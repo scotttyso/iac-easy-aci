@@ -30,6 +30,15 @@ class InvalidArg(Exception):
 class LoginFailed(Exception):
     pass
 
+# Function to Count the Number of Keys
+def countKeys(ws, func):
+    count = 0
+    for i in ws.rows:
+        if any(i):
+            if str(i[0].value) == func:
+                count += 1
+    return count
+
 # Function to find the Keys for each Section
 def findKeys(ws, func_regex):
     func_list = OrderedSet()
@@ -220,6 +229,21 @@ def read_in(excel_workbook):
         sys.exit(e)
     return wb
 
+def sensitive_var_site_group(**templateVars):
+    if re.search('Grp_[A-F]', templateVars['site_group']):
+        site_group = ast.literal_eval(os.environ[templateVars['site_group']])
+        for x in range(1, 16):
+            if not site_group[f'site_{x}'] == None:
+                site_id = 'site_id_%s' % (site_group[f'site_{x}'])
+                site_dict = ast.literal_eval(os.environ[site_id])
+                if site_dict['run_location'] == 'local':
+                    sensitive_var_value(templateVars['easy_jsonData'], **templateVars)
+    else:
+        site_id = 'site_id_%s' % (site_group[templateVars['site_group']])
+        site_dict = ast.literal_eval(os.environ[site_id])
+        if site_dict['run_location'] == 'local':
+            sensitive_var_value(templateVars['easy_jsonData'], **templateVars)
+
 def sensitive_var_value(jsonData, **templateVars):
     sensitive_var = 'TF_VAR_%s' % (templateVars['Variable'])
     # -------------------------------------------------------------------------------------------------------------------------
@@ -271,12 +295,12 @@ def sensitive_var_value(jsonData, **templateVars):
             elif re.search('(apikey|secretkey)', sensitive_var):
                 if not sensitive_var == '':
                     valid = True
-            elif 'bind' in sensitive_var:
-                jsonVars = jsonData['components']['schemas']['iam.LdapBaseProperties']['allOf'][1]['properties']
-                minLength = 1
-                maxLength = 254
+            elif 'aes_passphrase' in sensitive_var:
+                jsonVars = jsonData['components']['schemas']['global.AESPassphrase']['allOf'][1]['properties']
+                minLength = jsonVars['Password']['minimum']
+                maxLength = jsonVars['Password']['maximum']
                 rePattern = jsonVars['Password']['pattern']
-                varName = 'SNMP Community'
+                varName = 'Global AES Phassphrase'
                 valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
             elif 'community' in sensitive_var:
                 jsonVars = jsonData['components']['schemas']['snmp.Policy']['allOf'][1]['properties']
@@ -700,7 +724,7 @@ def write_to_site(self, **templateVars):
 
     # Process the template
     templateVars["dest_dir"] = '%s' % (self.type)
-    templateVars["dest_file"] = '%s.auto.tfvars' % (templateVars["template_type"])
+    templateVars["dest_file"] = '%s.auto.tfvars' % (templateVars["tfvars_file"])
     if templateVars["initial_write"] == True:
         templateVars["write_method"] = 'w'
     else:
@@ -749,7 +773,7 @@ def write_to_template(**templateVars):
     dest_file = templateVars["dest_file"]
     site_name = templateVars["site_name"]
     template = templateVars["template"]
-    wr_method = templateVars["wr_method"]
+    wr_method = templateVars["write_method"]
 
     if opSystem == 'Windows':
         if os.environ.get('TF_DEST_DIR') is None:

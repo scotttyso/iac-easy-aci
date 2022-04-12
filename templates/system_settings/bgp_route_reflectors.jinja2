@@ -3,4 +3,8 @@
 # {{ header }}
 #______________________________________________
 
-{{ template_type }} = "{{ autonomous_system_number }}"
+{{ template_type }} = {
+  "{{pod_id}}" = {
+    node_list = [{{node_list}}]
+  }
+}

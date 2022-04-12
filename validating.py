@@ -6,6 +6,15 @@ import re
 import validators
 
 # Validations
+def bool(row_num, ws, var, var_value):
+    if not (var_value == 'True' or var_value == 'False'):
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
+        print(f'   The Option should be True or False but recieved {var_value}.')
+        print(f'    Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
 def brkout_pg(row_num, brkout_pg):
     if not re.search('(2x100g_pg|4x100g_pg|4x10g_pg|4x25g_pg|8x50g_pg)', brkout_pg):
         print(f'\n-----------------------------------------------------------------------------\n')
@@ -13,6 +22,44 @@ def brkout_pg(row_num, brkout_pg):
         print(f'   2x100g_pg, 4x100g_pg, 4x10g_pg, 4x25g_pg, and 8x50g_pg.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
+
+def length_and_regex(regex_pattern, varName, varValue, minLength, maxLength):
+    invalid_count = 0
+    if not validators.length(varValue, min=int(minLength), max=int(maxLength)):
+        invalid_count += 1
+        print(f'\n--------------------------------------------------------------------------------------\n')
+        print(f'   !!! {varName} value "{varValue}" is Invalid!!!')
+        print(f'   Length Must be between {minLength} and {maxLength} characters.')
+        print(f'\n--------------------------------------------------------------------------------------\n')
+    if not re.search(regex_pattern, varValue):
+        invalid_count += 1
+        print(f'\n--------------------------------------------------------------------------------------\n')
+        print(f'   !!! Invalid Characters in {varValue}.  The allowed characters are:')
+        print(f'   - "{regex_pattern}"')
+        print(f'\n--------------------------------------------------------------------------------------\n')
+    if invalid_count == 0:
+        return True
+    else:
+        return False
+
+def length_and_regex_sensitive(regex_pattern, varName, varValue, minLength, maxLength):
+    invalid_count = 0
+    if not validators.length(varValue, min=int(minLength), max=int(maxLength)):
+        invalid_count += 1
+        print(f'\n--------------------------------------------------------------------------------------\n')
+        print(f'   !!! {varName} is Invalid!!!')
+        print(f'   Length Must be between {minLength} and {maxLength} characters.')
+        print(f'\n--------------------------------------------------------------------------------------\n')
+    if not re.search(regex_pattern, varValue):
+        invalid_count += 1
+        print(f'\n--------------------------------------------------------------------------------------\n')
+        print(f'   !!! Invalid Characters in {varName}.  The allowed characters are:')
+        print(f'   - "{regex_pattern}"')
+        print(f'\n--------------------------------------------------------------------------------------\n')
+    if invalid_count == 0:
+        return True
+    else:
+        return False
 
 def description(row_num, ws, var, var_value):
     if not (re.search(r'^[a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+$',  var_value) and validators.length(str(var_value), min=0, max=128)):

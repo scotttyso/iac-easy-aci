@@ -1,6 +1,6 @@
 #______________________________________________
 #
-# {{ header }}
+# APIC Connectivity Preference - Variables
 #______________________________________________
 
-{{ template_type }} = "{{ apic_connectivity_preference }}"
+apic_connectivity_preference = "ooband"

@@ -1,36 +1,49 @@
 #!/usr/bin/env python3
+"""ACI/NDO IAC - 
+This Script is to Create Terraform HCL configuration from an Excel Spreadsheet.
+It uses argparse to take in the following CLI arguments:
+    d or dir:           Base Directory to use for creation of the HCL Configuration Files
+    w or workbook:   Name of Excel Workbook file for the Data Source
+"""
 
+import argparse
+import json
+import lib_aci
+import os
+import re
+import sys
+import stdiomask
+import subprocess
+import time
+from class_system_settings import system_settings, site_policies
+from easy_functions import countKeys, findKeys, findVars, stdout_log
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 from pathlib import Path
 from git import Repo
-import getpass
-import lib_aci
-import os, re, sys
-import subprocess
-import time
 
 # Global Variables
 excel_workbook = None
 home = Path.home()
+Parser = argparse.ArgumentParser(description='Intersight Easy IMM Deployment Module')
 workspace_dict = {}
 
-Access_regex = re.compile('(^aep_profile|bpdu|cdp|(fibre|port)_(channel|security)|l2_interface|l3_domain|(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|phys_dom|stp|vlan_pool$)')
-Admin_regex = re.compile('(^export_policy|firmware|maint_group|radius|realm|remote_host|security|tacacs|tacacs_acct$)')
-Best_Practices_regex = re.compile('(^bgp_(asn|rr)|ep_controls|error_recovery|fabric_settings|fabric_wide|isis_policy|mcp_policy$)')
-Bridge_Domains_regex = re.compile('(^add_bd$)')
-Contracts_regex = re.compile('(^(contract|filter|subject)_(add|entry|to_epg)$)')
-DHCP_regex = re.compile('(^dhcp_add$)')
-EPGs_regex = re.compile('(^add_epg$)')
-Fabric_regex = re.compile('(^date_time|dns|dns_profile|domain|pod_policy|ntp|sch_dstgrp|sch_receiver|snmp_(client|clgrp|comm|policy|trap|user)|syslog_(dg|rmt)|trap_groups$)')
-Inventory_regex = re.compile('(^apic_inb|switch|vpc_pair$)')
-L3Out_regex = re.compile('(^add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer$)')
-Mgmt_Tenant_regex = re.compile('(^add_bd|mgmt_epg|oob_ext_epg$)')
-Sites_regex = re.compile('(^site_id|group_id$)')
-Tenant_regex = re.compile('(^add_tenant$)')
-VRF_regex = re.compile('(^add_vrf|ctx_common$)')
-VMM_regex = re.compile('(^add_vrf|ctx_common$)')
+access_regex = re.compile('(^aep_profile|bpdu|cdp|(fibre|port)_(channel|security)|l2_interface|l3_domain|(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|phys_dom|stp|vlan_pool$)')
+admin_regex = re.compile('(^export_policy|firmware|maint_group|radius|realm|remote_host|security|tacacs|tacacs_acct$)')
+system_settings_regex = re.compile('(^apic_preference|bgp_(asn|rr)|global_aes$)')
+bridge_domains_regex = re.compile('(^add_bd$)')
+contracts_regex = re.compile('(^(contract|filter|subject)_(add|entry|to_epg)$)')
+dhcp_regex = re.compile('(^dhcp_add$)')
+epgs_regex = re.compile('(^add_epg$)')
+fabric_regex = re.compile('(^date_time|dns|dns_profile|domain|pod_policy|ntp|sch_dstgrp|sch_receiver|snmp_(client|clgrp|comm|policy|trap|user)|syslog_(dg|rmt)|trap_groups$)')
+inventory_regex = re.compile('(^apic_inb|switch|vpc_pair$)')
+l3out_regex = re.compile('(^add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer$)')
+mgmt_tenant_regex = re.compile('(^add_bd|mgmt_epg|oob_ext_epg$)')
+sites_regex = re.compile('(^site_id|group_id$)')
+tenant_regex = re.compile('(^add_tenant$)')
+vrfs_regex = re.compile('(^add_vrf|ctx_common$)')
+vmm_regex = re.compile('(^add_vrf|ctx_common$)')
 
 def apply_aci_terraform(folders):
 
@@ -164,7 +177,7 @@ def get_user_pass():
     user = input('Enter APIC username: ')
     while True:
         try:
-            password = getpass.getpass(prompt='Enter APIC password: ')
+            password = stdiomask.getpass(prompt='Enter APIC password: ')
             break
         except Exception as e:
             print('Something went wrong. Error received: {}'.format(e))
@@ -172,127 +185,136 @@ def get_user_pass():
     os.environ['TF_VAR_aciUser'] = '%s' % (user)
     os.environ['TF_VAR_aciPass'] = '%s' % (password)
 
-def process_Access(wb):
+def process_access(wb):
     # Evaluate Access Worksheet
     lib_aci_ref = 'lib_aci.Access_Policies'
-    func_regex = Access_regex
+    func_regex = access_regex
     ws = wb['Access']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_Admin(wb):
+def process_admin(wb):
     # Evaluate Admin Worksheet
     lib_aci_ref = 'lib_aci.Admin_Policies'
-    func_regex = Admin_regex
+    func_regex = admin_regex
     ws = wb['Admin']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_Best_Practices(wb):
-    # Evaluate Best_Practices Worksheet
-    lib_aci_ref = 'lib_aci.Best_Practices'
-    func_regex = Best_Practices_regex
-    ws = wb['Best_Practices']
-    read_worksheet(wb, ws, lib_aci_ref, func_regex)
-
-def process_Bridge_Domains(wb):
+def process_bridge_domains(wb):
     # Evaluate Bridge_Domains Worksheet
     lib_aci_ref = 'lib_aci.Tenant_Policies'
-    func_regex = Bridge_Domains_regex
+    func_regex = bridge_domains_regex
     ws = wb['Bridge_Domains']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_Contracts(wb):
+def process_contracts(wb):
     # Evaluate Contracts Worksheet
     lib_aci_ref = 'lib_aci.Tenant_Policies'
-    func_regex = Contracts_regex
+    func_regex = contracts_regex
     ws = wb['Contracts']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_DHCP_Relay(wb):
+def process_dhcp_relay(wb):
     # Evaluate DHCP Relay Worksheet
     lib_aci_ref = 'lib_aci.Tenant_Policies'
-    func_regex = DHCP_regex
+    func_regex = dhcp_regex
     ws = wb['DHCP Relay']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_EPGs(wb):
+def process_epgs(wb):
     # Evaluate EPGs Worksheet
     lib_aci_ref = 'lib_aci.Tenant_Policies'
-    func_regex = EPGs_regex
+    func_regex = epgs_regex
     ws = wb['EPGs']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_Fabric(wb):
+def process_fabric(wb):
     # Evaluate Fabric Worksheet
     lib_aci_ref = 'lib_aci.Fabric_Policies'
-    func_regex = Fabric_regex
+    func_regex = fabric_regex
     ws = wb['Fabric']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_Inventory(wb):
+def process_inventory(wb):
     # Evaluate Inventory Worksheet
     lib_aci_ref = 'lib_aci.Access_Policies'
-    func_regex = Inventory_regex
+    func_regex = inventory_regex
     ws = wb['Inventory']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_L3Out(wb):
+def process_l3out(wb):
     # Evaluate L3Out Worksheet
     lib_aci_ref = 'lib_aci.Tenant_Policies'
-    func_regex = L3Out_regex
+    func_regex = l3out_regex
     ws = wb['L3Out']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_Mgmt_Tenant(wb):
+def process_mgmt_tenant(wb):
     # Evaluate Mgmt_Tenant Worksheet
     lib_aci_ref = 'lib_aci.Tenant_Policies'
     ws = wb['Mgmt_Tenant']
-    func_regex = Mgmt_Tenant_regex
+    func_regex = mgmt_tenant_regex
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_Sites(wb):
+def process_sites(easy_jsonData, wb):
     # Evaluate Sites Worksheet
-    lib_aci_ref = 'lib_aci.Site_Policies'
-    func_regex = Sites_regex
+    class_init = 'site_policies'
+    class_folder = 'sites'
+    func_regex = sites_regex
     ws = wb['Sites']
-    read_worksheet(wb, ws, lib_aci_ref, func_regex)
+    read_worksheet(class_init, class_folder, easy_jsonData, func_regex, wb, ws)
 
-def process_Tenants(wb):
+def process_system_settings(easy_jsonData, wb):
+    # Evaluate System_Settings Worksheet
+    class_init = 'system_settings'
+    class_folder = 'system_settings'
+    func_regex = system_settings_regex
+    ws = wb['System_Settings']
+    read_worksheet(class_init, class_folder, easy_jsonData, func_regex, wb, ws)
+
+def process_tenants(wb):
     # Evaluate Tenants Worksheet
     lib_aci_ref = 'lib_aci.Tenant_Policies'
-    func_regex = Tenant_regex
+    func_regex = tenant_regex
     ws = wb['Tenants']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_VRF(wb):
+def process_vrfs(wb):
     # Evaluate VRF Worksheet
     lib_aci_ref = 'lib_aci.Tenant_Policies'
-    func_regex = VRF_regex
+    func_regex = vrfs_regex
     ws = wb['VRF']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def process_VMM(wb):
+def process_vmm(wb):
     # Evaluate Sites Worksheet
     lib_aci_ref = 'lib_aci.VMM_Policies'
-    func_regex = VMM_regex
+    func_regex = vmm_regex
     ws = wb['VMM']
     read_worksheet(wb, ws, lib_aci_ref, func_regex)
 
-def read_worksheet(wb, ws, lib_aci_ref, func_regex):
+def read_worksheet(class_init, class_folder, easy_jsonData, func_regex, wb, ws):
     rows = ws.max_row
-    func_list = lib_aci.findKeys(ws, func_regex)
-    class_init = '%s(ws)' % (lib_aci_ref)
-    lib_aci.stdout_log(ws, None)
+    func_list = findKeys(ws, func_regex)
+    stdout_log(ws, None)
     for func in func_list:
-        count = lib_aci.countKeys(ws, func)
-        var_dict = lib_aci.findVars(ws, func, rows, count)
+        count = countKeys(ws, func)
+        var_dict = findVars(ws, func, rows, count)
         for pos in var_dict:
             row_num = var_dict[pos]['row']
             del var_dict[pos]['row']
             for x in list(var_dict[pos].keys()):
                 if var_dict[pos][x] == '':
                     del var_dict[pos][x]
-            lib_aci.stdout_log(ws, row_num)
-            eval("%s.%s(wb, ws, row_num, **var_dict[pos])" % (class_init, func))
+            stdout_log(ws, row_num)
+            var_dict[pos].update(
+                {
+                    'easy_jsonData':easy_jsonData,
+                    'row_num':row_num,
+                    'wb':wb,
+                    'ws':ws
+                }
+            )
+            eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
 
 def wb_update(wr_ws, status, i):
     # build green and red style sheets for excel
@@ -364,23 +386,30 @@ def wb_update(wr_ws, status, i):
         pass
 
 def main():
+    description = None
+    if description is not None:
+        Parser.description = description
+    Parser.add_argument('-d', '--dir', default='ACI',
+                        help='The Directory to Publish the Terraform Files to.'
+    )
+    Parser.add_argument('-wb', '--workbook', default='ACI_Base_Workbookv2.xlsx',
+                        help='The Workbook to read for Input.'
+    )
+    Parser.add_argument('-ws', '--worksheet', default=None,
+                        help='The Workbook to read for Input.'
+    )
+    args = Parser.parse_args()
+
+    jsonFile = 'templates/variables/easy_variables.json'
+    jsonOpen = open(jsonFile, 'r')
+    easy_jsonData = json.load(jsonOpen)
+    jsonOpen.close()
+
     # Ask user for required Information: ACI_DEPLOY_FILE
-    if sys.argv[1:]:
-        if os.path.isfile(sys.argv[1]):
-            excel_workbook = sys.argv[1]
-        else:
-            print('\nWorkbook not Found.  Please enter a valid /path/filename for the source you will be using.')
-            while True:
-                print('Please enter a valid /path/filename for the source you will be using.')
-                excel_workbook = input('/Path/Filename: ')
-                if os.path.isfile(excel_workbook):
-                    print(f'\n-----------------------------------------------------------------------------\n')
-                    print(f'   {excel_workbook} exists.  Will Now Check for API Variables...')
-                    print(f'\n-----------------------------------------------------------------------------\n')
-                    break
-                else:
-                    print('\nWorkbook not Found.  Please enter a valid /path/filename for the source you will be using.')
+    if os.path.isfile(args.workbook):
+        excel_workbook = args.workbook
     else:
+        print('\nWorkbook not Found.  Please enter a valid /path/filename for the source workbook you will be using.')
         while True:
             print('Please enter a valid /path/filename for the source you will be using.')
             excel_workbook = input('/Path/Filename: ')
@@ -396,70 +425,62 @@ def main():
     wb = lib_aci.read_in(excel_workbook)
 
     # Run Proceedures for Worksheets in the Workbook
-    process_Sites(wb)
+    process_sites(easy_jsonData, wb)
 
     # Either Run All Remaining Proceedures or Just Specific based on sys.argv[2:]
-    if sys.argv[2:]:
-        if re.search('site', str(sys.argv[2:])):
-            process_Sites(wb)
-        elif re.search('access', str(sys.argv[2:])):
-            process_Access(wb)
-        elif re.search('inventory', str(sys.argv[2:])):
-            process_Inventory(wb)
-        elif re.search('admin', str(sys.argv[2:])):
-            process_Admin(wb)
-        elif re.search('best', str(sys.argv[2:])):
-            process_Best_Practices(wb)
-        elif re.search('fabric', str(sys.argv[2:])):
-            process_Fabric(wb)
-        elif re.search('tenant', str(sys.argv[2:])):
-            process_Tenants(wb)
-        elif re.search('vrf', str(sys.argv[2:])):
-            process_VRF(wb)
-        elif re.search('contract', str(sys.argv[2:])):
-            process_Contracts(wb)
-        elif re.search('l3out', str(sys.argv[2:])):
-            process_L3Out(wb)
-        elif re.search('mgmt', str(sys.argv[2:])):
-            process_Mgmt_Tenant(wb)
-        elif re.search('bd', str(sys.argv[2:])):
-            process_Bridge_Domains(wb)
-        elif re.search('dhcp', str(sys.argv[2:])):
-            process_DHCP_Relay(wb)
-        elif re.search('epg', str(sys.argv[2:])):
-            process_EPGs(wb)
-        elif re.search('vmm', str(sys.argv[2:])):
-            process_VMM(wb)
+    if not args.worksheet == None:
+        if re.search('site', str(args.worksheet)):
+            process_sites(wb)
+        elif re.search('access', str(args.worksheet)):
+            process_access(wb)
+        elif re.search('admin', str(args.worksheet)):
+            process_admin(wb)
+        elif re.search('inventory', str(args.worksheet)):
+            process_inventory(wb)
+        elif re.search('system_settings', str(args.worksheet)):
+            process_system_settings(wb)
+        elif re.search('fabric', str(args.worksheet)):
+            process_fabric(wb)
+        elif re.search('tenant', str(args.worksheet)):
+            process_tenants(wb)
+        elif re.search('vrf', str(args.worksheet)):
+            process_vrfs(wb)
+        elif re.search('contract', str(args.worksheet)):
+            process_contracts(wb)
+        elif re.search('l3out', str(args.worksheet)):
+            process_l3out(wb)
+        elif re.search('mgmt', str(args.worksheet)):
+            process_mgmt_tenant(wb)
+        elif re.search('bd', str(args.worksheet)):
+            process_bridge_domains(wb)
+        elif re.search('dhcp', str(args.worksheet)):
+            process_dhcp_relay(wb)
+        elif re.search('epg', str(args.worksheet)):
+            process_epgs(wb)
+        elif re.search('vmm', str(args.worksheet)):
+            process_vmm(wb)
         else:
-            process_Best_Practices(wb)
-            process_Fabric(wb)
-            process_Admin(wb)
-            process_Access(wb)
-            process_Inventory(wb)
-            process_Tenants(wb)
-            process_L3Out(wb)
-            process_Contracts(wb)
-            process_Mgmt_Tenant(wb)
-            process_VRF(wb)
-            process_Bridge_Domains(wb)
-            # process_DHCP_Relay(wb)
-            process_EPGs(wb)
-            # process_VMM(wb)
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   {args.worksheet} is not a valid worksheet.  If you are trying to run')
+            print(f'   a single worksheet please re-enter the -ws argument.  Exiting...')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
     else:
-        process_Best_Practices(wb)
-        process_Fabric(wb)
-        process_Admin(wb)
-        process_Access(wb)
-        process_Inventory(wb)
-        process_Tenants(wb)
-        process_L3Out(wb)
-        process_Contracts(wb)
-        process_Mgmt_Tenant(wb)
-        process_VRF(wb)
-        process_Bridge_Domains(wb)
-        # process_DHCP_Relay(wb)
-        process_EPGs(wb)
-        # process_VMM(wb)
+        process_system_settings(easy_jsonData, wb)
+        exit()
+        process_fabric(wb)
+        process_admin(wb)
+        process_access(wb)
+        process_inventory(wb)
+        process_tenants(wb)
+        process_l3out(wb)
+        process_contracts(wb)
+        process_mgmt_tenant(wb)
+        process_vrfs(wb)
+        process_bridge_domains(wb)
+        # process_dhcp_relay(wb)
+        process_epgs(wb)
+        # process_vmm(wb)
 
     folders = check_git_status()
     get_user_pass()
