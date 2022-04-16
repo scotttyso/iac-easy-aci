@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 
-import ast
 import jinja2
 import os
-import re
 import pkg_resources
-import platform
 import validating
 from class_terraform import terraform_cloud
 from easy_functions import process_kwargs
-from easy_functions import sensitive_var_site_group, sensitive_var_value
+from easy_functions import sensitive_var_site_group
 from easy_functions import write_to_site
 from easy_functions import write_to_template
 from openpyxl import load_workbook
