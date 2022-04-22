@@ -73,6 +73,21 @@ def description(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
+def values(row_num, ws, var, var_value, value_list):
+    match_count = 0
+    for x in value_list:
+        if x == var_value:
+            match_count =+ 1
+    if not match_count > 0:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
+        print(f'   {var} should be one of the following:')
+        for x in value_list:
+            print(f'    - {x}')
+        print(f'    Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
 def days(row_num, ws, var, var_value):
     if not re.search('^(every-day|even-day|odd-day|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)$', var_value):
         print(f'\n---------------------------------------------------------------------------------------\n')
@@ -692,21 +707,6 @@ def url(row_num, ws, var, var_value):
         print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
         print(f'   {var} should be a valid URL.  The Following is not a valid URL:')
         print(f'    - {var_value}')
-        print(f'    Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def values(row_num, ws, var, var_value, value_list):
-    match_count = 0
-    for x in value_list:
-        if x == var_value:
-            match_count =+ 1
-    if not match_count > 0:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
-        print(f'   {var} should be one of the following:')
-        for x in value_list:
-            print(f'    - {x}')
         print(f'    Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()

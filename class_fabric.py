@@ -3,6 +3,7 @@
 import jinja2
 import os
 import pkg_resources
+import re
 import validating
 from class_terraform import terraform_cloud
 from easy_functions import process_kwargs
@@ -36,18 +37,27 @@ class system_settings(object):
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
-    def date_time(self, wb, ws, row_num, **kwargs):
+    def date_time(self, **kwargs):
         # Dicts for required and optional args
+        wb = kwargs['wb']
+        ws = kwargs['ws']
+        row_num = kwargs['row_num']
         required_args = {
-            'Site_Group': '',
-            'Name': '',
-            'Admin_State': '',
-            'Server_State': '',
-            'Master_Mode': '',
-            'Auth_State': ''
+            'row_num': '',
+            'site_group': '',
+            'wb': '',
+            'ws': '',
+            'administrative_state': '',
+            'display_format': '',
+            'master_mode': '',
+            'name': '',
+            'offset_state': '',
+            'server_state': '',
+            'stratum_value': '',
+            'time_zone': ''
         }
         optional_args = {
-            'Description': ''
+            'description': ''
         }
 
         # Validate inputs, return dict of template vars
@@ -55,20 +65,41 @@ class system_settings(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
-            validating.name_rule(row_num, ws, 'Name', templateVars['Name'])
-            validating.values(row_num, ws, 'Admin_State', templateVars['Admin_State'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'Server_State', templateVars['Server_State'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'Master_Mode', templateVars['Master_Mode'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'Auth_State', templateVars['Auth_State'], ['disabled', 'enabled'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.name_rule(row_num, ws, 'name', templateVars['name'])
+            validating.values(row_num, ws, 'administrative_state', templateVars['administrative_state'], ['disabled', 'enabled'])
+            validating.values(row_num, ws, 'display_format', templateVars['display_format'], ['local', 'utc'])
+            validating.values(row_num, ws, 'master_mode', templateVars['master_mode'], ['disabled', 'enabled'])
+            validating.values(row_num, ws, 'offset_state', templateVars['offset_state'], ['disabled', 'enabled'])
+            validating.values(row_num, ws, 'server_state', templateVars['server_state'], ['disabled', 'enabled'])
+            validating.values(row_num, ws, 'stratum_value', templateVars['stratum_value'], [
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+            ])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
         except Exception as err:
             Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
             raise ErrException(Error_Return)
 
-        if templateVars['Server_State'] == 'disabled':
-            templateVars['Master_Mode'] = 'disabled'
+        if templateVars['server_state'] == 'disabled':
+            templateVars['master_mode'] = 'disabled'
+        
+        date_time = {
+            'administrative_state':kwargs['administrative_state'],
+            'description':kwargs['description'],
+            'display_format':kwargs['display_format'],
+            'master_mode':kwargs['master_mode'],
+            'offset_state':kwargs['offset_state'],
+            'server_state':kwargs['server_state'],
+            'stratum_value':kwargs['stratum_value'],
+            'time_zone':kwargs['time_zone']
+        }
+        
+        # Add Dictionary to easyDict
+        kwargs['easyDict'].append(date_time)
+        # Return Dictionary
+        return kwargs['easyDict']
+
 
         # Define the Template Source
         template_file = "date_time_profile.jinja2"
@@ -77,7 +108,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'Date_and_Time_Profile_%s.tf' % (templateVars['Name'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -114,7 +145,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'DNS_Profile_%s.tf' % (templateVars['DNS_Profile'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -147,7 +178,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'DNS_Profile_%s.tf' % (templateVars['Name'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -181,7 +212,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'DNS_Profile_%s.tf' % (templateVars['DNS_Profile'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -228,7 +259,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'Pod_Profile_%s.tf' % (templateVars['Pod_Profile'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -282,7 +313,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'Date_and_Time_Profile_%s.tf' % (templateVars['Date_Policy'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -320,9 +351,9 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'variable_%s.tf' % (templateVars['sensitive_var'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-        process_sensitive_var(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
+        sensitive_var_site_group(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
 
         # Define the Template Source
         template_file = "ntp_key.jinja2"
@@ -331,7 +362,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'Date_and_Time_Profile_%s.tf' % (templateVars['Date_Policy'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -392,7 +423,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'Smart_Callhome_%s.tf' % (templateVars['DestGrp_Name'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -459,7 +490,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'Smart_Callhome_%s.tf' % (templateVars['DestGrp_Name'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         # Define the Template Source
         template_file = "smartcallhome_source.jinja2"
@@ -468,7 +499,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'Smart_Callhome_%s.tf' % (templateVars['DestGrp_Name'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -506,7 +537,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'SNMP_Policy_%s.tf' % (templateVars['SNMP_Policy'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -543,7 +574,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'SNMP_Policy_%s.tf' % (templateVars['SNMP_Policy'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         # site_dict = ast.literal_eval(os.environ[Site_ID])
 
@@ -554,9 +585,9 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'variable_%s.tf' % (templateVars['sensitive_var'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-        process_sensitive_var(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
+        sensitive_var_site_group(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -591,7 +622,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'SNMP_Policy_%s.tf' % (templateVars['SNMP_Policy'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -629,7 +660,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'SNMP_Policy_%s.tf' % (templateVars['SNMP_Policy'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -684,7 +715,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'SNMP_Policy_%s.tf' % (templateVars['SNMP_Policy'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         # Define the Template Source
         template_file = "snmp_trap_destgrp_reciever.jinja2"
@@ -693,7 +724,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'SNMP_Trap_DestGrp_%s.tf' % (templateVars['SNMP_Trap_DG'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         # site_dict = ast.literal_eval(os.environ[Site_ID])
 
@@ -704,9 +735,9 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'variable_%s.tf' % (templateVars['sensitive_var'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-        process_sensitive_var(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
+        sensitive_var_site_group(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -760,7 +791,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'SNMP_Policy_%s.tf' % (templateVars['SNMP_Policy'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         # site_dict = ast.literal_eval(os.environ[Site_ID])
 
@@ -773,17 +804,17 @@ class system_settings(object):
             dest_file = 'variable_%s.tf' % (templateVars['sensitive_var1'])
             dest_dir = 'Fabric'
             templateVars['sensitive_var'] = templateVars['sensitive_var1']
-            process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+            write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-            process_sensitive_var(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
+            sensitive_var_site_group(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
 
         if not templateVars['Authorization_Key'] == None:
             dest_file = 'variable_%s.tf' % (templateVars['sensitive_var2'])
             dest_dir = 'Fabric'
             templateVars['sensitive_var'] = templateVars['sensitive_var2']
-            process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+            write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-            process_sensitive_var(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
+            sensitive_var_site_group(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -854,7 +885,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'Syslog_DestGrp_%s.tf' % (templateVars['Dest_Grp_Name'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -897,7 +928,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'Syslog_DestGrp_%s.tf' % (templateVars['Dest_Grp_Name'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -958,7 +989,7 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'SNMP_Trap_DestGrp_%s.tf' % (templateVars['SNMP_Trap_DG'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
         # Define the Template Source
         template_file = "snmp_trap_source.jinja2"
@@ -967,4 +998,4 @@ class system_settings(object):
         # Process the template through the Sites
         dest_file = 'SNMP_Trap_DestGrp_%s.tf' % (templateVars['SNMP_Trap_DG'])
         dest_dir = 'Fabric'
-        process_method(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)

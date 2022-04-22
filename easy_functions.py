@@ -39,6 +39,124 @@ def countKeys(ws, func):
                 count += 1
     return count
 
+# Function to Create Interface Selectors
+def create_selector(ws_sw, ws_sw_row_count, **templateVars):
+    print(templateVars['port_count'])
+    Port_Selector = ''
+    for port in range(1, int(templateVars['port_count']) + 1):
+        if port < 10:
+            Port_Selector = 'Eth%s-0%s' % (templateVars['module'], port)
+        elif port < 100:
+            Port_Selector = 'Eth%s-%s' % (templateVars['module'], port)
+        elif port > 99:
+            Port_Selector = 'Eth%s_%s' % (templateVars['module'], port)
+        modp = '%s/%s' % (templateVars['module'],port)
+        # Copy the Port Selector to the Worksheet
+        data = ['intf_selector',templateVars['Pod_ID'],templateVars['Node_ID'],templateVars['Name'],Port_Selector,modp,'','','','','','']
+        ws_sw.append(data)
+        rc = '%s:%s' % (ws_sw_row_count, ws_sw_row_count)
+        for cell in ws_sw[rc]:
+            if ws_sw_row_count % 2 == 0:
+                cell.style = 'ws_odd'
+            else:
+                cell.style = 'ws_even'
+        dv1_cell = 'A%s' % (ws_sw_row_count)
+        dv2_cell = 'H%s' % (ws_sw_row_count)
+        templateVars['dv1'].add(dv1_cell)
+        templateVars['dv2'].add(dv2_cell)
+        ws_sw_row_count += 1
+    return ws_sw_row_count
+
+# Function to Create Static Paths within EPGs
+def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **templateVars):
+    wsheets = wb_sw.get_sheet_names()
+    tf_file = ''
+    for wsheet in wsheets:
+        ws = wb_sw[wsheet]
+        for row in ws.rows:
+            if not (row[12].value == None or row[13].value == None):
+                vlan_test = ''
+                if re.search('^(individual|port-channel|vpc)$', row[7].value) and (re.search(r'\d+', str(row[12].value)) or re.search(r'\d+', str(row[13].value))):
+                    if not row[12].value == None:
+                        vlan = row[12].value
+                        vlan_test = vlan_range(vlan, **templateVars)
+                        if 'true' in vlan_test:
+                            templateVars['mode'] = 'native'
+                    if not 'true' in vlan_test:
+                        templateVars['mode'] = 'regular'
+                        if not row[13].value == None:
+                            vlans = row[13].value
+                            vlan_test = vlan_range(vlans, **templateVars)
+                if vlan_test == 'true':
+                    templateVars['Pod_ID'] = row[1].value
+                    templateVars['Node_ID'] = row[2].value
+                    templateVars['Interface_Profile'] = row[3].value
+                    templateVars['Interface_Selector'] = row[4].value
+                    templateVars['Port'] = row[5].value
+                    templateVars['Policy_Group'] = row[6].value
+                    templateVars['Port_Type'] = row[7].value
+                    templateVars['Bundle_ID'] = row[9].value
+                    Site_Group = templateVars['Site_Group']
+                    pod = templateVars['Pod_ID']
+                    node_id =  templateVars['Node_ID']
+                    if templateVars['Port_Type'] == 'vpc':
+                        ws_vpc = wb['Inventory']
+                        for rx in ws_vpc.rows:
+                            if rx[0].value == 'vpc_pair' and int(rx[1].value) == int(Site_Group) and str(rx[4].value) == str(node_id):
+                                node1 = templateVars['Node_ID']
+                                node2 = rx[5].value
+                                templateVars['Policy_Group'] = '%s_vpc%s' % (row[3].value, templateVars['Bundle_ID'])
+                                templateVars['tDn'] = 'topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (pod, node1, node2, templateVars['Policy_Group'])
+                                templateVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (pod, node1, node2, templateVars['Policy_Group'])
+                                templateVars['GUI_Static'] = 'Pod-%s/Node-%s-%s/%s' % (pod, node1, node2, templateVars['Policy_Group'])
+                                templateVars['Static_descr'] = 'Pod-%s_Nodes-%s-%s_%s' % (pod, node1, node2, templateVars['Policy_Group'])
+                                tf_file = './ACI/%s/%s/%s' % (templateVars['Site_Name'], dest_dir, dest_file)
+                                read_file = open(tf_file, 'r')
+                                read_file.seek(0)
+                                static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (templateVars['App_Profile'], templateVars['EPG'], templateVars['Static_descr'])
+                                if not static_path_descr in read_file.read():
+                                    create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
+
+                    elif templateVars['Port_Type'] == 'port-channel':
+                        templateVars['Policy_Group'] = '%s_pc%s' % (row[3].value, templateVars['Bundle_ID'])
+                        templateVars['tDn'] = 'topology/pod-%s/paths-%s/pathep-[%s]' % (pod, templateVars['Node_ID'], templateVars['Policy_Group'])
+                        templateVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/paths-%s/pathep-[%s]' % (pod, templateVars['Node_ID'], templateVars['Policy_Group'])
+                        templateVars['GUI_Static'] = 'Pod-%s/Node-%s/%s' % (pod, templateVars['Node_ID'], templateVars['Policy_Group'])
+                        templateVars['Static_descr'] = 'Pod-%s_Node-%s_%s' % (pod, templateVars['Node_ID'], templateVars['Policy_Group'])
+                        read_file = open(tf_file, 'r')
+                        read_file.seek(0)
+                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (templateVars['App_Profile'], templateVars['EPG'], templateVars['Static_descr'])
+                        if not static_path_descr in read_file.read():
+                            create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
+
+                    elif templateVars['Port_Type'] == 'individual':
+                        port = 'eth%s' % (templateVars['Port'])
+                        templateVars['tDn'] = 'topology/pod-%s/paths-%s/pathep-[%s]' % (pod, templateVars['Node_ID'], port)
+                        templateVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/paths-%s/pathep-[%s]' % (pod, templateVars['Node_ID'], port)
+                        templateVars['GUI_Static'] = 'Pod-%s/Node-%s/%s' % (pod, templateVars['Node_ID'], port)
+                        templateVars['Static_descr'] = 'Pod-%s_Node-%s_%s' % (pod, templateVars['Node_ID'], templateVars['Interface_Selector'])
+                        read_file = open(tf_file, 'r')
+                        read_file.seek(0)
+                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (templateVars['App_Profile'], templateVars['EPG'], templateVars['Static_descr'])
+                        if not static_path_descr in read_file.read():
+                            create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
+
+# Function to Create Terraform Files
+def create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars):
+    # Make sure the Destination Directory Exists
+    dest_dir = './ACI/%s/%s' % (templateVars['Site_Name'], dest_dir)
+    if not os.path.isdir(dest_dir):
+        mk_dir = 'mkdir -p %s' % (dest_dir)
+        os.system(mk_dir)
+    # Create File for the Template in the Destination Folder
+    tf_file = '%s/%s' % (dest_dir, dest_file)
+    wr_file = open(tf_file, wr_method)
+
+    # Render Payload and Write to File
+    payload = template.render(templateVars)
+    wr_file.write(payload + '\n\n')
+    wr_file.close()
+
 # Function to find the Keys for each Section
 def findKeys(ws, func_regex):
     func_list = OrderedSet()
@@ -218,6 +336,133 @@ def process_kwargs(required_args, optional_args, **kwargs):
     # Combine option and required dicts for Jinja template render
     templateVars = {**required_args, **optional_args}
     return(templateVars)
+
+# Function to Add Static Port Bindings to Bridge Domains Terraform Files
+def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, **templateVars):
+    if re.search('Grp_[A-F]', templateVars['Site_Group']):
+        Group_ID = '%s' % (templateVars['Site_Group'])
+        site_group = ast.literal_eval(os.environ[Group_ID])
+        for x in range(1, 13):
+            sitex = 'Site_%s' % (x)
+            if not site_group[sitex] == None:
+                Site_ID = 'Site_ID_%s' % (site_group[sitex])
+                site_dict = ast.literal_eval(os.environ[Site_ID])
+
+                # Create templateVars for Site_Name and APIC_URL
+                templateVars['Site_Name'] = site_dict.get('Site_Name')
+                templateVars['Site_Group'] = site_dict.get('Site_ID')
+                templateVars['APIC_URL'] = site_dict.get('APIC_URL')
+
+                # Pull in the Site Workbook
+                excel_workbook = '%s_intf_selectors.xlsx' % (templateVars['Site_Name'])
+                try:
+                    wb_sw = load_workbook(excel_workbook)
+                except Exception as e:
+                    print(f"Something went wrong while opening the workbook - {excel_workbook}... ABORT!")
+                    sys.exit(e)
+
+                # Process the Interface Selectors for Static Port Paths
+                create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **templateVars)
+
+    elif re.search(r'\d+', templateVars['Site_Group']):
+        Site_ID = 'Site_ID_%s' % (templateVars['Site_Group'])
+        site_dict = ast.literal_eval(os.environ[Site_ID])
+
+        # Create templateVars for Site_Name and APIC_URL
+        templateVars['Site_Name'] = site_dict.get('Site_Name')
+        templateVars['Site_Group'] = site_dict.get('Site_ID')
+        templateVars['APIC_URL'] = site_dict.get('APIC_URL')
+
+        # Pull in the Site Workbook
+        excel_workbook = '%s_intf_selectors.xlsx' % (templateVars['Site_Name'])
+        try:
+            wb_sw = load_workbook(excel_workbook)
+        except Exception as e:
+            print(f"Something went wrong while opening the workbook - {excel_workbook}... ABORT!")
+            sys.exit(e)
+
+
+        # Process the Interface Selectors for Static Port Paths
+        create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **templateVars)
+
+    else:
+        print(f"\n-----------------------------------------------------------------------------\n")
+        print(f"   Error on Worksheet {ws.title}, Row {row_num} Site_Group, value {templateVars['Site_Group']}.")
+        print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
+        print(f"\n-----------------------------------------------------------------------------\n")
+        exit()
+
+# Function to Determine Port Count on Modules
+def query_module_type(row_num, module_type):
+    if re.search('^M4', module_type):
+        port_count = '4'
+    elif re.search('^M6', module_type):
+        port_count = '6'
+    elif re.search('^M12', module_type):
+        port_count = '12'
+    elif re.search('X9716D-GX', module_type):
+        port_count = '16'
+    elif re.search('X9732C-EX', module_type):
+        port_count = '32'
+    elif re.search('X9736', module_type):
+        port_count = '36'
+    else:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Row {row_num}.  Unknown Switch Model {module_type}')
+        print(f'   Please verify Input Information.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+    return port_count
+
+# Function to Determine Port count from Switch Model
+def query_switch_model(row_num, switch_type):
+    modules = ''
+    switch_type = str(switch_type)
+    if re.search('^9396', switch_type):
+        modules = '2'
+        port_count = '48'
+    elif re.search('^93', switch_type):
+        modules = '1'
+
+    if re.search('^9316', switch_type):
+        port_count = '16'
+    elif re.search('^(93120)', switch_type):
+        port_count = '102'
+    elif re.search('^(93108|93120|93216|93360)', switch_type):
+        port_count = '108'
+    elif re.search('^(93180|93240|9348|9396)', switch_type):
+        port_count = '54'
+    elif re.search('^(93240)', switch_type):
+        port_count = '60'
+    elif re.search('^9332', switch_type):
+        port_count = '34'
+    elif re.search('^(9336|93600)', switch_type):
+        port_count = '36'
+    elif re.search('^9364C-GX', switch_type):
+        port_count = '64'
+    elif re.search('^9364', switch_type):
+        port_count = '66'
+    elif re.search('^95', switch_type):
+        port_count = '36'
+        if switch_type == '9504':
+            modules = '4'
+        elif switch_type == '9508':
+            modules = '8'
+        elif switch_type == '9516':
+            modules = '16'
+        else:
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   Error on Row {row_num}.  Unknown Switch Model {switch_type}')
+            print(f'   Please verify Input Information.  Exiting....')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
+    else:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Row {row_num}.  Unknown Switch Model {switch_type}')
+        print(f'   Please verify Input Information.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+    return modules,port_count
 
 # Function to Read Excel Workbook Data
 def read_in(excel_workbook):
@@ -712,6 +957,40 @@ def vlan_pool():
             print(f'\n-------------------------------------------------------------------------------------------\n')
     
     return VlanList,vlanListExpanded
+
+# Function to Expand a VLAN Range to a VLAN List
+def vlan_range(vlan_list, **templateVars):
+    results = 'unknown'
+    while results == 'unknown':
+        if re.search(',', str(vlan_list)):
+            vx = vlan_list.split(',')
+            for vrange in vx:
+                if re.search('-', vrange):
+                    vl = vrange.split('-')
+                    min_ = int(vl[0])
+                    max_ = int(vl[1])
+                    if (int(templateVars['VLAN']) >= min_ and int(templateVars['VLAN']) <= max_):
+                        results = 'true'
+                        return results
+                else:
+                    if templateVars['VLAN'] == vrange:
+                        results = 'true'
+                        return results
+            results = 'false'
+            return results
+        elif re.search('-', str(vlan_list)):
+            vl = vlan_list.split('-')
+            min_ = int(vl[0])
+            max_ = int(vl[1])
+            if (int(templateVars['VLAN']) >= min_ and int(templateVars['VLAN']) <= max_):
+                results = 'true'
+                return results
+        else:
+            if int(templateVars['VLAN']) == int(vlan_list):
+                results = 'true'
+                return results
+        results = 'false'
+        return results
 
 # Function to Determine which sites to write files to
 def write_to_site(self, **templateVars):

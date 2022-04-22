@@ -8,7 +8,6 @@ from class_terraform import terraform_cloud
 from easy_functions import process_kwargs
 from easy_functions import sensitive_var_site_group
 from easy_functions import write_to_site
-from easy_functions import write_to_template
 from openpyxl import load_workbook
 
 aci_template_path = pkg_resources.resource_filename('class_system_settings', 'templates/')
@@ -67,8 +66,9 @@ class system_settings(object):
                 % (SystemExit(err), kwargs["wb"], kwargs["row_num"])
             raise ErrException(Error_Return)
 
-        # Write to the Template file
+        # Write to the Template file and Return Dictionary
         write_to_site(self, **templateVars)
+        return kwargs['easyDict']
 
     def bgp_asn(self, **kwargs):
         # Dictionaries for required and optional args
@@ -101,8 +101,9 @@ class system_settings(object):
                 % (SystemExit(err), kwargs["wb"], kwargs["row_num"])
             raise ErrException(Error_Return)
 
-        # Write to the Template file
+        # Write to the Template file and Return Dictionary
         write_to_site(self, **templateVars)
+        return kwargs['easyDict']
 
     def bgp_rr(self, **kwargs):
         # Dictionaries for required and optional args
@@ -136,8 +137,9 @@ class system_settings(object):
                 % (SystemExit(err), kwargs["wb"], kwargs["row_num"])
             raise ErrException(Error_Return)
 
-        # Write to the Template file
+        # Write to the Template file and Return Dictionary
         write_to_site(self, **templateVars)
+        return kwargs['easyDict']
 
     def global_aes(self, **kwargs):
         # Dictionaries for required and optional args
@@ -179,8 +181,9 @@ class system_settings(object):
             templateVars["Variable"] = 'aes_passphrase'
             sensitive_var_site_group(**templateVars)
         
-        # Write to the Template file
+        # Write to the Template file and Return Dictionary
         write_to_site(self, **templateVars)
+        return kwargs['easyDict']
 
 # Class must be instantiated with Variables
 class site_policies(object):
@@ -288,6 +291,10 @@ class site_policies(object):
                     wb_wr.remove_sheet(sheetToDelete)
             wb_wr.save(filename=site_wb)
 
+        # Return Dictionary
+        return kwargs['easyDict']
+
+
     # Method must be called with the following kwargs.
     # Group: Required.  A Group Name to represent a list of Site_ID's
     # site_1: Required.  The site_id for the First Site
@@ -343,3 +350,6 @@ class site_policies(object):
         # Save the Site Information into Environment Variables
         group_id = '%s' % (templateVars['site_group'])
         os.environ[group_id] = '%s' % (templateVars)
+
+        # Return Dictionary
+        return kwargs['easyDict']
