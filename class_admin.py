@@ -63,10 +63,21 @@ class admin(object):
         try:
             # Validate Required Arguments
             validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
-            validating.days(row_num, ws, 'Days', templateVars['Days'])
             validating.number_check(row_num, ws, 'Backup_Hour', templateVars['Backup_Hour'], 0, 23)
             validating.number_check(row_num, ws, 'Backup_Minute', templateVars['Backup_Minute'], 0, 59)
             validating.values(row_num, ws, 'Concurrent_Capacity', templateVars['Concurrent_Capacity'], ['unlimited'])
+            validating.values(row_num, ws, 'days', templateVars['days'], [
+                'every-day',
+                'even-day',
+                'odd-day',
+                'Sunday',
+                'Monday',
+                'Tuesday',
+                'Wednesday',
+                'Thursday',
+                'Friday',
+                'Saturday'
+            ])
             validating.values(row_num, ws, 'Format', templateVars['Format'], ['json', 'xml'])
             validating.values(row_num, ws, 'Start_Now', templateVars['Start_Now'], ['triggered', 'untriggered'])
             validating.values(row_num, ws, 'Snapshot', templateVars['Snapshot'], ['no', 'yes'])
@@ -76,8 +87,8 @@ class admin(object):
             if not templateVars['Export_Descr'] == None:
                 validating.description(row_num, ws, 'Export_Descr', templateVars['Export_Descr'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if re.search(r'\.', templateVars['Remote_Host']):
             templateVars['Remote_Host_'] = templateVars['Remote_Host'].replace('.', '-')
@@ -139,8 +150,8 @@ class admin(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "Login_Domain_%s.jinja2" % (templateVars['Realm_Type'])
@@ -185,8 +196,8 @@ class admin(object):
             validating.values(row_num, ws, 'Ver_Check_Override', templateVars['Ver_Check_Override'], ['trigger', 'trigger-immediate', 'triggered', 'untriggered'])
             validating.values(row_num, ws, 'MG_Type', templateVars['MG_Type'], ['ALL', 'range'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "maintenance_group.jinja2"
@@ -235,8 +246,8 @@ class admin(object):
             if not templateVars['Domain_Descr'] == None:
                 validating.description(row_num, ws, 'Domain_Descr', templateVars['Domain_Descr'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if re.search(r'\.', templateVars['RADIUS_Server']):
             templateVars['RADIUS_Server_'] = templateVars['RADIUS_Server'].replace('.', '-')
@@ -288,8 +299,8 @@ class admin(object):
                 validating.name_complexity(row_num, ws, 'Login_Domain', templateVars['Login_Domain'])
             validating.values(row_num, ws, 'Auth_Realm', templateVars['Auth_Realm'], ['console', 'default'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if templateVars['Auth_Realm'] == 'console':
             templateVars['child_class'] = 'aaaConsoleAuth'
@@ -354,8 +365,8 @@ class admin(object):
             validating.values(row_num, ws, 'Protocol', templateVars['Protocol'], ['ftp', 'scp', 'sftp'])
             templateVars['Mgmt_EPG'] = validating.mgmt_epg(row_num, ws, 'Mgmt_EPG', templateVars['Mgmt_EPG'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if re.search(':', templateVars['Remote_Host']):
             templateVars['Remote_Host_'] = templateVars['Remote_Host'].replace(':', '-')
@@ -451,8 +462,8 @@ class admin(object):
             validating.values(row_num, ws, 'Lockout', templateVars['Lockout'], ['disable', 'enable'])
             validating.values(row_num, ws, 'Passwd_Strength', templateVars['Passwd_Strength'], ['no', 'yes'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "security.jinja2"
@@ -524,8 +535,8 @@ class admin(object):
             if not templateVars['Login_Domain_Descr'] == None:
                 validating.description(row_num, ws, 'Login_Domain_Descr', templateVars['Login_Domain_Descr'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if re.search(r'\.', templateVars['TACACS_Server']):
             templateVars['TACACS_Server_'] = templateVars['TACACS_Server'].replace('.', '-')
@@ -577,8 +588,8 @@ class admin(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "tacacs_accounting.jinja2"

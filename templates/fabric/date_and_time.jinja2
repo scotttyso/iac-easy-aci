@@ -1,0 +1,35 @@
+
+  {{ name }} = {
+    annotation           = ""
+    administrative_state = "{{ administrative_state }}"
+    authentication_keys  = [
+{%- for item in authentication_keys %}
+      {
+        authentication_type = "{{ item['authentication_type'] }}"
+        key_id              = "{{ item['key_id'] }}"
+        trusted             = "{{ item['trusted'] }}"
+      },
+{%- endfor %}
+    ]
+    description          = ""
+    display_format       = "{{ display_format }}"
+    master_mode          = "{{ master_mode }}"
+    ntp_servers          = [
+{%- for item in ntp_servers %}
+      {
+        description              = "{{ item['description'] }}"
+        hostname                 = "{{ item['hostname'] }}"
+        key_id                   = "{{ item['key_id'] }}"
+        management_epg           = "{{ item['management_epg'] }}"
+        management_epg_type      = "{{ item['management_epg_type'] }}"
+        maximum_polling_interval = {{ item['maximum_polling_interval'] }}
+        minimum_polling_interval = {{ item['minimum_polling_interval'] }}
+        preferred                = {{ item['preferred'] }}
+      },
+{%- endfor %}
+    ]
+    offset_state         = "{{ offset_state }}"
+    server_state         = "{{ server_state }}"
+    stratum_value        = {{ stratum_value }}
+    time_zone            = "{{ time_zone }}"
+  }

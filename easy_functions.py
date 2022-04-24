@@ -339,19 +339,14 @@ def process_kwargs(required_args, optional_args, **kwargs):
 
 # Function to Add Static Port Bindings to Bridge Domains Terraform Files
 def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, **templateVars):
-    if re.search('Grp_[A-F]', templateVars['Site_Group']):
-        Group_ID = '%s' % (templateVars['Site_Group'])
-        site_group = ast.literal_eval(os.environ[Group_ID])
+    if re.search('Grp_[A-F]', templateVars['site_group']):
+        group_id = '%s' % (templateVars['site_group'])
+        site_group = ast.literal_eval(os.environ[group_id])
         for x in range(1, 13):
-            sitex = 'Site_%s' % (x)
+            sitex = 'site_%s' % (x)
             if not site_group[sitex] == None:
-                Site_ID = 'Site_ID_%s' % (site_group[sitex])
-                site_dict = ast.literal_eval(os.environ[Site_ID])
-
-                # Create templateVars for Site_Name and APIC_URL
-                templateVars['Site_Name'] = site_dict.get('Site_Name')
-                templateVars['Site_Group'] = site_dict.get('Site_ID')
-                templateVars['APIC_URL'] = site_dict.get('APIC_URL')
+                site_id = 'site_id_%s' % (site_group[sitex])
+                site_dict = ast.literal_eval(os.environ[site_id])
 
                 # Pull in the Site Workbook
                 excel_workbook = '%s_intf_selectors.xlsx' % (templateVars['Site_Name'])
@@ -365,8 +360,8 @@ def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, 
                 create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **templateVars)
 
     elif re.search(r'\d+', templateVars['Site_Group']):
-        Site_ID = 'Site_ID_%s' % (templateVars['Site_Group'])
-        site_dict = ast.literal_eval(os.environ[Site_ID])
+        site_id = 'site_id_%s' % (templateVars['Site_Group'])
+        site_dict = ast.literal_eval(os.environ[site_id])
 
         # Create templateVars for Site_Name and APIC_URL
         templateVars['Site_Name'] = site_dict.get('Site_Name')
@@ -996,18 +991,38 @@ def vlan_range(vlan_list, **templateVars):
 def write_to_site(self, **templateVars):
     ws = templateVars["ws"]
     row_num = templateVars["row_num"]
-    site_group = templateVars['site_group']
+    site_group = str(templateVars['site_group'])
     
     # Define the Template Source
     templateVars["template"] = self.templateEnv.get_template(templateVars["template_file"])
 
     # Process the template
-    templateVars["dest_dir"] = '%s' % (self.type)
+    if 'tenants' in self.type:
+        templateVars["dest_dir"] = 'tenant_%s' % (templateVars['tenant'])
+    else:
+        templateVars["dest_dir"] = '%s' % (self.type)
     templateVars["dest_file"] = '%s.auto.tfvars' % (templateVars["tfvars_file"])
     if templateVars["initial_write"] == True:
         templateVars["write_method"] = 'w'
     else:
         templateVars["write_method"] = 'a'
+
+    def process_siteDetails(site_dict, **templateVars):
+        # Create templateVars for site_name controller and controller_type
+        templateVars['controller'] = site_dict.get('controller')
+        templateVars['controller_type'] = site_dict.get('controller_type')
+        templateVars['site_name'] = site_dict.get('site_name')
+        templateVars['version'] = site_dict.get('version')
+
+        if templateVars['controller_type'] == 'ndo' and templateVars['template_type'] == 'tenants':
+            if templateVars['users'] == None:
+                validating.error_tenant_users(**templateVars)
+            else:
+                for user in templateVars['users'].split(','):
+                    regexp = '^[a-zA-Z0-9\_\-]+$'
+                    validating.length_and_regex(regexp, 'users', user, 1, 63)
+        # Create Terraform file from Template
+        write_to_template(**templateVars)
 
     if re.search('Grp_[A-F]', site_group):
         group_id = '%s' % (site_group)
@@ -1017,27 +1032,16 @@ def write_to_site(self, **templateVars):
                 site_id = 'site_id_%s' % (site_group[f'site_{x}'])
                 site_dict = ast.literal_eval(os.environ[site_id])
 
-                # Create templateVars for Site_Name and Controller URL
-                templateVars['controller'] = site_dict.get('controller')
-                templateVars['controller_type'] = site_dict.get('controller_type')
-                templateVars['site_name'] = site_dict.get('site_name')
-                templateVars['version'] = site_dict.get('version')
-
-                # Create Terraform file from Template
-                write_to_template(**templateVars)
+                # Add Site Detials to templateVars and write to template
+                process_siteDetails(site_dict, **templateVars)
 
     elif re.search(r'\d+', site_group):
         site_id = 'site_id_%s' % (site_group)
         site_dict = ast.literal_eval(os.environ[site_id])
 
-        # Create templateVars for site_name controller and controller_type
-        templateVars['controller'] = site_dict.get('controller')
-        templateVars['controller_type'] = site_dict.get('controller_type')
-        templateVars['site_name'] = site_dict.get('site_name')
-        templateVars['version'] = site_dict.get('version')
+        # Add Site Detials to templateVars and write to template
+        process_siteDetails(site_dict, **templateVars)
 
-        # Create Terraform file from Template
-        write_to_template(**templateVars)
     else:
         print(f"\n-----------------------------------------------------------------------------\n")
         print(f"   Error on Worksheet {ws.title}, Row {row_num} Site_Group, value {templateVars['site_group']}.")
@@ -1073,6 +1077,7 @@ def write_to_template(**templateVars):
             create_file = 'type nul >> %s' % (dest_file_path)
             os.system(create_file)
         tf_file = dest_file_path
+        print(tf_file)
         wr_file = open(tf_file, wr_method)
     else:
         if os.environ.get('TF_DEST_DIR') is None:

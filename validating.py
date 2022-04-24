@@ -73,49 +73,6 @@ def description(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def values(row_num, ws, var, var_value, value_list):
-    match_count = 0
-    for x in value_list:
-        if x == var_value:
-            match_count =+ 1
-    if not match_count > 0:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
-        print(f'   {var} should be one of the following:')
-        for x in value_list:
-            print(f'    - {x}')
-        print(f'    Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def days(row_num, ws, var, var_value):
-    if not re.search('^(every-day|even-day|odd-day|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)$', var_value):
-        print(f'\n---------------------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value} Valid Values are:')
-        print(f'    - every-day')
-        print(f'    - even-day')
-        print(f'    - odd-day')
-        print(f'    - Sunday')
-        print(f'    - Sunday')
-        print(f'    - Monday')
-        print(f'    - Tuesday')
-        print(f'    - Wednesday')
-        print(f'    - Thursday')
-        print(f'    - Friday')
-        print(f'    - Saturday')
-        print(f'   Exiting....')
-        print(f'\n---------------------------------------------------------------------------------------\n')
-        exit()
-
-def dscp(row_num, ws, var, var_value):
-    if not re.search('^(AF[1-4][1-3]|CS[0-7]|EF|VA|unspecified)$', var_value):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid Values are:')
-        print(f'   AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43,')
-        print(f'   CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA or unspecified.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
 def domain(row_num, ws, var, var_value):
     if not validators.domain(var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
@@ -142,19 +99,20 @@ def dns_name(row_num, ws, var, var_value):
         print(f'\n--------------------------------------------------------------------------------\n')
         exit()
 
+def dscp(row_num, ws, var, var_value):
+    if not re.search('^(AF[1-4][1-3]|CS[0-7]|EF|VA|unspecified)$', var_value):
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid Values are:')
+        print(f'   AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43,')
+        print(f'   CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA or unspecified.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
 def email(row_num, ws, var, var_value):
     if not validators.email(var_value, whitelist=None):
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Email address "{var_value}"')
         print(f'   is invalid.  Please Validate the email and retry.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def encryption_key(row_num, ws, var, var_value):
-    if not validators.length(str(var_value), min=16, max=32):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. The Encryption Key')
-        print(f'   Length must be between 16 and 32 characters.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
@@ -208,6 +166,15 @@ def error_tenant(row_num, tenant, ws1, ws2):
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
+def error_tenant_users(**templateVars):
+    site_group = templateVars['site_group']
+    tenant = templateVars['tenant']
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'   Error with {site_group} tenant {tenant} users was empty.')
+    print(f'   For Nexus Dashbord Orchestrator users is required.  Exiting....')
+    print(f'\n-----------------------------------------------------------------------------\n')
+    exit()
+
 def error_vlan_to_epg(row_num, vlan, ws):
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'   Error on Row {row_num}. Did not Find EPG corresponding to VLAN {vlan}')
@@ -221,33 +188,6 @@ def error_vrf(row_num, vrf):
     print(f'   Exiting....')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
-
-def filter_ports(row_num, ws, var, var_value):
-    valid_count = 0
-    if re.match(r'\d', var_value):
-        if not validators.between(int(var_value), min=1, max=65535):
-            valid_count =+ 1
-    elif re.match(r'[a-z]', var_value):
-        if not re.search('^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified)$', var_value):
-            valid_count =+ 1
-    else:
-        valid_count =+ 1
-    if not valid_count == 0:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title} Row {row_num}. {var} {var_value} did not')
-        print(f'   match allowed values. {var} can be:')
-        print(f'    - dns')
-        print(f'    - ftpData')
-        print(f'    - http')
-        print(f'    - https')
-        print(f'    - pop3')
-        print(f'    - rtsp')
-        print(f'    - smtp')
-        print(f'    - unspecified')
-        print(f'    - or between 1 and 65535')
-        print(f'   Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
 
 def hostname(row_num, ws, var, var_value):
     if not (re.search('^[a-zA-Z0-9\\-]+$', var_value) and validators.length(var_value, min=1, max=63)):
@@ -274,6 +214,139 @@ def ip_address(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   Error on Worksheet {ws.title} Row {row_num}. {var} {var_value} is not ')
         print(f'   a valid IPv4 or IPv6 Address.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def name_complexity(row_num, ws, var, var_value):
+    login_domain_count = 0
+    if not re.fullmatch('^([a-zA-Z0-9\\_]+)$', var_value):
+        login_domain_count += 1
+    elif not validators.length(var_value, min=1, max=10):
+        login_domain_count += 1
+    if not login_domain_count == 0:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num}, {var}, {var_value}.  The Value')
+        print(f'   must be between 1 and 10 characters.  The only non alphanumeric characters')
+        print(f'   allowed is "_"; but it must not start with "_".  "{var_value}" did not')
+        print(f'   meet these restrictions.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def not_empty(row_num, ws, var, var_value):
+    if var_value == None:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. This is a  ')
+        print(f'   required variable.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def number_check(row_num, ws, var, var_value, min_x, max_x):
+    if not (int(var_value) >= int(min_x) and int(var_value) <= int(max_x)):
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. Valid Values ')
+        print(f'   are between {min_x} and {max_x}.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def phone(row_num, ws, var, var_value):
+    phone_number = phonenumbers.parse(var_value, None)
+    if not phonenumbers.is_possible_number(phone_number):
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Phone Number "{phone_number}" ')
+        print(f'   is invalid.  Make sure you are including the country code and the full phone number.')
+        print(f'   Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def qos_priority(row_num, ws, var, var_value):
+    if not re.search('^(level[1-6]|unspecified)$', var_value):
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var} {var_value}. ')
+        print(f'   Valid Values are:')
+        print(f'   - level1')
+        print(f'   - level2')
+        print(f'   - level3')
+        print(f'   - level4')
+        print(f'   - level5')
+        print(f'   - level6')
+        print(f'   - unspecified')
+        print(f'   Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def site_group(row_num, ws, var, var_value):
+    if re.search('Grp_', var_value):
+        if not re.search('Grp_[A-F]', var_value):
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
+            print(f'   is invalid.  A valid Group Name is Grp_A thru Grp_F.  Exiting....')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
+    elif re.search(r'\d+', var_value):
+        if not validators.between(int(var_value), min=1, max=15):
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
+            print(f'   is invalid.  A valid Site ID is between 1 and 15.  Exiting....')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
+    else:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
+        print(f'   is invalid.  A valid Site_Group is either 1 thru 15 or Group_A thru Group_F.')
+        print(f'   Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def values(row_num, ws, var, var_value, value_list):
+    match_count = 0
+    for x in value_list:
+        if x == var_value:
+            match_count =+ 1
+    if not match_count > 0:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
+        print(f'   {var} should be one of the following:')
+        for x in value_list:
+            print(f'    - {x}')
+        print(f'    Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+
+## Should these remain
+
+def encryption_key(row_num, ws, var, var_value):
+    if not validators.length(str(var_value), min=16, max=32):
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. The Encryption Key')
+        print(f'   Length must be between 16 and 32 characters.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def filter_ports(row_num, ws, var, var_value):
+    valid_count = 0
+    if re.match(r'\d', var_value):
+        if not validators.between(int(var_value), min=1, max=65535):
+            valid_count =+ 1
+    elif re.match(r'[a-z]', var_value):
+        if not re.search('^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified)$', var_value):
+            valid_count =+ 1
+    else:
+        valid_count =+ 1
+    if not valid_count == 0:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title} Row {row_num}. {var} {var_value} did not')
+        print(f'   match allowed values. {var} can be:')
+        print(f'    - dns')
+        print(f'    - ftpData')
+        print(f'    - http')
+        print(f'    - https')
+        print(f'    - pop3')
+        print(f'    - rtsp')
+        print(f'    - smtp')
+        print(f'    - unspecified')
+        print(f'    - or between 1 and 65535')
+        print(f'   Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
@@ -334,14 +407,6 @@ def mac_address(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   Error on Worksheet {ws.title} Row {row_num}. {var} {var_value} is not ')
         print(f'   a valid MAC Address.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def match_t(row_num, ws, var, var_value):
-    if not re.search('^(All|AtleastOne|AtmostOne|None)$', var_value):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid Values are:')
-        print(f'   All, AtleastOne, AtmostOne or None.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
@@ -421,21 +486,6 @@ def modules(row_num, name, switch_role, modules):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def name_complexity(row_num, ws, var, var_value):
-    login_domain_count = 0
-    if not re.fullmatch('^([a-zA-Z0-9\\_]+)$', var_value):
-        login_domain_count += 1
-    elif not validators.length(var_value, min=1, max=10):
-        login_domain_count += 1
-    if not login_domain_count == 0:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num}, {var}, {var_value}.  The Value')
-        print(f'   must be between 1 and 10 characters.  The only non alphanumeric characters')
-        print(f'   allowed is "_"; but it must not start with "_".  "{var_value}" did not')
-        print(f'   meet these restrictions.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
 def name_rule(row_num, ws, var, var_value):
     if not (re.search(r'^[a-zA-Z0-9_-]+$',  var_value) and validators.length(str(var_value), min=0, max=63)):
         print(f'\n-----------------------------------------------------------------------------\n')
@@ -445,40 +495,6 @@ def name_rule(row_num, ws, var, var_value):
         print(f'    - Max Length 63')
         print(f'    - Regex [a-zA-Z0-9_-]+')
         print(f'    Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def number_check(row_num, ws, var, var_value, min_x, max_x):
-    if not (int(var_value) >= int(min_x) and int(var_value) <= int(max_x)):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. Valid Values ')
-        print(f'   are between {min_x} and {max_x}.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def number_length(row_num, ws, var, var_value, min_x, max_x):
-    if not (len(var_value) >= len(min_x) and len(var_value) <= len(max_x)):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. Valid Length ')
-        print(f'   of Number is between {min_x} and {max_x}.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def not_empty(row_num, ws, var, var_value):
-    if var_value == None:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. This is a  ')
-        print(f'   required variable.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def phone(row_num, ws, var, var_value):
-    phone_number = phonenumbers.parse(var_value, None)
-    if not phonenumbers.is_possible_number(phone_number):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Phone Number "{phone_number}" ')
-        print(f'   is invalid.  Make sure you are including the country code and the full phone number.')
-        print(f'   Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
@@ -498,42 +514,11 @@ def port_count(row_num, name, switch_role, port_count):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def qos_priority(row_num, ws, var, var_value):
-    if not re.search('^(level[1-6]|unspecified)$', var_value):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid Values are:')
-        print(f'   level1, level2, level3, level4, level5, level6 or unspecified.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
 def sensitive_var(row_num, ws, var, var_value):
     if not re.search('^(sensitive_var[1-7])$', var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid Values are:')
         print(f'   sensitive_var[1-7].  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def site_group(row_num, ws, var, var_value):
-    if re.search('Grp_', var_value):
-        if not re.search('Grp_[A-F]', var_value):
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
-            print(f'   is invalid.  A valid Group Name is Grp_A thru Grp_F.  Exiting....')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            exit()
-    elif re.search(r'\d+', var_value):
-        if not validators.between(int(var_value), min=1, max=12):
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
-            print(f'   is invalid.  A valid Site ID is between 1 and 12.  Exiting....')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            exit()
-    else:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
-        print(f'   is invalid.  A valid Site_Group is either 1 thru 12 or Group_A thru Group_F.')
-        print(f'   Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 

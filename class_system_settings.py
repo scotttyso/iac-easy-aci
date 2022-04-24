@@ -51,7 +51,6 @@ class system_settings(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
-        templateVars["header"] = '%s - Variables' % (policy_type)
         templateVars["initial_write"] = True
         templateVars["policy_type"] = policy_type
         templateVars["template_file"] = 'apic_connectivity_preference.jinja2'
@@ -62,9 +61,9 @@ class system_settings(object):
             # Validate Required Arguments
             validating.site_group(kwargs["wb"], kwargs["ws"], 'Site_Group', kwargs['site_group'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
                 % (SystemExit(err), kwargs["wb"], kwargs["row_num"])
-            raise ErrException(Error_Return)
+            raise ErrException(errorReturn)
 
         # Write to the Template file and Return Dictionary
         write_to_site(self, **templateVars)
@@ -86,7 +85,6 @@ class system_settings(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
-        templateVars["header"] = '%s - Variables' % (policy_type)
         templateVars["initial_write"] = True
         templateVars["policy_type"] = policy_type
         templateVars["template_file"] = 'bgp_autonomous_system_number.jinja2'
@@ -97,9 +95,9 @@ class system_settings(object):
             # Validate Required Arguments
             validating.site_group(kwargs["wb"], kwargs["ws"], 'Site_Group', kwargs['site_group'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
                 % (SystemExit(err), kwargs["wb"], kwargs["row_num"])
-            raise ErrException(Error_Return)
+            raise ErrException(errorReturn)
 
         # Write to the Template file and Return Dictionary
         write_to_site(self, **templateVars)
@@ -122,7 +120,6 @@ class system_settings(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
-        templateVars["header"] = '%s - Variables' % (policy_type)
         templateVars["initial_write"] = False
         templateVars["policy_type"] = policy_type
         templateVars["template_file"] = 'bgp_route_reflectors.jinja2'
@@ -133,15 +130,20 @@ class system_settings(object):
             # Validate Required Arguments
             validating.site_group(kwargs["wb"], kwargs["ws"], 'Site_Group', kwargs['site_group'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
                 % (SystemExit(err), kwargs["wb"], kwargs["row_num"])
-            raise ErrException(Error_Return)
+            raise ErrException(errorReturn)
 
         # Write to the Template file and Return Dictionary
         write_to_site(self, **templateVars)
         return kwargs['easyDict']
 
     def global_aes(self, **kwargs):
+        # Set Locally Used Variables
+        wb = kwargs['wb']
+        ws = kwargs['ws']
+        row_num = kwargs['row_num']
+
         # Dictionaries for required and optional args
         required_args = {
             'easy_jsonData': '',
@@ -160,7 +162,6 @@ class system_settings(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
-        templateVars["header"] = '%s - Variables' % (policy_type)
         templateVars["initial_write"] = True
         templateVars["policy_type"] = policy_type
         templateVars["template_file"] = 'global_aes_encryption_settings.jinja2'
@@ -169,15 +170,15 @@ class system_settings(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(kwargs["wb"], kwargs["ws"], 'Site_Group', kwargs['site_group'])
-            validating.bool(kwargs["wb"], kwargs["ws"], 'enable_encryption', templateVars['enable_encryption'])
+            validating.site_group(row_num, ws, 'site_group', kwargs['site_group'])
+            validating.values(row_num, ws, 'enable_encryption', templateVars['enable_encryption'], ['true', 'false'])
 
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
-                % (SystemExit(err), kwargs["wb"], kwargs["row_num"])
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
+                % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
-        if templateVars['enable_encryption'] == 'True':
+        if templateVars['enable_encryption'] == 'true':
             templateVars["Variable"] = 'aes_passphrase'
             sensitive_var_site_group(**templateVars)
         
@@ -225,13 +226,13 @@ class site_policies(object):
             validating.values(row_num, ws, 'version', templateVars['version'], ['5.2', '5.1', '5.0','4.2', '3.X'])
             validating.values(row_num, ws, 'auth_type', templateVars['auth_type'], ['ssh-key', 'username'])
             validating.values(row_num, ws, 'run_location', templateVars['run_location'], ['local', 'tfc'])
+            validating.values(row_num, ws, 'configure_terraform_cloud', templateVars['configure_terraform_cloud'], ['true', 'false'])
             validating.not_empty(row_num, ws, 'provider_version', templateVars['provider_version'])
             validating.not_empty(row_num, ws, 'terraform_version', templateVars['terraform_version'])
-            validating.bool(row_num, ws, 'configure_terraform_cloud', templateVars['configure_terraform_cloud'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
                 % (SystemExit(err), kwargs["wb"], kwargs["row_num"])
-            raise ErrException(Error_Return)
+            raise ErrException(errorReturn)
 
         # Save the Site Information into Environment Variables
         site_id = 'site_id_%s' % (templateVars['site_id'])
@@ -253,7 +254,7 @@ class site_policies(object):
         #             write_to_template(**templateVars)
 
             # If the state_location is tfc configure workspaces in the cloud
-        if templateVars['run_location'] == 'tfc' and templateVars['configure_terraform_cloud'] == True:
+        if templateVars['run_location'] == 'tfc' and templateVars['configure_terraform_cloud'] == 'true':
             # Initialize the Class
             class_init = '%s()' % ('lib_terraform.Terraform_Cloud')
 

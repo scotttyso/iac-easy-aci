@@ -1,0 +1,32 @@
+
+  "{{ tenant }}" = {
+{%- if annotations %}
+    alias             = "{{ alias }}"
+{%- else %}
+    alias             = ""
+{%- endif %}
+    annotation        = ""
+{%- if alias %}
+    annotations       = "{{ annotations }}"
+{%- else %}
+    annotations       = ""
+{%- endif %}
+    controller_type   = "{{ controller_type }}"
+{%- if description %}
+    description       = "{{ description }}"
+{%- else %}
+    description       = ""
+{%- endif %}
+    monitoring_policy = "default"
+    name_alias        = ""
+{%- if sites %}
+    sites             = [{{ sites }}]
+{%- endif %}
+{%- if controller_type == 'ndo' %}
+    users             = [
+  {%- for user in users.split(',') %}
+      "{{ user }}",
+  {%- endfor %}
+    ]
+{%- endif %}
+  }

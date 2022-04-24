@@ -3,11 +3,12 @@
 import ast
 import ipaddress
 import jinja2
+import json
 import os
 import pkg_resources
 import re
 import validating
-from class_terraform import terraform_cloud, tfcVariables
+from class_terraform import terraform_cloud
 from easy_functions import countKeys, create_tf_file, findVars
 from easy_functions import process_kwargs, process_workbook
 from easy_functions import sensitive_var_site_group
@@ -15,7 +16,7 @@ from easy_functions import write_to_site
 from easy_functions import write_to_template
 from openpyxl import load_workbook
 
-aci_template_path = pkg_resources.resource_filename('class_tenant', 'templates/')
+aci_template_path = pkg_resources.resource_filename('class_tenants', 'templates/')
 
 # Exception Classes
 class InsufficientArgs(Exception):
@@ -30,7 +31,7 @@ class InvalidArg(Exception):
 class LoginFailed(Exception):
     pass
 
-class tenant(object):
+class tenants(object):
     def __init__(self, type):
         self.templateLoader = jinja2.FileSystemLoader(
             searchpath=(aci_template_path + '%s/') % (type))
@@ -40,79 +41,77 @@ class tenant(object):
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
-    def add_app(self, wb, ws, row_num, **kwargs):
-        # Open the Network Policies Worksheet
-        ws_net = wb['Network Policies']
-        rows = ws_net.max_row
+    def app_add(self, **kwargs):
+        # Set Locally Used Variables
+        wb = kwargs['wb']
+        ws = kwargs['ws']
+        row_num = kwargs['row_num']
 
         # Dicts for Application Profile; required and optional args
-        required_args = {'Site_Group': '',
-                         'Tenant': '',
-                         'App_Profile': '',
-                         'App_Policy': '',
-                         'Policy_Name': '',
-                         'prio': '',
-                         'monEPGPol': ''}
-        optional_args = {'App_Alias': '',
-                         'App_Description': '',
-                         'App_Tags': ''}
-
-        # Get the Application Profile Policies from the Network Policies Tab
-        func = 'app'
-        count = countKeys(ws_net, func)
-        row_app = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_Name') == kwargs.get('App_Policy'):
-                row_app = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-                break
+        required_args = {
+            'site_group': '',
+            'tenant': '',
+            'name': '',
+        }
+        optional_args = {
+            'alias': '',
+            'annotations': '',
+            'description': '',
+            'qos_class': '',
+        }
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'App_Profile', templateVars['App_Profile'])
-            validating.qos_priority(row_app, ws_net, 'prio', templateVars['prio'])
-            if not templateVars['App_Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['App_Description'] == None:
-                validating.description(row_num, ws, 'App_Description', templateVars['App_Description'])
-            if not templateVars['App_Tags'] == None:
-                if re.match(',', templateVars['Tags']):
-                    for tag in templateVars['Tags'].split(','):
-                        validating.name_rule(row_num, ws, 'Tags', tag)
-                else:
-                    validating.name_rule(row_num, ws, 'Tags', templateVars['Tags'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.name_rule(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.name_rule(row_num, ws, 'name', templateVars['name'])
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['annotations'] == None:
+                for i in templateVars['annotations']:
+                    for k, v in i.items():
+                        validating.name_rule(row_num, ws, 'annotations', k)
+                        validating.name_rule(row_num, ws, 'annotations', v)
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
+            if not templateVars['qos_class'] == None:
+                validating.qos_priority(row_num, ws, 'qos_class', templateVars['qos_class'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
-        if templateVars['monEPGPol'] == 'default':
-            templateVars['monEPGPol'] = 'uni/tn-common/monepg-default'
+        dataDict = {
+            'alias':kwargs['alias'],
+            'annotations': kwargs['annotations'],
+            'description':kwargs['description'],
+            'monitoring_policy':'default',
+            'tenant':kwargs['tenant'],
+            'qos_class':kwargs['qos_class']
+        }
 
-        if re.search('^(common|mgmt|infra)$', templateVars['Tenant']):
-            templateVars['Tenant_Dn'] = 'data.aci_tenant.%s' % (templateVars['Tenant'])
-        else:
-            templateVars['Tenant_Dn'] = 'aci_tenant.%s' % (templateVars['Tenant'])
+        # Add Dictionary to easyDict
+        class_type = 'tenants'
+        data_type = 'application_profiles'
+        if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
+            kwargs['easyDict']['tenants'][data_type].append({kwargs['site_group']:[]})
+            
+        count = 0
+        for i in kwargs['easyDict'][class_type][data_type]:
+            for k, v in i.items():
+                if kwargs['site_group'] == k:
+                    kwargs['easyDict'][class_type][data_type][count][kwargs['site_group']].append(dataDict)
+            count += 1
 
-        # Define the Template Source
-        template_file = "app.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'App_Profile_%s.tf' % (templateVars['App_Profile'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        # Return Dictionary
+        return kwargs['easyDict']
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
-    def add_bd(self, wb, ws, row_num, **kwargs):
+    def bd_add(self, wb, ws, row_num, **kwargs):
         # Assign the kwargs to a initial var for each process
         initial_kwargs = kwargs
 
@@ -121,7 +120,7 @@ class tenant(object):
         rows = ws_net.max_row
 
         # Dicts for Bridge Domain required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Tenant': '',
                          'Bridge_Domain': '',
                          'BD_Policy': '',
@@ -145,15 +144,15 @@ class tenant(object):
                          'optimize_wan': '',
                          'monEPGPol': '',
                          'ip_dp_learning': ''}
-        optional_args = {'Alias': '',
-                         'Description': '',
-                         'Tags': '',
+        optional_args = {'alias': '',
+                         'description': '',
+                         'annotation': '',
                          'Custom_MAC': '',
                          'Link_Local_IPv6': '',
                          'VRF_Tenant': '',
                          'VRF': '',
                          'Subnet': '',
-                         'Subnet_Description': '',
+                         'Subnet_description': '',
                          'Subnet_Policy': '',
                          'L3Out_Tenant': '',
                          'L3Out': '',
@@ -185,19 +184,19 @@ class tenant(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'Bridge_Domain', templateVars['Bridge_Domain'])
-            if not templateVars['Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
-            if not templateVars['Tags'] == None:
-                if re.match(',', templateVars['Tags']):
-                    for tag in templateVars['Tags'].split(','):
-                        validating.name_rule(row_num, ws, 'Tags', tag)
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
+            if not templateVars['annotation'] == None:
+                if re.match(',', templateVars['annotation']):
+                    for tag in templateVars['annotation'].split(','):
+                        validating.name_rule(row_num, ws, 'annotation', tag)
                 else:
-                    validating.name_rule(row_num, ws, 'Tags', templateVars['Tags'])
+                    validating.name_rule(row_num, ws, 'annotation', templateVars['annotation'])
             if not templateVars['Custom_MAC'] == None:
                 validating.mac_address(row_num, ws, 'Custom_MAC', templateVars['Custom_MAC'])
             if not templateVars['Link_Local_IPv6'] == None:
@@ -209,8 +208,8 @@ class tenant(object):
                 validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
             if not templateVars['Subnet'] == None:
                 validating.ip_address(row_num, ws, 'Subnet', templateVars['Subnet'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
             if not templateVars['L3Out'] == None:
                 validating.name_rule(row_num, ws, 'L3Out_Tenant', templateVars['L3Out_Tenant'])
                 validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
@@ -234,8 +233,8 @@ class tenant(object):
             if not templateVars['ep_move'] == None:
                 validating.values(row_bd, ws_net, 'ep_move', templateVars['ep_move'], ['garp'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if templateVars['dhcpRelayP'] == 'default':
             templateVars['dhcpRelayP'] = 'uni/tn-common/relayp-default'
@@ -326,978 +325,13 @@ class tenant(object):
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
-    def add_epg(self, wb, ws, row_num, **kwargs):
-        # Assign the kwargs to a initial var for each process
-        initial_kwargs = kwargs
-
-        # Initialize the Class
-        lib_aci_ref = 'Tenant_Policies'
-        class_init = '%s(ws)' % (lib_aci_ref)
-
-        # Create the Application Profile if it Exists
-        if not kwargs.get('App_Profile') == None:
-            eval("%s.%s(wb, ws, row_num, **kwargs)" % (class_init, 'add_app'))
-
-        # Reset kwargs back to initial kwargs
-        kwargs = initial_kwargs
-
-        # Open the Network Policies Worksheet
-        ws_net = wb['Network Policies']
-        rows = ws_net.max_row
-
-        # Dicts for Bridge Domain required and optional args
-        required_args = {'Site_Group': '',
-                         'Tenant': '',
-                         'App_Profile': '',
-                         'EPG': '',
-                         'BD_Tenant': '',
-                         'Bridge_Domain': '',
-                         'EPG_Policy': '',
-                         'Policy_Name': '',
-                         'is_attr_based': '',
-                         'prio': '',
-                         'pc_enf_pref': '',
-                         'fwd_ctrl': '',
-                         'pref_gr_memb': '',
-                         'flood': '',
-                         'match_t': '',
-                         'monEPGPol': '',
-                         'shutdown': '',
-                         'has_mcast': ''}
-        optional_args = {'Alias': '',
-                         'Description': '',
-                         'Tags': '',
-                         'Physical_Domains': '',
-                         'VMM_Domains': '',
-                         'VLAN': '',
-                         'PVLAN': '',
-                         'EPG_to_AAEP': '',
-                         'Master_fvEPg': '',
-                         'vzCPIf': '',
-                         'vzCtrctEPgCont': '',
-                         'vzTaboo': '',
-                         'exception_tag': '',
-                         'qosCustomPol': '',
-                         'qosDppPol': '',
-                         'intra_vzBrCP': '',
-                         'fhsTrustCtrlPol': '',
-                         'vzGraphCont': '',
-                         'FC_Domain': '',}
-
-        # Get the EPG Policies from the Network Policies Tab
-        func = 'epg'
-        count = countKeys(ws_net, func)
-        row_epg = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_Name') == kwargs.get('EPG_Policy'):
-                row_epg = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'App_Profile', templateVars['App_Profile'])
-            validating.name_rule(row_num, ws, 'EPG', templateVars['EPG'])
-            validating.name_rule(row_num, ws, 'BD_Tenant', templateVars['BD_Tenant'])
-            validating.name_rule(row_num, ws, 'Bridge_Domain', templateVars['Bridge_Domain'])
-            if not templateVars['Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
-            if not templateVars['Tags'] == None:
-                if re.match(',', templateVars['Tags']):
-                    for tag in templateVars['Tags'].split(','):
-                        validating.name_rule(row_num, ws, 'Tags', tag)
-                else:
-                    validating.name_rule(row_num, ws, 'Tags', templateVars['Tags'])
-            if not templateVars['Physical_Domains'] == None:
-                if re.match(',', templateVars['Physical_Domains']):
-                    for phys in templateVars['Physical_Domains'].split(','):
-                        validating.name_rule(row_num, ws, 'Physical_Domains', phys)
-                else:
-                    validating.name_rule(row_num, ws, 'Physical_Domains', templateVars['Physical_Domains'])
-            if not templateVars['VMM_Domains'] == None:
-                if re.match(',', templateVars['VMM_Domains']):
-                    for phys in templateVars['VMM_Domains'].split(','):
-                        validating.name_rule(row_num, ws, 'VMM_Domains', phys)
-                else:
-                    validating.name_rule(row_num, ws, 'VMM_Domains', templateVars['VMM_Domains'])
-            if not templateVars['VLAN'] == None:
-                validating.vlans(row_num, ws, 'VLAN', templateVars['VLAN'])
-            if not templateVars['PVLAN'] == None:
-                validating.vlans(row_num, ws, 'PVLAN', templateVars['PVLAN'])
-            if not templateVars['EPG_to_AAEP'] == None:
-                validating.name_rule(row_num, ws, 'EPG_to_AAEP', templateVars['EPG_to_AAEP'])
-            validating.match_t(row_epg, ws_net, 'match_t', templateVars['match_t'])
-            validating.values(row_epg, ws_net, 'fwd_ctrl', templateVars['fwd_ctrl'], ['none', 'proxy-arp'])
-            validating.qos_priority(row_epg, ws_net, 'prio', templateVars['prio'])
-            validating.values(row_epg, ws_net, 'flood', templateVars['flood'], ['disabled', 'enabled'])
-            validating.values(row_epg, ws_net, 'is_attr_based', templateVars['is_attr_based'], ['no', 'yes'])
-            validating.values(row_epg, ws_net, 'pc_enf_pref', templateVars['pc_enf_pref'], ['enforced', 'unenforced'])
-            validating.values(row_epg, ws_net, 'pref_gr_memb', templateVars['pref_gr_memb'], ['exclude', 'include'])
-            validating.values(row_epg, ws_net, 'shutdown', templateVars['shutdown'], ['no', 'yes'])
-        except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
-
-        if templateVars['vzCPIf'] == 'default':
-            templateVars['vzCPIf'] = 'uni/tn-common/cif-default'
-        # if templateVars['vzCtrctEPgCont'] == 'default':
-        #     templateVars['vzCtrctEPgCont'] = 'uni/tn-common/mldsnoopPol-default'
-        if templateVars['vzTaboo'] == 'default':
-            templateVars['vzTaboo'] = 'uni/tn-common/taboo-default'
-        if templateVars['qosCustomPol'] == 'default':
-            templateVars['qosCustomPol'] = 'uni/tn-common/qoscustom-default'
-        if templateVars['qosDppPol'] == 'default':
-            templateVars['qosDppPol'] = 'uni/tn-common/qosdpppol-default'
-        if templateVars['intra_vzBrCP'] == 'default':
-            templateVars['intra_vzBrCP'] = 'uni/tn-common/brc-default'
-        if templateVars['monEPGPol'] == 'default':
-            templateVars['monEPGPol'] = 'uni/tn-common/monepg-default'
-        if templateVars['fhsTrustCtrlPol'] == 'default':
-            templateVars['fhsTrustCtrlPol'] = 'uni/tn-common/trustctrlpol-default'
-        if templateVars['fwd_ctrl'] == 'none':
-            templateVars['fwd_ctrl'] = None
-        # if templateVars['vzGraphCont'] == 'default':
-        #     templateVars['vzGraphCont'] = 'uni/tn-common/monitorpol-default'
-
-        # Define the Template Source
-        template_file = "epg.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-
-        if not templateVars['Physical_Domains'] == None:
-            if ',' in templateVars['Physical_Domains']:
-                splitx = templateVars['Physical_Domains'].split(',')
-                for x in splitx:
-                    templateVars['Domain'] = 'phys-%s' % (x)
-                    # Define the Template Source
-                    template_file = "domain_to_epg.jinja2"
-                    template = self.templateEnv.get_template(template_file)
-
-                    # Process the template through the Sites
-                    dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                    dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-                    write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-            else:
-                templateVars['Domain'] = 'phys-%s' % (templateVars['Physical_Domains'])
-                # Define the Template Source
-                template_file = "domain_to_epg.jinja2"
-                template = self.templateEnv.get_template(template_file)
-
-                # Process the template through the Sites
-                dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-                write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-        if not templateVars['VMM_Domains'] == None:
-            if ',' in templateVars['VMM_Domains']:
-                splitx = templateVars['VMM_Domains'].split(',')
-                for x in splitx:
-                    templateVars['Domain'] = 'vmm-%s' % (x)
-                    # Define the Template Source
-                    template_file = "domain_to_epg.jinja2"
-                    template = self.templateEnv.get_template(template_file)
-
-                    # Process the template through the Sites
-                    dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                    dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-                    write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-            else:
-                templateVars['Domain'] = 'vmm-%s' % (templateVars['VMM_Domains'])
-                # Define the Template Source
-                template_file = "domain_to_epg.jinja2"
-                template = self.templateEnv.get_template(template_file)
-
-                # Process the template through the Sites
-                dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-                write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-        if not templateVars['VLAN'] == None:
-            # Define the Template Source
-            template_file = "static_path.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-            process_workbook(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-        if not templateVars['EPG_to_AAEP'] == None:
-            if re.search(',', templateVars['EPG_to_AAEP']):
-                # Define the Template Source
-                aep_list = templateVars['EPG_to_AAEP'].split(',')
-                for aep in aep_list:
-                    templateVars['AAEP'] = aep
-
-                    # Define the Template Source
-                    template_file = "policies_global_aep_generic.jinja2"
-                    template = self.templateEnv.get_template(template_file)
-
-                    # Process the template through the Sites
-                    dest_file = 'Policies_Global_AEP_%s_generic.tf' % (templateVars['AAEP'])
-                    dest_dir = 'Access'
-                    write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-
-                    # Define the Template Source
-                    template_file = "data_access_generic.jinja2"
-                    template = self.templateEnv.get_template(template_file)
-
-                    # Process the template through the Sites
-                    dest_file = 'data_AEP_%s.tf' % (templateVars['AAEP'])
-                    dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-                    write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-
-                    # Define the Template Source
-                    template_file = "epgs_using_function.jinja2"
-                    template = self.templateEnv.get_template(template_file)
-
-                    # Process the template through the Sites
-                    dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                    dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-                    write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-            else:
-                templateVars['AAEP'] = templateVars['EPG_to_AAEP']
-                # Define the Template Source
-                template_file = "policies_global_aep_generic.jinja2"
-                template = self.templateEnv.get_template(template_file)
-
-                # Process the template through the Sites
-                dest_file = 'Policies_Global_AEP_%s_generic.tf' % (templateVars['AAEP'])
-                dest_dir = 'Access'
-                write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-
-                # Define the Template Source
-                template_file = "data_access_generic.jinja2"
-                template = self.templateEnv.get_template(template_file)
-
-                # Process the template through the Sites
-                dest_file = 'data_AEP_%s.tf' % (templateVars['AAEP'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-                write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-
-                # Define the Template Source
-                template_file = "epgs_using_function.jinja2"
-                template = self.templateEnv.get_template(template_file)
-
-                # Process the template through the Sites
-                dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-                write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-        # dest_file = 'epg_%s_%s_static_bindings.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-        # dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        # create_file(wb, ws, row_num, 'w', dest_dir, dest_file, **templateVars)
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def add_l3out(self, wb, ws, row_num, **kwargs):
-        # Open the Network Policies Worksheet
-        ws_net = wb['Network Policies']
-        rows = ws_net.max_row
-
-        # Dicts for required and optional args
-        required_args = {'Site_Group': '',
-                         'Tenant': '',
-                         'L3Out': '',
-                         'VRF_Tenant': '',
-                         'VRF': '',
-                         'L3_Domain': '',
-                         'target_dscp': '',
-                         'Run_BGP': '',
-                         'export': '',
-                         'import': '',
-                         'target_dscp': ''}
-        optional_args = {'Description': '',
-                         'Alias': '',
-                         'Tags': '',
-                         'EIGRP_Routing_Policy': '',
-                         'OSPF_Routing_Policy': '',
-                         'leak_rtctrlProfile': '',
-                         'damp_rtctrlProfile': '',
-                         'fvBDPublicSubnetHolder': ''}
-
-
-        # Get the L3Out Policies from the Network Policies Tab
-        func = 'l3Out'
-        count = countKeys(ws_net, func)
-        row_l3out = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_Name') == kwargs.get('L3Out_Policy'):
-                row_l3out = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
-            validating.dscp(row_l3out, ws_net, 'target_dscp', templateVars['target_dscp'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
-            validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
-            validating.name_rule(row_num, ws, 'VRF_Tenant', templateVars['VRF_Tenant'])
-            validating.values(row_num, ws, 'export', templateVars['export'], ['no', 'yes'])
-            validating.values(row_num, ws, 'import', templateVars['import'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Run_BGP', templateVars['Run_BGP'], ['no', 'yes'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
-        except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
-
-        # Process the template through the Sites
-        template_file = "data_domain_l3_profile.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'data_domain_l3_profile_%s.tf' % (templateVars['L3_Domain'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-
-        ctrl_count = 0
-        Ctrl = ''
-        if templateVars['export'] == 'yes':
-            Ctrl = '"export"'
-            ctrl_count =+ 1
-        if templateVars['import'] == 'yes' and ctrl_count > 0:
-            Ctrl = Ctrl + ',' + '"import"'
-            ctrl_count =+ 1
-        elif templateVars['import'] == 'yes':
-            Ctrl = '"import"'
-            ctrl_count =+ 1
-        if ctrl_count > 0:
-            templateVars['enforce_rtctrl'] = '[%s]' % (Ctrl)
-        else:
-            templateVars['enforce_rtctrl'] = '["unspecified"]'
-
-        # Define the Template Source
-        template_file = "l3out.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-
-        if templateVars['Run_BGP'] == 'yes':
-            # Define the Template Source
-            template_file = "bgp_external_policy.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            # Process the template through the Sites
-            dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-            write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-        #--------------------------
-        # EIGRP Routing Policy
-        #--------------------------
-        if not templateVars['EIGRP_Routing_Policy'] == None:
-
-            # Dicts for required and optional args
-            required_args = {'Site_Group': '',
-                            'Tenant': '',
-                            'L3Out': '',
-                            'Policy_Name': '',
-                            'AS_Number': ''}
-            optional_args = { }
-            # Get the L3Out Policies from the Network Policies Tab
-            func = 'eigrp_routing'
-            count = countKeys(ws_net, func)
-            row_eigrp = ''
-            var_dict = findVars(ws_net, func, rows, count)
-            for pos in var_dict:
-                if var_dict[pos].get('Policy_Name') == kwargs.get('EIGRP_Routing_Policy'):
-                    row_eigrp = var_dict[pos]['row']
-                    del var_dict[pos]['row']
-                    kwargs = {**kwargs, **var_dict[pos]}
-
-            # Validate inputs, return dict of template vars
-            templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-            try:
-                # Validate Required Arguments
-                validating.number_check(row_eigrp, ws_net, 'AS_Number', templateVars['AS_Number'], 1, 65534)
-            except Exception as err:
-                Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws_net, row_eigrp)
-                raise ErrException(Error_Return)
-
-            # Define the Template Source
-            template_file = "l3out_eigrp_external_policy.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            # Process the template through the Sites
-            dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-            write_to_site(wb, ws_net, row_eigrp, 'a+', dest_dir, dest_file, template, **templateVars)
-
-        #--------------------------
-        # OSPF Routing Policy
-        #--------------------------
-        if not templateVars['OSPF_Routing_Policy'] == None:
-
-            # Dicts for required and optional args
-            required_args = {'Site_Group': '',
-                            'Tenant': '',
-                            'L3Out': '',
-                            'Policy_Name': '',
-                            'Area_ID': '',
-                            'Area_Type': '',
-                            'Cost': '',
-                            'Redistribute_NSSA': '',
-                            'Originate_Summary': '',
-                            'Suppress_FA': ''}
-            optional_args = { }
-            # Get the L3Out Policies from the Network Policies Tab
-            func = 'ospf_routing'
-            count = countKeys(ws_net, func)
-            row_ospf = ''
-            var_dict = findVars(ws_net, func, rows, count)
-            for pos in var_dict:
-                if var_dict[pos].get('Policy_Name') == kwargs.get('OSPF_Routing_Policy'):
-                    row_ospf = var_dict[pos]['row']
-                    del var_dict[pos]['row']
-                    kwargs = {**kwargs, **var_dict[pos]}
-
-            # Validate inputs, return dict of template vars
-            templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-            try:
-                # Validate Required Arguments
-                validating.number_check(row_ospf, ws_net, 'Cost', templateVars['Cost'], 0, 16777215)
-                validating.values(row_ospf, ws_net, 'Area_Type', templateVars['Area_Type'], ['nssa', 'regular', 'stub'])
-                validating.values(row_ospf, ws_net, 'Redistribute_NSSA', templateVars['Redistribute_NSSA'], ['no', 'yes'])
-                validating.values(row_ospf, ws_net, 'Originate_Summary', templateVars['Originate_Summary'], ['no', 'yes'])
-                validating.values(row_ospf, ws_net, 'Suppress_FA', templateVars['Suppress_FA'], ['no', 'yes'])
-            except Exception as err:
-                Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws_net, row_ospf)
-                raise ErrException(Error_Return)
-
-            ctrl_count = 0
-            Ctrl = ''
-            if templateVars['Redistribute_NSSA'] == 'yes':
-                Ctrl = 'redistribute'
-                ctrl_count =+ 1
-            if templateVars['Originate_Summary'] == 'yes' and ctrl_count > 0:
-                Ctrl = Ctrl + ',' + 'summary'
-                ctrl_count =+ 1
-            elif templateVars['Originate_Summary'] == 'yes':
-                Ctrl = 'summary'
-                ctrl_count =+ 1
-            if templateVars['Suppress_FA'] == 'yes' and ctrl_count > 0:
-                Ctrl = Ctrl + ',' + 'supress-fa'
-                ctrl_count =+ 1
-            elif templateVars['Suppress_FA'] == 'yes':
-                Ctrl = 'supress-fa'
-                ctrl_count =+ 1
-            if ctrl_count > 0:
-                templateVars['Ctrl'] = '%s' % (Ctrl)
-            else:
-                templateVars['Ctrl'] = 'unspecified'
-
-            # Define the Template Source
-            template_file = "l3out_ospf_external_policy.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            # Process the template through the Sites
-            dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-            write_to_site(wb, ws_net, row_ospf, 'a+', dest_dir, dest_file, template, **templateVars)
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def add_subnet(self, wb, ws, row_num, **kwargs):
-        # Open the Network Policies Worksheet
-        ws_net = wb['Network Policies']
-        rows = ws_net.max_row
-
-        # Dicts for Subnet required and optional args
-        required_args = {'Site_Group': '',
-                         'Tenant': '',
-                         'Bridge_Domain': '',
-                         'Subnet': '',
-                         'Subnet_Policy': '',
-                         'Policy_Name': '',
-                         'virtual': '',
-                         'preferred': '',
-                         'scope': '',
-                         'nd': '',
-                         'no-default-gateway': '',
-                         'querier': ''}
-        optional_args = {'Subnet_Description': '',
-                         'l3extOut': '',
-                         'rtctrlProfile': '',
-                         'ndPfxPol': ''}
-
-        # Get the Subnet Policies from the Network Policies Tab
-        func = 'subnet'
-        count = countKeys(ws_net, func)
-        row_subnet = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_Name') == kwargs.get('Subnet_Policy'):
-                row_subnet = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-                break
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
-            validating.ip_address(row_num, ws, 'Subnet', templateVars['Subnet'])
-            if not templateVars['Subnet_Description'] == None:
-                validating.description(row_num, ws, 'Subnet_Description', templateVars['Subnet_Description'])
-            validating.values(row_subnet, ws_net, 'virtual', templateVars['virtual'], ['no', 'yes'])
-            validating.values(row_subnet, ws_net, 'preferred', templateVars['preferred'], ['no', 'yes'])
-            validating.values(row_subnet, ws_net, 'scope', templateVars['scope'], ['private', 'public', 'shared', 'private-shared', 'public-shared'])
-            validating.values(row_subnet, ws_net, 'nd', templateVars['nd'], ['no', 'yes'])
-            validating.values(row_subnet, ws_net, 'no-default-gateway', templateVars['no-default-gateway'], ['no', 'yes'])
-            validating.values(row_subnet, ws_net, 'querier', templateVars['querier'], ['no', 'yes'])
-        except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
-
-        if templateVars['l3extOut'] == 'default':
-            templateVars['l3extOut'] = 'uni/tn-common/out-default'
-        if templateVars['ndPfxPol'] == 'default':
-            templateVars['ndPfxPol'] = 'uni/tn-common/ndpfxpol-default'
-
-        # Create ctrl templateVars
-        ctrl_count = 0
-        Ctrl = ''
-        if templateVars['nd'] == 'yes':
-            Ctrl = '"nd"'
-            ctrl_count =+ 1
-        if templateVars['no-default-gateway'] == 'yes' and ctrl_count > 0:
-            Ctrl = Ctrl + ', ' + '"no-default-gateway"'
-            ctrl_count =+ 1
-        elif templateVars['no-default-gateway'] == 'yes':
-            Ctrl = '"no-default-gateway"'
-            ctrl_count =+ 1
-        if templateVars['querier'] == 'yes' and ctrl_count > 0:
-            Ctrl = Ctrl + ', ' + '"querier"'
-            ctrl_count =+ 1
-        elif templateVars['querier'] == 'yes':
-            Ctrl = '"querier"'
-            ctrl_count =+ 1
-
-        if ctrl_count > 0:
-            templateVars['Ctrl'] = '[%s]' % (Ctrl)
-        else:
-            templateVars['Ctrl'] = '["unspecified"]'
-
-        # Modify scope templateVars
-        if re.search('^(private|public|shared)$', templateVars['scope']):
-            templateVars['scope'] = '"%s"' % (templateVars['scope'])
-        elif re.search('^(private|public)\\-shared$', templateVars['scope']):
-            x = templateVars['scope'].split('-')
-            templateVars['scope'] = '"%s", "%s"' % (x[0], x[1])
-
-        # As period and colon are not allowed in description need to modify Subnet to work for description and filename
-        if ':' in templateVars['Subnet']:
-            network = "%s" % (ipaddress.IPv6Network(templateVars['Subnet'], strict=False))
-            templateVars['Subnet_'] = network
-            templateVars['Subnet_'] = templateVars['Subnet_'].replace(':', '-')
-            templateVars['Subnet_'] = templateVars['Subnet_'].replace('/', '_')
-        else:
-            network = "%s" % (ipaddress.IPv4Network(templateVars['Subnet'], strict=False))
-            templateVars['Subnet_'] = network
-            templateVars['Subnet_'] = templateVars['Subnet_'].replace('.', '-')
-            templateVars['Subnet_'] = templateVars['Subnet_'].replace('/', '_')
-
-        # Define the Template Source
-        template_file = "subnet.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Bridge_Domain_%s.tf' % (templateVars['Bridge_Domain'],)
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def add_tenant(self, wb, ws, row_num, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'Site_Group': '',
-                         'Tenant': ''}
-        optional_args = {'Alias': '',
-                         'Description': '',
-                         'Tags': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            if not templateVars['Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
-            if not templateVars['Tags'] == None:
-                if re.match(',', templateVars['Tags']):
-                    for tag in templateVars['Tags'].split(','):
-                        validating.name_rule(row_num, ws, 'Tags', tag)
-                else:
-                    validating.name_rule(row_num, ws, 'Tags', templateVars['Tags'])
-        except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
-
-        # Define the Template Source
-        template_file = "tenant.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Tenant_%s.tf' % (templateVars['Tenant'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-
-        if re.search('Grp_[A-F]', templateVars['Site_Group']):
-            Group_ID = '%s' % (templateVars['Site_Group'])
-            site_group = ast.literal_eval(os.environ[Group_ID])
-            for x in range(1, 13):
-                sitex = 'Site_%s' % (x)
-                if not site_group[sitex] == None:
-                    Site_ID = 'Site_ID_%s' % (site_group[sitex])
-                    site_dict = ast.literal_eval(os.environ[Site_ID])
-
-                    # Create kwargs for Site Variables
-                    kwargs['Site_ID'] = site_dict.get('Site_ID')
-                    kwargs['Site_Name'] = site_dict.get('Site_Name')
-                    kwargs['APIC_URL'] = site_dict.get('APIC_URL')
-                    kwargs['APIC_Version'] = site_dict.get('APIC_Version')
-                    kwargs['APIC_Auth_Type'] = site_dict.get('APIC_Auth_Type')
-                    kwargs['Terraform_EQ'] = site_dict.get('Terraform_EQ')
-                    kwargs['Terraform_Version'] = site_dict.get('Terraform_Version')
-                    kwargs['Provider_EQ'] = site_dict.get('Provider_EQ')
-                    kwargs['Provider_Version'] = site_dict.get('Provider_Version')
-                    kwargs['Run_Location'] = site_dict.get('Run_Location')
-                    kwargs['State_Location'] = site_dict.get('State_Location')
-                    kwargs['Terraform_Cloud_Org'] = site_dict.get('Terraform_Cloud_Org')
-                    kwargs['Workspace_Prefix'] = site_dict.get('Workspace_Prefix')
-                    kwargs['VCS_Base_Repo'] = site_dict.get('VCS_Base_Repo')
-                    kwargs['Terraform_Agent_Pool_ID'] = site_dict.get('Terraform_Agent_Pool_ID')
-
-                    # Dicts for required and optional args
-                    required_args = {'Site_ID': '',
-                                        'Site_Name': '',
-                                        'APIC_URL': '',
-                                        'APIC_Version': '',
-                                        'APIC_Auth_Type': '',
-                                        'Terraform_EQ': '',
-                                        'Terraform_Version': '',
-                                        'Provider_EQ': '',
-                                        'Provider_Version': '',
-                                        'Run_Location': '',
-                                        'State_Location': ''}
-                    optional_args = {'Terraform_Cloud_Org': '',
-                                        'Workspace_Prefix': '',
-                                        'VCS_Base_Repo': '',
-                                        'Terraform_Agent_Pool_ID': ''}
-
-                    # Validate inputs, return dict of template vars
-                    templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-                    # If the State_Location is Terraform_Cloud Configure Workspaces in the Cloud
-                    if templateVars['State_Location'] == 'Terraform_Cloud':
-                        # Initialize the Class
-                        lib_tf_ref = 'lib_terraform.Terraform_Cloud'
-                        class_init = '%s()' % (lib_tf_ref)
-
-                        # Get terraform_cloud_token
-                        kwargs['terraform_cloud_token'] = eval("%s.%s()" % (class_init, 'terraform_token'))
-
-                        # Get terraform_cloud_token
-                        kwargs['terraform_oath_token'] = eval("%s.%s(**kwargs)" % (class_init, 'oath_token'))
-
-                        # Get workspace_ids
-                        workspace_dict = {}
-                        workspace_dict = terraform_cloud.tfcWorkspace(class_init, dest_dir, workspace_dict, **kwargs)
-
-                    # If the Run_Location is Terraform_Cloud Configure Variables in the Cloud
-                    if templateVars['Run_Location'] == 'Terraform_Cloud':
-                        # Set Variable List
-                        if templateVars['APIC_Auth_Type'] == 'user_pass':
-                            var_list = ['aciUrl', 'aciUser', 'aciPass']
-                        else:
-                            var_list = ['aciUrl', 'aciCertName', 'aciPrivateKey']
-
-                        # Get var_ids
-                        tf_var_dict = {}
-                        folder_id = 'Site_ID_%s_%s' % (templateVars['Site_ID'], dest_dir)
-                        kwargs['workspace_id'] = workspace_dict[folder_id]
-                        kwargs['Description'] = ''
-                        for var in var_list:
-                            tf_var_dict = terraform_cloud.tfcVariables(class_init, dest_dir, var, tf_var_dict, **kwargs)
-
-                    self.templateLoader = jinja2.FileSystemLoader(
-                        searchpath=(aci_template_path))
-                    self.templateEnv = jinja2.Environment(loader=self.templateLoader)
-
-                    # Add the Default Files to the Tenant Directory
-                    file_list = ['.gitignore_.gitignore', 'main.jinja2_main.tf', 'variables.jinja2_variables.tf']
-                    for file in file_list:
-                        x = file.split('_')
-                        template_file = x[0]
-                        dest_file = x[1]
-                        template = self.templateEnv.get_template(template_file)
-                        create_tf_file('w', dest_dir, dest_file, template, **templateVars)
-
-        elif re.search(r'\d+', templateVars['Site_Group']):
-            Site_ID = 'Site_ID_%s' % (templateVars['Site_Group'])
-            site_dict = ast.literal_eval(os.environ[Site_ID])
-
-            # Create kwargs for Site Variables
-            kwargs['Site_ID'] = site_dict.get('Site_ID')
-            kwargs['Site_Name'] = site_dict.get('Site_Name')
-            kwargs['APIC_URL'] = site_dict.get('APIC_URL')
-            kwargs['APIC_Version'] = site_dict.get('APIC_Version')
-            kwargs['APIC_Auth_Type'] = site_dict.get('APIC_Auth_Type')
-            kwargs['Terraform_EQ'] = site_dict.get('Terraform_EQ')
-            kwargs['Terraform_Version'] = site_dict.get('Terraform_Version')
-            kwargs['Provider_EQ'] = site_dict.get('Provider_EQ')
-            kwargs['Provider_Version'] = site_dict.get('Provider_Version')
-            kwargs['Run_Location'] = site_dict.get('Run_Location')
-            kwargs['State_Location'] = site_dict.get('State_Location')
-            kwargs['Terraform_Cloud_Org'] = site_dict.get('Terraform_Cloud_Org')
-            kwargs['Workspace_Prefix'] = site_dict.get('Workspace_Prefix')
-            kwargs['VCS_Base_Repo'] = site_dict.get('VCS_Base_Repo')
-            kwargs['Terraform_Agent_Pool_ID'] = site_dict.get('Terraform_Agent_Pool_ID')
-
-            # Dicts for required and optional args
-            required_args = {'Site_ID': '',
-                                'Site_Name': '',
-                                'APIC_URL': '',
-                                'APIC_Version': '',
-                                'APIC_Auth_Type': '',
-                                'Terraform_EQ': '',
-                                'Terraform_Version': '',
-                                'Provider_EQ': '',
-                                'Provider_Version': '',
-                                'Run_Location': '',
-                                'State_Location': ''}
-            optional_args = {'Terraform_Cloud_Org': '',
-                                'Workspace_Prefix': '',
-                                'VCS_Base_Repo': '',
-                                'Terraform_Agent_Pool_ID': ''}
-
-            # Validate inputs, return dict of template vars
-            templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-            # If the State_Location is Terraform_Cloud Configure Workspaces in the Cloud
-            if templateVars['State_Location'] == 'Terraform_Cloud':
-                # Initialize the Class
-                lib_tf_ref = 'lib_terraform.Terraform_Cloud'
-                class_init = '%s()' % (lib_tf_ref)
-
-                # Get terraform_cloud_token
-                kwargs['terraform_cloud_token'] = eval("%s.%s()" % (class_init, 'terraform_token'))
-
-                # Get terraform_cloud_token
-                kwargs['terraform_oath_token'] = eval("%s.%s(**kwargs)" % (class_init, 'oath_token'))
-
-                # Get workspace_ids
-                workspace_dict = {}
-                workspace_dict = terraform_cloud.tfcWorkspace(class_init, dest_dir, workspace_dict, **kwargs)
-
-            # If the Run_Location is Terraform_Cloud Configure Variables in the Cloud
-            if templateVars['Run_Location'] == 'Terraform_Cloud':
-                # Set Variable List
-                if templateVars['APIC_Auth_Type'] == 'user_pass':
-                    var_list = ['aciUrl', 'aciUser', 'aciPass']
-                else:
-                    var_list = ['aciUrl', 'aciCertName', 'aciPrivateKey']
-
-                # Get var_ids
-                tf_var_dict = {}
-                folder_id = 'Site_ID_%s_%s' % (templateVars['Site_ID'], dest_dir)
-                kwargs['workspace_id'] = workspace_dict[folder_id]
-                kwargs['Description'] = ''
-                for var in var_list:
-                    tf_var_dict = terraform_cloud.tfcVariables(class_init, dest_dir, var, tf_var_dict, **kwargs)
-
-            self.templateLoader = jinja2.FileSystemLoader(
-                searchpath=(aci_template_path))
-            self.templateEnv = jinja2.Environment(loader=self.templateLoader)
-
-            # Add the Default Files to the Tenant Directory
-            file_list = ['.gitignore_.gitignore', 'main.jinja2_main.tf', 'variables.jinja2_variables.tf']
-            for file in file_list:
-                x = file.split('_')
-                template_file = x[0]
-                dest_file = x[1]
-                template = self.templateEnv.get_template(template_file)
-                create_tf_file('w', dest_dir, dest_file, template, **templateVars)
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def add_vrf(self, wb, ws, row_num, **kwargs):
-        # Open the Network Policies Worksheet
-        ws_net = wb['Network Policies']
-        rows = ws_net.max_row
-
-        # Dicts for required and optional args
-        required_args = {'Site_Group': '',
-                         'Tenant': '',
-                         'VRF': '',
-                         'VRF_Policy': '',
-                         'Policy_Name': '',
-                         'pc_enf_pref': '',
-                         'pc_enf_dir': '',
-                         'bd_enforce': '',
-                         'enf_type': '',
-                         'fvEpRetPol': '',
-                         'monEPGPol': '',
-                         'ip_dp_learning': '',
-                         'knw_mcast_act': ''}
-        optional_args = {'Alias': '',
-                         'Description': '',
-                         'Tags': '',
-                         'cons_vzBrCP': '',
-                         'vzCPIf': '',
-                         'prov_vzBrCP': '',
-                         'bgpCtxPol': '',
-                         'bgpCtxAfPol': '',
-                         'ospfCtxPol': '',
-                         'ospfCtxAfPol': '',
-                         'eigrpCtxAfPol': '',
-                         'l3extRouteTagPol': '',
-                         'l3extVrfValidationPol': ''}
-
-
-        # Get the VRF Policies from the Network Policies Tab
-        func = 'VRF'
-        count = countKeys(ws_net, func)
-        row_vrf = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_Name') == kwargs.get('VRF_Policy'):
-                row_vrf = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
-            if not templateVars['Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
-            if not templateVars['Tags'] == None:
-                if re.match(',', templateVars['Tags']):
-                    for tag in templateVars['Tags'].split(','):
-                        validating.name_rule(row_num, ws, 'Tags', tag)
-                else:
-                    validating.name_rule(row_num, ws, 'Tags', templateVars['Tags'])
-            validating.values(row_vrf, ws_net, 'bd_enforce', templateVars['bd_enforce'], ['no', 'yes'])
-            validating.values(row_vrf, ws_net, 'ip_dp_learning', templateVars['ip_dp_learning'], ['disabled', 'enabled'])
-            validating.values(row_vrf, ws_net, 'knw_mcast_act', templateVars['knw_mcast_act'], ['deny', 'permit'])
-            validating.values(row_vrf, ws_net, 'pc_enf_dir', templateVars['pc_enf_dir'], ['egress', 'ingress'])
-            validating.values(row_vrf, ws_net, 'pc_enf_pref', templateVars['pc_enf_pref'], ['enforced', 'unenforced'])
-            validating.values(row_vrf, ws_net, 'enf_type', templateVars['enf_type'], ['contract', 'pref_grp', 'vzAny'])
-        except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
-
-        if templateVars['cons_vzBrCP'] == 'default':
-            templateVars['cons_vzBrCP'] = 'uni/tn-common/brc-default'
-        if templateVars['prov_vzBrCP'] == 'default':
-            templateVars['prov_vzBrCP'] = 'uni/tn-common/brc-default'
-        if templateVars['vzCPIf'] == 'default':
-            templateVars['vzCPIf'] = 'uni/tn-common/cif-default'
-        if templateVars['bgpCtxPol'] == 'default':
-            templateVars['bgpCtxPol'] = 'uni/tn-common/bgpCtxP-default'
-        if templateVars['bgpCtxAfPol'] == 'default':
-            templateVars['bgpCtxAfPol'] = 'uni/tn-common/bgpCtxAfP-default'
-        if templateVars['eigrpCtxAfPol'] == 'default':
-            templateVars['eigrpCtxAfPol'] = 'uni/tn-common/eigrpCtxAfP-default'
-        if templateVars['ospfCtxPol'] == 'default':
-            templateVars['ospfCtxPol'] = 'uni/tn-common/ospfCtxP-default'
-        if templateVars['ospfCtxAfPol'] == 'default':
-            templateVars['ospfCtxAfPol'] = 'uni/tn-common/ospfCtxP-default'
-        if templateVars['fvEpRetPol'] == 'default':
-            templateVars['fvEpRetPol'] = 'uni/tn-common/epRPol-default'
-        if templateVars['monEPGPol'] == 'default':
-            templateVars['monEPGPol'] = 'uni/tn-common/monepg-default'
-        if templateVars['l3extVrfValidationPol'] == 'default':
-            templateVars['l3extVrfValidationPol'] = 'uni/tn-common/vrfvalidationpol-default'
-
-        # Define the Template Source
-        template_file = "vrf.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-
-        if templateVars['enf_type'] == 'pref_grp':
-            # Define the Template Source
-            template_file = "pref_grp.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            # Process the template through the Sites
-            dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-            write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-        elif templateVars['enf_type'] == 'vzAny':
-            # Define the Template Source
-            template_file = "vzAny.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            # Process the template through the Sites
-            dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-            write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-        # Define the Template Source
-        template_file = "snmp_ctx.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
     def bgp_peer(self, wb, ws, row_num, **kwargs):
         # Open the Network Policies Worksheet
         ws_net = wb['Network Policies']
         rows = ws_net.max_row
 
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Path_Policy_Name': '',
                          'Peer_Interface': '',
                          'Peer_Address': '',
@@ -1330,14 +364,14 @@ class tenant(object):
                          'remove_all_private_as': '',
                          'remove_private_as': '',
                          'private_to_local': ''}
-        optional_args = {'Description': '',
+        optional_args = {'description': '',
                          'BGP_Password': '',
                          'BGP_Peer_Prefix_Policy': '',
                          'Local_ASN': '',
                          'Node2_ID': '',
                          'Policy_Name': '',
                          'Prefix_Tenant': '',
-                         'PFX_Description': '',
+                         'PFX_description': '',
                          'Action': '',
                          'Maximum_Prefixes': '',
                          'Restart_Time': '',
@@ -1383,12 +417,12 @@ class tenant(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.values(row_num, ws, 'Peer_Interface', templateVars['Peer_Interface'], ['Interface', 'Loopback'])
             validating.ip_address(row_num, ws, 'Peer_Address', templateVars['Peer_Address'])
             validating.number_check(row_num, ws, 'Remote_ASN', templateVars['Remote_ASN'], 1, 4294967295)
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
             validating.number_check(row_num, ws, 'eBGP_Multihop_TTL', templateVars['eBGP_Multihop_TTL'], 1, 255)
             validating.number_check(row_num, ws, 'Weight', templateVars['Weight'], 0, 65535)
             if not templateVars['BGP_Peer_Prefix_Policy'] == None:
@@ -1429,11 +463,11 @@ class tenant(object):
                 validating.number_check(row_pfx, ws_net, 'Restart_Time', templateVars['Restart_Time'], 1, 65535)
                 validating.number_check(row_pfx, ws_net, 'Threshold', templateVars['Threshold'], 1, 100)
                 validating.values(row_pfx, ws_net, 'Action', templateVars['Action'], ['log', 'reject', 'restart', 'shut'])
-                if not templateVars['PFX_Description'] == None:
-                    validating.description(row_pfx, ws_net, 'PFX_Description', templateVars['PFX_Description'])
+                if not templateVars['PFX_description'] == None:
+                    validating.description(row_pfx, ws_net, 'PFX_description', templateVars['PFX_description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if re.search(r'\.', templateVars['Peer_Address']):
             templateVars['Peer_Address_'] = templateVars['Peer_Address'].replace('.', '-')
@@ -1612,24 +646,24 @@ class tenant(object):
     # for Detailed information on the Arguments used by this Method.
     def ctx_comm(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Tenant': '',
                          'VRF': '',
                          'Ctx_Community': ''}
-        optional_args = {'Description': ''}
+        optional_args = {'description': ''}
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
             validating.snmp_string(row_num, ws, 'Ctx_Community', templateVars['Ctx_Community'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "snmp_ctx_community.jinja2"
@@ -1645,23 +679,23 @@ class tenant(object):
     # for Detailed information on the Arguments used by this Method.
     def contract_add(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Tenant': '',
                          'Contract_Type': '',
                          'Contract': '',
                          'Scope': '',
                          'QoS_Class': '',
                          'Target_DSCP': ''}
-        optional_args = {'Description': '',
-                         'Alias': '',
-                         'Tags': ''}
+        optional_args = {'description': '',
+                         'alias': '',
+                         'annotation': ''}
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.dscp(row_num, ws, 'Target_DSCP', templateVars['Target_DSCP'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'Contract', templateVars['Contract'])
@@ -1669,8 +703,8 @@ class tenant(object):
             validating.values(row_num, ws, 'Contract_Type', templateVars['Contract_Type'], ['OOB', 'Standard', 'Taboo'])
             validating.values(row_num, ws, 'Scope', templateVars['Scope'], ['application-profile', 'context', 'global', 'tenant'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         if templateVars['Contract_Type'] == 'OOB':
@@ -1691,7 +725,7 @@ class tenant(object):
     # for Detailed information on the Arguments used by this Method.
     def contract_to_epg(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Contract_Tenant': '',
                          'Contract_Type': '',
                          'Contract': '',
@@ -1705,7 +739,7 @@ class tenant(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_num, ws, 'Contract_Tenant', templateVars['Contract_Tenant'])
             validating.name_rule(row_num, ws, 'Contract', templateVars['Contract'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
@@ -1713,8 +747,8 @@ class tenant(object):
             validating.name_rule(row_num, ws, 'EPG', templateVars['EPG'])
             validating.values(row_num, ws, 'Contract_Type', templateVars['Contract_Type'], ['consumer', 'provider'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "epg_to_contract.jinja2"
@@ -1728,13 +762,206 @@ class tenant(object):
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
+    def epg_add(self, wb, ws, row_num, **kwargs):
+        # Set Locally Used Variables
+        wb = kwargs['wb']
+        ws = kwargs['ws']
+        row_num = kwargs['row_num']
+
+        # Open the Network Policies Worksheet
+        ws_net = wb['Network Policies']
+        rows = ws_net.max_row
+
+        # Get the EPG Policies from the Network Policies Tab
+        func = 'epg'
+        count = countKeys(ws_net, func)
+        row_epg = ''
+        var_dict = findVars(ws_net, func, rows, count)
+        for pos in var_dict:
+            if var_dict[pos].get('Policy_Name') == kwargs.get('EPG_Policy'):
+                row_epg = var_dict[pos]['row']
+                del var_dict[pos]['row']
+                kwargs = {**kwargs, **var_dict[pos]}
+
+        # Dicts for EPG required and optional args
+        required_args = {
+            'site_group': '',
+            'tenant': '',
+            'application_profile': '',
+            'name': '',
+            'bridge_domain': '',
+            'contract_exception_tag': '',
+            'epg_policy': '',
+            'policy_name': '',
+            'useg_epg': '',
+            'qos_class': '',
+            'intra_epg_isolation': '',
+            'preferred_group_member': '',
+            'flood_in_encapsulation': '',
+            'label_match_criteria': '',
+            'epg_admin_state': '',
+            'has_multicast_source': ''
+        }
+        optional_args = {
+            'alias': '',
+            'description': '',
+            'annotations': '',
+            'global_alias': '',
+            'fibre_channel_domain_association': '',
+            'physical_domains': '',
+            'vmm_domains': '',
+            'VLAN': '',
+            'PVLAN': '',
+            'epg_to_aep': '',
+            'epg_contract_master': '',
+            'contract_exception_tag': '',
+            'custom_qos': '',
+            'data_plane_policer': '',
+            'fhs_trust_control_policy': '',
+            'vzGraphCont': '',
+        }
+
+
+        if kwargs['custom_qos'] == 'default':
+            kwargs['custom_qos'] = 'uni/tn-common/qoscustom-default'
+        if kwargs['data_plane_policer'] == 'default':
+            kwargs['data_plane_policer'] = 'uni/tn-common/qosdpppol-default'
+        if kwargs['fhs_trust_control_policy'] == 'default':
+            kwargs['fhs_trust_control_policy'] = 'uni/tn-common/trustctrlpol-default'
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+
+        try:
+            # Validate Required Arguments
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.name_rule(row_num, ws, 'application_profile', templateVars['application_profile'])
+            validating.name_rule(row_num, ws, 'bridge_domain', templateVars['bridge_domain'])
+            validating.name_rule(row_num, ws, 'name', templateVars['name'])
+            validating.name_rule(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.qos_priority(row_epg, ws_net, 'qos_class', templateVars['qos_class'])
+            validating.values(row_epg, ws_net, 'epg_admin_state', templateVars['epg_admin_state'], ['admin_up', 'admin_shut'])
+            validating.values(row_epg, ws_net, 'flood_in_encapsulation', templateVars['flood_in_encapsulation'], ['disabled', 'enabled'])
+            validating.values(row_epg, ws_net, 'intra_epg_isolation', templateVars['intra_epg_isolation'], ['enforced', 'unenforced'])
+            validating.values(row_epg, ws_net, 'label_match_criteria', templateVars['label_match_criteria'], ['All', 'AtleastOne', 'AtmostOne', 'None'])
+            validating.values(row_epg, ws_net, 'preferred_group_member', templateVars['preferred_group_member'], ['exclude', 'include'])
+            validating.values(row_epg, ws_net, 'useg_epg', templateVars['useg_epg'], ['true', 'false'])
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
+            if not templateVars['annotations'] == None:
+                for i in templateVars['annotations']:
+                    for k, v in i.items():
+                        validating.name_rule(row_num, ws, 'annotations', k)
+                        validating.name_rule(row_num, ws, 'annotations', v)
+            if not templateVars['physical_domains'] == None:
+                if re.match(',', templateVars['physical_domains']):
+                    for phys in templateVars['physical_domains'].split(','):
+                        validating.name_rule(row_num, ws, 'physical_domains', phys)
+                else:
+                    validating.name_rule(row_num, ws, 'physical_domains', templateVars['physical_domains'])
+            if not templateVars['vmm_domains'] == None:
+                if re.match(',', templateVars['vmm_domains']):
+                    for phys in templateVars['vmm_domains'].split(','):
+                        validating.name_rule(row_num, ws, 'vmm_domains', phys)
+                else:
+                    validating.name_rule(row_num, ws, 'vmm_domains', templateVars['vmm_domains'])
+            if not templateVars['VLAN'] == None:
+                validating.vlans(row_num, ws, 'VLAN', templateVars['VLAN'])
+            if not templateVars['PVLAN'] == None:
+                validating.vlans(row_num, ws, 'PVLAN', templateVars['PVLAN'])
+            if not templateVars['epg_to_aep'] == None:
+                validating.name_rule(row_num, ws, 'epg_to_aep', templateVars['epg_to_aep'])
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
+
+        if not templateVars['VLAN'] == None:
+            # Define the Template Source
+            template_file = "static_path.jinja2"
+            template = self.templateEnv.get_template(template_file)
+
+            dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
+            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            process_workbook(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+
+        if not templateVars['epg_to_aep'] == None:
+            if re.search(',', templateVars['epg_to_aep']):
+                # Define the Template Source
+                aep_list = templateVars['epg_to_aep'].split(',')
+                for aep in aep_list:
+                    templateVars['AAEP'] = aep
+
+                    # Define the Template Source
+                    template_file = "policies_global_aep_generic.jinja2"
+                    template = self.templateEnv.get_template(template_file)
+
+                    # Process the template through the Sites
+                    dest_file = 'Policies_Global_AEP_%s_generic.tf' % (templateVars['AAEP'])
+                    dest_dir = 'Access'
+                    write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+
+                    # Define the Template Source
+                    template_file = "data_access_generic.jinja2"
+                    template = self.templateEnv.get_template(template_file)
+
+                    # Process the template through the Sites
+                    dest_file = 'data_AEP_%s.tf' % (templateVars['AAEP'])
+                    dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                    write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+
+                    # Define the Template Source
+                    template_file = "epgs_using_function.jinja2"
+                    template = self.templateEnv.get_template(template_file)
+
+                    # Process the template through the Sites
+                    dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
+                    dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                    write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+            else:
+                templateVars['AAEP'] = templateVars['EPG_to_AAEP']
+                # Define the Template Source
+                template_file = "policies_global_aep_generic.jinja2"
+                template = self.templateEnv.get_template(template_file)
+
+                # Process the template through the Sites
+                dest_file = 'Policies_Global_AEP_%s_generic.tf' % (templateVars['AAEP'])
+                dest_dir = 'Access'
+                write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+
+                # Define the Template Source
+                template_file = "data_access_generic.jinja2"
+                template = self.templateEnv.get_template(template_file)
+
+                # Process the template through the Sites
+                dest_file = 'data_AEP_%s.tf' % (templateVars['AAEP'])
+                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+
+                # Define the Template Source
+                template_file = "epgs_using_function.jinja2"
+                template = self.templateEnv.get_template(template_file)
+
+                # Process the template through the Sites
+                dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
+                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+
+        # dest_file = 'epg_%s_%s_static_bindings.tf' % (templateVars['App_Profile'], templateVars['EPG'])
+        # dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        # create_file(wb, ws, row_num, 'w', dest_dir, dest_file, **templateVars)
+
+    # Method must be called with the following kwargs.
+    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
+    # for Detailed information on the Arguments used by this Method.
     def ext_epg(self, wb, ws, row_num, **kwargs):
         # Open the Network Policies Worksheet
         ws_net = wb['Network Policies']
         rows = ws_net.max_row
 
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Tenant': '',
                          'L3Out': '',
                          'Ext_EPG': '',
@@ -1754,9 +981,9 @@ class tenant(object):
                          'agg-export': '',
                          'agg-import': '',
                          'agg-shared': ''}
-        optional_args = {'Alias': '',
-                         'Description': '',
-                         'Tags': '',
+        optional_args = {'alias': '',
+                         'description': '',
+                         'annotation': '',
                          'cons_vzBrCP': '',
                          'vzCPIf': '',
                          'Master_fvEPg': '',
@@ -1794,7 +1021,7 @@ class tenant(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             if not templateVars['Subnets'] == None:
                 if re.search(',', templateVars['Subnets']):
@@ -1817,8 +1044,8 @@ class tenant(object):
             validating.values(row_sub, ws_net, 'shared-security', templateVars['shared-security'], ['no', 'yes'])
             validating.values(row_sub, ws_net, 'shared-rtctrl', templateVars['shared-rtctrl'], ['no', 'yes'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Create aggregate templateVars
         aggregate = ''
@@ -1941,11 +1168,11 @@ class tenant(object):
         rows = ws_net.max_row
 
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Ext_EPG': '',
                          'QoS_Class': '',
                          'Subnets': ''}
-        optional_args = {'Tags': '',
+        optional_args = {'annotation': '',
                          'consumed_Contracts': ''}
 
         # Validate inputs, return dict of template vars
@@ -1953,15 +1180,15 @@ class tenant(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_num, ws, 'Ext_EPG', templateVars['Ext_EPG'])
             validating.qos_priority(row_num, ws, 'QoS_Class', templateVars['QoS_Class'])
-            if not templateVars['Tags'] == None:
-                if re.search(',', templateVars['Tags']):
-                    for x in templateVars['Tags'].split(','):
-                        validating.description(row_num, ws, 'Tags', x)
+            if not templateVars['annotation'] == None:
+                if re.search(',', templateVars['annotation']):
+                    for x in templateVars['annotation'].split(','):
+                        validating.description(row_num, ws, 'annotation', x)
                 else:
-                    validating.description(row_num, ws, 'Tags', templateVars['Tags'])
+                    validating.description(row_num, ws, 'annotation', templateVars['annotation'])
             if not templateVars['consumed_Contracts'] == None:
                 if re.search(',', templateVars['consumed_Contracts']):
                     templateVars['provide_count'] =+ 1
@@ -1977,8 +1204,8 @@ class tenant(object):
                 else:
                     validating.ip_address(row_num, ws, 'Subnets', templateVars['Subnets'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "epg_ext_oob.jinja2"
@@ -2031,28 +1258,28 @@ class tenant(object):
     # for Detailed information on the Arguments used by this Method.
     def filter_add(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Tenant': '',
                          'Filter': ''}
-        optional_args = {'Description': '',
-                         'Alias': '',
-                         'Tags': ''}
+        optional_args = {'description': '',
+                         'alias': '',
+                         'annotation': ''}
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_num, ws, 'Filter', templateVars['Filter'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            if not templateVars['Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "contract_filter.jinja2"
@@ -2068,7 +1295,7 @@ class tenant(object):
     # for Detailed information on the Arguments used by this Method.
     def filter_entry(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Tenant': '',
                          'Filter': '',
                          'Filter_Entry': '',
@@ -2085,15 +1312,15 @@ class tenant(object):
                          'Dest_To': '',
                          'Stateful': '',
                          'TCP_Session_Rules': ''}
-        optional_args = {'Description': '',
-                         'Alias': ''}
+        optional_args = {'description': '',
+                         'alias': ''}
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.dscp(row_num, ws, 'Match_DSCP', templateVars['Match_DSCP'])
             validating.filter_ports(row_num, ws, 'Source_From', templateVars['Source_From'])
             validating.filter_ports(row_num, ws, 'Source_To', templateVars['Source_To'])
@@ -2110,13 +1337,13 @@ class tenant(object):
             validating.values(row_num, ws, 'ICMPv4_Type', templateVars['ICMPv4_Type'], ['dst-unreach', 'echo', 'echo-rep', 'src-quench', 'time-exceeded', 'unspecified'])
             validating.values(row_num, ws, 'ICMPv6_Type', templateVars['ICMPv6_Type'], ['dst-unreach', 'echo-req', 'echo-rep', 'nbr-solicit', 'nbr-advert', 'redirect', 'time-exceeded', 'unspecified'])
             validating.values(row_num, ws, 'TCP_Session_Rules', templateVars['TCP_Session_Rules'], ['ack', 'est', 'fin', 'rst', 'syn', 'unspecified'])
-            if not templateVars['Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if templateVars['TCP_Session_Rules'] == 'unspecified':
             templateVars['TCP_Session_Rules'] = None
@@ -2133,13 +1360,233 @@ class tenant(object):
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
+    def l3out_add(self, wb, ws, row_num, **kwargs):
+        # Open the Network Policies Worksheet
+        ws_net = wb['Network Policies']
+        rows = ws_net.max_row
+
+        # Dicts for required and optional args
+        required_args = {'site_group': '',
+                         'Tenant': '',
+                         'L3Out': '',
+                         'VRF_Tenant': '',
+                         'VRF': '',
+                         'L3_Domain': '',
+                         'target_dscp': '',
+                         'Run_BGP': '',
+                         'export': '',
+                         'import': '',
+                         'target_dscp': ''}
+        optional_args = {'description': '',
+                         'alias': '',
+                         'annotation': '',
+                         'EIGRP_Routing_Policy': '',
+                         'OSPF_Routing_Policy': '',
+                         'leak_rtctrlProfile': '',
+                         'damp_rtctrlProfile': '',
+                         'fvBDPublicSubnetHolder': ''}
+
+
+        # Get the L3Out Policies from the Network Policies Tab
+        func = 'l3Out'
+        count = countKeys(ws_net, func)
+        row_l3out = ''
+        var_dict = findVars(ws_net, func, rows, count)
+        for pos in var_dict:
+            if var_dict[pos].get('Policy_Name') == kwargs.get('L3Out_Policy'):
+                row_l3out = var_dict[pos]['row']
+                del var_dict[pos]['row']
+                kwargs = {**kwargs, **var_dict[pos]}
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+
+        try:
+            # Validate Required Arguments
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.dscp(row_l3out, ws_net, 'target_dscp', templateVars['target_dscp'])
+            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
+            validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
+            validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
+            validating.name_rule(row_num, ws, 'VRF_Tenant', templateVars['VRF_Tenant'])
+            validating.values(row_num, ws, 'export', templateVars['export'], ['no', 'yes'])
+            validating.values(row_num, ws, 'import', templateVars['import'], ['no', 'yes'])
+            validating.values(row_num, ws, 'Run_BGP', templateVars['Run_BGP'], ['no', 'yes'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
+
+        # Process the template through the Sites
+        template_file = "data_domain_l3_profile.jinja2"
+        template = self.templateEnv.get_template(template_file)
+
+        # Process the template through the Sites
+        dest_file = 'data_domain_l3_profile_%s.tf' % (templateVars['L3_Domain'])
+        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+
+        ctrl_count = 0
+        Ctrl = ''
+        if templateVars['export'] == 'yes':
+            Ctrl = '"export"'
+            ctrl_count =+ 1
+        if templateVars['import'] == 'yes' and ctrl_count > 0:
+            Ctrl = Ctrl + ',' + '"import"'
+            ctrl_count =+ 1
+        elif templateVars['import'] == 'yes':
+            Ctrl = '"import"'
+            ctrl_count =+ 1
+        if ctrl_count > 0:
+            templateVars['enforce_rtctrl'] = '[%s]' % (Ctrl)
+        else:
+            templateVars['enforce_rtctrl'] = '["unspecified"]'
+
+        # Define the Template Source
+        template_file = "l3out.jinja2"
+        template = self.templateEnv.get_template(template_file)
+
+        # Process the template through the Sites
+        dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
+        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+
+        if templateVars['Run_BGP'] == 'yes':
+            # Define the Template Source
+            template_file = "bgp_external_policy.jinja2"
+            template = self.templateEnv.get_template(template_file)
+
+            # Process the template through the Sites
+            dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
+            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+
+        #--------------------------
+        # EIGRP Routing Policy
+        #--------------------------
+        if not templateVars['EIGRP_Routing_Policy'] == None:
+
+            # Dicts for required and optional args
+            required_args = {'site_group': '',
+                            'Tenant': '',
+                            'L3Out': '',
+                            'Policy_Name': '',
+                            'AS_Number': ''}
+            optional_args = { }
+            # Get the L3Out Policies from the Network Policies Tab
+            func = 'eigrp_routing'
+            count = countKeys(ws_net, func)
+            row_eigrp = ''
+            var_dict = findVars(ws_net, func, rows, count)
+            for pos in var_dict:
+                if var_dict[pos].get('Policy_Name') == kwargs.get('EIGRP_Routing_Policy'):
+                    row_eigrp = var_dict[pos]['row']
+                    del var_dict[pos]['row']
+                    kwargs = {**kwargs, **var_dict[pos]}
+
+            # Validate inputs, return dict of template vars
+            templateVars = process_kwargs(required_args, optional_args, **kwargs)
+
+            try:
+                # Validate Required Arguments
+                validating.number_check(row_eigrp, ws_net, 'AS_Number', templateVars['AS_Number'], 1, 65534)
+            except Exception as err:
+                errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws_net, row_eigrp)
+                raise ErrException(errorReturn)
+
+            # Define the Template Source
+            template_file = "l3out_eigrp_external_policy.jinja2"
+            template = self.templateEnv.get_template(template_file)
+
+            # Process the template through the Sites
+            dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
+            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            write_to_site(wb, ws_net, row_eigrp, 'a+', dest_dir, dest_file, template, **templateVars)
+
+        #--------------------------
+        # OSPF Routing Policy
+        #--------------------------
+        if not templateVars['OSPF_Routing_Policy'] == None:
+
+            # Dicts for required and optional args
+            required_args = {'site_group': '',
+                            'Tenant': '',
+                            'L3Out': '',
+                            'Policy_Name': '',
+                            'Area_ID': '',
+                            'Area_Type': '',
+                            'Cost': '',
+                            'Redistribute_NSSA': '',
+                            'Originate_Summary': '',
+                            'Suppress_FA': ''}
+            optional_args = { }
+            # Get the L3Out Policies from the Network Policies Tab
+            func = 'ospf_routing'
+            count = countKeys(ws_net, func)
+            row_ospf = ''
+            var_dict = findVars(ws_net, func, rows, count)
+            for pos in var_dict:
+                if var_dict[pos].get('Policy_Name') == kwargs.get('OSPF_Routing_Policy'):
+                    row_ospf = var_dict[pos]['row']
+                    del var_dict[pos]['row']
+                    kwargs = {**kwargs, **var_dict[pos]}
+
+            # Validate inputs, return dict of template vars
+            templateVars = process_kwargs(required_args, optional_args, **kwargs)
+
+            try:
+                # Validate Required Arguments
+                validating.number_check(row_ospf, ws_net, 'Cost', templateVars['Cost'], 0, 16777215)
+                validating.values(row_ospf, ws_net, 'Area_Type', templateVars['Area_Type'], ['nssa', 'regular', 'stub'])
+                validating.values(row_ospf, ws_net, 'Redistribute_NSSA', templateVars['Redistribute_NSSA'], ['no', 'yes'])
+                validating.values(row_ospf, ws_net, 'Originate_Summary', templateVars['Originate_Summary'], ['no', 'yes'])
+                validating.values(row_ospf, ws_net, 'Suppress_FA', templateVars['Suppress_FA'], ['no', 'yes'])
+            except Exception as err:
+                errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws_net, row_ospf)
+                raise ErrException(errorReturn)
+
+            ctrl_count = 0
+            Ctrl = ''
+            if templateVars['Redistribute_NSSA'] == 'yes':
+                Ctrl = 'redistribute'
+                ctrl_count =+ 1
+            if templateVars['Originate_Summary'] == 'yes' and ctrl_count > 0:
+                Ctrl = Ctrl + ',' + 'summary'
+                ctrl_count =+ 1
+            elif templateVars['Originate_Summary'] == 'yes':
+                Ctrl = 'summary'
+                ctrl_count =+ 1
+            if templateVars['Suppress_FA'] == 'yes' and ctrl_count > 0:
+                Ctrl = Ctrl + ',' + 'supress-fa'
+                ctrl_count =+ 1
+            elif templateVars['Suppress_FA'] == 'yes':
+                Ctrl = 'supress-fa'
+                ctrl_count =+ 1
+            if ctrl_count > 0:
+                templateVars['Ctrl'] = '%s' % (Ctrl)
+            else:
+                templateVars['Ctrl'] = 'unspecified'
+
+            # Define the Template Source
+            template_file = "l3out_ospf_external_policy.jinja2"
+            template = self.templateEnv.get_template(template_file)
+
+            # Process the template through the Sites
+            dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
+            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            write_to_site(wb, ws_net, row_ospf, 'a+', dest_dir, dest_file, template, **templateVars)
+
+    # Method must be called with the following kwargs.
+    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
+    # for Detailed information on the Arguments used by this Method.
     def mgmt_epg(self, wb, ws, row_num, **kwargs):
         # Dicts for Bridge Domain required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Type': '',
                          'EPG': '',
                          'QoS_Class': ''}
-        optional_args = {'Tags': '',
+        optional_args = {'annotation': '',
                          'VLAN': '',
                          'Bridge_Domain': '',
                          'Tenant': '',
@@ -2160,7 +1607,7 @@ class tenant(object):
         templateVars['taboo_count'] = 1
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_num, ws, 'EPG', templateVars['EPG'])
             validating.qos_priority(row_num, ws, 'QoS_Class', templateVars['QoS_Class'])
             validating.values(row_num, ws, 'Type', templateVars['Type'], ['in_band', 'out_of_band'])
@@ -2198,8 +1645,8 @@ class tenant(object):
                         else:
                             validating.not_empty(row_num, ws, 'Taboo_Contracts', templateVars['Taboo_Contracts'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if not templateVars['Tenant'] == 'mgmt':
             dest_dir = 'Tenant_mgmt'
@@ -2309,7 +1756,7 @@ class tenant(object):
         rows = ws_net.max_row
 
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Tenant': '',
                          'L3Out': '',
                          'Node_Profile': '',
@@ -2318,8 +1765,8 @@ class tenant(object):
                          'Node_Intf_Policy': '',
                          'Policy_Name': '',
                          'tag': ''}
-        optional_args = {'Description': '',
-                         'Alias': '',
+        optional_args = {'description': '',
+                         'alias': '',
                          'EIGRP_Intf_Profile': '',
                          'OSPF_Intf_Profile': '',
                          'ndIfPol': '',
@@ -2345,16 +1792,16 @@ class tenant(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
             validating.name_rule(row_num, ws, 'Node_Profile', templateVars['Node_Profile'])
             validating.name_rule(row_num, ws, 'Interface_Profile', templateVars['Interface_Profile'])
             validating.qos_priority(row_num, ws, 'QoS_Class', templateVars['QoS_Class'])
-            if not templateVars['Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
             if not templateVars['EIGRP_Intf_Profile'] == None:
                 validating.name_rule(row_num, ws, 'EIGRP_Intf_Profile', templateVars['EIGRP_Intf_Profile'])
             if not templateVars['OSPF_Intf_Profile'] == None:
@@ -2362,8 +1809,8 @@ class tenant(object):
             if not templateVars['tag'] == None:
                 validating.tag_check(row_node, ws_net, 'tag', templateVars['tag'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "logical_interface_profile.jinja2"
@@ -2381,7 +1828,7 @@ class tenant(object):
 
             # Dicts for required and optional args
                              # OSPF Interface Profile
-            required_args = {'Site_Group': '',
+            required_args = {'site_group': '',
                              'Tenant': '',
                              'L3Out': '',
                              'Node_Profile': '',
@@ -2405,9 +1852,9 @@ class tenant(object):
                              # OSPF Interface Profile
             optional_args = {'Auth_Key_ID': '',
                              'OSPF_Auth_Key': '',
-                             'Description': '',
+                             'description': '',
                              # OSPF Interface Policy
-                             'OSPF_Description': ''}
+                             'OSPF_description': ''}
 
             # Get the OSPF Profile Attributes from the Network Policies Tab
             func = 'ospf_profile'
@@ -2439,8 +1886,8 @@ class tenant(object):
                 validating.values(row_ospf, ws_net, 'Auth_Type', templateVars['Auth_Type'], ['md5', 'none', 'simple'])
                 if not templateVars['Auth_Key_ID'] == None:
                     validating.number_check(row_ospf, ws_net, 'Auth_Key_ID', templateVars['Auth_Key_ID'], 1, 255)
-                if not templateVars['Description'] == None:
-                    validating.description(row_ospf, ws_net, 'Description', templateVars['Description'])
+                if not templateVars['description'] == None:
+                    validating.description(row_ospf, ws_net, 'description', templateVars['description'])
                 # Validate OSPF Policy Required Arguments
                 validating.name_rule(row_intf, ws_net, 'OSPF_Policy_Name', templateVars['OSPF_Policy_Name'])
                 validating.number_check(row_intf, ws_net, 'Priority', templateVars['Priority'], 0, 255)
@@ -2454,11 +1901,11 @@ class tenant(object):
                 validating.values(row_intf, ws_net, 'BFD', templateVars['BFD'], ['no', 'yes'])
                 validating.values(row_intf, ws_net, 'MTU_Ignore', templateVars['MTU_Ignore'], ['no', 'yes'])
                 validating.values(row_intf, ws_net, 'Passive_Interface', templateVars['Passive_Interface'], ['no', 'yes'])
-                if not templateVars['OSPF_Description'] == None:
-                    validating.description(row_intf, ws_net, 'OSPF_Description', templateVars['OSPF_Description'])
+                if not templateVars['OSPF_description'] == None:
+                    validating.description(row_intf, ws_net, 'OSPF_description', templateVars['OSPF_description'])
             except Exception as err:
-                Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws_net, row_ospf)
-                raise ErrException(Error_Return)
+                errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws_net, row_ospf)
+                raise ErrException(errorReturn)
 
             if templateVars['Auth_Type'] == 'none':
                 templateVars['Auth_Key_ID'] = 1
@@ -2559,7 +2006,7 @@ class tenant(object):
     def node_path(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
                          # Logical Interface Profile
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Path_Policy_Name': '',
                          'MTU': '',
                          'Target_DSCP': '',
@@ -2579,7 +2026,7 @@ class tenant(object):
         optional_args = {'Encap_Scope': '',
                          'Mode': '',
                          'VLAN': '',
-                         'Description': '',
+                         'description': '',
                          'Auto_State': '',
                          'MAC_Address': '',
                          'SideA_Secondary': '',
@@ -2607,7 +2054,7 @@ class tenant(object):
 
         try:
             # Validate Required Arguments Logincal Interface Profile
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_path, ws, 'Path_Policy_Name', templateVars['Path_Policy_Name'])
             if not templateVars['Encap_Scope'] == None:
                 validating.values(row_num, ws, 'Encap_Scope', templateVars['Encap_Scope'], ['ctx', 'local'])
@@ -2615,8 +2062,8 @@ class tenant(object):
                 validating.values(row_num, ws, 'Mode', templateVars['Mode'], ['native', 'regular', 'untagged'])
             if not templateVars['VLAN'] == None:
                 validating.vlans(row_num, ws, 'VLAN', templateVars['VLAN'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
             if not templateVars['Auto_State'] == None:
                 validating.values(row_num, ws, 'Auto_State', templateVars['Auto_State'], ['disabled', 'enabled'])
             if not templateVars['MTU'] == 'inherit':
@@ -2648,8 +2095,8 @@ class tenant(object):
             if not templateVars['Node2_ID'] == None:
                 validating.number_check(row_path, ws, 'Node2_ID', templateVars['Node2_ID'], 101, 4001)
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Create Global Variables for First Template
         if not templateVars['Node2_ID'] == None:
@@ -2722,7 +2169,7 @@ class tenant(object):
     # for Detailed information on the Arguments used by this Method.
     def node_prof(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Tenant': '',
                          'L3Out': '',
                          'Node_Profile': '',
@@ -2732,8 +2179,8 @@ class tenant(object):
                          'Node1_ID': '',
                          'Node1_Router_ID': '',
                          'Node1_Loopback': ''}
-        optional_args = {'Alias': '',
-                         'Description': '',
+        optional_args = {'alias': '',
+                         'description': '',
                          'Node2_ID': '',
                          'Node2_Router_ID': '',
                          'Node2_Loopback': ''}
@@ -2743,7 +2190,7 @@ class tenant(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
             validating.name_rule(row_num, ws, 'Node_Profile', templateVars['Node_Profile'])
@@ -2752,17 +2199,17 @@ class tenant(object):
             validating.number_check(row_num, ws, 'Node1_ID', templateVars['Node1_ID'], 101, 4001)
             validating.ip_address(row_num, ws, 'Node1_Router_ID', templateVars['Node1_Router_ID'])
             validating.values(row_num, ws, 'Node1_Loopback', templateVars['Node1_Loopback'], ['no', 'yes'])
-            if not templateVars['Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
             if not templateVars['Node2_ID'] == None:
                 validating.number_check(row_num, ws, 'Node2_ID', templateVars['Node2_ID'], 101, 4001)
                 validating.ip_address(row_num, ws, 'Node2_Router_ID', templateVars['Node2_Router_ID'])
                 validating.values(row_num, ws, 'Node2_Loopback', templateVars['Node2_Loopback'], ['no', 'yes'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "logical_node_profile.jinja2"
@@ -2803,7 +2250,7 @@ class tenant(object):
     # for Detailed information on the Arguments used by this Method.
     def subject_add(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
-        required_args = {'Site_Group': '',
+        required_args = {'site_group': '',
                          'Tenant': '',
                          'Subject': '',
                          'Contract_Type': '',
@@ -2812,9 +2259,9 @@ class tenant(object):
                          'QoS_Class': '',
                          'Target_DSCP': '',
                          'Filters_to_Assign': ''}
-        optional_args = {'Description': '',
-                         'Alias': '',
-                         'Tags': ''}
+        optional_args = {'description': '',
+                         'alias': '',
+                         'annotation': ''}
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
@@ -2822,7 +2269,7 @@ class tenant(object):
         templateVars['filters_count'] = 1
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
             validating.dscp(row_num, ws, 'Target_DSCP', templateVars['Target_DSCP'])
             validating.name_rule(row_num, ws, 'Contract', templateVars['Contract'])
             validating.name_rule(row_num, ws, 'Subject', templateVars['Subject'])
@@ -2830,10 +2277,10 @@ class tenant(object):
             validating.qos_priority(row_num, ws, 'QoS_Class', templateVars['QoS_Class'])
             validating.values(row_num, ws, 'Contract_Type', templateVars['Contract_Type'], ['OOB', 'Standard', 'Taboo'])
             validating.values(row_num, ws, 'Reverse_Filter_Ports', templateVars['Reverse_Filter_Ports'], ['no', 'yes'])
-            if not templateVars['Alias'] == None:
-                validating.name_rule(row_num, ws, 'Alias', templateVars['Alias'])
-            if not templateVars['Description'] == None:
-                validating.description(row_num, ws, 'Description', templateVars['Description'])
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
             if not templateVars['Filters_to_Assign'] == None:
                 if re.search(',', templateVars['Filters_to_Assign']):
                     templateVars['filters_count'] =+ 1
@@ -2842,8 +2289,8 @@ class tenant(object):
                 else:
                     validating.name_rule(row_num, ws, 'Filters_to_Assign', templateVars['Filters_to_Assign'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "contract_subject.jinja2"
@@ -2863,4 +2310,362 @@ class tenant(object):
         dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
+    # Method must be called with the following kwargs.
+    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
+    # for Detailed information on the Arguments used by this Method.
+    def subnet_add(self, wb, ws, row_num, **kwargs):
+        # Open the Network Policies Worksheet
+        ws_net = wb['Network Policies']
+        rows = ws_net.max_row
 
+        # Dicts for Subnet required and optional args
+        required_args = {'site_group': '',
+                         'Tenant': '',
+                         'Bridge_Domain': '',
+                         'Subnet': '',
+                         'Subnet_Policy': '',
+                         'Policy_Name': '',
+                         'virtual': '',
+                         'preferred': '',
+                         'scope': '',
+                         'nd': '',
+                         'no-default-gateway': '',
+                         'querier': ''}
+        optional_args = {'Subnet_description': '',
+                         'l3extOut': '',
+                         'rtctrlProfile': '',
+                         'ndPfxPol': ''}
+
+        # Get the Subnet Policies from the Network Policies Tab
+        func = 'subnet'
+        count = countKeys(ws_net, func)
+        row_subnet = ''
+        var_dict = findVars(ws_net, func, rows, count)
+        for pos in var_dict:
+            if var_dict[pos].get('Policy_Name') == kwargs.get('Subnet_Policy'):
+                row_subnet = var_dict[pos]['row']
+                del var_dict[pos]['row']
+                kwargs = {**kwargs, **var_dict[pos]}
+                break
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+
+        try:
+            # Validate Required Arguments
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.ip_address(row_num, ws, 'Subnet', templateVars['Subnet'])
+            if not templateVars['Subnet_description'] == None:
+                validating.description(row_num, ws, 'Subnet_description', templateVars['Subnet_description'])
+            validating.values(row_subnet, ws_net, 'virtual', templateVars['virtual'], ['no', 'yes'])
+            validating.values(row_subnet, ws_net, 'preferred', templateVars['preferred'], ['no', 'yes'])
+            validating.values(row_subnet, ws_net, 'scope', templateVars['scope'], ['private', 'public', 'shared', 'private-shared', 'public-shared'])
+            validating.values(row_subnet, ws_net, 'nd', templateVars['nd'], ['no', 'yes'])
+            validating.values(row_subnet, ws_net, 'no-default-gateway', templateVars['no-default-gateway'], ['no', 'yes'])
+            validating.values(row_subnet, ws_net, 'querier', templateVars['querier'], ['no', 'yes'])
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
+
+        if templateVars['l3extOut'] == 'default':
+            templateVars['l3extOut'] = 'uni/tn-common/out-default'
+        if templateVars['ndPfxPol'] == 'default':
+            templateVars['ndPfxPol'] = 'uni/tn-common/ndpfxpol-default'
+
+        # Create ctrl templateVars
+        ctrl_count = 0
+        Ctrl = ''
+        if templateVars['nd'] == 'yes':
+            Ctrl = '"nd"'
+            ctrl_count =+ 1
+        if templateVars['no-default-gateway'] == 'yes' and ctrl_count > 0:
+            Ctrl = Ctrl + ', ' + '"no-default-gateway"'
+            ctrl_count =+ 1
+        elif templateVars['no-default-gateway'] == 'yes':
+            Ctrl = '"no-default-gateway"'
+            ctrl_count =+ 1
+        if templateVars['querier'] == 'yes' and ctrl_count > 0:
+            Ctrl = Ctrl + ', ' + '"querier"'
+            ctrl_count =+ 1
+        elif templateVars['querier'] == 'yes':
+            Ctrl = '"querier"'
+            ctrl_count =+ 1
+
+        if ctrl_count > 0:
+            templateVars['Ctrl'] = '[%s]' % (Ctrl)
+        else:
+            templateVars['Ctrl'] = '["unspecified"]'
+
+        # Modify scope templateVars
+        if re.search('^(private|public|shared)$', templateVars['scope']):
+            templateVars['scope'] = '"%s"' % (templateVars['scope'])
+        elif re.search('^(private|public)\\-shared$', templateVars['scope']):
+            x = templateVars['scope'].split('-')
+            templateVars['scope'] = '"%s", "%s"' % (x[0], x[1])
+
+        # As period and colon are not allowed in description need to modify Subnet to work for description and filename
+        if ':' in templateVars['Subnet']:
+            network = "%s" % (ipaddress.IPv6Network(templateVars['Subnet'], strict=False))
+            templateVars['Subnet_'] = network
+            templateVars['Subnet_'] = templateVars['Subnet_'].replace(':', '-')
+            templateVars['Subnet_'] = templateVars['Subnet_'].replace('/', '_')
+        else:
+            network = "%s" % (ipaddress.IPv4Network(templateVars['Subnet'], strict=False))
+            templateVars['Subnet_'] = network
+            templateVars['Subnet_'] = templateVars['Subnet_'].replace('.', '-')
+            templateVars['Subnet_'] = templateVars['Subnet_'].replace('/', '_')
+
+        # Define the Template Source
+        template_file = "subnet.jinja2"
+        template = self.templateEnv.get_template(template_file)
+
+        # Process the template through the Sites
+        dest_file = 'Bridge_Domain_%s.tf' % (templateVars['Bridge_Domain'],)
+        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+
+    # Method must be called with the following kwargs.
+    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
+    # for Detailed information on the Arguments used by this Method.
+    def tenant_add(self, **kwargs):
+        # Set Locally Used Variables
+        wb = kwargs['wb']
+        ws = kwargs['ws']
+        row_num = kwargs['row_num']
+
+        # Dicts for required and optional args
+        required_args = {
+            'site_group': '',
+            'tenant': ''
+        }
+        optional_args = {
+            'alias': '',
+            'annotations': '',
+            'description': '',
+            'users': '',
+        }
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+
+        try:
+            # Validate Required Arguments
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.name_rule(row_num, ws, 'tenant', templateVars['tenant'])
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['annotations'] == None:
+                for i in templateVars['annotations']:
+                    for k, v in i.items():
+                        validating.name_rule(row_num, ws, 'annotations', k)
+                        validating.name_rule(row_num, ws, 'annotations', v)
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
+
+        dataDict = {
+            'alias':kwargs['alias'],
+            'annotations': kwargs['annotations'],
+            'description':kwargs['description'],
+            'monitoring_policy':'default',
+            'sites':[],
+            'tenant':kwargs['tenant'],
+            'users':kwargs['users']
+        }
+
+        # Add Dictionary to easyDict
+        class_type = 'tenants'
+        data_type = 'tenants'
+        if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
+            kwargs['easyDict']['tenants'][data_type].append({kwargs['site_group']:[]})
+            
+        count = 0
+        for i in kwargs['easyDict'][class_type][data_type]:
+            for k, v in i.items():
+                if kwargs['site_group'] == k:
+                    kwargs['easyDict'][class_type][data_type][count][kwargs['site_group']].append(dataDict)
+            count += 1
+
+        # Return Dictionary
+        return kwargs['easyDict']
+
+    # Method must be called with the following kwargs.
+    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
+    # for Detailed information on the Arguments used by this Method.
+    def vrf_add(self, wb, ws, row_num, **kwargs):
+        # Open the Network Policies Worksheet
+        ws_net = wb['Network Policies']
+        rows = ws_net.max_row
+
+        # Dicts for required and optional args
+        required_args = {'site_group': '',
+                         'Tenant': '',
+                         'VRF': '',
+                         'VRF_Policy': '',
+                         'Policy_Name': '',
+                         'pc_enf_pref': '',
+                         'pc_enf_dir': '',
+                         'bd_enforce': '',
+                         'enf_type': '',
+                         'fvEpRetPol': '',
+                         'monEPGPol': '',
+                         'ip_dp_learning': '',
+                         'knw_mcast_act': ''}
+        optional_args = {'alias': '',
+                         'description': '',
+                         'annotation': '',
+                         'cons_vzBrCP': '',
+                         'vzCPIf': '',
+                         'prov_vzBrCP': '',
+                         'bgpCtxPol': '',
+                         'bgpCtxAfPol': '',
+                         'ospfCtxPol': '',
+                         'ospfCtxAfPol': '',
+                         'eigrpCtxAfPol': '',
+                         'l3extRouteTagPol': '',
+                         'l3extVrfValidationPol': ''}
+
+
+        # Get the VRF Policies from the Network Policies Tab
+        func = 'VRF'
+        count = countKeys(ws_net, func)
+        row_vrf = ''
+        var_dict = findVars(ws_net, func, rows, count)
+        for pos in var_dict:
+            if var_dict[pos].get('Policy_Name') == kwargs.get('VRF_Policy'):
+                row_vrf = var_dict[pos]['row']
+                del var_dict[pos]['row']
+                kwargs = {**kwargs, **var_dict[pos]}
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+
+        try:
+            # Validate Required Arguments
+            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
+            validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
+            if not templateVars['alias'] == None:
+                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+            if not templateVars['description'] == None:
+                validating.description(row_num, ws, 'description', templateVars['description'])
+            if not templateVars['annotation'] == None:
+                if re.match(',', templateVars['annotation']):
+                    for tag in templateVars['annotation'].split(','):
+                        validating.name_rule(row_num, ws, 'annotation', tag)
+                else:
+                    validating.name_rule(row_num, ws, 'annotation', templateVars['annotation'])
+            validating.values(row_vrf, ws_net, 'bd_enforce', templateVars['bd_enforce'], ['no', 'yes'])
+            validating.values(row_vrf, ws_net, 'ip_dp_learning', templateVars['ip_dp_learning'], ['disabled', 'enabled'])
+            validating.values(row_vrf, ws_net, 'knw_mcast_act', templateVars['knw_mcast_act'], ['deny', 'permit'])
+            validating.values(row_vrf, ws_net, 'pc_enf_dir', templateVars['pc_enf_dir'], ['egress', 'ingress'])
+            validating.values(row_vrf, ws_net, 'pc_enf_pref', templateVars['pc_enf_pref'], ['enforced', 'unenforced'])
+            validating.values(row_vrf, ws_net, 'enf_type', templateVars['enf_type'], ['contract', 'pref_grp', 'vzAny'])
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
+
+        if templateVars['cons_vzBrCP'] == 'default':
+            templateVars['cons_vzBrCP'] = 'uni/tn-common/brc-default'
+        if templateVars['prov_vzBrCP'] == 'default':
+            templateVars['prov_vzBrCP'] = 'uni/tn-common/brc-default'
+        if templateVars['vzCPIf'] == 'default':
+            templateVars['vzCPIf'] = 'uni/tn-common/cif-default'
+        if templateVars['bgpCtxPol'] == 'default':
+            templateVars['bgpCtxPol'] = 'uni/tn-common/bgpCtxP-default'
+        if templateVars['bgpCtxAfPol'] == 'default':
+            templateVars['bgpCtxAfPol'] = 'uni/tn-common/bgpCtxAfP-default'
+        if templateVars['eigrpCtxAfPol'] == 'default':
+            templateVars['eigrpCtxAfPol'] = 'uni/tn-common/eigrpCtxAfP-default'
+        if templateVars['ospfCtxPol'] == 'default':
+            templateVars['ospfCtxPol'] = 'uni/tn-common/ospfCtxP-default'
+        if templateVars['ospfCtxAfPol'] == 'default':
+            templateVars['ospfCtxAfPol'] = 'uni/tn-common/ospfCtxP-default'
+        if templateVars['fvEpRetPol'] == 'default':
+            templateVars['fvEpRetPol'] = 'uni/tn-common/epRPol-default'
+        if templateVars['monEPGPol'] == 'default':
+            templateVars['monEPGPol'] = 'uni/tn-common/monepg-default'
+        if templateVars['l3extVrfValidationPol'] == 'default':
+            templateVars['l3extVrfValidationPol'] = 'uni/tn-common/vrfvalidationpol-default'
+
+        # Define the Template Source
+        template_file = "vrf.jinja2"
+        template = self.templateEnv.get_template(template_file)
+
+        # Process the template through the Sites
+        dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
+        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+
+        if templateVars['enf_type'] == 'pref_grp':
+            # Define the Template Source
+            template_file = "pref_grp.jinja2"
+            template = self.templateEnv.get_template(template_file)
+
+            # Process the template through the Sites
+            dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
+            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+
+        elif templateVars['enf_type'] == 'vzAny':
+            # Define the Template Source
+            template_file = "vzAny.jinja2"
+            template = self.templateEnv.get_template(template_file)
+
+            # Process the template through the Sites
+            dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
+            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+
+        # Define the Template Source
+        template_file = "snmp_ctx.jinja2"
+        template = self.templateEnv.get_template(template_file)
+
+        # Process the template through the Sites
+        dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
+        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+
+    def write_to_files(self, **easyDict):
+        functionList = ['tenants']
+        for func in functionList:
+            func_type = 'tenants'
+            # jsonDump = json.dumps(easyDict[func_type][func], indent=4)
+            # print(jsonDump)
+            # exit()
+            count = 0
+            for i in easyDict[func_type][func]:
+                firstVArs = easyDict[func_type][func][count]
+                for k, v in firstVArs.items():
+                    tcount = 0
+                    for i in v:
+                        templateVars = v[tcount]
+                        templateVars['row_num'] = '%s_section' % (func)
+                        templateVars['site_group'] = k
+                        templateVars['ws'] = easyDict['ws']
+                        
+                        # Add Variables for Template Functions
+                        templateVars["initial_write"] = True
+                        templateVars['policy_type'] = func.replace('_', ' ').capitalize()
+                        templateVars["template_file"] = 'template_open.jinja2'
+                        templateVars['template_type'] = func
+                        templateVars['tfvars_file'] = func
+                        
+                        # Write to the Template file and Return Dictionary
+                        write_to_site(self, **templateVars)
+
+                        templateVars["initial_write"] = False
+                        templateVars["template_file"] = f'{func}.jinja2'
+
+                        # Write to the Template file and Return Dictionary
+                        write_to_site(self, **templateVars)
+
+                        templateVars["initial_write"] = False
+                        templateVars["template_file"] = 'template_close.jinja2'
+
+                        # Write to the Template file and Return Dictionary
+                        write_to_site(self, **templateVars)
+                        tcount += 1
+                count += 1

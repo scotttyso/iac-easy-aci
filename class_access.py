@@ -89,8 +89,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         templateVars['phys_count'] = 0
         templateVars['l3_count'] = 0
@@ -192,8 +192,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
 
         # Define the Template Source
@@ -238,8 +238,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
 
         # Define the Template Source
@@ -273,8 +273,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if templateVars['Switch_Role'] == 'leaf':
             # Define the Template Source
@@ -451,8 +451,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
 
         # Define the Template Source
@@ -483,8 +483,8 @@ class access(object):
             validating.name_rule(row_num, ws, 'Name', templateVars['Name'])
             validating.name_rule(row_num, ws, 'VLAN_Pool', templateVars['VLAN_Pool'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
 
         # Define the Template Source
@@ -550,8 +550,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "leaf_policy_group.jinja2"
@@ -593,8 +593,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
 
         # Define the Template Source
@@ -631,8 +631,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
 
         # Define the Template Source
@@ -667,8 +667,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
 
         # Define the Template Source
@@ -718,8 +718,8 @@ class access(object):
                 templateVars['IPv6'] = '::'
                 templateVars['GWv6'] = '::'
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "static_node_mgmt_address.jinja2"
@@ -845,8 +845,8 @@ class access(object):
                 validating.name_rule(row_pg, ws_net, 'stormctrlIfPol', templateVars['stormctrlIfPol'])
                 templateVars['stormctrlIfPol'] = 'uni/infra/stormctrlifp-%s' % (templateVars['stormctrlIfPol'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "leaf_intf_pg_access.jinja2"
@@ -967,8 +967,8 @@ class access(object):
                 validating.name_rule(row_pg, ws_net, 'stormctrlIfPol', templateVars['stormctrlIfPol'])
                 templateVars['stormctrlIfPol'] = 'uni/infra/stormctrlifp-%s' % (templateVars['stormctrlIfPol'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "leaf_intf_pg_bundle.jinja2"
@@ -1000,8 +1000,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "leaf_intf_pg_breakout.jinja2"
@@ -1048,8 +1048,8 @@ class access(object):
                 validating.name_rule(row_num, ws, 'macsecIfPol', templateVars['macsecIfPol'])
                 templateVars['macsecIfPol'] = 'uni/infra/macsecifpol-%s' % (templateVars['macsecIfPol'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "spine_intf_pg_access.jinja2"
@@ -1079,8 +1079,8 @@ class access(object):
             validating.name_rule(row_num, ws, 'Name', templateVars['Name'])
             validating.name_rule(row_num, ws, 'VLAN_Pool', templateVars['VLAN_Pool'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
 
         # Define the Template Source
@@ -1129,8 +1129,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Create ctrl templateVars
         ctrl_count = 0
@@ -1196,8 +1196,8 @@ class access(object):
             validating.hostname(row_num, ws, 'Name', templateVars['Name'])
             validating.number_check(row_num, ws, 'Node_ID', templateVars['Node_ID'], 101, 4001)
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Create Port Name Var
         zz = templateVars['Port'].split('/')
@@ -1237,8 +1237,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
 
         # Define the Template Source
@@ -1281,8 +1281,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "spine_policy_group.jinja2"
@@ -1318,8 +1318,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Create ctrl templateVars
         ctrl_count = 0
@@ -1411,8 +1411,8 @@ class access(object):
             if not templateVars['Remote_ID'] == None:
                 validating.number_check(row_num, ws, 'Remote_ID', templateVars['Remote_ID'], 1, 255)
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Configure the Generic Template Variables for Node Management Inband IP's
         templateVars['Device_Type'] = 'switch'
@@ -1738,8 +1738,8 @@ class access(object):
             if not templateVars['Description'] == None:
                 validating.description(row_num, ws, 'Description', templateVars['Description'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         if templateVars['Switch_Role'] == 'leaf':
@@ -1797,12 +1797,12 @@ class access(object):
             if not templateVars['VLAN_Grp2'] == None:
                 validating.vlans(row_num, ws, 'VLAN_Grp2', templateVars['VLAN_Grp2'])
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         if templateVars['Name'] == None:
-            Error_Return = 'Error on Worksheet %s Row %s.  Could not Determine the Name of the VLAN Pool.' % (ws.title, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = 'Error on Worksheet %s Row %s.  Could not Determine the Name of the VLAN Pool.' % (ws.title, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "vlan_pool.jinja2"
@@ -1918,8 +1918,8 @@ class access(object):
             validating.number_check(row_num, ws, 'Node1_ID', templateVars['Node1_ID'], 101, 4001)
             validating.number_check(row_num, ws, 'Node2_ID', templateVars['Node2_ID'], 101, 4001)
         except Exception as err:
-            Error_Return = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
-            raise ErrException(Error_Return)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "vpc_domain.jinja2"
