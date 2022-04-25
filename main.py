@@ -20,6 +20,7 @@ from class_fabric import fabric
 from class_system_settings import system_settings, site_policies
 from class_tenants import tenants
 from easy_functions import countKeys, findKeys, findVars, read_in, stdout_log
+from easy_functions import wr_auto_tfvars
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -293,7 +294,7 @@ def process_system_settings(easyDict, easy_jsonData, wb):
     class_init = 'system_settings'
     class_folder = 'system_settings'
     func_regex = system_settings_regex
-    ws = wb['System_Settings']
+    ws = wb['System Settings']
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
@@ -316,7 +317,6 @@ def process_vmm(easyDict, easy_jsonData, wb):
     return easyDict
 
 def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
-    class_folder = class_folder
     rows = ws.max_row
     func_list = findKeys(ws, func_regex)
     stdout_log(ws, None)
@@ -332,6 +332,7 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
             stdout_log(ws, row_num)
             var_dict[pos].update(
                 {
+                    'class_folder':class_folder,
                     'easyDict':easyDict,
                     'easy_jsonData':easy_jsonData,
                     'row_num':row_num,
@@ -340,10 +341,8 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
                 }
             )
             easyDict = eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
-    func = 'write_to_files'
-    easyDict.update({'wb':wb,'ws':ws})
-    if re.search('(fabric|tenants)', class_folder):
-        eval(f"{class_init}(class_folder).{func}(**easyDict)")
+    
+    # Return the easyDict
     return easyDict
 
 def wb_update(wr_ws, status, i):
@@ -487,6 +486,12 @@ def main():
         },
         'inventory':{},
         'sites':{},
+        'system_settings':{
+            'apic_connectivity_preference':[],
+            'bgp_asn':[],
+            'bgp_rr':[],
+            'global_aes_encryption_settings':[]
+        },
         'tenants':{
             'application_epgs':[],
             'application_profiles':[],
@@ -510,7 +515,6 @@ def main():
             'tenants':[],
             'vrfs':[],
         },
-        'system_settings':{},
         'wb':wb
     }
 
@@ -557,7 +561,8 @@ def main():
         easyDict = process_system_settings(easyDict, easy_jsonData, wb)
         easyDict = process_fabric(easyDict, easy_jsonData, wb)
         easyDict = process_tenants(easyDict, easy_jsonData, wb)
-        easyDict = process_epgs(easyDict, easy_jsonData, wb)
+        # easyDict = process_epgs(easyDict, easy_jsonData, wb)
+        wr_auto_tfvars(easy_jsonData, **easyDict)
         print('Exiting Script')
         exit()
         easyDict = process_bridge_domains(easyDict, easy_jsonData, wb)

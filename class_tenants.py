@@ -12,8 +12,8 @@ from class_terraform import terraform_cloud
 from easy_functions import countKeys, create_tf_file, findVars
 from easy_functions import process_kwargs, process_workbook
 from easy_functions import sensitive_var_site_group
-from easy_functions import write_to_site
-from easy_functions import write_to_template
+from easy_functions import write_to_site, write_to_template
+from easy_functions import update_easyDict
 from openpyxl import load_workbook
 
 aci_template_path = pkg_resources.resource_filename('class_tenants', 'templates/')
@@ -762,7 +762,7 @@ class tenants(object):
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
-    def epg_add(self, wb, ws, row_num, **kwargs):
+    def epg_add(self, **kwargs):
         # Set Locally Used Variables
         wb = kwargs['wb']
         ws = kwargs['ws']
@@ -778,7 +778,7 @@ class tenants(object):
         row_epg = ''
         var_dict = findVars(ws_net, func, rows, count)
         for pos in var_dict:
-            if var_dict[pos].get('Policy_Name') == kwargs.get('EPG_Policy'):
+            if var_dict[pos].get('policy_name') == kwargs.get('epg_policy'):
                 row_epg = var_dict[pos]['row']
                 del var_dict[pos]['row']
                 kwargs = {**kwargs, **var_dict[pos]}
@@ -791,8 +791,6 @@ class tenants(object):
             'name': '',
             'bridge_domain': '',
             'contract_exception_tag': '',
-            'epg_policy': '',
-            'policy_name': '',
             'useg_epg': '',
             'qos_class': '',
             'intra_epg_isolation': '',
@@ -2465,30 +2463,16 @@ class tenants(object):
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
             raise ErrException(errorReturn)
 
-        dataDict = {
-            'alias':kwargs['alias'],
-            'annotations': kwargs['annotations'],
-            'description':kwargs['description'],
+        upDates = {
             'monitoring_policy':'default',
             'sites':[],
-            'tenant':kwargs['tenant'],
-            'users':kwargs['users']
         }
+        kwargs.update(upDates)
 
         # Add Dictionary to easyDict
-        class_type = 'tenants'
-        data_type = 'tenants'
-        if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
-            kwargs['easyDict']['tenants'][data_type].append({kwargs['site_group']:[]})
-            
-        count = 0
-        for i in kwargs['easyDict'][class_type][data_type]:
-            for k, v in i.items():
-                if kwargs['site_group'] == k:
-                    kwargs['easyDict'][class_type][data_type][count][kwargs['site_group']].append(dataDict)
-            count += 1
-
-        # Return Dictionary
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'tenants'
+        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
     # Method must be called with the following kwargs.
@@ -2628,23 +2612,20 @@ class tenants(object):
         dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
-    def write_to_files(self, **easyDict):
+    def wr_auto_tfvars(self, **easyDict):
         functionList = ['tenants']
         for func in functionList:
             func_type = 'tenants'
             # jsonDump = json.dumps(easyDict[func_type][func], indent=4)
             # print(jsonDump)
             # exit()
-            count = 0
-            for i in easyDict[func_type][func]:
-                firstVArs = easyDict[func_type][func][count]
-                for k, v in firstVArs.items():
-                    tcount = 0
+            for item in easyDict[func_type][func]:
+                for k, v in item.items():
                     for i in v:
-                        templateVars = v[tcount]
+                        templateVars = i
                         templateVars['row_num'] = '%s_section' % (func)
                         templateVars['site_group'] = k
-                        templateVars['ws'] = easyDict['ws']
+                        templateVars['ws'] = easyDict['wb']['Tenants']
                         
                         # Add Variables for Template Functions
                         templateVars["initial_write"] = True
@@ -2667,5 +2648,3 @@ class tenants(object):
 
                         # Write to the Template file and Return Dictionary
                         write_to_site(self, **templateVars)
-                        tcount += 1
-                count += 1

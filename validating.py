@@ -232,14 +232,6 @@ def name_complexity(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def not_empty(row_num, ws, var, var_value):
-    if var_value == None:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. This is a  ')
-        print(f'   required variable.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
 def number_check(row_num, ws, var, var_value, min_x, max_x):
     if not (int(var_value) >= int(min_x) and int(var_value) <= int(max_x)):
         print(f'\n-----------------------------------------------------------------------------\n')
@@ -275,7 +267,7 @@ def qos_priority(row_num, ws, var, var_value):
         exit()
 
 def site_group(row_num, ws, var, var_value):
-    if re.search('Grp_', var_value):
+    if 'Grp_' in var_value:
         if not re.search('Grp_[A-F]', var_value):
             print(f'\n-----------------------------------------------------------------------------\n')
             print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
@@ -495,6 +487,14 @@ def name_rule(row_num, ws, var, var_value):
         print(f'    - Max Length 63')
         print(f'    - Regex [a-zA-Z0-9_-]+')
         print(f'    Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def not_empty(row_num, ws, var, var_value):
+    if var_value == None:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. This is a  ')
+        print(f'   required variable.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 

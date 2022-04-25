@@ -1,6 +1,98 @@
 {
     "components":{
         "schemas":{
+            "easy_aci":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "classes":{
+                                "enum": [
+                                    "fabric",
+                                    "system_settings",
+                                    "tenants"
+                                ]
+                            },
+                            "class.fabric":{
+                                "enum": [
+                                    "date_and_time"
+                                ]
+                            },
+                            "class.system_settings":{
+                                "enum": [
+                                    "apic_connectivity_preference",
+                                    "bgp_asn",
+                                    "bgp_rr",
+                                    "global_aes_encryption_settings"
+                                ]
+                            },
+                            "class.tenants":{
+                                "enum": [
+                                    "tenants"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.dateandTime":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "administrative_state":{
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ]
+                            },
+                            "display_format":{
+                                "enum": [
+                                    "local",
+                                    "utc"
+                                ]
+                            },
+                            "master_mode":{
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ]
+                            },
+                            "offset_state":{
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ]
+                            },
+                            "server_state":{
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ]
+                            },
+                            "stratum_value":{
+                                "enum": [
+                                    1,
+                                    2,
+                                    3,
+                                    4,
+                                    5,
+                                    6,
+                                    7,
+                                    8,
+                                    9,
+                                    10,
+                                    11,
+                                    12,
+                                    13,
+                                    14,
+                                    15
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
             "global.AESPassphrase":{
                 "allOf":[
                     {},
@@ -10,6 +102,95 @@
                                 "minimum": 16,
                                 "maximum": 32,
                                 "pattern":"^[\\S+]{16,32}$"
+                            }
+                        }
+                    }
+                ]
+            },
+            "site.Variables":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "auth_type":{
+                                "enum": [
+                                    "ssh-key",
+                                    "username"
+                                ]
+                            },
+                            "configure_terraform_cloud":{
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ]
+                            },
+                            "controller_type":{
+                                "enum": [
+                                    "apic",
+                                    "ndo"
+                                ]
+                            },
+                            "provider_version_apic":{
+                                "enum": [
+                                    "1.2.0",
+                                    "1.1.0"
+                                ]
+                            },
+                            "provider_version_ndo":{
+                                "enum": [
+                                    "1.2.0",
+                                    "1.1.0"
+                                ]
+                            },
+                            "run_location":{
+                                "enum": [
+                                    "local",
+                                    "tfc"
+                                ]
+                            },
+                            "terraform_version":{
+                                "enum": [
+                                    "1.1.8",
+                                    "1.1.7",
+                                    "1.1.6",
+                                    "1.1.5",
+                                    "1.1.4",
+                                    "1.1.3",
+                                    "1.1.2",
+                                    "1.1.1"
+                                ]
+                            },
+                            "version_apic":{
+                                "enum": [
+                                    "5.2",
+                                    "5.1",
+                                    "5.0",
+                                    "4.2",
+                                    "3.2"
+                                ]
+                            },
+                            "version_ndo":{
+                                "enum": [
+                                    "3.7",
+                                    "3.6",
+                                    "3.5",
+                                    "3.4"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            "system.apicPreference":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "apic_connectivity_preference":{
+                                "enum": [
+                                    "ooband",
+                                    "inband"
+                                ]
                             }
                         }
                     }

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import jinja2
+import json
 import os
 import pkg_resources
 import re
@@ -8,9 +9,8 @@ import validating
 from class_terraform import terraform_cloud
 from easy_functions import process_kwargs
 from easy_functions import sensitive_var_site_group
-from easy_functions import write_to_site
-from easy_functions import write_to_template
-from openpyxl import load_workbook
+from easy_functions import write_to_site, write_to_template
+from easy_functions import update_easyDict
 
 aci_template_path = pkg_resources.resource_filename('class_fabric', 'templates/')
 
@@ -39,40 +39,43 @@ class fabric(object):
     # for Detailed information on the Arguments used by this Method.
     def date_time(self, **kwargs):
         # Set Locally Used Variables
-        wb = kwargs['wb']
         ws = kwargs['ws']
         row_num = kwargs['row_num']
 
         # Dicts for required and optional args
         required_args = {
-            'row_num': '',
             'site_group': '',
-            'wb': '',
-            'ws': '',
             'administrative_state': '',
             'display_format': '',
             'master_mode': '',
             'offset_state': '',
             'server_state': '',
             'stratum_value': '',
-            'time_zone': ''
+            'time_zone': '',
         }
         optional_args = {}
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
+        # Get Variable Values
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.dateandTime']['allOf'][1]['properties']
+
         try:
             # Validate Required Arguments
             validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
-            validating.values(row_num, ws, 'administrative_state', templateVars['administrative_state'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'display_format', templateVars['display_format'], ['local', 'utc'])
-            validating.values(row_num, ws, 'master_mode', templateVars['master_mode'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'offset_state', templateVars['offset_state'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'server_state', templateVars['server_state'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'stratum_value', templateVars['stratum_value'], [
-                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-            ])
+            validating.values(row_num, ws, 'administrative_state', templateVars['administrative_state'], 
+                jsonData['administrative_state']['enum'])
+            validating.values(row_num, ws, 'display_format', templateVars['display_format'],
+                jsonData['display_format']['enum'])
+            validating.values(row_num, ws, 'master_mode', templateVars['master_mode'],
+                jsonData['master_mode']['enum'])
+            validating.values(row_num, ws, 'offset_state', templateVars['offset_state'],
+                jsonData['offset_state']['enum'])
+            validating.values(row_num, ws, 'server_state', templateVars['server_state'],
+                jsonData['server_state']['enum'])
+            validating.values(row_num, ws, 'stratum_value', templateVars['stratum_value'],
+                jsonData['stratum_value']['enum'])
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
             raise ErrException(errorReturn)
@@ -80,22 +83,17 @@ class fabric(object):
         if templateVars['server_state'] == 'disabled':
             templateVars['master_mode'] = 'disabled'
         
-        date_time = {
-            'administrative_state':kwargs['administrative_state'],
+        upDates = {
             'authentication_keys': [],
-            'display_format':kwargs['display_format'],
-            'master_mode':kwargs['master_mode'],
             'name':'default',
             'ntp_servers': [],
-            'offset_state':kwargs['offset_state'],
-            'server_state':kwargs['server_state'],
-            'stratum_value':kwargs['stratum_value'],
-            'time_zone':kwargs['time_zone']
         }
+        templateVars.update(upDates)
         
         # Add Dictionary to easyDict
-        kwargs['easyDict']['fabric']['date_and_time'].append({kwargs['site_group']:date_time})
-        # Return Dictionary
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'date_and_time'
+        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
     # Method must be called with the following kwargs.
@@ -286,12 +284,11 @@ class fabric(object):
         }
         
         # Add Dictionary to easyDict
-        count = 0
-        for i in kwargs['easyDict']['fabric']['date_and_time']:
-            for k, v in i.items():
+        for items in kwargs['easyDict']['fabric']['date_and_time']:
+            for k, v in items.items():
                 if k == kwargs['site_group']:
-                    kwargs['easyDict']['fabric']['date_and_time'][count][kwargs['site_group']]['ntp_servers'].append(ntpArgs)
-            count =+ 1
+                    for i in v:
+                        i['ntp_servers'].append(ntpArgs)
 
         # Return Dictionary
         return kwargs['easyDict']
@@ -1006,37 +1003,3 @@ class fabric(object):
         dest_file = 'SNMP_Trap_DestGrp_%s.tf' % (templateVars['SNMP_Trap_DG'])
         dest_dir = 'Fabric'
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-    def write_to_files(self, **easyDict):
-        functionList = ['date_and_time']
-        count = 0
-        for func in functionList:
-            func_type = 'fabric'
-            firstVArs = easyDict[func_type][func][count]
-            for k, v in firstVArs.items():
-                templateVars = v
-                templateVars['row_num'] = f'{func}_section'
-                templateVars['site_group'] = k
-                templateVars['ws'] = easyDict['ws']
-                
-                # Add Variables for Template Functions
-                templateVars["initial_write"] = True
-                templateVars['policy_type'] = func.replace('_', ' ').capitalize()
-                templateVars["template_file"] = 'template_open.jinja2'
-                templateVars['template_type'] = func
-                templateVars['tfvars_file'] = func
-                
-                # Write to the Template file and Return Dictionary
-                write_to_site(self, **templateVars)
-
-                templateVars["initial_write"] = False
-                templateVars["template_file"] = f'{func}.jinja2'
-
-                # Write to the Template file and Return Dictionary
-                write_to_site(self, **templateVars)
-
-                templateVars["initial_write"] = False
-                templateVars["template_file"] = 'template_close.jinja2'
-
-                # Write to the Template file and Return Dictionary
-                write_to_site(self, **templateVars)

@@ -3,8 +3,10 @@
 from openpyxl import load_workbook
 from ordered_set import OrderedSet
 import ast
+import jinja2
 import json
 import os
+import pkg_resources
 import platform
 import re
 import subprocess
@@ -988,41 +990,47 @@ def vlan_range(vlan_list, **templateVars):
         return results
 
 # Function to Determine which sites to write files to
-def write_to_site(self, **templateVars):
-    ws = templateVars["ws"]
-    row_num = templateVars["row_num"]
-    site_group = str(templateVars['site_group'])
+def write_to_site(**kwargs):
+    class_type = kwargs['class_type']
+    aci_template_path = pkg_resources.resource_filename(f'class_{class_type}', 'templates/')
+
+    templateLoader = jinja2.FileSystemLoader(
+        searchpath=(aci_template_path + '%s/') % (class_type))
+    templateEnv = jinja2.Environment(loader=templateLoader)
+    ws = kwargs["ws"]
+    row_num = kwargs["row_num"]
+    site_group = str(kwargs['site_group'])
     
     # Define the Template Source
-    templateVars["template"] = self.templateEnv.get_template(templateVars["template_file"])
+    kwargs["template"] = templateEnv.get_template(kwargs["template_file"])
 
     # Process the template
-    if 'tenants' in self.type:
-        templateVars["dest_dir"] = 'tenant_%s' % (templateVars['tenant'])
+    if 'tenants' in class_type:
+        kwargs["dest_dir"] = 'tenant_%s' % (kwargs['tenant'])
     else:
-        templateVars["dest_dir"] = '%s' % (self.type)
-    templateVars["dest_file"] = '%s.auto.tfvars' % (templateVars["tfvars_file"])
-    if templateVars["initial_write"] == True:
-        templateVars["write_method"] = 'w'
+        kwargs["dest_dir"] = '%s' % (class_type)
+    kwargs["dest_file"] = '%s.auto.tfvars' % (kwargs["tfvars_file"])
+    if kwargs["initial_write"] == True:
+        kwargs["write_method"] = 'w'
     else:
-        templateVars["write_method"] = 'a'
+        kwargs["write_method"] = 'a'
 
-    def process_siteDetails(site_dict, **templateVars):
-        # Create templateVars for site_name controller and controller_type
-        templateVars['controller'] = site_dict.get('controller')
-        templateVars['controller_type'] = site_dict.get('controller_type')
-        templateVars['site_name'] = site_dict.get('site_name')
-        templateVars['version'] = site_dict.get('version')
+    def process_siteDetails(site_dict, **kwargs):
+        # Create kwargs for site_name controller and controller_type
+        kwargs['controller'] = site_dict.get('controller')
+        kwargs['controller_type'] = site_dict.get('controller_type')
+        kwargs['site_name'] = site_dict.get('site_name')
+        kwargs['version'] = site_dict.get('version')
 
-        if templateVars['controller_type'] == 'ndo' and templateVars['template_type'] == 'tenants':
-            if templateVars['users'] == None:
-                validating.error_tenant_users(**templateVars)
+        if kwargs['controller_type'] == 'ndo' and kwargs['template_type'] == 'tenants':
+            if kwargs['users'] == None:
+                validating.error_tenant_users(**kwargs)
             else:
-                for user in templateVars['users'].split(','):
+                for user in kwargs['users'].split(','):
                     regexp = '^[a-zA-Z0-9\_\-]+$'
                     validating.length_and_regex(regexp, 'users', user, 1, 63)
         # Create Terraform file from Template
-        write_to_template(**templateVars)
+        write_to_template(**kwargs)
 
     if re.search('Grp_[A-F]', site_group):
         group_id = '%s' % (site_group)
@@ -1032,22 +1040,72 @@ def write_to_site(self, **templateVars):
                 site_id = 'site_id_%s' % (site_group[f'site_{x}'])
                 site_dict = ast.literal_eval(os.environ[site_id])
 
-                # Add Site Detials to templateVars and write to template
-                process_siteDetails(site_dict, **templateVars)
+                # Add Site Detials to kwargs and write to template
+                process_siteDetails(site_dict, **kwargs)
 
     elif re.search(r'\d+', site_group):
         site_id = 'site_id_%s' % (site_group)
         site_dict = ast.literal_eval(os.environ[site_id])
 
-        # Add Site Detials to templateVars and write to template
-        process_siteDetails(site_dict, **templateVars)
+        # Add Site Detials to kwargs and write to template
+        process_siteDetails(site_dict, **kwargs)
 
     else:
         print(f"\n-----------------------------------------------------------------------------\n")
-        print(f"   Error on Worksheet {ws.title}, Row {row_num} Site_Group, value {templateVars['site_group']}.")
+        print(f"   Error on Worksheet {ws.title}, Row {row_num} Site_Group, value {kwargs['site_group']}.")
         print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
         print(f"\n-----------------------------------------------------------------------------\n")
         exit()
+
+# Function for Creating the Auto Tfvars files
+def wr_auto_tfvars(easy_jsonData, **easyDict):
+    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
+    classes = jsonData['classes']['enum']
+    for class_type in classes:
+        funcList = jsonData[f'class.{class_type}']['enum']
+        for func in funcList:
+            for item in easyDict[class_type][func]:
+                print(class_type)
+                print(func)
+                for k, v in item.items():
+                    for i in v:
+                        kwargs = i
+                        kwargs['row_num'] = f'{func}_section'
+                        kwargs['site_group'] = k
+                        kwargs['ws'] = easyDict['wb']['System Settings']
+                        
+                        # Add Variables for Template Functions
+                        kwargs['template_type'] = func
+                            
+                        if re.search('(apic|bgp_asn)', func):
+                            kwargs["template_file"] = 'template_open2.jinja2'
+                        else:
+                            kwargs["template_file"] = 'template_open.jinja2'
+                        if 'bgp' in func:
+                            kwargs['policy_type'] = func.replace('_', ' ').upper()
+                            kwargs['tfvars_file'] = 'bgp'
+                        else:
+                            kwargs['policy_type'] = func.replace('_', ' ').capitalize()
+                            kwargs['tfvars_file'] = func
+                        
+                        # Write the Header to the Template File
+                        if 'bgp_rr' in func:
+                            kwargs["initial_write"] = False
+                        else:
+                            kwargs["initial_write"] = True
+                        write_to_site(**kwargs)
+
+                        # Write the template to the Template File
+                        kwargs["initial_write"] = False
+                        kwargs["template_file"] = f'{func}.jinja2'
+                        write_to_site(**kwargs)
+
+                        kwargs["initial_write"] = False
+                        kwargs["template_file"] = 'template_close.jinja2'
+
+                        if not re.search('apic|bgp_asn', func):
+                            # Write the Footer to the Template File
+                            write_to_site(**kwargs)
 
 # Function to write files
 def write_to_template(**templateVars):    
@@ -1104,3 +1162,18 @@ def write_to_template(**templateVars):
     payload = template.render(templateVars)
     wr_file.write(payload)
     wr_file.close()
+
+# Update the easyDict Dictionary
+def update_easyDict(templateVars, **kwargs):
+    class_type = templateVars['class_type']
+    data_type = templateVars['data_type']
+    if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
+        kwargs['easyDict'][class_type][data_type].append({kwargs['site_group']:[]})
+        
+    count = 0
+    for i in kwargs['easyDict'][class_type][data_type]:
+        for k, v in i.items():
+            if kwargs['site_group'] == k:
+                i[kwargs['site_group']].append(templateVars)
+        count += 1
+    return kwargs['easyDict']
