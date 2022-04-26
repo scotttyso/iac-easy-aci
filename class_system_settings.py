@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 
-import jinja2
-import os
-import pkg_resources
-import re
-import validating
 from class_terraform import terraform_cloud
 from easy_functions import process_kwargs
 from easy_functions import sensitive_var_site_group
 from easy_functions import update_easyDict
 from openpyxl import load_workbook
-
-aci_template_path = pkg_resources.resource_filename('class_system_settings', 'templates/')
+import os
+import validating
 
 # Exception Classes
 class InsufficientArgs(Exception):
@@ -28,9 +23,6 @@ class LoginFailed(Exception):
 
 class system_settings(object):
     def __init__(self, type):
-        self.templateLoader = jinja2.FileSystemLoader(
-            searchpath=(aci_template_path + '%s/') % (type))
-        self.templateEnv = jinja2.Environment(loader=self.templateLoader)
         self.type = type
 
     #==============================================
@@ -166,10 +158,8 @@ class system_settings(object):
 
 # Class must be instantiated with Variables
 class site_policies(object):
-    def __init__(self, class_folder):
-        self.templateLoader = jinja2.FileSystemLoader(
-            searchpath=(aci_template_path + '%s/') % (class_folder))
-        self.templateEnv = jinja2.Environment(loader=self.templateLoader)
+    def __init__(self, type):
+        self.type = type
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers

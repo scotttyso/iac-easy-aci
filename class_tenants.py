@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
 
-import ast
+from class_terraform import terraform_cloud
+from easy_functions import countKeys, findVars
+from easy_functions import process_kwargs, process_workbook
+from easy_functions import sensitive_var_site_group
+from easy_functions import write_to_site
+from easy_functions import update_easyDict
 import ipaddress
 import jinja2
-import json
-import os
 import pkg_resources
 import re
 import validating
-from class_terraform import terraform_cloud
-from easy_functions import countKeys, create_tf_file, findVars
-from easy_functions import process_kwargs, process_workbook
-from easy_functions import sensitive_var_site_group
-from easy_functions import write_to_site, write_to_template
-from easy_functions import update_easyDict
-from openpyxl import load_workbook
 
 aci_template_path = pkg_resources.resource_filename('class_tenants', 'templates/')
 

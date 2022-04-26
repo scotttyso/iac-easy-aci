@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 
-import jinja2
-import json
-import os
-import pkg_resources
-import re
-import validating
 from class_terraform import terraform_cloud
 from easy_functions import process_kwargs
 from easy_functions import sensitive_var_site_group
-from easy_functions import write_to_site, write_to_template
+from easy_functions import write_to_site
 from easy_functions import update_easyDict
-
-aci_template_path = pkg_resources.resource_filename('class_fabric', 'templates/')
+import re
+import validating
 
 # Exception Classes
 class InsufficientArgs(Exception):
@@ -29,9 +23,6 @@ class LoginFailed(Exception):
 
 class fabric(object):
     def __init__(self, type):
-        self.templateLoader = jinja2.FileSystemLoader(
-            searchpath=(aci_template_path + '%s/') % (type))
-        self.templateEnv = jinja2.Environment(loader=self.templateLoader)
         self.type = type
 
     # Method must be called with the following kwargs.

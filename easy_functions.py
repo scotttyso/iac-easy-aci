@@ -2,6 +2,7 @@
 
 from openpyxl import load_workbook
 from ordered_set import OrderedSet
+from textwrap import fill
 import ast
 import jinja2
 import json
@@ -13,8 +14,6 @@ import subprocess
 import sys
 import stdiomask
 import validating
-# from class_policies_domain import policies_domain
-from textwrap import fill
 
 # Log levels 0 = None, 1 = Class only, 2 = Line
 log_level = 2
