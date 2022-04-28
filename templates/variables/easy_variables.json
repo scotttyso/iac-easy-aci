@@ -35,42 +35,73 @@
                     }
                 ]
             },
-            "fabric.dateandTime":{
+            "fabric.DateandTime":{
                 "allOf":[
                     {},
                     {
                         "properties":{
                             "administrative_state":{
+                                "description": "Date and Time Policy Administrative State.",
+                                "type": "string",
                                 "enum": [
                                     "disabled",
                                     "enabled"
-                                ]
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
                             },
                             "display_format":{
+                                "description": "Date and Time Display Format.",
+                                "type": "string",
                                 "enum": [
                                     "local",
                                     "utc"
-                                ]
+                                ],
+                                "default": "local",
+                                "x-omitempty": true
                             },
                             "master_mode":{
+                                "description": "Date and Time Display Format.",
+                                "type": "string",
                                 "enum": [
                                     "disabled",
                                     "enabled"
-                                ]
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
                             },
                             "offset_state":{
+                                "description": "Date and Time Policy Offset State.",
+                                "type": "string",
                                 "enum": [
                                     "disabled",
                                     "enabled"
-                                ]
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {},
+                            "required_args": {
+                                "administrative_state": "",
+                                "display_format": "",
+                                "master_mode": "",
+                                "offset_state": "",
+                                "server_state": "",
+                                "site_group": "",
+                                "stratum_value": "",
+                                "time_zone": ""
                             },
                             "server_state":{
+                                "description": "Date and Time Server State.",
+                                "type": "string",
                                 "enum": [
                                     "disabled",
                                     "enabled"
                                 ]
                             },
                             "stratum_value":{
+                                "description": "Date and Time Server Stratum Value.",
+                                "type": "string",
                                 "enum": [
                                     1,
                                     2,
@@ -93,63 +124,522 @@
                     }
                 ]
             },
-            "global.AESPassphrase":{
+            "fabric.dnsProfiles":{
                 "allOf":[
                     {},
                     {
                         "properties":{
-                            "Password":{
-                                "minimum": 16,
-                                "maximum": 32,
-                                "pattern":"^[\\S+]{16,32}$"
+                            "management_epg_type":{
+                                "description": "The Type of Management EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "inb",
+                                    "oob"
+                                ],
+                                "default": "oob",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": ""                                
+                            },
+                            "preferred":{
+                                "description": "Prefer DNS Server 1 or 2.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 2,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "default_domain": "",
+                                "dns_providers": "",
+                                "domain_list": "",
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "preferred": "",
+                                "site_group": ""
                             }
                         }
                     }
                 ]
             },
-            "site.Variables":{
+            "fabric.Ntp":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "key_id":{
+                                "description": "NTP Key Options.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "x-omitempty": true
+                            },
+                            "maximum_polling_interval":{
+                                "description": "The Maximum Polling Interval.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 4,
+                                "maximum": 16,
+                                "x-omitempty": true
+                            },
+                            "management_epg_type":{
+                                "description": "The Type of Management EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "inb",
+                                    "oob"
+                                ],
+                                "default": "oob",
+                                "x-omitempty": true
+                            },
+                            "minimum_polling_interval":{
+                                "description": "The Minimum Polling Interval.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 4,
+                                "maximum": 16,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": "",
+                                "key_id": ""                                
+                            },
+                            "preferred":{
+                                "description": "If the NTP Server is Preferred or not.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "hostname": "",
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "maximum_polling_interval": "",
+                                "minimum_polling_interval": "",
+                                "preferred": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.NtpKeys":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "authentication_type":{
+                                "description": "The Authentication Protocol to use.",
+                                "type": "string",
+                                "enum": [
+                                    "md5",
+                                    "sha1"
+                                ],
+                                "default": "sha1",
+                                "x-omitempty": true
+                            },
+                            "key_id":{
+                                "description": "NTP Key Options.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {},
+                            "required_args": {
+                                "authentication_type": "",
+                                "key_id": "",
+                                "site_group": "",
+                                "trusted": ""
+                            },
+                            "trusted":{
+                                "description": "If the NTP Key is trusted or not.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.schSmtpServer":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "management_epg_type":{
+                                "description": "The Type of Management EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "inb",
+                                    "oob"
+                                ],
+                                "default": "oob",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "username" : ""
+                            },
+                            "Password":{
+                                "description": "NTP Key Options.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 128,
+                                "pattern":"^[\\S+]{1,128}$",
+                                "x-omitempty": true
+                            },
+                            "port_number":{
+                                "description": "NTP Key Options.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "port_number" : "",
+                                "secure_smtp" : "",
+                                "smtp_server" : "",
+                                "site_group" : ""
+                            },
+                            "secure_smtp":{
+                                "description": "Does the SMTP Server Require Credentials.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.smartCallHome":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "admin_state":{
+                                "description": "Admin State of the Smart Call Home Policy.",
+                                "type": "string",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "audit_logs":{
+                                "description": "Audit Log Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "events":{
+                                "description": "Audit Log Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "faults":{
+                                "description": "Faults Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "contact_information" : "",
+                                "contract_id" : "",
+                                "customer_id" : "",
+                                "customer_contact_email" : "",
+                                "from_email" : "",
+                                "phone_contact" : "",
+                                "reply_to_email" : "",
+                                "site_id" : "",
+                                "street_address" : ""
+                            },
+                            "required_args": {
+                                "admin_state" : "",
+                                "audit_logs" : "",
+                                "events" : "",
+                                "faults" : "",
+                                "session_logs" : "",
+                                "site_group" : ""
+                            },
+                            "session_logs":{
+                                "description": "Session Log Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.smartDestinations":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "admin_state":{
+                                "description": "Admin State of the Smart Call Home Smart Destination.",
+                                "type": "string",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "format":{
+                                "description": "Format of the Email.",
+                                "type": "string",
+                                "enum": [
+                                    "aml",
+                                    "short-txt",
+                                    "xml"
+                                ],
+                                "default": "short-txt",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {},
+                            "required_args": {
+                                "admin_state" : "",
+                                "email" : "",
+                                "format" : "",
+                                "rfc_compliant" : "",
+                                "site_group" : ""
+                            },
+                            "rfc_compliant":{
+                                "description": "Should the Message be RFC Compliant.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.snmpPolicy":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "admin_state":{
+                                "description": "Admin State of the SNMP Policy.",
+                                "type": "string",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "audit_logs":{
+                                "description": "Audit Log Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "events":{
+                                "description": "Audit Log Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "faults":{
+                                "description": "Faults Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "contact" : "",
+                                "location" : ""
+                            },
+                            "required_args": {
+                                "admin_state" : "",
+                                "audit_logs" : "",
+                                "events" : "",
+                                "faults" : "",
+                                "session_logs" : "",
+                                "site_group" : ""
+                            },
+                            "session_logs":{
+                                "description": "Session Log Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "site.Groups":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args":{
+                                "site_1": "",
+                                "site_2": "",
+                                "site_3": "",
+                                "site_4": "",
+                                "site_5": "",
+                                "site_6": "",
+                                "site_7": "",
+                                "site_8": "",
+                                "site_9": "",
+                                "site_10": "",
+                                "site_11": "",
+                                "site_12": "",
+                                "site_13": "",
+                                "site_14": "",
+                                "site_15": ""
+                            },
+                            "required_args":{
+                                "site_1": "",
+                                "site_2": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "site.Identifiers":{
                 "allOf":[
                     {},
                     {
                         "properties":{
                             "auth_type":{
+                                "description": "Type of Authentication to use for the Target System.",
+                                "type": "string",
                                 "enum": [
                                     "ssh-key",
                                     "username"
-                                ]
+                                ],
+                                "default": "username",
+                                "x-omitempty": true
                             },
                             "configure_terraform_cloud":{
+                                "description": "Flag to Enable or Disable Terraform Cloud.",
+                                "type": "string",
                                 "enum": [
                                     "false",
                                     "true"
-                                ]
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
                             },
                             "controller_type":{
+                                "description": "Type of Controller for the Target Site.",
+                                "type": "string",
                                 "enum": [
                                     "apic",
                                     "ndo"
-                                ]
+                                ],
+                                "default": "apic",
+                                "x-omitempty": true
                             },
+                            "optional_args":{},
                             "provider_version_apic":{
+                                "description": "Provider Version for the ACI Site.",
+                                "type": "string",
                                 "enum": [
                                     "1.2.0",
                                     "1.1.0"
-                                ]
+                                ],
+                                "default": "oob",
+                                "x-omitempty": true
                             },
                             "provider_version_ndo":{
+                                "description": "Provider Version for the Nexus Dashboard Orchestrator Site.",
+                                "type": "string",
                                 "enum": [
-                                    "1.2.0",
-                                    "1.1.0"
-                                ]
+                                    "0.6.1",
+                                    "0.6.0"
+                                ],
+                                "default": "0.6.1",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "auth_type": "",
+                                "configure_terraform_cloud": "",
+                                "controller": "",
+                                "controller_type": "",
+                                "provider_version": "",
+                                "run_location": "",
+                                "site_id": "",
+                                "site_name": "",
+                                "terraform_version": "",
+                                "version": ""
                             },
                             "run_location":{
+                                "description": "Will the Code be executed in Terraform Cloud or on the local Machine.",
+                                "type": "string",
                                 "enum": [
                                     "local",
                                     "tfc"
-                                ]
+                                ],
+                                "default": "tfc",
+                                "x-omitempty": true
                             },
                             "terraform_version":{
+                                "description": "Version of Terraform to Use.",
+                                "type": "string",
                                 "enum": [
+                                    "1.1.9",
                                     "1.1.8",
                                     "1.1.7",
                                     "1.1.6",
@@ -158,30 +648,40 @@
                                     "1.1.3",
                                     "1.1.2",
                                     "1.1.1"
-                                ]
+                                ],
+                                "default": "1.1.9",
+                                "x-omitempty": true
                             },
                             "version_apic":{
+                                "description": "Version of Code on the Controller.",
+                                "type": "string",
                                 "enum": [
                                     "5.2",
                                     "5.1",
                                     "5.0",
                                     "4.2",
                                     "3.2"
-                                ]
+                                ],
+                                "default": "5.2",
+                                "x-omitempty": true
                             },
                             "version_ndo":{
+                                "description": "Version of Code on the Controller.",
+                                "type": "string",
                                 "enum": [
                                     "3.7",
                                     "3.6",
                                     "3.5",
                                     "3.4"
-                                ]
+                                ],
+                                "default": "3.7",
+                                "x-omitempty": true
                             }
                         }
                     }
                 ]
             },
-            "system.apicPreference":{
+            "system.apicConnectivityPreference":{
                 "allOf":[
                     {},
                     {
@@ -191,6 +691,256 @@
                                     "ooband",
                                     "inband"
                                 ]
+                            },
+                            "optional_args":{},
+                            "required_args":{
+                                "site_group": "",
+                                "apic_connectivity_preference": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "system.bgpASN":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args":{},
+                            "required_args":{
+                                "autonomous_system_number": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "system.bgpRouteReflector":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args":{},
+                            "required_args":{
+                                "node_list": "",
+                                "pod_id": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "system.globalAesEncryptionSettings":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "enable_encryption":{
+                                "description": "If Encryption should be Enabled or Not.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{},
+                            "Password":{
+                                "minimum": 16,
+                                "maximum": 32,
+                                "pattern":"^[\\S+]{16,32}$"
+                            },
+                            "required_args":{
+                                "clear_passphrase": "",
+                                "enable_encryption": "",
+                                "passphrase_key_derivation_version": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.applicationProfiles":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args":{
+                                "alias": "",
+                                "annotations": "",
+                                "description": "",
+                                "qos_class": ""
+                            },
+                            "preferred_group_member":{
+                                "description": "Preferred Group Member.",
+                                "type": "string",
+                                "enum": [
+                                    "exclude",
+                                    "include"
+                                ],
+                                "default": "exclude",
+                                "x-omitempty": true
+                            },
+                            "qos_class":{
+                                "description": "QoS Class Levels.",
+                                "type": "string",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "name": "",
+                                "site_group": "",
+                                "tenant": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.applicationEpgs":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "epg_admin_state":{
+                                "description": "EPG Admin State.",
+                                "type": "string",
+                                "enum": [
+                                    "admin_up",
+                                    "admin_shut"
+                                ],
+                                "default": "admin_up",
+                                "x-omitempty": true
+                            },
+                            "flood_in_encapsulation":{
+                                "description": "Flood in Encapsulation.",
+                                "type": "string",
+                                "enum": [
+                                    "admin_up",
+                                    "admin_shut"
+                                ],
+                                "default": "admin_up",
+                                "x-omitempty": true
+                            },
+                            "intra_epg_isolation":{
+                                "description": "Intra EPG Isolation.",
+                                "type": "string",
+                                "enum": [
+                                    "enforced",
+                                    "unenforced"
+                                ],
+                                "default": "unenforced",
+                                "x-omitempty": true
+                            },
+                            "label_match_criteria":{
+                                "description": "Label Match Criteria.",
+                                "type": "string",
+                                "enum": [
+                                    "All",
+                                    "AtleastOne",
+                                    "AtmostOne",
+                                    "None"
+                                ],
+                                "default": "AtleastOne",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "alias": "",
+                                "annotations": "",
+                                "contract_exception_tag": "",
+                                "custom_qos": "",
+                                "data_plane_policer": "",
+                                "description": "",
+                                "epg_to_aep": "",
+                                "epg_contract_master": "",
+                                "global_alias": "",
+                                "fhs_trust_control_policy": "",
+                                "fibre_channel_domain_association": "",
+                                "physical_domains": "",
+                                "PVLAN": "",
+                                "vmm_domains": "",
+                                "VLAN": "",
+                                "vzGraphCont": ""
+                            },
+                            "preferred_group_member":{
+                                "description": "Preferred Group Member.",
+                                "type": "string",
+                                "enum": [
+                                    "exclude",
+                                    "include"
+                                ],
+                                "default": "exclude",
+                                "x-omitempty": true
+                            },
+                            "qos_class":{
+                                "description": "QoS Class Levels.",
+                                "type": "string",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "application_profile": "",
+                                "bridge_domain": "",
+                                "contract_exception_tag": "",
+                                "epg_admin_state": "",
+                                "flood_in_encapsulation": "",
+                                "has_multicast_source": "",
+                                "intra_epg_isolation": "",
+                                "label_match_criteria": "",
+                                "name": "",
+                                "preferred_group_member": "",
+                                "qos_class": "",
+                                "site_group": "",
+                                "tenant": "",
+                                "useg_epg": ""
+                            },
+                            "useg_epg":{
+                                "description": "Microseg EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.Tenants":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args":{
+                                "alias": "",
+                                "annotations": "",
+                                "description": "",
+                                "schema": "",
+                                "users": ""
+                            },
+                            "required_args":{
+                                "tenant": "",
+                                "site_group": ""
                             }
                         }
                     }

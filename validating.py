@@ -23,48 +23,13 @@ def brkout_pg(row_num, brkout_pg):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def length_and_regex(regex_pattern, varName, varValue, minLength, maxLength):
-    invalid_count = 0
-    if not validators.length(varValue, min=int(minLength), max=int(maxLength)):
-        invalid_count += 1
-        print(f'\n--------------------------------------------------------------------------------------\n')
-        print(f'   !!! {varName} value "{varValue}" is Invalid!!!')
-        print(f'   Length Must be between {minLength} and {maxLength} characters.')
-        print(f'\n--------------------------------------------------------------------------------------\n')
-    if not re.search(regex_pattern, varValue):
-        invalid_count += 1
-        print(f'\n--------------------------------------------------------------------------------------\n')
-        print(f'   !!! Invalid Characters in {varValue}.  The allowed characters are:')
-        print(f'   - "{regex_pattern}"')
-        print(f'\n--------------------------------------------------------------------------------------\n')
-    if invalid_count == 0:
-        return True
-    else:
-        return False
-
-def length_and_regex_sensitive(regex_pattern, varName, varValue, minLength, maxLength):
-    invalid_count = 0
-    if not validators.length(varValue, min=int(minLength), max=int(maxLength)):
-        invalid_count += 1
-        print(f'\n--------------------------------------------------------------------------------------\n')
-        print(f'   !!! {varName} is Invalid!!!')
-        print(f'   Length Must be between {minLength} and {maxLength} characters.')
-        print(f'\n--------------------------------------------------------------------------------------\n')
-    if not re.search(regex_pattern, varValue):
-        invalid_count += 1
-        print(f'\n--------------------------------------------------------------------------------------\n')
-        print(f'   !!! Invalid Characters in {varName}.  The allowed characters are:')
-        print(f'   - "{regex_pattern}"')
-        print(f'\n--------------------------------------------------------------------------------------\n')
-    if invalid_count == 0:
-        return True
-    else:
-        return False
-
-def description(row_num, ws, var, var_value):
-    if not (re.search(r'^[a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+$',  var_value) and validators.length(str(var_value), min=0, max=128)):
+def description(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if not (re.search(r'^[a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+$',  varValue) and validators.length(str(varValue), min=0, max=128)):
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue}. ')
         print(f'   The description is an invalid Value... It failed one of the complexity tests:')
         print(f'    - Min Length 0')
         print(f'    - Max Length 128')
@@ -73,16 +38,22 @@ def description(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def domain(row_num, ws, var, var_value):
-    if not validators.domain(var_value):
+def domain(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if not validators.domain(varValue):
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Domain {var_value}')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Domain {varValue}')
         print(f'   is invalid.  Please Validate the domain and retry.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def dns_name(row_num, ws, var, var_value):
-    hostname = var_value
+def dns_name(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    hostname = varValue
     valid_count = 0
     if len(hostname) > 255:
         valid_count =+ 1
@@ -93,14 +64,17 @@ def dns_name(row_num, ws, var, var_value):
         valid_count =+ 1
     if not valid_count == 0:
         print(f'\n--------------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value} ')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue} ')
         print(f'   is not a valid Hostname.  Confirm that you have entered the DNS Name Correctly.')
         print(f'   Exiting....')
         print(f'\n--------------------------------------------------------------------------------\n')
         exit()
 
-def dscp(row_num, ws, var, var_value):
-    if not re.search('^(AF[1-4][1-3]|CS[0-7]|EF|VA|unspecified)$', var_value):
+def dscp(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if not re.search('^(AF[1-4][1-3]|CS[0-7]|EF|VA|unspecified)$', varValue):
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid Values are:')
         print(f'   AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43,')
@@ -108,10 +82,13 @@ def dscp(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def email(row_num, ws, var, var_value):
-    if not validators.email(var_value, whitelist=None):
+def email(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if not validators.email(varValue, whitelist=None):
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Email address "{var_value}"')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Email address "{varValue}"')
         print(f'   is invalid.  Please Validate the email and retry.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
@@ -189,20 +166,26 @@ def error_vrf(row_num, vrf):
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
-def hostname(row_num, ws, var, var_value):
-    if not (re.search('^[a-zA-Z0-9\\-]+$', var_value) and validators.length(var_value, min=1, max=63)):
+def hostname(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if not (re.search('^[a-zA-Z0-9\\-]+$', varValue) and validators.length(varValue, min=1, max=63)):
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value} ')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue} ')
         print(f'   is not a valid Hostname.  Be sure you are not using the FQDN.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def ip_address(row_num, ws, var, var_value):
-    if re.search('/', var_value):
-        x = var_value.split('/')
+def ip_address(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if re.search('/', varValue):
+        x = varValue.split('/')
         address = x[0]
     else:
-        address = var_value
+        address = varValue
     valid_count = 0
     if re.search(r'\.', address):
         if not validators.ip_address.ipv4(address):
@@ -212,36 +195,154 @@ def ip_address(row_num, ws, var, var_value):
             valid_count =+ 1
     if not valid_count == 0:
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title} Row {row_num}. {var} {var_value} is not ')
+        print(f'   Error on Worksheet {ws.title} Row {row_num}. {var} {varValue} is not ')
         print(f'   a valid IPv4 or IPv6 Address.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def name_complexity(row_num, ws, var, var_value):
+def length_and_regex(pattern, varName, varValue, minimum, maximum):
+    invalid_count = 0
+    if not validators.length(varValue, min=int(minimum), max=int(maximum)):
+        invalid_count += 1
+        print(f'\n--------------------------------------------------------------------------------------\n')
+        print(f'   !!! {varName} value "{varValue}" is Invalid!!!')
+        print(f'   Length Must be between {minimum} and {maximum} characters.')
+        print(f'\n--------------------------------------------------------------------------------------\n')
+    if not re.search(pattern, varValue):
+        invalid_count += 1
+        print(f'\n--------------------------------------------------------------------------------------\n')
+        print(f'   !!! Invalid Characters in {varValue}.  The allowed characters are:')
+        print(f'   - "{pattern}"')
+        print(f'\n--------------------------------------------------------------------------------------\n')
+    if invalid_count == 0:
+        return True
+    else:
+        return False
+
+def length_and_regex_sensitive(pattern, varName, varValue, minimum, maximum):
+    invalid_count = 0
+    if not validators.length(varValue, min=int(minimum), max=int(maximum)):
+        invalid_count += 1
+        print(f'\n--------------------------------------------------------------------------------------\n')
+        print(f'   !!! {varName} is Invalid!!!')
+        print(f'   Length Must be between {minimum} and {maximum} characters.')
+        print(f'\n--------------------------------------------------------------------------------------\n')
+    if not re.search(pattern, varValue):
+        invalid_count += 1
+        print(f'\n--------------------------------------------------------------------------------------\n')
+        print(f'   !!! Invalid Characters in {varName}.  The allowed characters are:')
+        print(f'   - "{pattern}"')
+        print(f'\n--------------------------------------------------------------------------------------\n')
+    if invalid_count == 0:
+        return True
+    else:
+        return False
+
+def name_complexity(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
     login_domain_count = 0
-    if not re.fullmatch('^([a-zA-Z0-9\\_]+)$', var_value):
+    if not re.fullmatch('^([a-zA-Z0-9\\_]+)$', varValue):
         login_domain_count += 1
-    elif not validators.length(var_value, min=1, max=10):
+    elif not validators.length(varValue, min=1, max=10):
         login_domain_count += 1
     if not login_domain_count == 0:
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num}, {var}, {var_value}.  The Value')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num}, {var}, {varValue}.  The Value')
         print(f'   must be between 1 and 10 characters.  The only non alphanumeric characters')
-        print(f'   allowed is "_"; but it must not start with "_".  "{var_value}" did not')
+        print(f'   allowed is "_"; but it must not start with "_".  "{varValue}" did not')
         print(f'   meet these restrictions.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def number_check(row_num, ws, var, var_value, min_x, max_x):
-    if not (int(var_value) >= int(min_x) and int(var_value) <= int(max_x)):
+def name_lists(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    for i in varValue:
+        if not (re.search(r'^[a-zA-Z0-9_-]+$',  i) and validators.length(str(i), min=0, max=63)):
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {i}. ')
+            print(f'   {i} is an invalid Value... It failed one of the complexity tests:')
+            print(f'    - Min Length 0')
+            print(f'    - Max Length 63')
+            print(f'    - Regex [a-zA-Z0-9_-]+')
+            print(f'    Exiting....')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
+
+def name_maps(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    for i in varValue:
+        for k, v in i.items():
+            if not (re.search(r'^[a-zA-Z0-9_-]+$',  k) and validators.length(str(k), min=0, max=63)):
+                print(f'\n-----------------------------------------------------------------------------\n')
+                print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {k}. ')
+                print(f'   {k} is an invalid Value... It failed one of the complexity tests:')
+                print(f'    - Min Length 0')
+                print(f'    - Max Length 63')
+                print(f'    - Regex [a-zA-Z0-9_-]+')
+                print(f'    Exiting....')
+                print(f'\n-----------------------------------------------------------------------------\n')
+                exit()
+            if not (re.search(r'^[a-zA-Z0-9_-]+$',  v) and validators.length(str(v), min=0, max=63)):
+                print(f'\n-----------------------------------------------------------------------------\n')
+                print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {v}. ')
+                print(f'   {v} is an invalid Value... It failed one of the complexity tests:')
+                print(f'    - Min Length 0')
+                print(f'    - Max Length 63')
+                print(f'    - Regex [a-zA-Z0-9_-]+')
+                print(f'    Exiting....')
+                print(f'\n-----------------------------------------------------------------------------\n')
+                exit()
+
+def name_rule(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if not (re.search(r'^[a-zA-Z0-9_-]+$',  varValue) and validators.length(str(varValue), min=0, max=63)):
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. Valid Values ')
-        print(f'   are between {min_x} and {max_x}.  Exiting....')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue}. ')
+        print(f'   {var} is an invalid Value... It failed one of the complexity tests:')
+        print(f'    - Min Length 0')
+        print(f'    - Max Length 63')
+        print(f'    - Regex [a-zA-Z0-9_-]+')
+        print(f'    Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def phone(row_num, ws, var, var_value):
-    phone_number = phonenumbers.parse(var_value, None)
+def number_check(var, jsonData, **kwargs):
+    minimum = jsonData[var]['minimum']
+    maximum = jsonData[var]['maximum']
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if not (validators.between(int(varValue), min=int(minimum), max=int(maximum))):
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue}. Valid Values ')
+        print(f'   are between {minimum} and {maximum}.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def not_empty(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if varValue == None:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue}. This is a  ')
+        print(f'   required variable.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def phone_number(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    phone_number = phonenumbers.parse(varValue, None)
     if not phonenumbers.is_possible_number(phone_number):
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Phone Number "{phone_number}" ')
@@ -250,55 +351,64 @@ def phone(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def qos_priority(row_num, ws, var, var_value):
-    if not re.search('^(level[1-6]|unspecified)$', var_value):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var} {var_value}. ')
-        print(f'   Valid Values are:')
-        print(f'   - level1')
-        print(f'   - level2')
-        print(f'   - level3')
-        print(f'   - level4')
-        print(f'   - level5')
-        print(f'   - level6')
-        print(f'   - unspecified')
-        print(f'   Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def site_group(row_num, ws, var, var_value):
-    if 'Grp_' in var_value:
-        if not re.search('Grp_[A-F]', var_value):
+def site_group(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if 'Grp_' in varValue:
+        if not re.search('Grp_[A-F]', varValue):
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
             print(f'   is invalid.  A valid Group Name is Grp_A thru Grp_F.  Exiting....')
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
-    elif re.search(r'\d+', var_value):
-        if not validators.between(int(var_value), min=1, max=15):
+    elif re.search(r'\d+', varValue):
+        if not validators.between(int(varValue), min=1, max=15):
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
             print(f'   is invalid.  A valid Site ID is between 1 and 15.  Exiting....')
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     else:
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{var_value}"')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
         print(f'   is invalid.  A valid Site_Group is either 1 thru 15 or Group_A thru Group_F.')
         print(f'   Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def values(row_num, ws, var, var_value, value_list):
+def url(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    uRL = f'https://{varValue}'
+    if not validators.url(uRL):
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue}. ')
+        print(f'   {var} should be a valid URL.  The Following is not a valid URL:')
+        print(f'    - {uRL}')
+        print(f'    Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def values(var, jsonData, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    if re.search('^(provider_)?version$', var) and ws.title == 'Sites':
+        ctype = kwargs['controller_type']
+        varList = jsonData[f'{var}_{ctype}']['enum']
+    else:
+        varList = jsonData[var]['enum']
+    varValue = kwargs[var]
     match_count = 0
-    for x in value_list:
-        if x == var_value:
+    for x in varList:
+        if x == varValue:
             match_count =+ 1
     if not match_count > 0:
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue}. ')
         print(f'   {var} should be one of the following:')
-        for x in value_list:
+        for x in varList:
             print(f'    - {x}')
         print(f'    Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
@@ -475,26 +585,6 @@ def modules(row_num, name, switch_role, modules):
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   Error on Row {row_num}. {name} module count is not valid.')
         print(f'   A Spine needs between 1 and 16 modules.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def name_rule(row_num, ws, var, var_value):
-    if not (re.search(r'^[a-zA-Z0-9_-]+$',  var_value) and validators.length(str(var_value), min=0, max=63)):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
-        print(f'   {var} is an invalid Value... It failed one of the complexity tests:')
-        print(f'    - Min Length 0')
-        print(f'    - Max Length 63')
-        print(f'    - Regex [a-zA-Z0-9_-]+')
-        print(f'    Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def not_empty(row_num, ws, var, var_value):
-    if var_value == None:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. This is a  ')
-        print(f'   required variable.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
@@ -683,16 +773,6 @@ def timeout(row_num, ws, var, var_value):
         print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
         print(f'   {var} should be between 5 and 60 and be a factor of 5.  "{var_value}" ')
         print(f'   does not meet this.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def url(row_num, ws, var, var_value):
-    if not validators.url(var_value):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {var_value}. ')
-        print(f'   {var} should be a valid URL.  The Following is not a valid URL:')
-        print(f'    - {var_value}')
-        print(f'    Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 

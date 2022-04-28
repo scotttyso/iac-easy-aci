@@ -38,70 +38,39 @@ class tenants(object):
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
     def app_add(self, **kwargs):
-        # Set Locally Used Variables
-        wb = kwargs['wb']
-        ws = kwargs['ws']
-        row_num = kwargs['row_num']
-
-        # Dicts for Application Profile; required and optional args
-        required_args = {
-            'site_group': '',
-            'tenant': '',
-            'name': '',
-        }
-        optional_args = {
-            'alias': '',
-            'annotations': '',
-            'description': '',
-            'qos_class': '',
-        }
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
-            validating.name_rule(row_num, ws, 'tenant', templateVars['tenant'])
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
-            if not templateVars['annotations'] == None:
-                for i in templateVars['annotations']:
-                    for k, v in i.items():
-                        validating.name_rule(row_num, ws, 'annotations', k)
-                        validating.name_rule(row_num, ws, 'annotations', v)
-            if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+            validating.site_group('site_group', **kwargs)
+            validating.name_rule('tenant', **kwargs)
+            validating.name_rule('name', **kwargs)
+            if not kwargs['alias'] == None:
+                validating.name_rule('alias', **kwargs)
+            if not kwargs['description'] == None:
+                validating.description('description', **kwargs)
+            if not kwargs['annotations'] == None:
+                validating.name_maps('annotations', **kwargs)
             if not templateVars['qos_class'] == None:
-                validating.qos_priority(row_num, ws, 'qos_class', templateVars['qos_class'])
+                validating.values('qos_class', jsonData, **kwargs)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        dataDict = {
-            'alias':kwargs['alias'],
-            'annotations': kwargs['annotations'],
-            'description':kwargs['description'],
-            'monitoring_policy':'default',
-            'tenant':kwargs['tenant'],
-            'qos_class':kwargs['qos_class']
+        Additions = {
+            'monitoring_policy':'default'
         }
+        templateVars.update(Additions)
 
         # Add Dictionary to easyDict
-        class_type = 'tenants'
-        data_type = 'application_profiles'
-        if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
-            kwargs['easyDict']['tenants'][data_type].append({kwargs['site_group']:[]})
-            
-        count = 0
-        for i in kwargs['easyDict'][class_type][data_type]:
-            for k, v in i.items():
-                if kwargs['site_group'] == k:
-                    kwargs['easyDict'][class_type][data_type][count][kwargs['site_group']].append(dataDict)
-            count += 1
-
-        # Return Dictionary
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'date_and_time'
+        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
     # Method must be called with the following kwargs.
@@ -180,7 +149,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'Bridge_Domain', templateVars['Bridge_Domain'])
             if not templateVars['alias'] == None:
@@ -229,7 +198,8 @@ class tenants(object):
             if not templateVars['ep_move'] == None:
                 validating.values(row_bd, ws_net, 'ep_move', templateVars['ep_move'], ['garp'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         if templateVars['dhcpRelayP'] == 'default':
@@ -413,7 +383,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.values(row_num, ws, 'Peer_Interface', templateVars['Peer_Interface'], ['Interface', 'Loopback'])
             validating.ip_address(row_num, ws, 'Peer_Address', templateVars['Peer_Address'])
             validating.number_check(row_num, ws, 'Remote_ASN', templateVars['Remote_ASN'], 1, 4294967295)
@@ -462,7 +432,8 @@ class tenants(object):
                 if not templateVars['PFX_description'] == None:
                     validating.description(row_pfx, ws_net, 'PFX_description', templateVars['PFX_description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         if re.search(r'\.', templateVars['Peer_Address']):
@@ -653,12 +624,13 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
             validating.snmp_string(row_num, ws, 'Ctx_Community', templateVars['Ctx_Community'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -674,13 +646,19 @@ class tenants(object):
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
     def contract_add(self, wb, ws, row_num, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'Tenant': '',
                          'Contract_Type': '',
                          'Contract': '',
                          'Scope': '',
-                         'QoS_Class': '',
+                         'qos_class': '',
                          'Target_DSCP': ''}
         optional_args = {'description': '',
                          'alias': '',
@@ -691,15 +669,16 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.dscp(row_num, ws, 'Target_DSCP', templateVars['Target_DSCP'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'Contract', templateVars['Contract'])
-            validating.qos_priority(row_num, ws, 'QoS_Class', templateVars['QoS_Class'])
+            validating.values('qos_class', jsonData, **kwargs)
             validating.values(row_num, ws, 'Contract_Type', templateVars['Contract_Type'], ['OOB', 'Standard', 'Taboo'])
             validating.values(row_num, ws, 'Scope', templateVars['Scope'], ['application-profile', 'context', 'global', 'tenant'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -735,7 +714,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Contract_Tenant', templateVars['Contract_Tenant'])
             validating.name_rule(row_num, ws, 'Contract', templateVars['Contract'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
@@ -743,7 +722,8 @@ class tenants(object):
             validating.name_rule(row_num, ws, 'EPG', templateVars['EPG'])
             validating.values(row_num, ws, 'Contract_Type', templateVars['Contract_Type'], ['consumer', 'provider'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -759,62 +739,20 @@ class tenants(object):
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
     def epg_add(self, **kwargs):
-        # Set Locally Used Variables
-        wb = kwargs['wb']
-        ws = kwargs['ws']
-        row_num = kwargs['row_num']
-
         # Open the Network Policies Worksheet
-        ws_net = wb['Network Policies']
+        ws_net = kwargs['wb']['Network Policies']
         rows = ws_net.max_row
 
         # Get the EPG Policies from the Network Policies Tab
         func = 'epg'
         count = countKeys(ws_net, func)
-        row_epg = ''
+        row_net = ''
         var_dict = findVars(ws_net, func, rows, count)
         for pos in var_dict:
             if var_dict[pos].get('policy_name') == kwargs.get('epg_policy'):
-                row_epg = var_dict[pos]['row']
+                row_net = var_dict[pos]['row']
                 del var_dict[pos]['row']
                 kwargs = {**kwargs, **var_dict[pos]}
-
-        # Dicts for EPG required and optional args
-        required_args = {
-            'site_group': '',
-            'tenant': '',
-            'application_profile': '',
-            'name': '',
-            'bridge_domain': '',
-            'contract_exception_tag': '',
-            'useg_epg': '',
-            'qos_class': '',
-            'intra_epg_isolation': '',
-            'preferred_group_member': '',
-            'flood_in_encapsulation': '',
-            'label_match_criteria': '',
-            'epg_admin_state': '',
-            'has_multicast_source': ''
-        }
-        optional_args = {
-            'alias': '',
-            'description': '',
-            'annotations': '',
-            'global_alias': '',
-            'fibre_channel_domain_association': '',
-            'physical_domains': '',
-            'vmm_domains': '',
-            'VLAN': '',
-            'PVLAN': '',
-            'epg_to_aep': '',
-            'epg_contract_master': '',
-            'contract_exception_tag': '',
-            'custom_qos': '',
-            'data_plane_policer': '',
-            'fhs_trust_control_policy': '',
-            'vzGraphCont': '',
-        }
-
 
         if kwargs['custom_qos'] == 'default':
             kwargs['custom_qos'] = 'uni/tn-common/qoscustom-default'
@@ -823,54 +761,60 @@ class tenants(object):
         if kwargs['fhs_trust_control_policy'] == 'default':
             kwargs['fhs_trust_control_policy'] = 'uni/tn-common/trustctrlpol-default'
 
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationEpgs']['allOf'][1]['properties']
+
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
-            validating.name_rule(row_num, ws, 'application_profile', templateVars['application_profile'])
-            validating.name_rule(row_num, ws, 'bridge_domain', templateVars['bridge_domain'])
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'tenant', templateVars['tenant'])
-            validating.qos_priority(row_epg, ws_net, 'qos_class', templateVars['qos_class'])
-            validating.values(row_epg, ws_net, 'epg_admin_state', templateVars['epg_admin_state'], ['admin_up', 'admin_shut'])
-            validating.values(row_epg, ws_net, 'flood_in_encapsulation', templateVars['flood_in_encapsulation'], ['disabled', 'enabled'])
-            validating.values(row_epg, ws_net, 'intra_epg_isolation', templateVars['intra_epg_isolation'], ['enforced', 'unenforced'])
-            validating.values(row_epg, ws_net, 'label_match_criteria', templateVars['label_match_criteria'], ['All', 'AtleastOne', 'AtmostOne', 'None'])
-            validating.values(row_epg, ws_net, 'preferred_group_member', templateVars['preferred_group_member'], ['exclude', 'include'])
-            validating.values(row_epg, ws_net, 'useg_epg', templateVars['useg_epg'], ['true', 'false'])
-            if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
-            if not templateVars['annotations'] == None:
-                for i in templateVars['annotations']:
-                    for k, v in i.items():
-                        validating.name_rule(row_num, ws, 'annotations', k)
-                        validating.name_rule(row_num, ws, 'annotations', v)
-            if not templateVars['physical_domains'] == None:
-                if re.match(',', templateVars['physical_domains']):
-                    for phys in templateVars['physical_domains'].split(','):
-                        validating.name_rule(row_num, ws, 'physical_domains', phys)
+            validating.site_group('site_group', **kwargs)
+            validating.name_rule('application_profile', **kwargs)
+            validating.name_rule('bridge_domain', **kwargs)
+            validating.name_rule('name', **kwargs)
+            validating.name_rule('tenant', **kwargs)
+            if not kwargs['alias'] == None:
+                validating.name_rule('alias', **kwargs)
+            if not kwargs['description'] == None:
+                validating.description('description', **kwargs)
+            if not kwargs['annotations'] == None:
+                validating.name_maps('annotations', **kwargs)
+            if not kwargs['physical_domains'] == None:
+                if re.match(',', kwargs['physical_domains']):
+                    validating.name_lists('physical_domains', **kwargs)
                 else:
-                    validating.name_rule(row_num, ws, 'physical_domains', templateVars['physical_domains'])
+                    validating.name_rule('physical_domains', **kwargs)
             if not templateVars['vmm_domains'] == None:
                 if re.match(',', templateVars['vmm_domains']):
-                    for phys in templateVars['vmm_domains'].split(','):
-                        validating.name_rule(row_num, ws, 'vmm_domains', phys)
+                    validating.name_lists('vmm_domains', **kwargs)
                 else:
-                    validating.name_rule(row_num, ws, 'vmm_domains', templateVars['vmm_domains'])
+                    validating.name_rule('vmm_domains', **kwargs)
             if not templateVars['VLAN'] == None:
                 validating.vlans(row_num, ws, 'VLAN', templateVars['VLAN'])
             if not templateVars['PVLAN'] == None:
                 validating.vlans(row_num, ws, 'PVLAN', templateVars['PVLAN'])
             if not templateVars['epg_to_aep'] == None:
                 validating.name_rule(row_num, ws, 'epg_to_aep', templateVars['epg_to_aep'])
+            row_num = kwargs['row_num']
+            ws = kwargs['ws']
+            kwargs['row_num'] = row_net
+            kwargs['ws'] = ws_net
+            validating.values('qos_class', jsonData, **kwargs)
+            validating.values('epg_admin_state', jsonData, **kwargs)
+            validating.values('flood_in_encapsulation', jsonData, **kwargs)
+            validating.values('intra_epg_isolation', jsonData, **kwargs)
+            validating.values('label_match_criteria', jsonData, **kwargs)
+            validating.values('preferred_group_member', jsonData, **kwargs)
+            validating.values('useg_epg', jsonData, **kwargs)
+            kwargs['row_num'] = row_num
+            kwargs['ws'] = ws
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        wb = kwargs['wb']
         if not templateVars['VLAN'] == None:
             # Define the Template Source
             template_file = "static_path.jinja2"
@@ -942,10 +886,6 @@ class tenants(object):
                 dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
                 write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
-        # dest_file = 'epg_%s_%s_static_bindings.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-        # dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        # create_file(wb, ws, row_num, 'w', dest_dir, dest_file, **templateVars)
-
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
@@ -962,7 +902,7 @@ class tenants(object):
                          'Ext_EPG_Policy': '',
                          'Subnets': '',
                          'Ext_Subnet_Policy': '',
-                         'prio': '',
+                         'qos_class': '',
                          'target_dscp': '',
                          'pref_gr_memb': '',
                          'match_t': '',
@@ -1015,7 +955,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             if not templateVars['Subnets'] == None:
                 if re.search(',', templateVars['Subnets']):
@@ -1026,7 +966,7 @@ class tenants(object):
                     validating.ip_address(row_num, ws, 'Subnets', templateVars['Subnets'])
             validating.dscp(row_epg, ws_net, 'target_dscp', templateVars['target_dscp'])
             validating.match_t(row_epg, ws_net, 'match_t', templateVars['match_t'])
-            validating.qos_priority(row_epg, ws_net, 'prio', templateVars['prio'])
+            validating.values(row_epg, ws_net, 'qos_class', templateVars['qos_class'])
             validating.values(row_epg, ws_net, 'flood', templateVars['flood'], ['disabled', 'enabled'])
             validating.values(row_epg, ws_net, 'pref_gr_memb', templateVars['pref_gr_memb'], ['exclude', 'include'])
             validating.values(row_sub, ws_net, 'agg-export', templateVars['agg-export'], ['no', 'yes'])
@@ -1038,7 +978,8 @@ class tenants(object):
             validating.values(row_sub, ws_net, 'shared-security', templateVars['shared-security'], ['no', 'yes'])
             validating.values(row_sub, ws_net, 'shared-rtctrl', templateVars['shared-rtctrl'], ['no', 'yes'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Create aggregate templateVars
@@ -1157,6 +1098,12 @@ class tenants(object):
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
     def extepg_oob(self, wb, ws, row_num, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Open the Network Policies Worksheet
         ws_net = wb['Network Policies']
         rows = ws_net.max_row
@@ -1164,7 +1111,7 @@ class tenants(object):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'Ext_EPG': '',
-                         'QoS_Class': '',
+                         'qos_class': '',
                          'Subnets': ''}
         optional_args = {'annotation': '',
                          'consumed_Contracts': ''}
@@ -1174,9 +1121,9 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Ext_EPG', templateVars['Ext_EPG'])
-            validating.qos_priority(row_num, ws, 'QoS_Class', templateVars['QoS_Class'])
+            validating.values('qos_class', jsonData, **kwargs)
             if not templateVars['annotation'] == None:
                 if re.search(',', templateVars['annotation']):
                     for x in templateVars['annotation'].split(','):
@@ -1198,7 +1145,8 @@ class tenants(object):
                 else:
                     validating.ip_address(row_num, ws, 'Subnets', templateVars['Subnets'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -1264,7 +1212,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Filter', templateVars['Filter'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             if not templateVars['alias'] == None:
@@ -1272,7 +1220,8 @@ class tenants(object):
             if not templateVars['description'] == None:
                 validating.description(row_num, ws, 'description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -1314,7 +1263,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.dscp(row_num, ws, 'Match_DSCP', templateVars['Match_DSCP'])
             validating.filter_ports(row_num, ws, 'Source_From', templateVars['Source_From'])
             validating.filter_ports(row_num, ws, 'Source_To', templateVars['Source_To'])
@@ -1336,7 +1285,8 @@ class tenants(object):
             if not templateVars['description'] == None:
                 validating.description(row_num, ws, 'description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         if templateVars['TCP_Session_Rules'] == 'unspecified':
@@ -1397,7 +1347,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.dscp(row_l3out, ws_net, 'target_dscp', templateVars['target_dscp'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
@@ -1409,7 +1359,8 @@ class tenants(object):
             if not templateVars['description'] == None:
                 validating.description(row_num, ws, 'description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Process the template through the Sites
@@ -1575,11 +1526,17 @@ class tenants(object):
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
     def mgmt_epg(self, wb, ws, row_num, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Dicts for Bridge Domain required and optional args
         required_args = {'site_group': '',
                          'Type': '',
                          'EPG': '',
-                         'QoS_Class': ''}
+                         'qos_class': ''}
         optional_args = {'annotation': '',
                          'VLAN': '',
                          'Bridge_Domain': '',
@@ -1601,9 +1558,9 @@ class tenants(object):
         templateVars['taboo_count'] = 1
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'EPG', templateVars['EPG'])
-            validating.qos_priority(row_num, ws, 'QoS_Class', templateVars['QoS_Class'])
+            validating.values('qos_class', jsonData, **kwargs)
             validating.values(row_num, ws, 'Type', templateVars['Type'], ['in_band', 'out_of_band'])
             if templateVars['Type'] == 'in_band':
                 validating.vlans(row_num, ws, 'VLAN', templateVars['VLAN'])
@@ -1639,7 +1596,8 @@ class tenants(object):
                         else:
                             validating.not_empty(row_num, ws, 'Taboo_Contracts', templateVars['Taboo_Contracts'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         if not templateVars['Tenant'] == 'mgmt':
@@ -1745,6 +1703,12 @@ class tenants(object):
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
     def node_intf(self, wb, ws, row_num, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Open the Network Policies Worksheet
         ws_net = wb['Network Policies']
         rows = ws_net.max_row
@@ -1755,7 +1719,7 @@ class tenants(object):
                          'L3Out': '',
                          'Node_Profile': '',
                          'Interface_Profile': '',
-                         'QoS_Class': '',
+                         'qos_class': '',
                          'Node_Intf_Policy': '',
                          'Policy_Name': '',
                          'tag': ''}
@@ -1786,12 +1750,12 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
             validating.name_rule(row_num, ws, 'Node_Profile', templateVars['Node_Profile'])
             validating.name_rule(row_num, ws, 'Interface_Profile', templateVars['Interface_Profile'])
-            validating.qos_priority(row_num, ws, 'QoS_Class', templateVars['QoS_Class'])
+            validating.values('qos_class', jsonData, **kwargs)
             if not templateVars['alias'] == None:
                 validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
             if not templateVars['description'] == None:
@@ -1803,7 +1767,8 @@ class tenants(object):
             if not templateVars['tag'] == None:
                 validating.tag_check(row_node, ws_net, 'tag', templateVars['tag'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -2048,7 +2013,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments Logincal Interface Profile
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_path, ws, 'Path_Policy_Name', templateVars['Path_Policy_Name'])
             if not templateVars['Encap_Scope'] == None:
                 validating.values(row_num, ws, 'Encap_Scope', templateVars['Encap_Scope'], ['ctx', 'local'])
@@ -2089,7 +2054,8 @@ class tenants(object):
             if not templateVars['Node2_ID'] == None:
                 validating.number_check(row_path, ws, 'Node2_ID', templateVars['Node2_ID'], 101, 4001)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Create Global Variables for First Template
@@ -2184,7 +2150,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
             validating.name_rule(row_num, ws, 'Node_Profile', templateVars['Node_Profile'])
@@ -2202,7 +2168,8 @@ class tenants(object):
                 validating.ip_address(row_num, ws, 'Node2_Router_ID', templateVars['Node2_Router_ID'])
                 validating.values(row_num, ws, 'Node2_Loopback', templateVars['Node2_Loopback'], ['no', 'yes'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -2243,6 +2210,12 @@ class tenants(object):
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
     def subject_add(self, wb, ws, row_num, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'Tenant': '',
@@ -2250,7 +2223,7 @@ class tenants(object):
                          'Contract_Type': '',
                          'Contract': '',
                          'Reverse_Filter_Ports': '',
-                         'QoS_Class': '',
+                         'qos_class': '',
                          'Target_DSCP': '',
                          'Filters_to_Assign': ''}
         optional_args = {'description': '',
@@ -2263,12 +2236,12 @@ class tenants(object):
         templateVars['filters_count'] = 1
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.dscp(row_num, ws, 'Target_DSCP', templateVars['Target_DSCP'])
             validating.name_rule(row_num, ws, 'Contract', templateVars['Contract'])
             validating.name_rule(row_num, ws, 'Subject', templateVars['Subject'])
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.qos_priority(row_num, ws, 'QoS_Class', templateVars['QoS_Class'])
+            validating.values('qos_class', jsonData, **kwargs)
             validating.values(row_num, ws, 'Contract_Type', templateVars['Contract_Type'], ['OOB', 'Standard', 'Taboo'])
             validating.values(row_num, ws, 'Reverse_Filter_Ports', templateVars['Reverse_Filter_Ports'], ['no', 'yes'])
             if not templateVars['alias'] == None:
@@ -2283,7 +2256,8 @@ class tenants(object):
                 else:
                     validating.name_rule(row_num, ws, 'Filters_to_Assign', templateVars['Filters_to_Assign'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -2347,7 +2321,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.ip_address(row_num, ws, 'Subnet', templateVars['Subnet'])
             if not templateVars['Subnet_description'] == None:
                 validating.description(row_num, ws, 'Subnet_description', templateVars['Subnet_description'])
@@ -2358,7 +2332,8 @@ class tenants(object):
             validating.values(row_subnet, ws_net, 'no-default-gateway', templateVars['no-default-gateway'], ['no', 'yes'])
             validating.values(row_subnet, ws_net, 'querier', templateVars['querier'], ['no', 'yes'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         if templateVars['l3extOut'] == 'default':
@@ -2422,48 +2397,32 @@ class tenants(object):
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
     def tenant_add(self, **kwargs):
-        # Set Locally Used Variables
-        wb = kwargs['wb']
-        ws = kwargs['ws']
-        row_num = kwargs['row_num']
-
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'tenant': ''
-        }
-        optional_args = {
-            'alias': '',
-            'annotations': '',
-            'description': '',
-            'users': '',
-        }
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.Tenants']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
-            validating.name_rule(row_num, ws, 'tenant', templateVars['tenant'])
+            # Validate Variables
+            validating.site_group('site_group', **kwargs)
+            validating.name_rule('tenant', **kwargs)
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
-            if not templateVars['annotations'] == None:
-                for i in templateVars['annotations']:
-                    for k, v in i.items():
-                        validating.name_rule(row_num, ws, 'annotations', k)
-                        validating.name_rule(row_num, ws, 'annotations', v)
+                validating.name_rule('alias', **kwargs)
+            if not kwargs['annotations'] == None:
+                validating.name_maps('annotations', **kwargs)
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', **kwargs)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        upDates = {
+        Additions = {
             'monitoring_policy':'default',
             'sites':[],
         }
-        kwargs.update(upDates)
+        templateVars.update(Additions)
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
@@ -2524,7 +2483,7 @@ class tenants(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', templateVars['site_group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
             validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
             if not templateVars['alias'] == None:
@@ -2544,7 +2503,8 @@ class tenants(object):
             validating.values(row_vrf, ws_net, 'pc_enf_pref', templateVars['pc_enf_pref'], ['enforced', 'unenforced'])
             validating.values(row_vrf, ws_net, 'enf_type', templateVars['enf_type'], ['contract', 'pref_grp', 'vzAny'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         if templateVars['cons_vzBrCP'] == 'default':
@@ -2607,40 +2567,3 @@ class tenants(object):
         dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
         dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
-
-    def wr_auto_tfvars(self, **easyDict):
-        functionList = ['tenants']
-        for func in functionList:
-            func_type = 'tenants'
-            # jsonDump = json.dumps(easyDict[func_type][func], indent=4)
-            # print(jsonDump)
-            # exit()
-            for item in easyDict[func_type][func]:
-                for k, v in item.items():
-                    for i in v:
-                        templateVars = i
-                        templateVars['row_num'] = '%s_section' % (func)
-                        templateVars['site_group'] = k
-                        templateVars['ws'] = easyDict['wb']['Tenants']
-                        
-                        # Add Variables for Template Functions
-                        templateVars["initial_write"] = True
-                        templateVars['policy_type'] = func.replace('_', ' ').capitalize()
-                        templateVars["template_file"] = 'template_open.jinja2'
-                        templateVars['template_type'] = func
-                        templateVars['tfvars_file'] = func
-                        
-                        # Write to the Template file and Return Dictionary
-                        write_to_site(self, **templateVars)
-
-                        templateVars["initial_write"] = False
-                        templateVars["template_file"] = f'{func}.jinja2'
-
-                        # Write to the Template file and Return Dictionary
-                        write_to_site(self, **templateVars)
-
-                        templateVars["initial_write"] = False
-                        templateVars["template_file"] = 'template_close.jinja2'
-
-                        # Write to the Template file and Return Dictionary
-                        write_to_site(self, **templateVars)

@@ -470,32 +470,32 @@ def read_in(excel_workbook):
         sys.exit(e)
     return wb
 
-def sensitive_var_site_group(**templateVars):
-    if re.search('Grp_[A-F]', templateVars['site_group']):
-        site_group = ast.literal_eval(os.environ[templateVars['site_group']])
+def sensitive_var_site_group(**kwargs):
+    if re.search('Grp_[A-F]', kwargs['site_group']):
+        site_group = ast.literal_eval(os.environ[kwargs['site_group']])
         for x in range(1, 16):
             if not site_group[f'site_{x}'] == None:
                 site_id = 'site_id_%s' % (site_group[f'site_{x}'])
                 site_dict = ast.literal_eval(os.environ[site_id])
                 if site_dict['run_location'] == 'local':
-                    sensitive_var_value(templateVars['easy_jsonData'], **templateVars)
+                    sensitive_var_value(**kwargs)
     else:
-        site_id = 'site_id_%s' % (site_group[templateVars['site_group']])
+        site_id = 'site_id_%s' % (site_group[kwargs['site_group']])
         site_dict = ast.literal_eval(os.environ[site_id])
         if site_dict['run_location'] == 'local':
-            sensitive_var_value(templateVars['easy_jsonData'], **templateVars)
+            sensitive_var_value(**kwargs)
 
-def sensitive_var_value(jsonData, **templateVars):
-    sensitive_var = 'TF_VAR_%s' % (templateVars['Variable'])
+def sensitive_var_value(**kwargs):
+    sensitive_var = 'TF_VAR_%s' % (kwargs['Variable'])
     # -------------------------------------------------------------------------------------------------------------------------
     # Check to see if the Variable is already set in the Environment, and if not prompt the user for Input.
     #--------------------------------------------------------------------------------------------------------------------------
     if os.environ.get(sensitive_var) is None:
         print(f"\n----------------------------------------------------------------------------------\n")
         print(f"  The Script did not find {sensitive_var} as an 'environment' variable.")
-        print(f"  To not be prompted for the value of {templateVars['Variable']} each time")
+        print(f"  To not be prompted for the value of {kwargs['Variable']} each time")
         print(f"  add the following to your local environemnt:\n")
-        print(f"   - export {sensitive_var}='{templateVars['Variable']}_value'")
+        print(f"   - export {sensitive_var}='{kwargs['Variable']}_value'")
         print(f"\n----------------------------------------------------------------------------------\n")
 
     if os.environ.get(sensitive_var) is None:
@@ -507,8 +507,8 @@ def sensitive_var_value(jsonData, **templateVars):
 
         valid = False
         while valid == False:
-            if templateVars.get('Multi_Line_Input'):
-                print(f'Enter the value for {templateVars["Variable"]}:')
+            if kwargs.get('Multi_Line_Input'):
+                print(f'Enter the value for {kwargs["Variable"]}:')
                 lines = []
                 while True:
                     # line = input('')
@@ -522,7 +522,7 @@ def sensitive_var_value(jsonData, **templateVars):
                 else:
                     secure_value = '\n'.join(lines)
             else:
-                secure_value = stdiomask.getpass(prompt=f'Enter the value for {templateVars["Variable"]}: ')
+                secure_value = stdiomask.getpass(prompt=f'Enter the value for {kwargs["Variable"]}: ')
 
             # Validate Sensitive Passwords
             cert_regex = re.compile(r'^\-{5}BEGIN (CERTIFICATE|PRIVATE KEY)\-{5}.*\-{5}END (CERTIFICATE|PRIVATE KEY)\-{5}$')
@@ -536,50 +536,55 @@ def sensitive_var_value(jsonData, **templateVars):
             elif re.search('(apikey|secretkey)', sensitive_var):
                 if not sensitive_var == '':
                     valid = True
+            elif 'smtp_password' in sensitive_var:
+                minimum = kwargs['jsonData']['Password']['minimum']
+                maximum = kwargs['jsonData']['Password']['maximum']
+                rePattern = kwargs['jsonData']['Password']['pattern']
+                varName = 'SmartCallHome SMTP Server Password'
+                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minimum, maximum)
             elif 'aes_passphrase' in sensitive_var:
-                jsonVars = jsonData['components']['schemas']['global.AESPassphrase']['allOf'][1]['properties']
-                minLength = jsonVars['Password']['minimum']
-                maxLength = jsonVars['Password']['maximum']
-                rePattern = jsonVars['Password']['pattern']
+                minLength = kwargs['jsonData']['Password']['minimum']
+                maxLength = kwargs['jsonData']['Password']['maximum']
+                rePattern = kwargs['jsonData']['Password']['pattern']
                 varName = 'Global AES Phassphrase'
                 valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
             elif 'community' in sensitive_var:
-                jsonVars = jsonData['components']['schemas']['snmp.Policy']['allOf'][1]['properties']
+                jsonVars = kwargs['easy_jsonData']['components']['schemas']['snmp.Policy']['allOf'][1]['properties']
                 minLength = 1
                 maxLength = jsonVars['TrapCommunity']['maxLength']
                 rePattern = '^[\\S]+$'
                 varName = 'SNMP Community'
                 valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
             elif 'ipmi_key' in sensitive_var:
-                jsonVars = jsonData['components']['schemas']['ipmioverlan.Policy']['allOf'][1]['properties']
+                jsonVars = kwargs['easy_jsonData']['components']['schemas']['ipmioverlan.Policy']['allOf'][1]['properties']
                 minLength = 2
                 maxLength = jsonVars['EncryptionKey']['maxLength']
                 rePattern = jsonVars['EncryptionKey']['pattern']
                 varName = 'IPMI Encryption Key'
                 valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
             elif 'iscsi_boot' in sensitive_var:
-                jsonVars = jsonData['components']['schemas']['vnic.IscsiAuthProfile']['allOf'][1]['properties']
+                jsonVars = kwargs['easy_jsonData']['components']['schemas']['vnic.IscsiAuthProfile']['allOf'][1]['properties']
                 minLength = 12
                 maxLength = 16
                 rePattern = jsonVars['Password']['pattern']
                 varName = 'iSCSI Boot Password'
                 valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
             elif 'local' in sensitive_var:
-                jsonVars = jsonData['components']['schemas']['iam.EndPointUserRole']['allOf'][1]['properties']
+                jsonVars = kwargs['easy_jsonData']['components']['schemas']['iam.EndPointUserRole']['allOf'][1]['properties']
                 minLength = jsonVars['Password']['minLength']
                 maxLength = jsonVars['Password']['maxLength']
                 rePattern = jsonVars['Password']['pattern']
                 varName = 'Local User Password'
                 valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
             elif 'secure_passphrase' in sensitive_var:
-                jsonVars = jsonData['components']['schemas']['memory.PersistentMemoryLocalSecurity']['allOf'][1]['properties']
+                jsonVars = kwargs['easy_jsonData']['components']['schemas']['memory.PersistentMemoryLocalSecurity']['allOf'][1]['properties']
                 minLength = jsonVars['SecurePassphrase']['minLength']
                 maxLength = jsonVars['SecurePassphrase']['maxLength']
                 rePattern = jsonVars['SecurePassphrase']['pattern']
                 varName = 'Persistent Memory Secure Passphrase'
                 valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
             elif 'snmp' in sensitive_var:
-                jsonVars = jsonData['components']['schemas']['snmp.Policy']['allOf'][1]['properties']
+                jsonVars = kwargs['easy_jsonData']['components']['schemas']['snmp.Policy']['allOf'][1]['properties']
                 minLength = 1
                 maxLength = jsonVars['TrapCommunity']['maxLength']
                 rePattern = '^[\\S]+$'
@@ -589,7 +594,7 @@ def sensitive_var_value(jsonData, **templateVars):
                     varName = 'SNMP Privacy Password'
                 valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
             elif 'vmedia' in sensitive_var:
-                jsonVars = jsonData['components']['schemas']['vmedia.Mapping']['allOf'][1]['properties']
+                jsonVars = kwargs['easy_jsonData']['components']['schemas']['vmedia.Mapping']['allOf'][1]['properties']
                 minLength = 1
                 maxLength = jsonVars['Password']['maxLength']
                 rePattern = '^[\\S]+$'
@@ -602,7 +607,7 @@ def sensitive_var_value(jsonData, **templateVars):
 
     else:
         # Add the Variable to the Environment
-        if templateVars.get('Multi_Line_Input'):
+        if kwargs.get('Multi_Line_Input'):
             var_value = os.environ.get(sensitive_var)
             var_value = var_value.replace('\n', '\\n')
         else:
@@ -1064,8 +1069,6 @@ def wr_auto_tfvars(easy_jsonData, **easyDict):
         funcList = jsonData[f'class.{class_type}']['enum']
         for func in funcList:
             for item in easyDict[class_type][func]:
-                print(class_type)
-                print(func)
                 for k, v in item.items():
                     for i in v:
                         kwargs = i

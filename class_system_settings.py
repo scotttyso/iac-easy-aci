@@ -29,30 +29,19 @@ class system_settings(object):
     # Function - APIC Connectivity Preference
     #==============================================
     def apic_preference(self, **kwargs):
-        # Set Locally Used Variables
-        ws = kwargs['ws']
-        row_num = kwargs['row_num']
-
-        # Dictionaries for required and optional args
-        required_args = {
-            'site_group': '',
-            'apic_connectivity_preference': ''
-        }
-        optional_args = {}
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['system.apicConnectivityPreference']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        # Get Variable Values
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['system.apicPreference']['allOf'][1]['properties']
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', kwargs['site_group'])
-            validating.values(row_num, ws, 'apic_connectivity_preference', kwargs['apic_connectivity_preference'], 
-                jsonData['apic_connectivity_preference']['enum'])
+            validating.site_group('site_group', **kwargs)
+            validating.values('apic_connectivity_preference', jsonData, **kwargs)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Add Dictionary to easyDict
@@ -62,26 +51,18 @@ class system_settings(object):
         return kwargs['easyDict']
 
     def bgp_asn(self, **kwargs):
-        # Set Locally Used Variables
-        ws = kwargs['ws']
-        row_num = kwargs['row_num']
-
-        # Dictionaries for required and optional args
-        required_args = {
-            'site_group': '',
-            'autonomous_system_number': ''
-        }
-        optional_args = {}
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['system.bgpASN']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, kwargs["ws"], 'Site_Group', kwargs['site_group'])
+            validating.site_group('site_group', **kwargs)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
-                % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Add Dictionary to easyDict
@@ -91,26 +72,18 @@ class system_settings(object):
         return kwargs['easyDict']
 
     def bgp_rr(self, **kwargs):
-        # Set Locally Used Variables
-        ws = kwargs['ws']
-        row_num = kwargs['row_num']
-
-        # Dictionaries for required and optional args
-        required_args = {
-            'site_group': '',
-            'pod_id': '',
-            'node_list': ''
-        }
-        optional_args = {}
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['system.bgpRouteReflector']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', kwargs['site_group'])
+            validating.site_group('site_group', **kwargs)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Add Dictionary to easyDict
@@ -120,34 +93,25 @@ class system_settings(object):
         return kwargs['easyDict']
 
     def global_aes(self, **kwargs):
-        # Set Locally Used Variables
-        ws = kwargs['ws']
-        row_num = kwargs['row_num']
-
-        # Dictionaries for required and optional args
-        required_args = {
-            'site_group': '',
-            'clear_passphrase': '',
-            'enable_encryption': '',
-            'passphrase_key_derivation_version': ''
-        }
-        optional_args = {}
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['system.globalAesEncryptionSettings']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'site_group', kwargs['site_group'])
-            validating.values(row_num, ws, 'enable_encryption', kwargs['enable_encryption'], ['true', 'false'])
+            validating.site_group('site_group', **kwargs)
+            validating.values('enable_encryption', jsonData, **kwargs)
 
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' \
-                % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         if kwargs['enable_encryption'] == 'true':
             kwargs["Variable"] = 'aes_passphrase'
+            kwargs['jsonData'] = jsonData
             sensitive_var_site_group(**kwargs)
         
         # Add Dictionary to easyDict
@@ -165,61 +129,32 @@ class site_policies(object):
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
     def site_id(self, **kwargs):
-        # Set Locally Used Variables
-        wb = kwargs['wb']
-        ws = kwargs['ws']
-        row_num = kwargs['row_num']
-
-        # Dicts for required and optional args
-        required_args = {
-            'auth_type': '',
-            'configure_terraform_cloud': '',
-            'controller': '',
-            'controller_type': '',
-            'provider_version': '',
-            'run_location': '',
-            'site_id': '',
-            'site_name': '',
-            'terraform_version': '',
-            'version': ''
-        }
-        optional_args = {}
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['site.Identifiers']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        # Get Variable Values
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['site.Variables']['allOf'][1]['properties']
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
             # Validate Variables
-            validating.name_complexity(row_num, ws, 'site_name', kwargs['site_name'])
-            controller = 'https://%s' % (kwargs['controller'])
-            validating.url(row_num, ws, 'controller', controller)
-            validating.values(row_num, ws, 'auth_type', kwargs['auth_type'],
-                jsonData['auth_type']['enum'])
-            validating.values(row_num, ws, 'configure_terraform_cloud', kwargs['configure_terraform_cloud'],
-                jsonData['configure_terraform_cloud']['enum'])
-            validating.values(row_num, ws, 'controller_type', kwargs['controller_type'],
-                jsonData['controller_type']['enum'])
-            validating.values(row_num, ws, 'run_location', kwargs['run_location'],
-                jsonData['run_location']['enum'])
+            validating.name_complexity('site_name', **kwargs)
+            validating.url('controller', **kwargs)
+            validating.values('auth_type', jsonData, **kwargs)
+            validating.values('configure_terraform_cloud', jsonData, **kwargs)
+            validating.values('controller_type', jsonData, **kwargs)
+            validating.values('run_location', jsonData, **kwargs)
             if kwargs['controller_type'] == 'apic':
-                validating.values(row_num, ws, 'provider_version', kwargs['provider_version'],
-                    jsonData['provider_version_apic']['enum'])
+                validating.values('provider_version', jsonData, **kwargs)
             else:
-                validating.values(row_num, ws, 'provider_version', kwargs['provider_version'],
-                    jsonData['provider_version_ndo']['enum'])
-            validating.values(row_num, ws, 'terraform_version', kwargs['terraform_version'],
-                jsonData['terraform_version']['enum'])
+                validating.values('provider_version', jsonData, **kwargs)
+            validating.values('terraform_version', jsonData, **kwargs)
             if kwargs['controller_type'] == 'apic':
-                validating.values(row_num, ws, 'version', kwargs['version'],
-                    jsonData['version_apic']['enum'])
+                validating.values('version', jsonData, **kwargs)
             else:
-                validating.values(row_num, ws, 'version', kwargs['version'],
-                    jsonData['version_ndo']['enum'])
+                validating.values('version', jsonData, **kwargs)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Save the Site Information into Environment Variables
@@ -271,7 +206,7 @@ class site_policies(object):
 
         site_wb = '%s_intf_selectors.xlsx' % (kwargs['site_name'])
         if not os.path.isfile(site_wb):
-            wb.save(filename=site_wb)
+            kwargs['wb'].save(filename=site_wb)
             wb_wr = load_workbook(site_wb)
             ws_wr = wb_wr.get_sheet_names()
             for sheetName in ws_wr:
@@ -289,40 +224,16 @@ class site_policies(object):
     # site_2: Required.  The site_id for the Second Site
     # site_[3-15]: Optional.  The site_id for the 3rd thru the 15th Site(s)
     def group_id(self, **kwargs):
-        # Set Locally Used Variables
-        ws = kwargs['ws']
-        row_num = kwargs['row_num']
-
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'site_1': '',
-            'site_2': ''
-        }
-        optional_args = {
-            'site_2': '',
-            'site_3': '',
-            'site_4': '',
-            'site_5': '',
-            'site_6': '',
-            'site_7': '',
-            'site_8': '',
-            'site_9': '',
-            'site_10': '',
-            'site_11': '',
-            'site_12': '',
-            'site_13': '',
-            'site_14': '',
-            'site_15': ''
-        }
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['site.Groups']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         for x in range(1, 16):
             site = 'site_%s' % (x)
             if not kwargs[site] == None:
-                validating.site_group(row_num, ws, site, kwargs[site])
+                validating.site_group('site_group', **kwargs)
 
         grp_count = 0
         for x in list(map(chr, range(ord('A'), ord('F')+1))):
@@ -330,6 +241,8 @@ class site_policies(object):
             if kwargs['site_group'] == grp:
                 grp_count += 1
         if grp_count == 0:
+            ws = kwargs['ws']
+            row_num = kwargs['row_num']
             print(f'\n-----------------------------------------------------------------------------\n')
             print(f'   Error on Worksheet {ws.title}, Row {row_num} group, group_name "{kwargs["group"]}" is invalid.')
             print(f'   A valid Group Name is Grp_A thru Grp_F.  Exiting....')

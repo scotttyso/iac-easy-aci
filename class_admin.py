@@ -59,7 +59,7 @@ class admin(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group('site_group', **kwargs)
             validating.number_check(row_num, ws, 'Backup_Hour', templateVars['Backup_Hour'], 0, 23)
             validating.number_check(row_num, ws, 'Backup_Minute', templateVars['Backup_Minute'], 0, 59)
             validating.values(row_num, ws, 'Concurrent_Capacity', templateVars['Concurrent_Capacity'], ['unlimited'])
@@ -141,7 +141,7 @@ class admin(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_complexity(row_num, ws, 'Login_Domain', templateVars['Login_Domain'])
             validating.values(row_num, ws, 'Realm_Type', templateVars['Realm_Type'], ['RADIUS', 'TACACS'])
             if not templateVars['Description'] == None:
@@ -182,7 +182,7 @@ class admin(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'MG_Name', templateVars['MG_Name'])
             validating.sw_version(row_num, ws, 'SW_Version', templateVars['SW_Version'])
             validating.values(row_num, ws, 'Admin_State', templateVars['Admin_State'], ['triggered', 'untriggered'])
@@ -228,7 +228,7 @@ class admin(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group('site_group', **kwargs)
             validating.ip_address(row_num, ws, 'RADIUS_Server', templateVars['RADIUS_Server'])
             validating.name_complexity(row_num, ws, 'Login_Domain', templateVars['Login_Domain'])
             validating.number_check(row_num, ws, 'Domain_Order', templateVars['Domain_Order'], 0, 17)
@@ -290,7 +290,7 @@ class admin(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group('site_group', **kwargs)
             validating.login_type(row_num, ws, 'Auth_Realm', templateVars['Auth_Realm'], 'Domain_Type', templateVars['Domain_Type'])
             if not templateVars['Domain_Type'] == 'local':
                 validating.name_complexity(row_num, ws, 'Login_Domain', templateVars['Login_Domain'])
@@ -339,7 +339,7 @@ class admin(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group('site_group', **kwargs)
 
             if re.match(r'\:', templateVars['Remote_Host']):
                 validating.ip_address(row_num, ws, 'Remote_Host', templateVars['Remote_Host'])
@@ -444,7 +444,7 @@ class admin(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group('site_group', **kwargs)
             validating.number_check(row_num, ws, 'Expiration_Warn', templateVars['Expiration_Warn'], 0, 30)
             validating.number_check(row_num, ws, 'Passwd_Intv', templateVars['Passwd_Intv'], 0, 745)
             validating.number_check(row_num, ws, 'Number_Allowed', templateVars['Number_Allowed'], 0, 10)
@@ -515,7 +515,7 @@ class admin(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group('site_group', **kwargs)
             validating.ip_address(row_num, ws, 'TACACS_Server', templateVars['TACACS_Server'])
             validating.name_complexity(row_num, ws, 'Login_Domain', templateVars['Login_Domain'])
             validating.number_check(row_num, ws, 'Domain_Order', templateVars['Domain_Order'], 0, 17)
@@ -579,7 +579,7 @@ class admin(object):
 
         try:
             # Validate Required Arguments
-            validating.site_group(row_num, ws, 'Site_Group', templateVars['Site_Group'])
+            validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'Acct_DestGrp_Name', templateVars['Acct_DestGrp_Name'])
             validating.name_rule(row_num, ws, 'Acct_SrcGrp_Name', templateVars['Acct_SrcGrp_Name'])
             if not templateVars['Description'] == None:
