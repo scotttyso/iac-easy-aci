@@ -35,6 +35,347 @@
                     }
                 ]
             },
+            "admin.exportPolicy":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "format":{
+                                "description": "Format of the Backup File.",
+                                "type": "string",
+                                "enum": [
+                                    "json",
+                                    "xml"
+                                ],
+                                "default": "json",
+                                "x-omitempty": true
+                            },
+                            "max_snapshot_count":{
+                                "description": "Maximum Number of Snapshots to allow.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 10,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description" : ""
+                            },
+                            "required_args": {
+                                "format" : "",
+                                "max_snapshot_count" : "",
+                                "name" : "",
+                                "scheduled_days" : "",
+                                "scheduled_hour" : "",
+                                "scheduled_minute" : "",
+                                "site_group" : "",
+                                "snapshot" : "",
+                                "start_now" : ""
+                            },
+                            "scheduled_days":{
+                                "description": "Scheduled Days.",
+                                "type": "string",
+                                "enum": [
+                                    "every-day",
+                                    "even-day",
+                                    "odd-day",
+                                    "Sunday",
+                                    "Monday",
+                                    "Tuesday",
+                                    "Wednesday",
+                                    "Thursday",
+                                    "Friday",
+                                    "Saturday",
+                                    "Sunday"
+                                ],
+                                "default": "json",
+                                "x-omitempty": true
+                            },
+                            "scheduled_hour":{
+                                "description": "Hour of the day to perform the backup.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 23,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "scheduled_minute":{
+                                "description": "Minute of the day to perform the backup.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 59,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "snapshot":{
+                                "description": "Flag to define if the backup is a snapshot.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "start_now":{
+                                "description": "Flag to Start the Backup now.",
+                                "type": "string",
+                                "enum": [
+                                    "triggered",
+                                    "untriggered"
+                                ],
+                                "default": "untriggered",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "admin.globalSecurity":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "enable_lockout":{
+                                "description": "Enable User Lockout.",
+                                "type": "string",
+                                "enum": [
+                                    "disable",
+                                    "enable"
+                                ],
+                                "default": "disable",
+                                "x-omitempty": true
+                            },
+                            "lockout_duration":{
+                                "description": "Lockout Duration.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 1440,
+                                "default": 60,
+                                "x-omitempty": true
+                            },
+                            "max_failed_attempts":{
+                                "description": "Max Failed Attempts.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 15,
+                                "default": 5,
+                                "x-omitempty": true
+                            },
+                            "maximum_validity_period":{
+                                "description": "Maximum Validity Period.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 24,
+                                "default": 24,
+                                "x-omitempty": true
+                            },
+                            "max_failed_attempts_window":{
+                                "description": "Max Failed Attempts Window.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 720,
+                                "default": 5,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {},
+                            "password_change_interval":{
+                                "description": "Password Change Interval.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 745,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "password_change_interval_enforce":{
+                                "description": "Password Change Interval Enforce.",
+                                "type": "string",
+                                "enum": [
+                                    "disable",
+                                    "enable"
+                                ],
+                                "default": "disable",
+                                "x-omitempty": true
+                            },
+                            "password_changes_within_interval":{
+                                "description": "Password Changes within Interval.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 10,
+                                "default": 2,
+                                "x-omitempty": true
+                            },
+                            "password_expiration_warn_time":{
+                                "description": "Password Expiration Warn Time.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 30,
+                                "default": 15,
+                                "x-omitempty": true
+                            },
+                            "password_strength_check":{
+                                "description": "Password Strength Check.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "enable_lockout" : "",
+                                "lockout_duration" : "",
+                                "max_failed_attempts" : "",
+                                "max_failed_attempts_window" : "",
+                                "maximum_validity_period" : "",
+                                "password_change_interval" : "",
+                                "password_change_interval_enforce" : "",
+                                "password_changes_within_interval" : "",
+                                "password_expiration_warn_time" : "",
+                                "password_strength_check" : "",
+                                "site_group" : "",
+                                "user_passwords_to_store_count" : "",
+                                "web_session_idle_timeout" : "",
+                                "web_token_timeout" : ""
+                            },
+                            "user_passwords_to_store_count":{
+                                "description": "User Passwords To Store Count.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 15,
+                                "default": 5,
+                                "x-omitempty": true
+                            },
+                            "web_session_idle_timeout":{
+                                "description": "Web Session Idle Timeout.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 60,
+                                "maximum": 65525,
+                                "default": 1200,
+                                "x-omitempty": true
+                            },
+                            "web_token_timeout":{
+                                "description": "Web Token Timeout.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 300,
+                                "maximum": 9600,
+                                "default": 600,
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "admin.remoteHost":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "authentication_type":{
+                                "description": "Remote Host authentication type.",
+                                "type": "string",
+                                "enum": [
+                                    "usePassword",
+                                    "useSshKeyContents"
+                                ],
+                                "default": "usePassword",
+                                "x-omitempty": true
+                            },
+                            "management_epg_type":{
+                                "description": "The Type of Management EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "inb",
+                                    "oob"
+                                ],
+                                "default": "oob",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description" : "",
+                                "password" : "",
+                                "username" : ""
+                            },
+                            "protocol":{
+                                "description": "Remote Host authentication type.",
+                                "type": "string",
+                                "enum": [
+                                    "ftp",
+                                    "scp",
+                                    "sftp"
+                                ],
+                                "default": "sftp",
+                                "x-omitempty": true
+                            },
+                            "password":{
+                                "description": "Remote Host Password Identifier.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "remote_password":{
+                                "description": "Remote Password.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 32,
+                                "pattern":"^.*$",
+                                "x-omitempty": true
+                            },
+                            "remote_port":{
+                                "description": "Remote Host Port.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 22,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "authentication_type" : "",
+                                "management_epg" : "",
+                                "management_epg_type" : "",
+                                "protocol" : "",
+                                "remote_hosts" : "",
+                                "remote_path" : "",
+                                "remote_port" : "",
+                                "scheduler_name" : "",
+                                "site_group" : ""
+                            },
+                            "ssh_key_contents":{
+                                "description": "SSH Key Contents.",
+                                "type": "string",
+                                "minimum": 512,
+                                "maximum": 4096,
+                                "pattern":"^.*$",
+                                "x-omitempty": true
+                            },
+                            "ssh_key_passphrase":{
+                                "description": "SSH Key Passphrase.",
+                                "type": "string",
+                                "minimum": 512,
+                                "maximum": 512,
+                                "pattern":"^.*$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "fabric.DateandTime":{
                 "allOf":[
                     {},
@@ -244,12 +585,20 @@
                                 "default": "sha1",
                                 "x-omitempty": true
                             },
+                            "key":{
+                                "description": "NTP Key Value.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 40,
+                                "pattern":"^[\\S+]{1,40}$",
+                                "x-omitempty": true
+                            },
                             "key_id":{
-                                "description": "NTP Key Options.",
+                                "description": "NTP Key Variable Identifier.",
                                 "type": "integer",
                                 "format": "int64",
                                 "minimum": 1,
-                                "maximum": 65535,
+                                "maximum": 5,
                                 "x-omitempty": true
                             },
                             "optional_args": {},
@@ -261,62 +610,6 @@
                             },
                             "trusted":{
                                 "description": "If the NTP Key is trusted or not.",
-                                "type": "string",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "fabric.schSmtpServer":{
-                "allOf":[
-                    {},
-                    {
-                        "properties":{
-                            "management_epg_type":{
-                                "description": "The Type of Management EPG.",
-                                "type": "string",
-                                "enum": [
-                                    "inb",
-                                    "oob"
-                                ],
-                                "default": "oob",
-                                "x-omitempty": true
-                            },
-                            "optional_args": {
-                                "username" : ""
-                            },
-                            "Password":{
-                                "description": "NTP Key Options.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 128,
-                                "pattern":"^[\\S+]{1,128}$",
-                                "x-omitempty": true
-                            },
-                            "port_number":{
-                                "description": "NTP Key Options.",
-                                "type": "integer",
-                                "format": "int64",
-                                "minimum": 1,
-                                "maximum": 65535,
-                                "x-omitempty": true
-                            },
-                            "required_args": {
-                                "management_epg": "",
-                                "management_epg_type": "",
-                                "port_number" : "",
-                                "secure_smtp" : "",
-                                "smtp_server" : "",
-                                "site_group" : ""
-                            },
-                            "secure_smtp":{
-                                "description": "Does the SMTP Server Require Credentials.",
                                 "type": "string",
                                 "enum": [
                                     "false",
@@ -455,6 +748,200 @@
                     }
                 ]
             },
+            "fabric.smartSmtpServer":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "management_epg_type":{
+                                "description": "The Type of Management EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "inb",
+                                    "oob"
+                                ],
+                                "default": "oob",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "username" : ""
+                            },
+                            "smtp_password":{
+                                "description": "Security SMTP Password.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 128,
+                                "pattern":"^[\\S+]{1,128}$",
+                                "x-omitempty": true
+                            },
+                            "port_number":{
+                                "description": "NTP Key Options.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "port_number" : "",
+                                "secure_smtp" : "",
+                                "smtp_server" : "",
+                                "site_group" : ""
+                            },
+                            "secure_smtp":{
+                                "description": "Does the SMTP Server Require Credentials.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.snmpClientGroups":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "management_epg_type":{
+                                "description": "The Type of Management EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "inb",
+                                    "oob"
+                                ],
+                                "default": "oob",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description" : ""
+                            },
+                            "required_args": {
+                                "clients" : "",
+                                "management_epg" : "",
+                                "management_epg_type" : "",
+                                "name" : "",
+                                "site_group" : ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.snmpCommunities":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "community_variable":{
+                                "description": "Communtiy Variable Check.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description" : ""
+                            },
+                            "required_args": {
+                                "community_variable" : "",
+                                "site_group" : ""
+                            },
+                            "snmp_community":{
+                                "description": "Community String.",
+                                "type": "string",
+                                "minimum": 8,
+                                "maximum": 32,
+                                "pattern":"^([a-zA-Z0-9\\-\\_\\.]+){8,32}$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.snmpDestinations":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "community_variable":{
+                                "description": "Communtiy Variable Check.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "management_epg_type":{
+                                "description": "The Type of Management EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "inb",
+                                    "oob"
+                                ],
+                                "default": "oob",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "community" : "",
+                                "username" : "",
+                                "v3_security_level" : ""
+                            },
+                            "port":{
+                                "description": "SNMP Trap Port.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 162,
+                                "x-omitempty": true
+                            },
+                            "snmp_community":{
+                                "description": "Community String.",
+                                "type": "string",
+                                "minimum": 8,
+                                "maximum": 32,
+                                "pattern":"^([a-zA-Z0-9\\-\\_\\.]+){8,32}$",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "host": "",
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "port" : "",
+                                "site_group" : "",
+                                "version" : ""
+                            },
+                            "v3_security_level":{
+                                "description": "The SNMPv3 Security Level.",
+                                "type": "string",
+                                "enum": [
+                                    "auth",
+                                    "noauth",
+                                    "priv"
+                                ],
+                                "default": "priv",
+                                "x-omitempty": true
+                            },
+                            "version":{
+                                "description": "SNMP Version.",
+                                "type": "string",
+                                "enum": [
+                                    "v1",
+                                    "v2c",
+                                    "v3"
+                                ],
+                                "default": "v3",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "fabric.snmpPolicy":{
                 "allOf":[
                     {},
@@ -520,6 +1007,321 @@
                                     "true"
                                 ],
                                 "default": "true",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.snmpUsers":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "authorization_key":{
+                                "description": "SNMP Authorization Variable Number.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "authorization_type":{
+                                "description": "SNMP User Authorization Type.",
+                                "type": "string",
+                                "enum": [
+                                    "hmac-md5-96",
+                                    "hmac-sha1-96",
+                                    "hmac-sha2-224",
+                                    "hmac-sha2-256",
+                                    "hmac-sha2-384",
+                                    "hmac-sha2-512"
+                                ],
+                                "default": "hmac-sha1-96",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "privacy_key" : "",
+                                "privacy_type" : ""
+                            },
+                            "privacy_key":{
+                                "description": "SNMP Privacy Variable Number.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "privacy_type":{
+                                "description": "SNMP User Privacy Type.",
+                                "type": "string",
+                                "enum": [
+                                    "aes-128,,",
+                                    "des",
+                                    "none"
+                                ],
+                                "default": "none",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "authorization_key" : "",
+                                "authorization_type": "",
+                                "site_group" : "",
+                                "username" : ""
+                            },
+                            "snmp_key":{
+                                "description": "SNMP Authorization/Privacy Keys.",
+                                "type": "string",
+                                "minimum": 8,
+                                "maximum": 130,
+                                "pattern":"^[\\S+]{8,130}$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.Syslog":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "admin_state":{
+                                "description": "Admin State of the Syslog Policy.",
+                                "type": "string",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "audit_logs":{
+                                "description": "Audit Log Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "console_admin_state":{
+                                "description": "Console Syslog Admin State.",
+                                "type": "string",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "console_severity":{
+                                "description": "Console Severity.",
+                                "type": "string",
+                                "enum": [
+                                    "alerts",
+                                    "critical",
+                                    "emergencies"
+                                ],
+                                "default": "critical",
+                                "x-omitempty": true
+                            },
+                            "events":{
+                                "description": "Audit Log Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "faults":{
+                                "description": "Faults Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "format":{
+                                "description": "Syslog Format.",
+                                "type": "string",
+                                "enum": [
+                                    "aci",
+                                    "nxos"
+                                ],
+                                "default": "aci",
+                                "x-omitempty": true
+                            },
+                            "local_admin_state":{
+                                "description": "Local Syslog Admin State.",
+                                "type": "string",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "local_severity":{
+                                "description": "Local Severity.",
+                                "type": "string",
+                                "enum": [
+                                    "alerts",
+                                    "critical",
+                                    "debugging",
+                                    "emergencies",
+                                    "errors",
+                                    "information",
+                                    "notifications",
+                                    "warnings"
+                                ],
+                                "default": "information",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {},
+                            "required_args": {
+                                "admin_state" : "",
+                                "audit_logs" : "",
+                                "console_admin_state" : "",
+                                "console_severity" : "",
+                                "events" : "",
+                                "faults" : "",
+                                "format" : "",
+                                "local_admin_state" : "",
+                                "local_severity" : "",
+                                "session_logs" : "",
+                                "show_milliseconds_in_timestamp" : "",
+                                "show_time_zone_in_timestamp" : "",
+                                "site_group" : ""
+                            },
+                            "session_logs":{
+                                "description": "Session Log Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "show_milliseconds_in_timestamp":{
+                                "description": "Flag to show milliseconds in timestamp.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "show_time_zone_in_timestamp":{
+                                "description": "Flag to show timezone in timestamp.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "fabric.syslogRemoteDestinations":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "admin_state":{
+                                "description": "Admin State of the Syslog Remote Destination.",
+                                "type": "string",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "forwarding_facility":{
+                                "description": "The Remote Syslog Server Facility.",
+                                "type": "string",
+                                "enum": [
+                                    "local0",
+                                    "local1",
+                                    "local2",
+                                    "local3",
+                                    "local4",
+                                    "local5",
+                                    "local6",
+                                    "local7"
+                                ],
+                                "default": "local7",
+                                "x-omitempty": true
+                            },
+                            "management_epg_type":{
+                                "description": "The Type of Management EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "inb",
+                                    "oob"
+                                ],
+                                "default": "oob",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "community" : "",
+                                "username" : "",
+                                "v3_security_level" : ""
+                            },
+                            "port":{
+                                "description": "Syslog Destination Port.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 162,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "admin_state" : "",
+                                "forwarding_facility" : "",
+                                "host" : "",
+                                "management_epg" : "",
+                                "management_epg_type" : "",
+                                "port" : "",
+                                "severity" : "",
+                                "transport" : ""
+                            },
+                            "severity":{
+                                "description": "The Syslog Severity Level.",
+                                "type": "string",
+                                "enum": [
+                                    "alerts",
+                                    "critical",
+                                    "debugging",
+                                    "emergencies",
+                                    "errors",
+                                    "information",
+                                    "notifications",
+                                    "warnings"
+                                ],
+                                "default": "information",
+                                "x-omitempty": true
+                            },
+                            "transport":{
+                                "description": "Send Syslog using TCP or UDP.",
+                                "type": "string",
+                                "enum": [
+                                    "tcp",
+                                    "udp"
+                                ],
+                                "default": "udp",
                                 "x-omitempty": true
                             }
                         }
@@ -735,6 +1537,11 @@
                     {},
                     {
                         "properties":{
+                            "aes_passphrase":{
+                                "minimum": 16,
+                                "maximum": 32,
+                                "pattern":"^[\\S+]{16,32}$"
+                            },
                             "enable_encryption":{
                                 "description": "If Encryption should be Enabled or Not.",
                                 "type": "string",
@@ -746,11 +1553,6 @@
                                 "x-omitempty": true
                             },
                             "optional_args":{},
-                            "Password":{
-                                "minimum": 16,
-                                "maximum": 32,
-                                "pattern":"^[\\S+]{16,32}$"
-                            },
                             "required_args":{
                                 "clear_passphrase": "",
                                 "enable_encryption": "",
@@ -770,7 +1572,10 @@
                                 "alias": "",
                                 "annotations": "",
                                 "description": "",
-                                "qos_class": ""
+                                "qos_class": "",
+                                "schema": "",
+                                "sites": "",
+                                "template": ""
                             },
                             "preferred_group_member":{
                                 "description": "Preferred Group Member.",
@@ -825,10 +1630,10 @@
                                 "description": "Flood in Encapsulation.",
                                 "type": "string",
                                 "enum": [
-                                    "admin_up",
-                                    "admin_shut"
+                                    "disabled",
+                                    "enabled"
                                 ],
-                                "default": "admin_up",
+                                "default": "disabled",
                                 "x-omitempty": true
                             },
                             "intra_epg_isolation":{
@@ -860,7 +1665,7 @@
                                 "custom_qos": "",
                                 "data_plane_policer": "",
                                 "description": "",
-                                "epg_to_aep": "",
+                                "epg_to_aaeps": "",
                                 "epg_contract_master": "",
                                 "global_alias": "",
                                 "fhs_trust_control_policy": "",
@@ -868,7 +1673,8 @@
                                 "physical_domains": "",
                                 "PVLAN": "",
                                 "vmm_domains": "",
-                                "VLAN": "",
+                                "vmm_static_vlans": "",
+                                "vlans": "",
                                 "vzGraphCont": ""
                             },
                             "preferred_group_member":{
@@ -926,6 +1732,622 @@
                     }
                 ]
             },
+            "tenants.bridgeDomains":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "epg_admin_state":{
+                                "description": "EPG Admin State.",
+                                "type": "string",
+                                "enum": [
+                                    "admin_up",
+                                    "admin_shut"
+                                ],
+                                "default": "admin_up",
+                                "x-omitempty": true
+                            },
+                            "flood_in_encapsulation":{
+                                "description": "Flood in Encapsulation.",
+                                "type": "string",
+                                "enum": [
+                                    "admin_up",
+                                    "admin_shut"
+                                ],
+                                "default": "admin_up",
+                                "x-omitempty": true
+                            },
+                            "intra_epg_isolation":{
+                                "description": "Intra EPG Isolation.",
+                                "type": "string",
+                                "enum": [
+                                    "enforced",
+                                    "unenforced"
+                                ],
+                                "default": "unenforced",
+                                "x-omitempty": true
+                            },
+                            "label_match_criteria":{
+                                "description": "Label Match Criteria.",
+                                "type": "string",
+                                "enum": [
+                                    "All",
+                                    "AtleastOne",
+                                    "AtmostOne",
+                                    "None"
+                                ],
+                                "default": "AtleastOne",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "alias": "",
+                                "annotations": "",
+                                "description": "",
+                                "first_hop_security_policy" : "",
+                                "global_alias": "",
+                                "fhs_trust_control_policy": "",
+                                "fibre_channel_domain_association": "",
+                                "physical_domains": "",
+                                "PVLAN": "",
+                                "vmm_domains": "",
+                                "VLAN": "",
+                                "vzGraphCont": ""
+                            },
+                            "preferred_group_member":{
+                                "description": "Preferred Group Member.",
+                                "type": "string",
+                                "enum": [
+                                    "exclude",
+                                    "include"
+                                ],
+                                "default": "exclude",
+                                "x-omitempty": true
+                            },
+                            "qos_class":{
+                                "description": "QoS Class Levels.",
+                                "type": "string",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "arp_flooding" : "",
+                                "bd_policy" : "",
+                                "disable_ip_data_plane_learning_for_pbr" : "",
+                                "endpoint_clear" : "",
+                                "endpoint_retention_policy" : "",
+                                "ep_move_detection_mode" : "",
+                                "igmp_interface_policy" : "",
+                                "igmp_snooping_policy" : "",
+                                "intersite_bum_traffic_allow" : "",
+                                "intersite_l2_stretch" : "",
+                                "ipv6_l3_unknown_multicast" : "",
+                                "l2_unknown_unicast" : "",
+                                "l3_unknown_multicast_flooding" : "",
+                                "l3out" : "",
+                                "l3out_for_route_profile" : "",
+                                "limit_ip_learn_to_subnets" : "",
+                                "link_local_ipv6" : "",
+                                "mac_address" : "",
+                                "mld_snoop_policy" : "",
+                                "multi_destionation_flooding" : "",
+                                "name" : "",
+                                "ndIfPol" : "",
+                                "netflow_monitor_policies" : "",
+                                "optimize_wan_bandwidth" : "",
+                                "pim" : "",
+                                "pimv6" : "",
+                                "policy_name" : "",
+                                "schema" : "",
+                                "site_group" : "",
+                                "sites" : "",
+                                "template" : "",
+                                "tenant" : "",
+                                "type" : "",
+                                "unicast_routing" : "",
+                                "vrf" : ""
+                            },
+                            "useg_epg":{
+                                "description": "Microseg EPG.",
+                                "type": "string",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.Contracts":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args":{
+                                "alias" : "",
+                                "annotations" : "",
+                                "description" : "",
+                                "schema" : "",
+                                "sites" : "",
+                                "template" : ""
+                            },
+                            "qos_class":{
+                                "description": "QoS Class Levels.",
+                                "type": "string",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "enable_policy_compression" : "",
+                                "name" : "",
+                                "qos_class" : "",
+                                "contract_type" : "",
+                                "scope" : "",
+                                "site_group" : "",
+                                "target_dscp" : "",
+                                "tenant" : ""
+                            },
+                            "target_dscp":{
+                                "description": "Target DSCP Values.",
+                                "type": "string",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.filterEntry":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "acknowledgement":{
+                                "description": "TCP Session Rules - Option Acknowledgement.",
+                                "type": "string",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "arp_flag":{
+                                "description": "ARP Flag Values.",
+                                "type": "string",
+                                "enum": [
+                                    "req",
+                                    "reply",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "established":{
+                                "description": "TCP Session Rules - Option Established.",
+                                "type": "string",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "ethertype":{
+                                "description": "Ether Type Values.",
+                                "type": "string",
+                                "enum": [
+                                    "arp",
+                                    "fcoe",
+                                    "ip",
+                                    "ipv4",
+                                    "ipv6",
+                                    "trill",
+                                    "mac_security",
+                                    "mpls_ucast",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "finish":{
+                                "description": "TCP Session Rules - Option Finish.",
+                                "type": "string",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "icmpv4_type":{
+                                "description": "ICMPv4 Values.",
+                                "type": "string",
+                                "enum": [
+                                    "dst-unreach",
+                                    "echo",
+                                    "echo-rep",
+                                    "src-quench",
+                                    "time-exceeded",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "icmpv6_type":{
+                                "description": "ICMPv6 Values.",
+                                "type": "string",
+                                "enum": [
+                                    "dst-unreach",
+                                    "echo-req",
+                                    "echo-rep",
+                                    "nbr-solicit",
+                                    "nbr-advert",
+                                    "redirect", 
+                                    "time-exceeded",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "ip_protocol":{
+                                "description": "ICMPv6 Values.",
+                                "type": "string",
+                                "enum": [
+                                    "egp",
+                                    "eigrp",
+                                    "igp",
+                                    "icmp",
+                                    "icmpv6",
+                                    "igmp",
+                                    "l2tp",
+                                    "ospfigp",
+                                    "pim",
+                                    "tcp",
+                                    "udp", 
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "match_dscp":{
+                                "description": "Target DSCP Values.",
+                                "type": "string",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "match_only_fragments":{
+                                "description": "Match Only Fragements Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "alias" : "",
+                                "description" : ""
+                            },
+                            "required_args" : {
+                                "acknowledgement": "",
+                                "arp_flag": "",
+                                "destination_from": "",
+                                "destination_to": "",
+                                "established": "",
+                                "ethertype": "",
+                                "filter_name": "",
+                                "finish": "",
+                                "icmpv4_type": "",
+                                "icmpv6_type": "",
+                                "ip_protocol": "",
+                                "name": "",
+                                "match_dscp": "",
+                                "match_only_Frags": "",
+                                "reset": "",
+                                "site_group": "",
+                                "source_from": "",
+                                "source_to": "",
+                                "stateful": "",
+                                "synchronize": "",
+                                "tenant": "",
+                                "tcp_session_rules": ""
+                            },
+                            "reset":{
+                                "description": "TCP Session Rules - Option Reset.",
+                                "type": "string",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "stateful":{
+                                "description": "Stateful Flag Values.",
+                                "type": "string",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "synchronize":{
+                                "description": "TCP Session Rules - Option Synchronize.",
+                                "type": "string",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.l3Out.nodeProfiles":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args":{
+                                "alias" : "",
+                                "annotations" : "",
+                                "description" : "",
+                                "schema" : "",
+                                "sites" : "",
+                                "template" : ""
+                            },
+                            "qos_class":{
+                                "description": "QoS Class Levels.",
+                                "type": "string",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "enable_policy_compression" : "",
+                                "name" : "",
+                                "qos_class" : "",
+                                "contract_type" : "",
+                                "scope" : "",
+                                "site_group" : "",
+                                "target_dscp" : "",
+                                "tenant" : ""
+                            },
+                            "color_tag":{
+                                "description": "Specifies the color of a policy label.",
+                                "type": "string",
+                                "enum": [
+                                    "alice-blue",
+                                    "antique-white",
+                                    "aqua",
+                                    "aquamarine",
+                                    "azure",
+                                    "beige",
+                                    "bisque",
+                                    "black",
+                                    "blanched-almond",
+                                    "blue",
+                                    "blue-violet",
+                                    "brown",
+                                    "burlywood",
+                                    "cadet-blue",
+                                    "chartreuse",
+                                    "chocolate",
+                                    "coral",
+                                    "cornflower-blue",
+                                    "cornsilk",
+                                    "crimson",
+                                    "cyan",
+                                    "dark-blue",
+                                    "dark-cyan",
+                                    "dark-goldenrod",
+                                    "dark-gray",
+                                    "dark-green",
+                                    "dark-khaki",
+                                    "dark-magenta",
+                                    "dark-olive-green",
+                                    "dark-orange",
+                                    "dark-orchid",
+                                    "dark-red",
+                                    "dark-salmon",
+                                    "dark-sea-green",
+                                    "dark-slate-blue",
+                                    "dark-slate-gray",
+                                    "dark-turquoise",
+                                    "dark-violet",
+                                    "deep-pink",
+                                    "deep-sky-blue",
+                                    "dim-gray",
+                                    "dodger-blue",
+                                    "fire-brick",
+                                    "floral-white",
+                                    "forest-green",
+                                    "fuchsia",
+                                    "gainsboro",
+                                    "ghost-white",
+                                    "gold",
+                                    "goldenrod",
+                                    "gray",
+                                    "green",
+                                    "green-yellow",
+                                    "honeydew",
+                                    "hot-pink",
+                                    "indian-red",
+                                    "indigo",
+                                    "ivory",
+                                    "khaki",
+                                    "lavender",
+                                    "lavender-blush",
+                                    "lawn-green",
+                                    "lemon-chiffon",
+                                    "light-blue",
+                                    "light-coral",
+                                    "light-cyan",
+                                    "light-goldenrod-yellow",
+                                    "light-gray",
+                                    "light-green",
+                                    "light-pink",
+                                    "light-salmon",
+                                    "light-sea-green",
+                                    "light-sky-blue",
+                                    "light-slate-gray",
+                                    "light-steel-blue",
+                                    "light-yellow",
+                                    "lime",
+                                    "lime-green",
+                                    "linen",
+                                    "magenta",
+                                    "maroon",
+                                    "medium-aquamarine",
+                                    "medium-blue",
+                                    "medium-orchid",
+                                    "medium-purple",
+                                    "medium-sea-green",
+                                    "medium-slate-blue",
+                                    "medium-spring-green",
+                                    "medium-turquoise",
+                                    "medium-violet-red",
+                                    "midnight-blue",
+                                    "mint-cream",
+                                    "misty-rose",
+                                    "moccasin",
+                                    "navajo-white",
+                                    "navy",
+                                    "old-lace",
+                                    "olive",
+                                    "olive-drab",
+                                    "orange",
+                                    "orange-red",
+                                    "orchid",
+                                    "pale-goldenrod",
+                                    "pale-green",
+                                    "pale-turquoise",
+                                    "pale-violet-red",
+                                    "papaya-whip",
+                                    "peachpuff",
+                                    "peru",
+                                    "pink",
+                                    "plum",
+                                    "powder-blue",
+                                    "purple",
+                                    "red",
+                                    "rosy-brown",
+                                    "royal-blue",
+                                    "saddle-brown",
+                                    "salmon",
+                                    "sandy-brown",
+                                    "sea-green",
+                                    "seashell",
+                                    "sienna",
+                                    "silver",
+                                    "sky-blue",
+                                    "slate-blue",
+                                    "slate-gray",
+                                    "snow",
+                                    "spring-green",
+                                    "steel-blue",
+                                    "tan",
+                                    "teal",
+                                    "thistle",
+                                    "tomato",
+                                    "turquoise",
+                                    "violet",
+                                    "wheat",
+                                    "white",
+                                    "white-smoke",
+                                    "yellow",
+                                    "yellow-green"
+                                ],
+                                "default": "yellow-green",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "tenants.Tenants":{
                 "allOf":[
                     {},
@@ -934,13 +2356,140 @@
                             "optional_args":{
                                 "alias": "",
                                 "annotations": "",
-                                "description": "",
-                                "schema": "",
-                                "users": ""
+                                "description": ""
                             },
                             "required_args":{
                                 "tenant": "",
                                 "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "validators":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "alias":{
+                                "description": "Alias Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "annotation":{
+                                "description": "Annotation Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 128,
+                                "pattern":"^[a-zA-Z0-9\\\\!#$%()*,-./:;@ _{|}~?&+]+$",
+                                "x-omitempty": true
+                            },
+                            "description":{
+                                "description": "Description Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 128,
+                                "pattern":"^[a-zA-Z0-9\\\\!#$%()*,-./:;@ _{|}~?&+]+$",
+                                "x-omitempty": true
+                            },
+                            "filter_name":{
+                                "description": "Filter Entry Name Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "location":{
+                                "description": "SNMP Location Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 128,
+                                "pattern":"^[a-zA-Z0-9\\\\!#$%()*,-./:;@ _{|}~?&+]+$",
+                                "x-omitempty": true
+                            },
+                            "login_domain":{
+                                "description": "Login Domain Name.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 10,
+                                "pattern":"^[a-zA-Z0-9][a-zA-Z0-9_]+$",
+                                "x-omitempty": true
+                            },
+                            "management_epg":{
+                                "description": "Management EPG.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "name":{
+                                "description": "Name Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "name_alias":{
+                                "description": "Name Alias Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 63,
+                                "pattern":"^[a-zA-Z0-9_.-]+$",
+                                "x-omitempty": true
+                            },
+                            "physical_domain":{
+                                "description": "Physical Domain Name Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "site_name":{
+                                "description": "Site Name.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "software_version":{
+                                "description": "Switch Software Version for Maintenance Group.",
+                                "type": "string",
+                                "minimum": 14,
+                                "maximum": 17,
+                                "pattern":"^(n9000\\-\\d{2}|^simsw-\\d{1})\\.\\d{1,2}\\(\\d{1,2}[a-z]\\)$",
+                                "x-omitempty": true
+                            },
+                            "tenant":{
+                                "description": "Tenant Name.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "username":{
+                                "description": "SNMP Username.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 31,
+                                "pattern":"^[a-zA-Z][a-zA-Z0-9_.@-]{0,31}$",
+                                "x-omitempty": true
+                            },
+                            "vmm_domain":{
+                                "description": "VMM Domain Name Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             }
                         }
                     }

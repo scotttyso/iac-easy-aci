@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+#======================================================
+# Source Modules
+#======================================================
 from openpyxl import load_workbook
 from ordered_set import OrderedSet
 from textwrap import fill
@@ -15,10 +18,14 @@ import sys
 import stdiomask
 import validating
 
-# Log levels 0 = None, 1 = Class only, 2 = Line
+#======================================================
+# Log Level - 0 = None, 1 = Class only, 2 = Line
+#======================================================
 log_level = 2
 
+#======================================================
 # Exception Classes
+#======================================================
 class InsufficientArgs(Exception):
     pass
 
@@ -31,7 +38,9 @@ class InvalidArg(Exception):
 class LoginFailed(Exception):
     pass
 
-# Function to Count the Number of Keys
+#======================================================
+# Function to Count the Number of Keys/Columns
+#======================================================
 def countKeys(ws, func):
     count = 0
     for i in ws.rows:
@@ -40,7 +49,9 @@ def countKeys(ws, func):
                 count += 1
     return count
 
+#======================================================
 # Function to Create Interface Selectors
+#======================================================
 def create_selector(ws_sw, ws_sw_row_count, **templateVars):
     print(templateVars['port_count'])
     Port_Selector = ''
@@ -68,7 +79,9 @@ def create_selector(ws_sw, ws_sw_row_count, **templateVars):
         ws_sw_row_count += 1
     return ws_sw_row_count
 
+#======================================================
 # Function to Create Static Paths within EPGs
+#======================================================
 def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **templateVars):
     wsheets = wb_sw.get_sheet_names()
     tf_file = ''
@@ -142,7 +155,9 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
                         if not static_path_descr in read_file.read():
                             create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
 
-# Function to Create Terraform Files
+#======================================================
+# Function to Create Terraform auto.tfvars files
+#======================================================
 def create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars):
     # Make sure the Destination Directory Exists
     dest_dir = './ACI/%s/%s' % (templateVars['Site_Name'], dest_dir)
@@ -158,7 +173,9 @@ def create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars):
     wr_file.write(payload + '\n\n')
     wr_file.close()
 
-# Function to find the Keys for each Section
+#======================================================
+# Function to find the Keys for each Worksheet
+#======================================================
 def findKeys(ws, func_regex):
     func_list = OrderedSet()
     for i in ws.rows:
@@ -167,6 +184,9 @@ def findKeys(ws, func_regex):
                 func_list.add(str(i[0].value))
     return func_list
 
+#======================================================
+# Function to Create Terraform auto.tfvars files
+#======================================================
 # Function to Assign the Variables to the Keys
 def findVars(ws, func, rows, count):
     var_list = []
@@ -194,6 +214,9 @@ def findVars(ws, func, rows, count):
         vcount += 1
     return var_dict
 
+#======================================================
+# Function to Create Terraform auto.tfvars files
+#======================================================
 def naming_rule(name_prefix, name_suffix, org):
     if not name_prefix == '':
         name = '%s_%s' % (name_prefix, name_suffix)
@@ -201,6 +224,9 @@ def naming_rule(name_prefix, name_suffix, org):
         name = '%s_%s' % (org, name_suffix)
     return name
 
+#======================================================
+# Function to Create Terraform auto.tfvars files
+#======================================================
 def policies_list(policies_list, **templateVars):
     valid = False
     while valid == False:
@@ -248,6 +274,9 @@ def policies_list(policies_list, **templateVars):
             print(f'  Error!! Invalid Selection.  Please Select a valid Index from the List.')
             print(f'\n-------------------------------------------------------------------------------------------\n')
 
+#======================================================
+# Function to Create Terraform auto.tfvars files
+#======================================================
 def policies_parse(org, policy_type, policy):
     if os.environ.get('TF_DEST_DIR') is None:
         tfDir = 'Intersight'
@@ -291,7 +320,9 @@ def policies_parse(org, policy_type, policy):
         json_data = {}
         return policies,json_data
 
+#======================================================
 # Function to validate input for each method
+#======================================================
 def process_kwargs(required_args, optional_args, **kwargs):
     # Validate all required kwargs passed
     # if all(item in kwargs for item in required_args.keys()) is not True:
@@ -338,7 +369,9 @@ def process_kwargs(required_args, optional_args, **kwargs):
     templateVars = {**required_args, **optional_args}
     return(templateVars)
 
+#======================================================
 # Function to Add Static Port Bindings to Bridge Domains Terraform Files
+#======================================================
 def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, **templateVars):
     if re.search('Grp_[A-F]', templateVars['site_group']):
         group_id = '%s' % (templateVars['site_group'])
@@ -388,7 +421,9 @@ def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, 
         print(f"\n-----------------------------------------------------------------------------\n")
         exit()
 
+#======================================================
 # Function to Determine Port Count on Modules
+#======================================================
 def query_module_type(row_num, module_type):
     if re.search('^M4', module_type):
         port_count = '4'
@@ -404,12 +439,15 @@ def query_module_type(row_num, module_type):
         port_count = '36'
     else:
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Row {row_num}.  Unknown Switch Model {module_type}')
+        print(f'   Error on Row {row_num}.  Unknown Module {module_type}')
         print(f'   Please verify Input Information.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
     return port_count
 
+#======================================================
+# Function to Determine Port count from Switch Model
+#======================================================
 # Function to Determine Port count from Switch Model
 def query_switch_model(row_num, switch_type):
     modules = ''
@@ -460,7 +498,59 @@ def query_switch_model(row_num, switch_type):
         exit()
     return modules,port_count
 
+#======================================================
+# Function for Processing Loops to auto.tfvars files
+#======================================================
+def read_easy_jsonData(easy_jsonData, **easyDict):
+    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
+    classes = jsonData['classes']['enum']
+    for class_type in classes:
+        funcList = jsonData[f'class.{class_type}']['enum']
+        for func in funcList:
+            for item in easyDict[class_type][func]:
+                for k, v in item.items():
+                    for i in v:
+                        kwargs = i
+                        kwargs['row_num'] = f'{func}_section'
+                        kwargs['site_group'] = k
+                        kwargs['ws'] = easyDict['wb']['System Settings']
+                        
+                        # Add Variables for Template Functions
+                        kwargs['template_type'] = func
+                            
+                        if re.search('(apic|bgp_asn)', func):
+                            kwargs["template_file"] = 'template_open2.jinja2'
+                        else:
+                            kwargs["template_file"] = 'template_open.jinja2'
+                        if 'bgp' in func:
+                            kwargs['policy_type'] = func.replace('_', ' ').upper()
+                            kwargs['tfvars_file'] = 'bgp'
+                        else:
+                            kwargs['policy_type'] = func.replace('_', ' ').capitalize()
+                            kwargs['tfvars_file'] = func
+                        
+                        # Write the Header to the Template File
+                        if 'bgp_rr' in func:
+                            kwargs["initial_write"] = False
+                        else:
+                            kwargs["initial_write"] = True
+                        write_to_site(**kwargs)
+
+                        # Write the template to the Template File
+                        kwargs["initial_write"] = False
+                        kwargs["template_file"] = f'{func}.jinja2'
+                        write_to_site(**kwargs)
+
+                        kwargs["initial_write"] = False
+                        kwargs["template_file"] = 'template_close.jinja2'
+
+                        if not re.search('apic|bgp_asn', func):
+                            # Write the Footer to the Template File
+                            write_to_site(**kwargs)
+
+#======================================================
 # Function to Read Excel Workbook Data
+#======================================================
 def read_in(excel_workbook):
     try:
         wb = load_workbook(excel_workbook)
@@ -470,6 +560,9 @@ def read_in(excel_workbook):
         sys.exit(e)
     return wb
 
+#======================================================
+# Function to loop through site_groups for sensitve vars
+#======================================================
 def sensitive_var_site_group(**kwargs):
     if re.search('Grp_[A-F]', kwargs['site_group']):
         site_group = ast.literal_eval(os.environ[kwargs['site_group']])
@@ -485,6 +578,9 @@ def sensitive_var_site_group(**kwargs):
         if site_dict['run_location'] == 'local':
             sensitive_var_value(**kwargs)
 
+#======================================================
+# Function to add sensitive_var to Environment
+#======================================================
 def sensitive_var_value(**kwargs):
     sensitive_var = 'TF_VAR_%s' % (kwargs['Variable'])
     # -------------------------------------------------------------------------------------------------------------------------
@@ -536,70 +632,29 @@ def sensitive_var_value(**kwargs):
             elif re.search('(apikey|secretkey)', sensitive_var):
                 if not sensitive_var == '':
                     valid = True
-            elif 'smtp_password' in sensitive_var:
-                minimum = kwargs['jsonData']['Password']['minimum']
-                maximum = kwargs['jsonData']['Password']['maximum']
-                rePattern = kwargs['jsonData']['Password']['pattern']
-                varName = 'SmartCallHome SMTP Server Password'
-                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minimum, maximum)
-            elif 'aes_passphrase' in sensitive_var:
-                minLength = kwargs['jsonData']['Password']['minimum']
-                maxLength = kwargs['jsonData']['Password']['maximum']
-                rePattern = kwargs['jsonData']['Password']['pattern']
-                varName = 'Global AES Phassphrase'
-                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
-            elif 'community' in sensitive_var:
-                jsonVars = kwargs['easy_jsonData']['components']['schemas']['snmp.Policy']['allOf'][1]['properties']
-                minLength = 1
-                maxLength = jsonVars['TrapCommunity']['maxLength']
-                rePattern = '^[\\S]+$'
-                varName = 'SNMP Community'
-                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
-            elif 'ipmi_key' in sensitive_var:
-                jsonVars = kwargs['easy_jsonData']['components']['schemas']['ipmioverlan.Policy']['allOf'][1]['properties']
-                minLength = 2
-                maxLength = jsonVars['EncryptionKey']['maxLength']
-                rePattern = jsonVars['EncryptionKey']['pattern']
-                varName = 'IPMI Encryption Key'
-                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
-            elif 'iscsi_boot' in sensitive_var:
-                jsonVars = kwargs['easy_jsonData']['components']['schemas']['vnic.IscsiAuthProfile']['allOf'][1]['properties']
-                minLength = 12
-                maxLength = 16
-                rePattern = jsonVars['Password']['pattern']
-                varName = 'iSCSI Boot Password'
-                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
-            elif 'local' in sensitive_var:
-                jsonVars = kwargs['easy_jsonData']['components']['schemas']['iam.EndPointUserRole']['allOf'][1]['properties']
-                minLength = jsonVars['Password']['minLength']
-                maxLength = jsonVars['Password']['maxLength']
-                rePattern = jsonVars['Password']['pattern']
-                varName = 'Local User Password'
-                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
-            elif 'secure_passphrase' in sensitive_var:
-                jsonVars = kwargs['easy_jsonData']['components']['schemas']['memory.PersistentMemoryLocalSecurity']['allOf'][1]['properties']
-                minLength = jsonVars['SecurePassphrase']['minLength']
-                maxLength = jsonVars['SecurePassphrase']['maxLength']
-                rePattern = jsonVars['SecurePassphrase']['pattern']
-                varName = 'Persistent Memory Secure Passphrase'
-                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
-            elif 'snmp' in sensitive_var:
-                jsonVars = kwargs['easy_jsonData']['components']['schemas']['snmp.Policy']['allOf'][1]['properties']
-                minLength = 1
-                maxLength = jsonVars['TrapCommunity']['maxLength']
-                rePattern = '^[\\S]+$'
-                if 'auth' in sensitive_var:
-                    varName = 'SNMP Authorization Password'
-                else:
-                    varName = 'SNMP Privacy Password'
-                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
-            elif 'vmedia' in sensitive_var:
-                jsonVars = kwargs['easy_jsonData']['components']['schemas']['vmedia.Mapping']['allOf'][1]['properties']
-                minLength = 1
-                maxLength = jsonVars['Password']['maxLength']
-                rePattern = '^[\\S]+$'
-                varName = 'vMedia Mapping Password'
-                valid = validating.length_and_regex_sensitive(rePattern, varName, secure_value, minLength, maxLength)
+            else:
+                if 'aes_passphrase' in sensitive_var:
+                    sKey = 'aes_passphrase'
+                    varTitle = 'Global AES Phassphrase'
+                elif 'ntp_key' in sensitive_var:
+                    sKey = 'key'
+                    varTitle = 'NTP Key'
+                elif re.fullmatch('^(authorization|privacy)_key$', sensitive_var):
+                    sKey = 'snmp_key'
+                    x = sensitive_var.split('_')
+                    varType = '%s %s' % (x[0].capitalize(), x[1].capitalize())
+                    varTitle = f'{varType}'
+                elif 'snmp_community' in sensitive_var:
+                    sKey = 'snmp_community'
+                    varTitle = 'The Community may only contain letters, numbers and the special characters of \
+                    underscore (_), hyphen (-), or period (.). The Community may not contain the @ symbol.'
+                elif 'smtp_password' in sensitive_var:
+                    sKey = 'smtp_password'
+                    varTitle = 'Smart CallHome SMTP Server Password'
+                minimum = kwargs['jsonData'][sKey]['minimum']
+                maximum = kwargs['jsonData'][sKey]['maximum']
+                pattern = kwargs['jsonData'][sKey]['pattern']
+                valid = validating.length_and_regex_sensitive(pattern, varTitle, secure_value, minimum, maximum)
 
         # Add the Variable to the Environment
         os.environ[sensitive_var] = '%s' % (secure_value)
@@ -615,7 +670,9 @@ def sensitive_var_value(**kwargs):
 
     return var_value
 
+#======================================================
 # Function to Define stdout_log output
+#======================================================
 def stdout_log(sheet, line):
     if log_level == 0:
         return
@@ -631,6 +688,9 @@ def stdout_log(sheet, line):
     else:
         return
 
+#======================================================
+# Function to pull variables from easy_jsonData
+#======================================================
 def variablesFromAPI(**templateVars):
     valid = False
     while valid == False:
@@ -706,6 +766,9 @@ def variablesFromAPI(**templateVars):
             print(f'\n-------------------------------------------------------------------------------------------\n')
     return selection
 
+#======================================================
+# Function to pull variables from easy_jsonData
+#======================================================
 def varBoolLoop(**templateVars):
     print(f'\n-------------------------------------------------------------------------------------------\n')
     newDescr = templateVars["Description"]
@@ -740,6 +803,9 @@ def varBoolLoop(**templateVars):
             print(f'\n-------------------------------------------------------------------------------------------\n')
     return varValue
 
+#======================================================
+# Function to pull variables from easy_jsonData
+#======================================================
 def varNumberLoop(**templateVars):
     maxNum = templateVars["maxNum"]
     minNum = templateVars["minNum"]
@@ -771,9 +837,12 @@ def varNumberLoop(**templateVars):
             print(f'\n-------------------------------------------------------------------------------------------\n')
     return varValue
 
+#======================================================
+# Function to pull variables from easy_jsonData
+#======================================================
 def varSensitiveStringLoop(**templateVars):
-    maxLength = templateVars["maxLength"]
-    minLength = templateVars["minLength"]
+    maximum = templateVars["maximum"]
+    minimum = templateVars["minimum"]
     varName = templateVars["varName"]
     varRegex = templateVars["varRegex"]
 
@@ -793,16 +862,19 @@ def varSensitiveStringLoop(**templateVars):
     while valid == False:
         varValue = stdiomask.getpass(f'{templateVars["varInput"]} ')
         if not varValue == '':
-            valid = validating.length_and_regex_sensitive(varRegex, varName, varValue, minLength, maxLength)
+            valid = validating.length_and_regex_sensitive(varRegex, varName, varValue, minimum, maximum)
         else:
             print(f'\n-------------------------------------------------------------------------------------------\n')
             print(f'   {varName} value is Invalid!!! ')
             print(f'\n-------------------------------------------------------------------------------------------\n')
     return varValue
 
+#======================================================
+# Function to pull variables from easy_jsonData
+#======================================================
 def varStringLoop(**templateVars):
-    maxLength = templateVars["maxLength"]
-    minLength = templateVars["minLength"]
+    maximum = templateVars["maximum"]
+    minimum = templateVars["minimum"]
     varName = templateVars["varName"]
     varRegex = templateVars["varRegex"]
 
@@ -827,73 +899,16 @@ def varStringLoop(**templateVars):
             varValue = templateVars["varDefault"]
             valid = True
         elif not varValue == '':
-            valid = validating.length_and_regex(varRegex, varName, varValue, minLength, maxLength)
+            valid = validating.length_and_regex(varRegex, varName, varValue, minimum, maximum)
         else:
             print(f'\n-------------------------------------------------------------------------------------------\n')
             print(f'   {varName} value of "{varValue}" is Invalid!!! ')
             print(f'\n-------------------------------------------------------------------------------------------\n')
     return varValue
 
-def vars_from_list(var_options, **templateVars):
-    selection = []
-    selection_count = 0
-    valid = False
-    while valid == False:
-        print(f'\n-------------------------------------------------------------------------------------------\n')
-        print(f'{templateVars["var_description"]}')
-        for index, value in enumerate(var_options):
-            index += 1
-            if index < 10:
-                print(f'     {index}. {value}')
-            else:
-                print(f'    {index}. {value}')
-        print(f'\n-------------------------------------------------------------------------------------------\n')
-        exit_answer = False
-        while exit_answer == False:
-            var_selection = input(f'Please Enter the Option Number to Select for {templateVars["var_type"]}: ')
-            if not var_selection == '':
-                if re.search(r'[0-9]+', str(var_selection)):
-                    xcount = 1
-                    for index, value in enumerate(var_options):
-                        index += 1
-                        if int(var_selection) == index:
-                            selection.append(value)
-                            xcount = 0
-                    if xcount == 0:
-                        if selection_count % 2 == 0 and templateVars["multi_select"] == True:
-                            answer_finished = input(f'Would you like to add another port to the {templateVars["port_type"]}?  Enter "Y" or "N" [Y]: ')
-                        elif templateVars["multi_select"] == True:
-                            answer_finished = input(f'Would you like to add another port to the {templateVars["port_type"]}?  Enter "Y" or "N" [N]: ')
-                        elif templateVars["multi_select"] == False:
-                            answer_finished = 'N'
-                        if (selection_count % 2 == 0 and answer_finished == '') or answer_finished == 'Y':
-                            exit_answer = True
-                            selection_count += 1
-                        elif answer_finished == '' or answer_finished == 'N':
-                            exit_answer = True
-                            valid = True
-                        elif templateVars["multi_select"] == False:
-                            exit_answer = True
-                            valid = True
-                        else:
-                            print(f'\n------------------------------------------------------\n')
-                            print(f'  Error!! Invalid Value.  Please enter "Y" or "N".')
-                            print(f'\n------------------------------------------------------\n')
-                    else:
-                        print(f'\n-------------------------------------------------------------------------------------------\n')
-                        print(f'  Error!! Invalid Selection.  Please select a valid option from the List.')
-                        print(f'\n-------------------------------------------------------------------------------------------\n')
-
-                else:
-                    print(f'\n-------------------------------------------------------------------------------------------\n')
-                    print(f'  Error!! Invalid Selection.  Please Select a valid Option from the List.')
-                    print(f'\n-------------------------------------------------------------------------------------------\n')
-            else:
-                print(f'\n-------------------------------------------------------------------------------------------\n')
-                print(f'  Error!! Invalid Selection.  Please Select a valid Option from the List.')
-                print(f'\n-------------------------------------------------------------------------------------------\n')
-    return selection
-
+#======================================================
+# Function to Expand the VLAN list
+#======================================================
 def vlan_list_full(vlan_list):
     full_vlan_list = []
     if re.search(r',', str(vlan_list)):
@@ -919,47 +934,9 @@ def vlan_list_full(vlan_list):
         full_vlan_list.append(vlan_list)
     return full_vlan_list
 
-def vlan_pool():
-    valid = False
-    while valid == False:
-        print(f'\n-------------------------------------------------------------------------------------------\n')
-        print(f'  The allowed vlan list can be in the format of:')
-        print(f'     5 - Single VLAN')
-        print(f'     1-10 - Range of VLANs')
-        print(f'     1,2,3,4,5,11,12,13,14,15 - List of VLANs')
-        print(f'     1-10,20-30 - Ranges and Lists of VLANs')
-        print(f'\n-------------------------------------------------------------------------------------------\n')
-        VlanList = input('Enter the VLAN or List of VLANs to assign to the Domain VLAN Pool: ')
-        if not VlanList == '':
-            vlanListExpanded = vlan_list_full(VlanList)
-            valid_vlan = True
-            for vlan in vlanListExpanded:
-                valid_vlan = validating.number_in_range('VLAN ID', vlan, 1, 4094)
-                if valid_vlan == False:
-                    continue
-            if valid_vlan == False:
-                print(f'\n-------------------------------------------------------------------------------------------\n')
-                print(f'  Error with VLAN(s) assignment!!! VLAN List: "{VlanList}" is not Valid.')
-                print(f'  The allowed vlan list can be in the format of:')
-                print(f'     5 - Single VLAN')
-                print(f'     1-10 - Range of VLANs')
-                print(f'     1,2,3,4,5,11,12,13,14,15 - List of VLANs')
-                print(f'     1-10,20-30 - Ranges and Lists of VLANs')
-                print(f'\n-------------------------------------------------------------------------------------------\n')
-            else:
-                valid = True
-        else:
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'  The allowed vlan list can be in the format of:')
-            print(f'     5 - Single VLAN')
-            print(f'     1-10 - Range of VLANs')
-            print(f'     1,2,3,4,5,11,12,13,14,15 - List of VLANs')
-            print(f'     1-10,20-30 - Ranges and Lists of VLANs')
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-    
-    return VlanList,vlanListExpanded
-
+#======================================================
 # Function to Expand a VLAN Range to a VLAN List
+#======================================================
 def vlan_range(vlan_list, **templateVars):
     results = 'unknown'
     while results == 'unknown':
@@ -993,7 +970,9 @@ def vlan_range(vlan_list, **templateVars):
         results = 'false'
         return results
 
-# Function to Determine which sites to write files to
+#======================================================
+# Function to Determine which sites to write files to.
+#======================================================
 def write_to_site(**kwargs):
     class_type = kwargs['class_type']
     aci_template_path = pkg_resources.resource_filename(f'class_{class_type}', 'templates/')
@@ -1061,55 +1040,9 @@ def write_to_site(**kwargs):
         print(f"\n-----------------------------------------------------------------------------\n")
         exit()
 
-# Function for Creating the Auto Tfvars files
-def wr_auto_tfvars(easy_jsonData, **easyDict):
-    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
-    classes = jsonData['classes']['enum']
-    for class_type in classes:
-        funcList = jsonData[f'class.{class_type}']['enum']
-        for func in funcList:
-            for item in easyDict[class_type][func]:
-                for k, v in item.items():
-                    for i in v:
-                        kwargs = i
-                        kwargs['row_num'] = f'{func}_section'
-                        kwargs['site_group'] = k
-                        kwargs['ws'] = easyDict['wb']['System Settings']
-                        
-                        # Add Variables for Template Functions
-                        kwargs['template_type'] = func
-                            
-                        if re.search('(apic|bgp_asn)', func):
-                            kwargs["template_file"] = 'template_open2.jinja2'
-                        else:
-                            kwargs["template_file"] = 'template_open.jinja2'
-                        if 'bgp' in func:
-                            kwargs['policy_type'] = func.replace('_', ' ').upper()
-                            kwargs['tfvars_file'] = 'bgp'
-                        else:
-                            kwargs['policy_type'] = func.replace('_', ' ').capitalize()
-                            kwargs['tfvars_file'] = func
-                        
-                        # Write the Header to the Template File
-                        if 'bgp_rr' in func:
-                            kwargs["initial_write"] = False
-                        else:
-                            kwargs["initial_write"] = True
-                        write_to_site(**kwargs)
-
-                        # Write the template to the Template File
-                        kwargs["initial_write"] = False
-                        kwargs["template_file"] = f'{func}.jinja2'
-                        write_to_site(**kwargs)
-
-                        kwargs["initial_write"] = False
-                        kwargs["template_file"] = 'template_close.jinja2'
-
-                        if not re.search('apic|bgp_asn', func):
-                            # Write the Footer to the Template File
-                            write_to_site(**kwargs)
-
-# Function to write files
+#======================================================
+# Function to write files from Templates
+#======================================================
 def write_to_template(**templateVars):    
     opSystem = platform.system()
     dest_dir = templateVars["dest_dir"]
@@ -1165,7 +1098,9 @@ def write_to_template(**templateVars):
     wr_file.write(payload)
     wr_file.close()
 
-# Update the easyDict Dictionary
+#======================================================
+# Function to Update the easyDict Dictionary
+#======================================================
 def update_easyDict(templateVars, **kwargs):
     class_type = templateVars['class_type']
     data_type = templateVars['data_type']

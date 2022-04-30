@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+#======================================================
+# Source Modules
+#======================================================
 from class_terraform import terraform_cloud
 from easy_functions import countKeys, create_selector, create_tf_file
 from easy_functions import findKeys, findVars
@@ -18,7 +21,9 @@ import validating
 
 aci_template_path = pkg_resources.resource_filename('class_access', 'templates/')
 
+#======================================================
 # Exception Classes
+#======================================================
 class InsufficientArgs(Exception):
     pass
 
@@ -61,7 +66,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.values(row_num, ws, 'infra_vlan', templateVars['infra_vlan'], ['no', 'yes'])
@@ -194,7 +199,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.values(row_num, ws, 'admin_state', templateVars['admin_state'], ['disabled', 'enabled'])
@@ -239,7 +244,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.number_check(row_num, ws, 'Buffer_Credit', templateVars['Buffer_Credit'], 16, 64)
@@ -282,7 +287,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'Dest_Folder', templateVars['Dest_Folder'])
@@ -465,7 +470,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.values(row_num, ws, 'QinQ', templateVars['QinQ'], ['disabled', 'enabled'])
@@ -505,7 +510,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'VLAN_Pool', templateVars['VLAN_Pool'])
@@ -555,7 +560,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'Auth_8021X', templateVars['Auth_8021X'])
@@ -613,7 +618,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.number_check(row_num, ws, 'Port_Delay', templateVars['Port_Delay'], 0, 10000)
@@ -658,7 +663,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.values(row_num, ws, 'Receive_State', templateVars['Receive_State'], ['disabled', 'enabled'])
@@ -684,6 +689,52 @@ class access(object):
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
+    def maint_group(self, wb, ws, row_num, **kwargs):
+        # Dicts for required and optional args
+        required_args = {'Site_Group': '',
+                         'MG_Name': '',
+                         'Admin_State': '',
+                         'Admin_Notify': '',
+                         'Graceful': '',
+                         'Ignore_Compatability': '',
+                         'Run_Mode': '',
+                         'SW_Version': '',
+                         'Ver_Check_Override': '',
+                         'FW_Type': '',
+                         'MG_Type': ''}
+        optional_args = { }
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+
+        try:
+            # Validate Arguments
+            validating.site_group('site_group', **kwargs)
+            validating.name_rule(row_num, ws, 'MG_Name', templateVars['MG_Name'])
+            validating.validator('software_version', **kwargs)
+            validating.values(row_num, ws, 'Admin_State', templateVars['Admin_State'], ['triggered', 'untriggered'])
+            validating.values(row_num, ws, 'Admin_Notify', templateVars['Admin_Notify'], ['notifyAlwaysBetweenSets', 'notifyNever', 'notifyOnlyOnFailures'])
+            validating.values(row_num, ws, 'Graceful', templateVars['Graceful'], ['no', 'yes'])
+            validating.values(row_num, ws, 'Ignore_Compatability',templateVars['Ignore_Compatability'], ['no', 'yes'])
+            validating.values(row_num, ws, 'Run_Mode', templateVars['Run_Mode'], ['pauseAlwaysBetweenSets', 'pauseNever', 'pauseOnlyOnFailures'])
+            validating.values(row_num, ws, 'Ver_Check_Override', templateVars['Ver_Check_Override'], ['trigger', 'trigger-immediate', 'triggered', 'untriggered'])
+            validating.values(row_num, ws, 'MG_Type', templateVars['MG_Type'], ['ALL', 'range'])
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            raise ErrException(errorReturn)
+
+        # Define the Template Source
+        template_file = "maintenance_group.jinja2"
+        template = self.templateEnv.get_template(template_file)
+
+        # Process the template through the Sites
+        dest_file = 'Maintenance_Group_%s.tf' % (templateVars['MG_Name'])
+        dest_dir = 'Admin'
+        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+
+    # Method must be called with the following kwargs.
+    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
+    # for Detailed information on the Arguments used by this Method.
     def mcp(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
         required_args = {
@@ -699,7 +750,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.values(row_num, ws, 'admin_state', templateVars['admin_state'], ['disabled', 'enabled'])
@@ -742,7 +793,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.hostname(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'EPG', templateVars['EPG'])
@@ -826,7 +877,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'AEP_Policy', templateVars['AEP_Policy'])
@@ -955,7 +1006,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'AEP_Policy', templateVars['AEP_Policy'])
@@ -1034,7 +1085,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.values(row_num, ws, 'Breakout_Map', templateVars['Breakout_Map'], ['100g-2x', '100g-4x', '10g-4x', '25g-4x', '50g-8x'])
@@ -1072,7 +1123,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'AEP_Policy', templateVars['AEP_Policy'])
@@ -1115,7 +1166,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'VLAN_Pool', templateVars['VLAN_Pool'])
@@ -1154,7 +1205,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.number_check(row_num, ws, 'Min_Links', templateVars['Min_Links'], 1, 16)
@@ -1232,7 +1283,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.hostname(row_num, ws, 'name', templateVars['name'])
             validating.number_check(row_num, ws, 'node_id', templateVars['node_id'], 101, 4001)
@@ -1268,7 +1319,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.number_check(row_num, ws, 'Timeout', templateVars['Timeout'], 60, 3600)
@@ -1310,7 +1361,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'BFD_IPv4', templateVars['BFD_IPv4'])
@@ -1349,7 +1400,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.values(row_num, ws, 'Filter', templateVars['Filter'], ['disabled', 'enabled'])
@@ -1427,7 +1478,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         # Use Switch_Type to Determine the Number of ports on the switch
-        modules,port_count = query_switch_model(row_num, templateVars['Switch_Type'])
+        modules,port_count = query_switch_model(row_num, kwargs['Switch_Type'])
 
         try:
             # Validate Arguments
@@ -1441,7 +1492,6 @@ class access(object):
             validating.number_check(row_num, ws, 'node_id', templateVars['node_id'], 101, 4001)
             validating.number_check(row_num, ws, 'pod_id', templateVars['pod_id'], 1, 12)
             validating.number_check(row_num, ws, 'Fabric_ID', templateVars['Fabric_ID'], 1, 12)
-            validating.port_count(row_num, templateVars['name'], templateVars['Switch_Role'], port_count)
             validating.values(row_num, ws, 'Profiles', templateVars['Profiles'], ['no', 'yes'])
             validating.values(row_num, ws, 'Node_Type', templateVars['Node_Type'], ['remote-leaf-wan', 'unspecified'])
             validating.values(row_num, ws, 'Switch_Role', templateVars['Switch_Role'], ['leaf', 'spine'])
@@ -1764,7 +1814,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.name_rule(row_num, ws, 'Selector_name', templateVars['Selector_name'])
@@ -1823,7 +1873,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.name_rule(row_num, ws, 'name', templateVars['name'])
             validating.values(row_num, ws, 'Allocation_Mode', templateVars['Allocation_Mode'], ['dynamic', 'static'])
@@ -1953,7 +2003,7 @@ class access(object):
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.number_check(row_num, ws, 'VPC_ID', templateVars['VPC_ID'], 1, 1000)
             validating.number_check(row_num, ws, 'Node1_ID', templateVars['Node1_ID'], 101, 4001)
@@ -1970,4 +2020,3 @@ class access(object):
         dest_file = 'vpc_domain_%s.tf' % (templateVars['VPC_ID'])
         dest_dir = 'Access'
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
-

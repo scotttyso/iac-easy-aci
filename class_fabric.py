@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
-from class_terraform import terraform_cloud
+#======================================================
+# Source Modules
+#======================================================
 from easy_functions import process_kwargs
 from easy_functions import sensitive_var_site_group
-from easy_functions import write_to_site
 from easy_functions import update_easyDict
 import re
 import validating
 
+#======================================================
 # Exception Classes
+#======================================================
 class InsufficientArgs(Exception):
     pass
 
@@ -21,13 +24,17 @@ class InvalidArg(Exception):
 class LoginFailed(Exception):
     pass
 
+#=====================================================================================
+# Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
+# for detailed information on the Arguments used by this Function.
+#=====================================================================================
 class fabric(object):
     def __init__(self, type):
         self.type = type
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+    #======================================================
+    # Function - Date and Time Policy
+    #======================================================
     def date_time(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.DateandTime']['allOf'][1]['properties']
@@ -36,7 +43,7 @@ class fabric(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.values('administrative_state', jsonData, **kwargs)
             validating.values('display_format', jsonData, **kwargs)
@@ -65,9 +72,9 @@ class fabric(object):
         kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+    #======================================================
+    # Function - DNS Profiles
+    #======================================================
     def dns_profile(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.dnsProfiles']['allOf'][1]['properties']
@@ -77,9 +84,9 @@ class fabric(object):
 
         try:
             # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('management_epg', **kwargs)
             validating.number_check('preferred', jsonData, **kwargs)
+            validating.site_group('site_group', **kwargs)
+            validating.validator('management_epg', **kwargs)
             validating.values('management_epg_type', jsonData, **kwargs)
             count = 1
             for hostname in kwargs['dns_providers'].split(','):
@@ -90,6 +97,7 @@ class fabric(object):
                     validating.dns_name(f'dns_provider_{count}', **kwargs)
                 else:
                     validating.ip_address(f'dns_provider_{count}', **kwargs)
+                kwargs.pop(f'dns_provider_{count}')
                 count += 1
             if not kwargs['default_domain'] in kwargs['domain_list']:
                 kwargs['domain_list'].append(kwargs['default_domain'])
@@ -99,7 +107,7 @@ class fabric(object):
                 validating.domain(f'domain_{count}', **kwargs)
                 count += 1
             if not templateVars['description'] == None:
-                validating.description('description', **kwargs)
+                validating.validator('description', **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
@@ -116,10 +124,9 @@ class fabric(object):
         kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+    #======================================================
+    # Function - Date and Time Policy - NTP Servers
+    #======================================================
     def ntp(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.Ntp']['allOf'][1]['properties']
@@ -130,9 +137,9 @@ class fabric(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule('management_epg', **kwargs)
             validating.number_check('maximum_polling_interval', jsonData, **kwargs)
             validating.number_check('minimum_polling_interval', jsonData, **kwargs)
+            validating.validator('management_epg', **kwargs)
             validating.values('management_epg_type', jsonData, **kwargs)
             validating.values('preferred', jsonData, **kwargs)
             if ':' in templateVars['hostname']:
@@ -142,7 +149,7 @@ class fabric(object):
             else:
                 validating.ip_address('hostname', **kwargs)
             if not templateVars['description'] == None:
-                validating.description('description', **kwargs)
+                validating.validator('description', **kwargs)
             if not templateVars['key_id'] == None:
                 validating.number_check('key_id', jsonData, **kwargs)
         except Exception as err:
@@ -160,9 +167,9 @@ class fabric(object):
         # Return Dictionary
         return kwargs['easyDict']
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+    #======================================================
+    # Function - Date and Time Policy - NTP Keys
+    #======================================================
     def ntp_key(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.NtpKeys']['allOf'][1]['properties']
@@ -171,7 +178,7 @@ class fabric(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.number_check('key_id', jsonData, **kwargs)
             validating.values('authentication_type', jsonData, **kwargs)
@@ -181,6 +188,7 @@ class fabric(object):
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Check if the NTP Key is in the Environment.  If not Add it.
         templateVars["Variable"] = f'ntp_key_{kwargs["key_id"]}'
         sensitive_var_site_group(**templateVars)
 
@@ -194,52 +202,9 @@ class fabric(object):
         # Return Dictionary
         return kwargs['easyDict']
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def sch_smtp_server(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.schSmtpServer']['allOf'][1]['properties']
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('management_epg', **kwargs)
-            validating.number_check('port_number', jsonData, **kwargs)
-            validating.values('management_epg_type', jsonData, **kwargs)
-            validating.values('secure_smtp', jsonData, **kwargs)
-            if ':' in kwargs['smtp_server']:
-                validating.ip_address('smtp_server', **kwargs)
-            elif re.search('[a-z]', kwargs['smtp_server'], re.IGNORECASE):
-                validating.dns_name('smtp_server', **kwargs)
-            else:
-                validating.ip_address('smtp_server', **kwargs)
-            if 'true' in kwargs['secure_smtp']:
-                validating.not_empty('username', **kwargs)
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-        templateVars["Variable"] = f'smtp_password'
-        sensitive_var_site_group(**templateVars)
-
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['smartcallhome']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['smtp_server'].append(templateVars)
-
-        # Return Dictionary
-        return kwargs['easyDict']
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+    #======================================================
+    # Function - Smart CallHome Policy
+    #======================================================
     def smart_callhome(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartCallHome']['allOf'][1]['properties']
@@ -248,7 +213,7 @@ class fabric(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.values('admin_state', jsonData, **kwargs)
             validating.values('audit_logs', jsonData, **kwargs)
@@ -262,11 +227,11 @@ class fabric(object):
             if not kwargs['reply_to_email'] == None:
                 validating.email('reply_to_email', **kwargs)
             if not kwargs['contact_information'] == None:
-                validating.description('contact_information', **kwargs)
+                validating.validator('contact_information', **kwargs)
             if not kwargs['phone_contact'] == None:
                 validating.phone_number('phone_contact', **kwargs)
             if not kwargs['street_address'] == None:
-                validating.description('street_address', **kwargs)
+                validating.validator('street_address', **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
@@ -285,9 +250,9 @@ class fabric(object):
         kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+    #======================================================
+    # Function - Smart CallHome Policy - Smart Destinations
+    #======================================================
     def smart_destinations(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartCallHome']['allOf'][1]['properties']
@@ -296,7 +261,7 @@ class fabric(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.email('email', **kwargs)
             validating.values('admin_state', jsonData, **kwargs)
@@ -317,69 +282,198 @@ class fabric(object):
         # Return Dictionary
         return kwargs['easyDict']
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def snmp_community(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'SNMP_Policy': '',
-                         'SNMP_Community': ''}
-        optional_args = {'description': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.snmp_string('SNMP_Community', templateVars['SNMP_Community'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def snmp_clgrp(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'SNMP_Policy': '',
-                         'Client_Group': '',
-                         'Mgmt_EPG': ''}
-        optional_args = {'description': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('Client_Group', templateVars['Client_Group'])
-            validating.name_rule('SNMP_Policy', templateVars['SNMP_Policy'])
-            templateVars['Mgmt_EPG'] = validating.mgmt_epg('Mgmt_EPG', templateVars['Mgmt_EPG'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def snmp_policy(self, **kwargs):
+    #======================================================
+    # Function - Smart CallHome Policy - SMTP Server
+    #======================================================
+    def smart_smtp_server(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartCallHome']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartSmtpServer']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
+            validating.site_group('site_group', **kwargs)
+            validating.validator('management_epg', **kwargs)
+            validating.number_check('port_number', jsonData, **kwargs)
+            validating.values('management_epg_type', jsonData, **kwargs)
+            validating.values('secure_smtp', jsonData, **kwargs)
+            if ':' in kwargs['smtp_server']:
+                validating.ip_address('smtp_server', **kwargs)
+            elif re.search('[a-z]', kwargs['smtp_server'], re.IGNORECASE):
+                validating.dns_name('smtp_server', **kwargs)
+            else:
+                validating.ip_address('smtp_server', **kwargs)
+            if 'true' in kwargs['secure_smtp']:
+                validating.not_empty('username', **kwargs)
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
+            raise ErrException(errorReturn)
+
+        # Check if the Smart CallHome SMTP Password is in the Environment and if not add it.
+        if 'true' in kwargs['secure_smtp']:
+            templateVars["Variable"] = f'smtp_password'
+            sensitive_var_site_group(**templateVars)
+
+        # Add Dictionary to easyDict
+        for items in kwargs['easyDict']['fabric']['smartcallhome']:
+            for k, v in items.items():
+                if k == kwargs['site_group']:
+                    for i in v:
+                        i['smtp_server'].append(templateVars)
+
+        # Return Dictionary
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - SNMP Policy - Client Groups
+    #======================================================
+    def snmp_clgrp(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpClientGroups']['allOf'][1]['properties']
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        try:
+            # Validate Arguments
+            validating.site_group('site_group', **kwargs)
+            validating.validator('management_epg',  **kwargs)
+            validating.validator('name',  **kwargs)
+            validating.values('management_epg_type', jsonData, **kwargs)
+            if not templateVars['description'] == None:
+                validating.validator('description', templateVars['description'])
+            count = 1
+            for hostname in kwargs['clients'].split(','):
+                kwargs[f'client_{count}'] = hostname
+                if ':' in hostname:
+                    validating.ip_address(f'client_{count}', **kwargs)
+                elif re.search('[a-z]', hostname, re.IGNORECASE):
+                    validating.dns_name(f'client_{count}', **kwargs)
+                else:
+                    validating.ip_address(f'client_{count}', **kwargs)
+                kwargs.pop(f'client_{count}')
+                count += 1
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
+            raise ErrException(errorReturn)
+
+        # Add Dictionary to easyDict
+        for items in kwargs['easyDict']['fabric']['snmp_policies']:
+            for k, v in items.items():
+                if k == kwargs['site_group']:
+                    for i in v:
+                        i['snmp_client_groups'].append(templateVars)
+
+        # Return Dictionary
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - SNMP Policy - Communities
+    #======================================================
+    def snmp_community(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpCommunities']['allOf'][1]['properties']
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        try:
+            # Validate Arguments
+            validating.site_group('site_group', **kwargs)
+            if not templateVars['description'] == None:
+                validating.validator('description', **kwargs)
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
+            raise ErrException(errorReturn)
+
+        # Check if the SNMP Community is in the Environment.  If not Add it.
+        templateVars["Variable"] = f'snmp_community_{kwargs["community_variable"]}'
+        sensitive_var_site_group(**templateVars)
+
+        # Add Dictionary to easyDict
+        for items in kwargs['easyDict']['fabric']['snmp_policies']:
+            for k, v in items.items():
+                if k == kwargs['site_group']:
+                    for i in v:
+                        i['snmp_communities'].append(templateVars)
+
+        # Return Dictionary
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - SNMP Policy - SNMP Trap Destinations
+    #======================================================
+    def snmp_destinations(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpDestinations']['allOf'][1]['properties']
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        try:
+            # Validate Arguments
+            validating.number_check('port', jsonData, **kwargs)
+            validating.site_group('site_group', **kwargs)
+            validating.validator('management_epg',  **kwargs)
+            validating.validator('name',  **kwargs)
+            validating.values('management_epg_type', jsonData, **kwargs)
+            validating.values('version', jsonData, **kwargs)
+            if ':' in kwargs['host']:
+                validating.ip_address('host', **kwargs)
+            elif re.search('[a-z]', kwargs['host'], re.IGNORECASE):
+                validating.dns_name('host', **kwargs)
+            else:
+                validating.ip_address('host', **kwargs)
+            if re.fullmatch('(v1|v2c)', kwargs['version']):
+                validating.number_check('community_variable', **kwargs)
+                count = 0
+                for i in kwargs['easyDict']['fabric']['snmp_policies']['snmp_communities']:
+                    for k, v in i.items():
+                        if int(v['community_variable']) == int(kwargs['community_variable']):
+                            count += 1
+                if not count == 1:
+                    validating.error_snmp_community(kwargs['row_num'], kwargs['community_variable'])
+            elif 'v3' in kwargs['version']:
+                validating.values('v3_security_level', **kwargs)
+                count = 0
+                for i in kwargs['easyDict']['fabric']['snmp_policies']['snmp_users']:
+                    for k, v in i.items():
+                        if int(v['username']) == int(kwargs['username']):
+                            count += 1
+                if not count == 1:
+                    validating.error_snmp_user(kwargs['row_num'], kwargs['username'])
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
+            raise ErrException(errorReturn)
+
+        # Add Dictionary to easyDict
+        for items in kwargs['easyDict']['fabric']['snmp_policies']:
+            for k, v in items.items():
+                if k == kwargs['site_group']:
+                    for i in v:
+                        i['snmp_destinations'].append(templateVars)
+
+        # Return Dictionary
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - SNMP Policy
+    #======================================================
+    def snmp_policy(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpPolicy']['allOf'][1]['properties']
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        try:
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.values('admin_state', jsonData, **kwargs)
             validating.values('audit_logs', jsonData, **kwargs)
@@ -387,196 +481,153 @@ class fabric(object):
             validating.values('faults', jsonData, **kwargs)
             validating.values('session_logs', jsonData, **kwargs)
             if not kwargs['contact'] == None:
-                validating.description('contact', **kwargs)
-            if not kwargs['from_email'] == None:
-                validating.email('from_email', **kwargs)
-            if not kwargs['reply_to_email'] == None:
-                validating.email('reply_to_email', **kwargs)
-            if not kwargs['contact_information'] == None:
-                validating.description('contact_information', **kwargs)
-            if not kwargs['phone_contact'] == None:
-                validating.phone_number('phone_contact', **kwargs)
-            if not kwargs['street_address'] == None:
-                validating.description('street_address', **kwargs)
+                validating.validator('contact', **kwargs)
+            if not kwargs['location'] == None:
+                validating.validator('location', **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         Additions = {
-            'smtp_server': [],
             'name':'default',
-            'smart_destinations': [],
+            'snmp_client_groups': [],
+            'snmp_communities': [],
+            'snmp_destinations': [],
+            'users': [],
         }
         templateVars.update(Additions)
         
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'smartcallhome'
+        templateVars['data_type'] = 'snmp_policies'
         kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'SNMP_Policy': '',
-                         'Admin_State': ''}
-        optional_args = {'description': '',
-                         'SNMP_Contact': '',
-                         'SNMP_Location': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('SNMP_Policy', templateVars['SNMP_Policy'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
-            if not templateVars['SNMP_Contact'] == None:
-                validating.description('SNMP_Contact', templateVars['SNMP_Contact'])
-            if not templateVars['SNMP_Location'] == None:
-                validating.description('SNMP_Location', templateVars['SNMP_Location'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def snmp_destinations(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'SNMP_Policy': '',
-                         'SNMP_Trap_DG': '',
-                         'Trap_Server': '',
-                         'Destination_Port': '',
-                         'Version': '',
-                         'Community_or_Username': '',
-                         'Security_Level': '',
-                         'Mgmt_EPG': ''}
-        optional_args = { }
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        # Set noauth if v1 or v2c
-        if re.search('(v1|v2c)', templateVars['Version']):
-            templateVars['Security_Level'] = 'noauth'
-
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.ip_address('Trap_Server', templateVars['Trap_Server'])
-            validating.number_check('Destination_Port', templateVars['Destination_Port'], 1, 65535)
-            validating.values('Version', templateVars['Version'], ['v1', 'v2c', 'v3'])
-            validating.values('Security_Level', templateVars['Security_Level'], ['auth', 'noauth', 'priv'])
-            validating.snmp_string('Community_or_Username', templateVars['Community_or_Username'])
-            templateVars['Mgmt_EPG'] = validating.mgmt_epg('Mgmt_EPG', templateVars['Mgmt_EPG'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+    #======================================================
+    # Function - SNMP Policy - SNMP Users
+    #======================================================
     def snmp_user(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'SNMP_Policy': '',
-                         'SNMP_User': '',
-                         'Authorization_Type': '',
-                         'Authorization_Key': ''}
-        optional_args = {'Privacy_Type': '',
-                         'Privacy_Key': ''}
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpUsers']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            auth_type = templateVars['Authorization_Type']
-            auth_key = templateVars['Authorization_Key']
-            validating.snmp_auth(templateVars['Privacy_Type'], templateVars['Privacy_Key'], auth_type, auth_key)
-            validating.snmp_string('SNMP_User', templateVars['SNMP_User'])
+            validating.validator('username',  **kwargs)
+            validating.values('authorization_type', jsonData, **kwargs)
+            if not kwargs['authorization_key'] == None:
+                validating.number_check('authorization_key', jsonData, **kwargs)
+            if not kwargs['privacy_key'] == None:
+                validating.number_check('privacy_key', jsonData, **kwargs)
+            if kwargs['privacy_type'] == None:
+                kwargs['privacy_type'] == 'none'
+            else:
+                validating.values('privacy_type', jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+        # Check if the Authorization and Privacy Keys are in the environment and if not add them.
+        templateVars["Variable"] = f'snmp_authorization_key_{kwargs["authorization_key"]}'
+        sensitive_var_site_group(**templateVars)
+        if not kwargs['privacy_type'] == 'none':
+            templateVars["Variable"] = f'snmp_privacy_key_{kwargs["privacy_key"]}'
+            sensitive_var_site_group(**templateVars)
+
+        # Add Dictionary to easyDict
+        for items in kwargs['easyDict']['fabric']['snmp_policies']:
+            for k, v in items.items():
+                if k == kwargs['site_group']:
+                    for i in v:
+                        i['users'].append(templateVars)
+
+        # Return Dictionary
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Syslog Policy
+    #======================================================
     def syslog(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'Dest_Grp_Name': '',
-                         'Minimum_Level': '',
-                         'Log_Format': '',
-                         'Console': '',
-                         'Console_Level': '',
-                         'Local': '',
-                         'Local_Level': '',
-                         'Include_msec': '',
-                         'Include_timezone': '',
-                         'Audit': '',
-                         'Events': '',
-                         'Faults': '',
-                         'Session': ''}
-        optional_args = { }
+       # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.Syslog']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.log_level('Minimum_Level', templateVars['Minimum_Level'])
-            validating.log_level('Local_Level', templateVars['Local_Level'])
-            validating.log_level('Console_Level', templateVars['Console_Level'])
-            validating.name_rule('Dest_Grp_Name', templateVars['Dest_Grp_Name'])
-            validating.values('Console', templateVars['Console'], ['disabled', 'enabled'])
-            validating.values('Local', templateVars['Local'], ['disabled', 'enabled'])
-            validating.values('Include_msec', templateVars['Include_msec'], ['no', 'yes'])
-            validating.values('Include_timezone', templateVars['Include_timezone'], ['no', 'yes'])
-            validating.values('Audit', templateVars['Audit'], ['no', 'yes'])
-            validating.values('Events', templateVars['Events'], ['no', 'yes'])
-            validating.values('Faults', templateVars['Faults'], ['no', 'yes'])
-            validating.values('Session', templateVars['Session'], ['no', 'yes'])
+            validating.values('admin_state', jsonData, **kwargs)
+            validating.values('audit_logs', jsonData, **kwargs)
+            validating.values('console_admin_state', jsonData, **kwargs)
+            validating.values('console_severity', jsonData, **kwargs)
+            validating.values('events', jsonData, **kwargs)
+            validating.values('faults', jsonData, **kwargs)
+            validating.values('format', jsonData, **kwargs)
+            validating.values('local_admin_state', jsonData, **kwargs)
+            validating.values('local_severity', jsonData, **kwargs)
+            validating.values('session_logs', jsonData, **kwargs)
+            validating.values('show_milliseconds_in_timestamp', jsonData, **kwargs)
+            validating.values('show_time_zone_in_timestamp', jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+        Additions = {
+            'name':'default',
+            'remote_destinations': []
+        }
+        templateVars.update(Additions)
+        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'syslog'
+        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Syslog Policy - Syslog Destinations
+    #======================================================
     def syslog_destinations(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'Dest_Grp_Name': '',
-                         'Syslog_Server': '',
-                         'Port': '',
-                         'Mgmt_EPG': '',
-                         'Severity': '',
-                         'Facility': ''}
-        optional_args = { }
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.syslogRemoteDestinations']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
+            validating.number_check('port', jsonData, **kwargs)
             validating.site_group('site_group', **kwargs)
-            validating.ip_address('Syslog_Server', templateVars['Syslog_Server'])
-            validating.log_level('Severity', templateVars['Severity'])
-            validating.number_check('Port', templateVars['Port'], 1, 65535)
-            validating.syslog_fac('Facility', templateVars['Facility'])
-            templateVars['Mgmt_EPG'] = validating.mgmt_epg('Mgmt_EPG', templateVars['Mgmt_EPG'])
+            validating.validator('management_epg',  **kwargs)
+            validating.values('admin_state', jsonData, **kwargs)
+            validating.values('forwarding_facility', jsonData, **kwargs)
+            validating.values('management_epg_type', jsonData, **kwargs)
+            validating.values('severity', jsonData, **kwargs)
+            validating.values('transport', jsonData, **kwargs)
+            if ':' in kwargs['host']:
+                validating.ip_address('host', **kwargs)
+            elif re.search('[a-z]', kwargs['host'], re.IGNORECASE):
+                validating.dns_name('host', **kwargs)
+            else:
+                validating.ip_address('host', **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Add Dictionary to easyDict
+        for items in kwargs['easyDict']['fabric']['syslog']:
+            for k, v in items.items():
+                if k == kwargs['site_group']:
+                    for i in v:
+                        i['remote_destinations'].append(templateVars)
+
+        # Return Dictionary
+        return kwargs['easyDict']

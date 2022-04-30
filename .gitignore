@@ -9,6 +9,7 @@ ACI/
 *.tfstate.*
 
 # Crash log files
+APIC-IN.xsd
 crash.log
 
 # Ignore any .tfvars files that are generated automatically for each Terraform run. Most

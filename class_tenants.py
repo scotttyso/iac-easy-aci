@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+#======================================================
+# Source Modules
+#======================================================
 from class_terraform import terraform_cloud
 from easy_functions import countKeys, findVars
 from easy_functions import process_kwargs, process_workbook
@@ -14,7 +17,9 @@ import validating
 
 aci_template_path = pkg_resources.resource_filename('class_tenants', 'templates/')
 
+#======================================================
 # Exception Classes
+#======================================================
 class InsufficientArgs(Exception):
     pass
 
@@ -47,14 +52,14 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule('tenant', **kwargs)
-            validating.name_rule('name', **kwargs)
+            validating.validator('tenant', **kwargs)
+            validating.validator('name', **kwargs)
             if not kwargs['alias'] == None:
-                validating.name_rule('alias', **kwargs)
+                validating.validator('alias', **kwargs)
             if not kwargs['description'] == None:
-                validating.description('description', **kwargs)
+                validating.validator('description', **kwargs)
             if not kwargs['annotations'] == None:
-                validating.name_maps('annotations', **kwargs)
+                validating.validator_array('annotations', **kwargs)
             if not templateVars['qos_class'] == None:
                 validating.values('qos_class', jsonData, **kwargs)
         except Exception as err:
@@ -86,7 +91,7 @@ class tenants(object):
 
         # Dicts for Bridge Domain required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'Bridge_Domain': '',
                          'BD_Policy': '',
                          'Policy_Name': '',
@@ -114,12 +119,12 @@ class tenants(object):
                          'annotation': '',
                          'Custom_MAC': '',
                          'Link_Local_IPv6': '',
-                         'VRF_Tenant': '',
+                         'VRF_tenant': '',
                          'VRF': '',
                          'Subnet': '',
                          'Subnet_description': '',
                          'Subnet_Policy': '',
-                         'L3Out_Tenant': '',
+                         'L3Out_tenant': '',
                          'L3Out': '',
                          # BD Policy Optional Args
                          'dhcpRelayP': '',
@@ -150,18 +155,18 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'Bridge_Domain', templateVars['Bridge_Domain'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_num, ws, 'Bridge_Domain', templateVars['Bridge_Domain'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.validator(row_num, ws, 'alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
             if not templateVars['annotation'] == None:
                 if re.match(',', templateVars['annotation']):
                     for tag in templateVars['annotation'].split(','):
-                        validating.name_rule(row_num, ws, 'annotation', tag)
+                        validating.validator(row_num, ws, 'annotation', tag)
                 else:
-                    validating.name_rule(row_num, ws, 'annotation', templateVars['annotation'])
+                    validating.validator(row_num, ws, 'annotation', templateVars['annotation'])
             if not templateVars['Custom_MAC'] == None:
                 validating.mac_address(row_num, ws, 'Custom_MAC', templateVars['Custom_MAC'])
             if not templateVars['Link_Local_IPv6'] == None:
@@ -169,15 +174,15 @@ class tenants(object):
             if not templateVars['BD_Policy'] == templateVars['Policy_Name']:
                 validating.error_policy_names(row_num, ws, templateVars['BD_Policy'], templateVars['Policy_Name'])
             if not templateVars['VRF'] == None:
-                validating.name_rule(row_num, ws, 'VRF_Tenant', templateVars['VRF_Tenant'])
-                validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
+                validating.validator(row_num, ws, 'VRF_tenant', templateVars['VRF_tenant'])
+                validating.validator(row_num, ws, 'VRF', templateVars['VRF'])
             if not templateVars['Subnet'] == None:
                 validating.ip_address(row_num, ws, 'Subnet', templateVars['Subnet'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
             if not templateVars['L3Out'] == None:
-                validating.name_rule(row_num, ws, 'L3Out_Tenant', templateVars['L3Out_Tenant'])
-                validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
+                validating.validator(row_num, ws, 'L3Out_tenant', templateVars['L3Out_tenant'])
+                validating.validator(row_num, ws, 'L3Out', templateVars['L3Out'])
             validating.values(row_bd, ws_net, 'bd_type', templateVars['bd_type'], ['fc', 'regular'])
             validating.values(row_bd, ws_net, 'ep_clear', templateVars['ep_clear'], ['no', 'yes'])
             validating.values(row_bd, ws_net, 'host_routing', templateVars['host_routing'], ['no', 'yes'])
@@ -227,31 +232,31 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'Bridge_Domain_%s.tf' % (templateVars['Bridge_Domain'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
        # Reset kwargs back to initial kwargs
         kwargs = initial_kwargs
 
         # Initialize the Class
-        lib_aci_ref = 'Tenant_Policies'
+        lib_aci_ref = 'tenant_Policies'
         class_init = '%s(ws)' % (lib_aci_ref)
 
         # Create the Subnet if it Exists
         if not kwargs.get('Subnet') == None:
             eval("%s.%s(wb, ws, row_num, **kwargs)" % (class_init, 'add_subnet'))
 
-        if not templateVars['Tenant'] == templateVars['VRF_Tenant']:
-            templateVars['bd_Tenant'] = templateVars['Tenant']
+        if not templateVars['tenant'] == templateVars['VRF_tenant']:
+            templateVars['bd_tenant'] = templateVars['tenant']
 
             # Process the template through the Sites
-            templateVars['Tenant'] = templateVars['VRF_Tenant']
+            templateVars['tenant'] = templateVars['VRF_tenant']
             template_file = "data_tenant.jinja2"
             template = self.templateEnv.get_template(template_file)
 
             # Process the template through the Sites
-            dest_file = 'data_Tenant_%s.tf' % (templateVars['VRF_Tenant'])
-            dest_dir = 'Tenant_%s' % (templateVars['bd_Tenant'])
+            dest_file = 'data_tenant_%s.tf' % (templateVars['VRF_tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['bd_tenant'])
             write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
             # Define the Template Source
@@ -259,24 +264,24 @@ class tenants(object):
             template = self.templateEnv.get_template(template_file)
 
             # Process the template through the Sites
-            dest_file = 'data_Tenant_%s_VRF_%s.tf' % (templateVars['VRF_Tenant'], templateVars['VRF'])
-            dest_dir = 'Tenant_%s' % (templateVars['bd_Tenant'])
+            dest_file = 'data_tenant_%s_VRF_%s.tf' % (templateVars['VRF_tenant'], templateVars['VRF'])
+            dest_dir = 'tenant_%s' % (templateVars['bd_tenant'])
             write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-            templateVars['Tenant'] = templateVars['bd_Tenant']
+            templateVars['tenant'] = templateVars['bd_tenant']
 
         if not templateVars['L3Out'] == None:
-            if not templateVars['Tenant'] == templateVars['L3Out_Tenant']:
-                templateVars['bd_Tenant'] = templateVars['Tenant']
+            if not templateVars['tenant'] == templateVars['L3Out_tenant']:
+                templateVars['bd_tenant'] = templateVars['tenant']
 
                 # Process the template through the Sites
-                templateVars['Tenant'] = templateVars['L3Out_Tenant']
+                templateVars['tenant'] = templateVars['L3Out_tenant']
                 template_file = "data_tenant.jinja2"
                 template = self.templateEnv.get_template(template_file)
 
                 # Process the template through the Sites
-                dest_file = 'data_Tenant_%s.tf' % (templateVars['L3Out_Tenant'])
-                dest_dir = 'Tenant_%s' % (templateVars['bd_Tenant'])
+                dest_file = 'data_tenant_%s.tf' % (templateVars['L3Out_tenant'])
+                dest_dir = 'tenant_%s' % (templateVars['bd_tenant'])
                 write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
                 # Process the template through the Sites
@@ -284,8 +289,8 @@ class tenants(object):
                 template = self.templateEnv.get_template(template_file)
 
                 # Process the template through the Sites
-                dest_file = 'data_Tenant_%s_L3Out_%s.tf' % (templateVars['L3Out_Tenant'], templateVars['L3Out'])
-                dest_dir = 'Tenant_%s' % (templateVars['bd_Tenant'])
+                dest_file = 'data_tenant_%s_L3Out_%s.tf' % (templateVars['L3Out_tenant'], templateVars['L3Out'])
+                dest_dir = 'tenant_%s' % (templateVars['bd_tenant'])
                 write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -307,7 +312,7 @@ class tenants(object):
                          'Local_ASN_Config': '',
                          'Admin_State': '',
                          'BGP_Peer_Policy': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'L3Out': '',
                          'Profile_Name': '',
                          'Node_Profile': '',
@@ -336,7 +341,7 @@ class tenants(object):
                          'Local_ASN': '',
                          'Node2_ID': '',
                          'Policy_Name': '',
-                         'Prefix_Tenant': '',
+                         'Prefix_tenant': '',
                          'PFX_description': '',
                          'Action': '',
                          'Maximum_Prefixes': '',
@@ -388,21 +393,21 @@ class tenants(object):
             validating.ip_address(row_num, ws, 'Peer_Address', templateVars['Peer_Address'])
             validating.number_check(row_num, ws, 'Remote_ASN', templateVars['Remote_ASN'], 1, 4294967295)
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
             validating.number_check(row_num, ws, 'eBGP_Multihop_TTL', templateVars['eBGP_Multihop_TTL'], 1, 255)
             validating.number_check(row_num, ws, 'Weight', templateVars['Weight'], 0, 65535)
             if not templateVars['BGP_Peer_Prefix_Policy'] == None:
-                validating.name_rule(row_num, ws, 'BGP_Peer_Prefix_Policy', templateVars['BGP_Peer_Prefix_Policy'])
+                validating.validator(row_num, ws, 'BGP_Peer_Prefix_Policy', templateVars['BGP_Peer_Prefix_Policy'])
             validating.values(row_num, ws, 'Local_ASN_Config', templateVars['Local_ASN_Config'], ['dual-as', 'no-prepend', 'none', 'replace-as'])
             if not templateVars['Local_ASN'] == None:
                 validating.number_check(row_num, ws, 'Local_ASN', templateVars['Local_ASN'], 1, 4294967295)
             validating.values(row_num, ws, 'Admin_State', templateVars['Admin_State'], ['disabled', 'enabled'])
-            validating.name_rule(row_num, ws, 'BGP_Peer_Policy', templateVars['BGP_Peer_Policy'])
+            validating.validator(row_num, ws, 'BGP_Peer_Policy', templateVars['BGP_Peer_Policy'])
 
-            validating.name_rule(row_path, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_path, ws, 'L3Out', templateVars['L3Out'])
-            validating.name_rule(row_path, ws, 'Node_Profile', templateVars['Node_Profile'])
-            validating.name_rule(row_path, ws, 'Interface_Profile', templateVars['Interface_Profile'])
+            validating.validator(row_path, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_path, ws, 'L3Out', templateVars['L3Out'])
+            validating.validator(row_path, ws, 'Node_Profile', templateVars['Node_Profile'])
+            validating.validator(row_path, ws, 'Interface_Profile', templateVars['Interface_Profile'])
             validating.values(row_path, ws, 'Interface_Type', templateVars['Interface_Type'], ['ext-svi', 'l3-port', 'sub-interface'])
             validating.number_check(row_path, ws, 'Pod_ID', templateVars['Pod_ID'], 1, 15)
             validating.number_check(row_path, ws, 'Node1_ID', templateVars['Node1_ID'], 101, 4001)
@@ -424,13 +429,13 @@ class tenants(object):
             validating.values(row_bgp, ws_net, 'private_to_local', templateVars['private_to_local'], ['no', 'yes'])
 
             if not templateVars['BGP_Peer_Prefix_Policy'] == None:
-                validating.name_rule(row_pfx, ws_net, 'Prefix_Tenant', templateVars['Prefix_Tenant'])
+                validating.validator(row_pfx, ws_net, 'Prefix_tenant', templateVars['Prefix_tenant'])
                 validating.number_check(row_pfx, ws_net, 'Maximum_Prefixes', templateVars['Maximum_Prefixes'], 1, 300000)
                 validating.number_check(row_pfx, ws_net, 'Restart_Time', templateVars['Restart_Time'], 1, 65535)
                 validating.number_check(row_pfx, ws_net, 'Threshold', templateVars['Threshold'], 1, 100)
                 validating.values(row_pfx, ws_net, 'Action', templateVars['Action'], ['log', 'reject', 'restart', 'shut'])
                 if not templateVars['PFX_description'] == None:
-                    validating.description(row_pfx, ws_net, 'PFX_description', templateVars['PFX_description'])
+                    validating.validator(row_pfx, ws_net, 'PFX_description', templateVars['PFX_description'])
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
@@ -546,7 +551,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'variable_%s.tf' % (templateVars['sensitive_var'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
             sensitive_var_site_group(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
@@ -568,7 +573,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         if not templateVars['BGP_Peer_Prefix_Policy'] == None:
@@ -581,23 +586,23 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'BGP_Peer_Prefix_%s.tf' % (templateVars['Policy_Name'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-            print(f'dest file {dest_file} and dest_dir {dest_dir} and Tenant = {templateVars["Tenant"]}')
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
+            print(f'dest file {dest_file} and dest_dir {dest_dir} and tenant = {templateVars["tenant"]}')
             write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-            if not templateVars['Tenant'] == templateVars['Prefix_Tenant']:
+            if not templateVars['tenant'] == templateVars['Prefix_tenant']:
                 # Define the Template Source
                 template_file = "data_tenant.jinja2"
                 template = self.templateEnv.get_template(template_file)
 
-                temp_Tenant = templateVars['Tenant']
-                templateVars['Tenant'] = templateVars['Prefix_Tenant']
+                temp_tenant = templateVars['tenant']
+                templateVars['tenant'] = templateVars['Prefix_tenant']
                 # Process the template through the Sites
-                dest_file = 'data_Tenant_%s.tf' % (templateVars['Tenant'])
-                dest_dir = 'Tenant_%s' % (temp_Tenant)
+                dest_file = 'data_tenant_%s.tf' % (templateVars['tenant'])
+                dest_dir = 'tenant_%s' % (temp_tenant)
                 write_to_site(wb, ws_net, row_pfx, 'w', dest_dir, dest_file, template, **templateVars)
 
-                templateVars['Tenant'] = temp_Tenant
+                templateVars['tenant'] = temp_tenant
 
                 # Define the Template Source
                 template_file = "data_bgp_peer_prefix.jinja2"
@@ -605,7 +610,7 @@ class tenants(object):
 
                 # Process the template through the Sites
                 dest_file = 'data_BGP_Peer_Prefix_%s.tf' % (templateVars['Policy_Name'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                dest_dir = 'tenant_%s' % (templateVars['tenant'])
                 write_to_site(wb, ws_net, row_pfx, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -614,7 +619,7 @@ class tenants(object):
     def ctx_comm(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'VRF': '',
                          'Ctx_Community': ''}
         optional_args = {'description': ''}
@@ -625,8 +630,8 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_num, ws, 'VRF', templateVars['VRF'])
             validating.snmp_string(row_num, ws, 'Ctx_Community', templateVars['Ctx_Community'])
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
@@ -639,7 +644,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -647,52 +652,37 @@ class tenants(object):
     # for Detailed information on the Arguments used by this Method.
     def contract_add(self, wb, ws, row_num, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contracts']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'Tenant': '',
-                         'Contract_Type': '',
-                         'Contract': '',
-                         'Scope': '',
-                         'qos_class': '',
-                         'Target_DSCP': ''}
-        optional_args = {'description': '',
-                         'alias': '',
-                         'annotation': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.dscp(row_num, ws, 'Target_DSCP', templateVars['Target_DSCP'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'Contract', templateVars['Contract'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_num, ws, 'contract', templateVars['contract'])
+            validating.values('target_dscp', jsonData, **kwargs)
             validating.values('qos_class', jsonData, **kwargs)
-            validating.values(row_num, ws, 'Contract_Type', templateVars['Contract_Type'], ['OOB', 'Standard', 'Taboo'])
-            validating.values(row_num, ws, 'Scope', templateVars['Scope'], ['application-profile', 'context', 'global', 'tenant'])
+            validating.values(row_num, ws, 'contract_type', templateVars['contract_type'], ['OOB', 'Standard', 'Taboo'])
+            validating.values(row_num, ws, 'scope', templateVars['scope'], ['application-profile', 'context', 'global', 'tenant'])
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
-        if templateVars['Contract_Type'] == 'OOB':
+        if templateVars['contract_type'] == 'OOB':
             template_file = "contract_oob.jinja2"
-        elif templateVars['Contract_Type'] == 'Standard':
+        elif templateVars['contract_type'] == 'Standard':
             template_file = "contract.jinja2"
-        elif templateVars['Contract_Type'] == 'Taboo':
+        elif templateVars['contract_type'] == 'Taboo':
             template_file = "contract_taboo.jinja2"
-        dest_file = 'Contract_Type_%s_%s.tf' % (templateVars['Contract_Type'], templateVars['Contract'])
+        dest_file = 'contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['contract'])
         template = self.templateEnv.get_template(template_file)
 
         # Process the template through the Sites
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -701,10 +691,10 @@ class tenants(object):
     def contract_to_epg(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
-                         'Contract_Tenant': '',
-                         'Contract_Type': '',
-                         'Contract': '',
-                         'Tenant': '',
+                         'contract_tenant': '',
+                         'contract_type': '',
+                         'contract': '',
+                         'tenant': '',
                          'App_Profile': '',
                          'EPG': ''}
         optional_args = { }
@@ -715,12 +705,12 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'Contract_Tenant', templateVars['Contract_Tenant'])
-            validating.name_rule(row_num, ws, 'Contract', templateVars['Contract'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'App_Profile', templateVars['App_Profile'])
-            validating.name_rule(row_num, ws, 'EPG', templateVars['EPG'])
-            validating.values(row_num, ws, 'Contract_Type', templateVars['Contract_Type'], ['consumer', 'provider'])
+            validating.validator(row_num, ws, 'contract_tenant', templateVars['contract_tenant'])
+            validating.validator(row_num, ws, 'contract', templateVars['contract'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_num, ws, 'App_Profile', templateVars['App_Profile'])
+            validating.validator(row_num, ws, 'EPG', templateVars['EPG'])
+            validating.values(row_num, ws, 'contract_type', templateVars['contract_type'], ['consumer', 'provider'])
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
@@ -732,7 +722,7 @@ class tenants(object):
         template = self.templateEnv.get_template(template_file)
 
         # Process the template through the Sites
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -770,32 +760,30 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule('application_profile', **kwargs)
-            validating.name_rule('bridge_domain', **kwargs)
-            validating.name_rule('name', **kwargs)
-            validating.name_rule('tenant', **kwargs)
+            validating.validator('application_profile', **kwargs)
+            validating.validator('bridge_domain', **kwargs)
+            validating.validator('name', **kwargs)
+            validating.validator('tenant', **kwargs)
             if not kwargs['alias'] == None:
-                validating.name_rule('alias', **kwargs)
+                validating.validator('alias', **kwargs)
             if not kwargs['description'] == None:
-                validating.description('description', **kwargs)
+                validating.validator('description', **kwargs)
             if not kwargs['annotations'] == None:
-                validating.name_maps('annotations', **kwargs)
+                validating.validator_array('annotations', **kwargs)
             if not kwargs['physical_domains'] == None:
                 if re.match(',', kwargs['physical_domains']):
-                    validating.name_lists('physical_domains', **kwargs)
+                    validating.validator_list('physical_domains', **kwargs)
                 else:
-                    validating.name_rule('physical_domains', **kwargs)
+                    validating.validator('physical_domains', **kwargs)
             if not templateVars['vmm_domains'] == None:
                 if re.match(',', templateVars['vmm_domains']):
-                    validating.name_lists('vmm_domains', **kwargs)
+                    validating.validator_list('vmm_domains', **kwargs)
                 else:
-                    validating.name_rule('vmm_domains', **kwargs)
-            if not templateVars['VLAN'] == None:
-                validating.vlans(row_num, ws, 'VLAN', templateVars['VLAN'])
-            if not templateVars['PVLAN'] == None:
-                validating.vlans(row_num, ws, 'PVLAN', templateVars['PVLAN'])
-            if not templateVars['epg_to_aep'] == None:
-                validating.name_rule(row_num, ws, 'epg_to_aep', templateVars['epg_to_aep'])
+                    validating.validator('vmm_domains', **kwargs)
+            if not templateVars['epg_to_aaeps'] == None:
+                validating.validator(row_num, ws, 'epg_to_aaeps', templateVars['epg_to_aep'])
+            if not templateVars['vlans'] == None:
+                validating.vlans(row_num, ws, 'vlans', templateVars['vlans'])
             row_num = kwargs['row_num']
             ws = kwargs['ws']
             kwargs['row_num'] = row_net
@@ -821,7 +809,7 @@ class tenants(object):
             template = self.templateEnv.get_template(template_file)
 
             dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             process_workbook(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         if not templateVars['epg_to_aep'] == None:
@@ -846,7 +834,7 @@ class tenants(object):
 
                     # Process the template through the Sites
                     dest_file = 'data_AEP_%s.tf' % (templateVars['AAEP'])
-                    dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                    dest_dir = 'tenant_%s' % (templateVars['tenant'])
                     write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
                     # Define the Template Source
@@ -855,7 +843,7 @@ class tenants(object):
 
                     # Process the template through the Sites
                     dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                    dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                    dest_dir = 'tenant_%s' % (templateVars['tenant'])
                     write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
             else:
                 templateVars['AAEP'] = templateVars['EPG_to_AAEP']
@@ -874,7 +862,7 @@ class tenants(object):
 
                 # Process the template through the Sites
                 dest_file = 'data_AEP_%s.tf' % (templateVars['AAEP'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                dest_dir = 'tenant_%s' % (templateVars['tenant'])
                 write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
                 # Define the Template Source
@@ -883,7 +871,7 @@ class tenants(object):
 
                 # Process the template through the Sites
                 dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                dest_dir = 'tenant_%s' % (templateVars['tenant'])
                 write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -896,7 +884,7 @@ class tenants(object):
 
         # Dicts for required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'L3Out': '',
                          'Ext_EPG': '',
                          'Ext_EPG_Policy': '',
@@ -956,7 +944,7 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
             if not templateVars['Subnets'] == None:
                 if re.search(',', templateVars['Subnets']):
                     sx = templateVars['Subnets'].split(',')
@@ -1054,7 +1042,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'L3Out_%s_EXTERNAL_EPG_%s.tf' % (templateVars['L3Out'], templateVars['Ext_EPG'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
         if re.search(',', templateVars['Subnets']):
@@ -1074,7 +1062,7 @@ class tenants(object):
 
                 # Process the template through the Sites
                 dest_file = 'L3Out_%s_EXTERNAL_EPG_%s.tf' % (templateVars['L3Out'], templateVars['Ext_EPG'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                dest_dir = 'tenant_%s' % (templateVars['tenant'])
                 write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
         else:
             templateVars['Subnet'] = templateVars['Subnets']
@@ -1091,7 +1079,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'L3Out_%s_EXTERNAL_EPG_%s.tf' % (templateVars['L3Out'], templateVars['Ext_EPG'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -1114,7 +1102,7 @@ class tenants(object):
                          'qos_class': '',
                          'Subnets': ''}
         optional_args = {'annotation': '',
-                         'consumed_Contracts': ''}
+                         'consumed_contracts': ''}
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(required_args, optional_args, **kwargs)
@@ -1122,21 +1110,21 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'Ext_EPG', templateVars['Ext_EPG'])
+            validating.validator(row_num, ws, 'Ext_EPG', templateVars['Ext_EPG'])
             validating.values('qos_class', jsonData, **kwargs)
             if not templateVars['annotation'] == None:
                 if re.search(',', templateVars['annotation']):
                     for x in templateVars['annotation'].split(','):
-                        validating.description(row_num, ws, 'annotation', x)
+                        validating.validator(row_num, ws, 'annotation', x)
                 else:
-                    validating.description(row_num, ws, 'annotation', templateVars['annotation'])
-            if not templateVars['consumed_Contracts'] == None:
-                if re.search(',', templateVars['consumed_Contracts']):
+                    validating.validator(row_num, ws, 'annotation', templateVars['annotation'])
+            if not templateVars['consumed_contracts'] == None:
+                if re.search(',', templateVars['consumed_contracts']):
                     templateVars['provide_count'] =+ 1
-                    for x in templateVars['consumed_Contracts'].split(','):
-                        validating.name_rule(row_num, ws, 'consumed_Contracts', x)
+                    for x in templateVars['consumed_contracts'].split(','):
+                        validating.validator(row_num, ws, 'consumed_contracts', x)
                 else:
-                    validating.name_rule(row_num, ws, 'consumed_Contracts', templateVars['consumed_Contracts'])
+                    validating.validator(row_num, ws, 'consumed_contracts', templateVars['consumed_contracts'])
             if not templateVars['Subnet'] == None:
                 if re.search(',', templateVars['Subnets']):
                     sx = templateVars['Subnets'].split(',')
@@ -1155,7 +1143,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'EPG_Mgmt_OOB_External_EPG_%s.tf' % (templateVars['Ext_EPG'])
-        dest_dir = 'Tenant_mgmt'
+        dest_dir = 'tenant_mgmt'
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
         if re.search(',', templateVars['Subnets']):
@@ -1175,7 +1163,7 @@ class tenants(object):
 
                 # Process the template through the Sites
                 dest_file = 'EPG_Mgmt_OOB_External_EPG_%s.tf' % (templateVars['Ext_EPG'])
-                dest_dir = 'Tenant_mgmt'
+                dest_dir = 'tenant_mgmt'
                 write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
         else:
             templateVars['Subnet'] = templateVars['Subnets']
@@ -1192,7 +1180,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'EPG_Mgmt_OOB_External_EPG_%s.tf' % (templateVars['Ext_EPG'])
-            dest_dir = 'Tenant_mgmt'
+            dest_dir = 'tenant_mgmt'
             write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -1201,7 +1189,7 @@ class tenants(object):
     def filter_add(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'Filter': ''}
         optional_args = {'description': '',
                          'alias': '',
@@ -1213,12 +1201,12 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'Filter', templateVars['Filter'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
+            validating.validator(row_num, ws, 'Filter', templateVars['Filter'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.validator(row_num, ws, 'alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
@@ -1229,77 +1217,61 @@ class tenants(object):
         template = self.templateEnv.get_template(template_file)
 
         # Process the template through the Sites
-        dest_file = 'Contract_Filter_%s.tf' % (templateVars['Filter'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_file = 'contract_Filter_%s.tf' % (templateVars['Filter'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
     # for Detailed information on the Arguments used by this Method.
-    def filter_entry(self, wb, ws, row_num, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'Tenant': '',
-                         'Filter': '',
-                         'Filter_Entry': '',
-                         'EtherType': '',
-                         'IP_Protocol': '',
-                         'ARP_Flag': '',
-                         'ICMPv4_Type': '',
-                         'ICMPv6_Type': '',
-                         'Match_DSCP': '',
-                         'Match_Only_Frags': '',
-                         'Source_From': '',
-                         'Source_To': '',
-                         'Dest_From': '',
-                         'Dest_To': '',
-                         'Stateful': '',
-                         'TCP_Session_Rules': ''}
-        optional_args = {'description': '',
-                         'alias': ''}
+    def filter_entry(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.filterEntry']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
             # Validate Required Arguments
+            validating.filter_ports('destination_from', **kwargs)
+            validating.filter_ports('destination_to', **kwargs)
+            validating.filter_ports('source_from', **kwargs)
+            validating.filter_ports('source_to', **kwargs)
             validating.site_group('site_group', **kwargs)
-            validating.dscp(row_num, ws, 'Match_DSCP', templateVars['Match_DSCP'])
-            validating.filter_ports(row_num, ws, 'Source_From', templateVars['Source_From'])
-            validating.filter_ports(row_num, ws, 'Source_To', templateVars['Source_To'])
-            validating.filter_ports(row_num, ws, 'Dest_From', templateVars['Dest_From'])
-            validating.filter_ports(row_num, ws, 'Dest_To', templateVars['Dest_To'])
-            validating.name_rule(row_num, ws, 'Filter', templateVars['Filter'])
-            validating.name_rule(row_num, ws, 'Filter_Entry', templateVars['Filter_Entry'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.values(row_num, ws, 'Match_Only_Frags', templateVars['Match_Only_Frags'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Stateful', templateVars['Stateful'], ['no', 'yes'])
-            validating.values(row_num, ws, 'EtherType', templateVars['EtherType'], ['arp', 'fcoe', 'ip', 'ipv4', 'ipv6', 'trill', 'mac_security', 'mpls_ucast', 'unspecified'])
-            validating.values(row_num, ws, 'IP_Protocol', templateVars['IP_Protocol'], ['egp', 'eigrp', 'igp', 'icmp', 'icmpv6', 'igmp', 'l2tp', 'ospfigp', 'pim', 'tcp', 'udp', 'unspecified'])
-            validating.values(row_num, ws, 'ARP_Flag', templateVars['ARP_Flag'], ['req', 'reply', 'unspecified'])
-            validating.values(row_num, ws, 'ICMPv4_Type', templateVars['ICMPv4_Type'], ['dst-unreach', 'echo', 'echo-rep', 'src-quench', 'time-exceeded', 'unspecified'])
-            validating.values(row_num, ws, 'ICMPv6_Type', templateVars['ICMPv6_Type'], ['dst-unreach', 'echo-req', 'echo-rep', 'nbr-solicit', 'nbr-advert', 'redirect', 'time-exceeded', 'unspecified'])
-            validating.values(row_num, ws, 'TCP_Session_Rules', templateVars['TCP_Session_Rules'], ['ack', 'est', 'fin', 'rst', 'syn', 'unspecified'])
+            validating.validator('filter_name', **kwargs)
+            validating.validator('name', **kwargs)
+            validating.validator('tenant', **kwargs)
+            validating.values('acknowledgement', jsonData, **kwargs)
+            validating.values('arp_flag', jsonData, **kwargs)
+            validating.values('established', jsonData, **kwargs)
+            validating.values('ethertype', jsonData, **kwargs)
+            validating.values('finish', jsonData, **kwargs)
+            validating.values('icmpv4_type', jsonData, **kwargs)
+            validating.values('icmpv6_type', jsonData, **kwargs)
+            validating.values('ip_protocol', jsonData, **kwargs)
+            validating.values('match_dscp', jsonData, **kwargs)
+            validating.values('match_only_frags', jsonData, **kwargs)
+            validating.values('reset', jsonData, **kwargs)
+            validating.values('stateful', jsonData, **kwargs)
+            validating.values('synchronize', jsonData, **kwargs)
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.validator('alias', **kwargs)
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator('description', **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        if templateVars['TCP_Session_Rules'] == 'unspecified':
-            templateVars['TCP_Session_Rules'] = None
+        # Add Dictionary to easyDict
+        for items in kwargs['easyDict']['tenants']['filters']:
+            for k, v in items.items():
+                if k == kwargs['site_group']:
+                    for i in v:
+                        i['filter_entries'].append(templateVars)
 
-        # Define the Template Source
-        template_file = "contract_filter_entry.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Contract_Filter_%s.tf' % (templateVars['Filter'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
-        write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+        # Return Dictionary
+        return kwargs['easyDict']
 
     # Method must be called with the following kwargs.
     # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
@@ -1311,9 +1283,9 @@ class tenants(object):
 
         # Dicts for required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'L3Out': '',
-                         'VRF_Tenant': '',
+                         'VRF_tenant': '',
                          'VRF': '',
                          'L3_Domain': '',
                          'target_dscp': '',
@@ -1349,15 +1321,15 @@ class tenants(object):
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
             validating.dscp(row_l3out, ws_net, 'target_dscp', templateVars['target_dscp'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
-            validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
-            validating.name_rule(row_num, ws, 'VRF_Tenant', templateVars['VRF_Tenant'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_num, ws, 'L3Out', templateVars['L3Out'])
+            validating.validator(row_num, ws, 'VRF', templateVars['VRF'])
+            validating.validator(row_num, ws, 'VRF_tenant', templateVars['VRF_tenant'])
             validating.values(row_num, ws, 'export', templateVars['export'], ['no', 'yes'])
             validating.values(row_num, ws, 'import', templateVars['import'], ['no', 'yes'])
             validating.values(row_num, ws, 'Run_BGP', templateVars['Run_BGP'], ['no', 'yes'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
@@ -1369,7 +1341,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'data_domain_l3_profile_%s.tf' % (templateVars['L3_Domain'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
         ctrl_count = 0
@@ -1394,7 +1366,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
         if templateVars['Run_BGP'] == 'yes':
@@ -1404,7 +1376,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         #--------------------------
@@ -1414,7 +1386,7 @@ class tenants(object):
 
             # Dicts for required and optional args
             required_args = {'site_group': '',
-                            'Tenant': '',
+                            'tenant': '',
                             'L3Out': '',
                             'Policy_Name': '',
                             'AS_Number': ''}
@@ -1446,7 +1418,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws_net, row_eigrp, 'a+', dest_dir, dest_file, template, **templateVars)
 
         #--------------------------
@@ -1456,7 +1428,7 @@ class tenants(object):
 
             # Dicts for required and optional args
             required_args = {'site_group': '',
-                            'Tenant': '',
+                            'tenant': '',
                             'L3Out': '',
                             'Policy_Name': '',
                             'Area_ID': '',
@@ -1519,7 +1491,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws_net, row_ospf, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -1540,12 +1512,12 @@ class tenants(object):
         optional_args = {'annotation': '',
                          'VLAN': '',
                          'Bridge_Domain': '',
-                         'Tenant': '',
-                         'consumed_Contracts': '',
-                         'provided_Contracts': '',
+                         'tenant': '',
+                         'consumed_contracts': '',
+                         'provided_contracts': '',
                          'match_t': '',
-                         'Contract_Interfaces': '',
-                         'Taboo_Contracts': '',
+                         'contract_Interfaces': '',
+                         'Taboo_contracts': '',
                          'Subnets': '',
                          'Static_Routes': '',}
 
@@ -1559,116 +1531,116 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'EPG', templateVars['EPG'])
+            validating.validator(row_num, ws, 'EPG', templateVars['EPG'])
             validating.values('qos_class', jsonData, **kwargs)
             validating.values(row_num, ws, 'Type', templateVars['Type'], ['in_band', 'out_of_band'])
             if templateVars['Type'] == 'in_band':
                 validating.vlans(row_num, ws, 'VLAN', templateVars['VLAN'])
-                validating.name_rule(row_num, ws, 'Bridge_Domain', templateVars['Bridge_Domain'])
-            if not templateVars['Tenant'] == None:
-                validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-                if re.search(',', templateVars['provided_Contracts']):
+                validating.validator(row_num, ws, 'Bridge_Domain', templateVars['Bridge_Domain'])
+            if not templateVars['tenant'] == None:
+                validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
+                if re.search(',', templateVars['provided_contracts']):
                     templateVars['provide_count'] =+ 1
-                    for x in templateVars['provided_Contracts'].split(','):
-                        validating.name_rule(row_num, ws, 'provided_Contracts', x)
+                    for x in templateVars['provided_contracts'].split(','):
+                        validating.validator(row_num, ws, 'provided_contracts', x)
                 else:
-                    validating.name_rule(row_num, ws, 'provided_Contracts', templateVars['provided_Contracts'])
+                    validating.validator(row_num, ws, 'provided_contracts', templateVars['provided_contracts'])
                 if templateVars['Type'] == 'in_band':
-                    if not templateVars['consumed_Contracts'] == None:
-                        if re.search(',', templateVars['consumed_Contracts']):
+                    if not templateVars['consumed_contracts'] == None:
+                        if re.search(',', templateVars['consumed_contracts']):
                             templateVars['provide_count'] =+ 1
-                            for x in templateVars['consumed_Contracts'].split(','):
-                                validating.name_rule(row_num, ws, 'consumed_Contracts', x)
+                            for x in templateVars['consumed_contracts'].split(','):
+                                validating.validator(row_num, ws, 'consumed_contracts', x)
                         else:
-                            validating.name_rule(row_num, ws, 'consumed_Contracts', templateVars['consumed_Contracts'])
-                    if not templateVars['Contract_Interfaces'] == None:
-                        if re.search(',', templateVars['Contract_Interfaces']):
-                            for x in templateVars['Contract_Interfaces'].split(','):
+                            validating.validator(row_num, ws, 'consumed_contracts', templateVars['consumed_contracts'])
+                    if not templateVars['contract_Interfaces'] == None:
+                        if re.search(',', templateVars['contract_Interfaces']):
+                            for x in templateVars['contract_Interfaces'].split(','):
                                 templateVars['interface_count'] =+ 1
-                                validating.not_empty(row_num, ws, 'Contract_Interfaces', x)
+                                validating.not_empty(row_num, ws, 'contract_Interfaces', x)
                         else:
-                            validating.not_empty(row_num, ws, 'Contract_Interfaces', templateVars['Contract_Interfaces'])
-                    if not templateVars['Taboo_Contracts'] == None:
-                        if re.search(',', templateVars['Taboo_Contracts']):
+                            validating.not_empty(row_num, ws, 'contract_Interfaces', templateVars['contract_Interfaces'])
+                    if not templateVars['Taboo_contracts'] == None:
+                        if re.search(',', templateVars['Taboo_contracts']):
                             templateVars['taboo_count'] =+ 1
-                            for x in templateVars['Taboo_Contracts'].split(','):
-                                validating.not_empty(row_num, ws, 'Taboo_Contracts', x)
+                            for x in templateVars['Taboo_contracts'].split(','):
+                                validating.not_empty(row_num, ws, 'Taboo_contracts', x)
                         else:
-                            validating.not_empty(row_num, ws, 'Taboo_Contracts', templateVars['Taboo_Contracts'])
+                            validating.not_empty(row_num, ws, 'Taboo_contracts', templateVars['Taboo_contracts'])
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        if not templateVars['Tenant'] == 'mgmt':
-            dest_dir = 'Tenant_mgmt'
+        if not templateVars['tenant'] == 'mgmt':
+            dest_dir = 'tenant_mgmt'
 
             template_file = 'data_tenant.jinja2'
             template = self.templateEnv.get_template(template_file)
-            dest_file = 'data_Tenant_%s.tf' % (templateVars['Tenant'])
+            dest_file = 'data_tenant_%s.tf' % (templateVars['tenant'])
             write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-            templateVars['Contract_Type'] = 'Standard'
-            if not templateVars['consumed_Contracts'] == None:
-                if re.search(',', templateVars['consumed_Contracts']):
-                    for x in templateVars['consumed_Contracts'].split(','):
-                        templateVars['Contract'] = x
+            templateVars['contract_type'] = 'Standard'
+            if not templateVars['consumed_contracts'] == None:
+                if re.search(',', templateVars['consumed_contracts']):
+                    for x in templateVars['consumed_contracts'].split(','):
+                        templateVars['contract'] = x
                         template_file = 'data_contract.jinja2'
                         template = self.templateEnv.get_template(template_file)
-                        dest_file = 'data_Contract_Type_%s_%s.tf' % (templateVars['Contract_Type'], x)
+                        dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], x)
                         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
                 else:
-                    templateVars['Contract'] = templateVars['consumed_Contracts']
+                    templateVars['contract'] = templateVars['consumed_contracts']
                     template_file = 'data_contract.jinja2'
                     template = self.templateEnv.get_template(template_file)
-                    dest_file = 'data_Contract_Type_%s_%s.tf' % (templateVars['Contract_Type'], templateVars['consumed_Contracts'])
+                    dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['consumed_contracts'])
                     write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-            if not templateVars['Contract_Interfaces'] == None:
-                if re.search(',', templateVars['Contract_Interfaces']):
-                    for x in templateVars['Contract_Interfaces'].split(','):
-                        templateVars['Contract'] = x
+            if not templateVars['contract_Interfaces'] == None:
+                if re.search(',', templateVars['contract_Interfaces']):
+                    for x in templateVars['contract_Interfaces'].split(','):
+                        templateVars['contract'] = x
                         template_file = 'data_contract.jinja2'
                         template = self.templateEnv.get_template(template_file)
-                        dest_file = 'data_Contract_Type_%s_%s.tf' % (templateVars['Contract_Type'], x)
+                        dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], x)
                         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
                 else:
-                    templateVars['Contract'] = templateVars['Contract_Interfaces']
+                    templateVars['contract'] = templateVars['contract_Interfaces']
                     template_file = 'data_contract.jinja2'
                     template = self.templateEnv.get_template(template_file)
-                    dest_file = 'data_Contract_Type_%s_%s.tf' % (templateVars['Contract_Type'], templateVars['Contract_Interfaces'])
+                    dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['contract_Interfaces'])
                     write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-            if not templateVars['provided_Contracts'] == None:
+            if not templateVars['provided_contracts'] == None:
                 if templateVars['Type'] == 'in_band':
-                    if re.search(',', templateVars['provided_Contracts']):
-                        for x in templateVars['provided_Contracts'].split(','):
-                            templateVars['Contract'] = x
+                    if re.search(',', templateVars['provided_contracts']):
+                        for x in templateVars['provided_contracts'].split(','):
+                            templateVars['contract'] = x
                             template_file = 'data_contract.jinja2'
                             template = self.templateEnv.get_template(template_file)
-                            dest_file = 'data_Contract_Type_%s_%s.tf' % (templateVars['Contract_Type'], x)
+                            dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], x)
                             write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
                     else:
-                        templateVars['Contract'] = templateVars['provided_Contracts']
+                        templateVars['contract'] = templateVars['provided_contracts']
                         template_file = 'data_contract.jinja2'
                         template = self.templateEnv.get_template(template_file)
-                        dest_file = 'data_Contract_Type_%s_%s.tf' % (templateVars['Contract_Type'], templateVars['provided_Contracts'])
+                        dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['provided_contracts'])
                         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-            templateVars['Contract_Type'] = 'Taboo'
-            if not templateVars['Taboo_Contracts'] == None:
-                if re.search(',', templateVars['Taboo_Contracts']):
-                    for x in templateVars['Taboo_Contracts'].split(','):
-                        templateVars['Contract'] == x
+            templateVars['contract_type'] = 'Taboo'
+            if not templateVars['Taboo_contracts'] == None:
+                if re.search(',', templateVars['Taboo_contracts']):
+                    for x in templateVars['Taboo_contracts'].split(','):
+                        templateVars['contract'] == x
                         template_file = 'data_contract_taboo.jinja2'
                         template = self.templateEnv.get_template(template_file)
-                        dest_file = 'data_Contract_Type_%s_%s.tf' % (templateVars['Contract_Type'], x)
+                        dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], x)
                         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
                 else:
-                    templateVars['Contract'] = templateVars['Taboo_Contracts']
+                    templateVars['contract'] = templateVars['Taboo_contracts']
                     template_file = 'data_contract_taboo.jinja2'
                     template = self.templateEnv.get_template(template_file)
-                    dest_file = 'data_Contract_Type_%s_%s.tf' % (templateVars['Contract_Type'], templateVars['Contract_Type'])
+                    dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['contract_type'])
                     write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
         # Define the Template Source and Destination File
@@ -1677,7 +1649,7 @@ class tenants(object):
         dest_file = 'EPG_Mgmt_Type_%s_EPG_%s.tf' % (templateVars['Type'], templateVars['EPG'])
 
         # Process the template through the Sites
-        dest_dir = 'Tenant_mgmt'
+        dest_dir = 'tenant_mgmt'
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
         # Define the Template Source and Destination File
@@ -1715,7 +1687,7 @@ class tenants(object):
 
         # Dicts for required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'L3Out': '',
                          'Node_Profile': '',
                          'Interface_Profile': '',
@@ -1751,19 +1723,19 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
-            validating.name_rule(row_num, ws, 'Node_Profile', templateVars['Node_Profile'])
-            validating.name_rule(row_num, ws, 'Interface_Profile', templateVars['Interface_Profile'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_num, ws, 'L3Out', templateVars['L3Out'])
+            validating.validator(row_num, ws, 'Node_Profile', templateVars['Node_Profile'])
+            validating.validator(row_num, ws, 'Interface_Profile', templateVars['Interface_Profile'])
             validating.values('qos_class', jsonData, **kwargs)
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.validator(row_num, ws, 'alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
             if not templateVars['EIGRP_Intf_Profile'] == None:
-                validating.name_rule(row_num, ws, 'EIGRP_Intf_Profile', templateVars['EIGRP_Intf_Profile'])
+                validating.validator(row_num, ws, 'EIGRP_Intf_Profile', templateVars['EIGRP_Intf_Profile'])
             if not templateVars['OSPF_Intf_Profile'] == None:
-                validating.name_rule(row_num, ws, 'OSPF_Intf_Profile', templateVars['OSPF_Intf_Profile'])
+                validating.validator(row_num, ws, 'OSPF_Intf_Profile', templateVars['OSPF_Intf_Profile'])
             if not templateVars['tag'] == None:
                 validating.tag_check(row_node, ws_net, 'tag', templateVars['tag'])
         except Exception as err:
@@ -1777,7 +1749,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         #--------------------------
@@ -1788,7 +1760,7 @@ class tenants(object):
             # Dicts for required and optional args
                              # OSPF Interface Profile
             required_args = {'site_group': '',
-                             'Tenant': '',
+                             'tenant': '',
                              'L3Out': '',
                              'Node_Profile': '',
                              'Interface_Profile': '',
@@ -1796,7 +1768,7 @@ class tenants(object):
                              'Interface_Policy_Name': '',
                              # OSPF Interface Policy
                              'OSPF_Policy_Name': '',
-                             'Policy_Tenant': '',
+                             'Policy_tenant': '',
                              'Network_Type': '',
                              'Priority': '',
                              'Cost': '',
@@ -1846,9 +1818,9 @@ class tenants(object):
                 if not templateVars['Auth_Key_ID'] == None:
                     validating.number_check(row_ospf, ws_net, 'Auth_Key_ID', templateVars['Auth_Key_ID'], 1, 255)
                 if not templateVars['description'] == None:
-                    validating.description(row_ospf, ws_net, 'description', templateVars['description'])
+                    validating.validator(row_ospf, ws_net, 'description', templateVars['description'])
                 # Validate OSPF Policy Required Arguments
-                validating.name_rule(row_intf, ws_net, 'OSPF_Policy_Name', templateVars['OSPF_Policy_Name'])
+                validating.validator(row_intf, ws_net, 'OSPF_Policy_Name', templateVars['OSPF_Policy_Name'])
                 validating.number_check(row_intf, ws_net, 'Priority', templateVars['Priority'], 0, 255)
                 validating.number_check(row_intf, ws_net, 'Cost', templateVars['Cost'], 0, 65535)
                 validating.number_check(row_intf, ws_net, 'Hello_Interval', templateVars['Hello_Interval'], 1, 65535)
@@ -1861,7 +1833,7 @@ class tenants(object):
                 validating.values(row_intf, ws_net, 'MTU_Ignore', templateVars['MTU_Ignore'], ['no', 'yes'])
                 validating.values(row_intf, ws_net, 'Passive_Interface', templateVars['Passive_Interface'], ['no', 'yes'])
                 if not templateVars['OSPF_description'] == None:
-                    validating.description(row_intf, ws_net, 'OSPF_description', templateVars['OSPF_description'])
+                    validating.validator(row_intf, ws_net, 'OSPF_description', templateVars['OSPF_description'])
             except Exception as err:
                 errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws_net, row_ospf)
                 raise ErrException(errorReturn)
@@ -1875,7 +1847,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws_net, row_ospf, 'a+', dest_dir, dest_file, template, **templateVars)
 
             if not templateVars['OSPF_Auth_Key'] == None:
@@ -1889,7 +1861,7 @@ class tenants(object):
 
                 # Process the template through the Sites
                 dest_file = 'variable_%s.tf' % (templateVars['sensitive_var'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                dest_dir = 'tenant_%s' % (templateVars['tenant'])
                 write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
                 sensitive_var_site_group(wb, ws, row_num, dest_dir, dest_file, template, **templateVars)
@@ -1935,28 +1907,28 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'Policies_OSPF_Interface_%s.tf' % (templateVars['OSPF_Policy_Name'])
-            dest_dir = 'Tenant_%s' % (templateVars['Policy_Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['Policy_tenant'])
             write_to_site(wb, ws_net, row_ospf, 'w', dest_dir, dest_file, template, **templateVars)
 
-            if not templateVars['Tenant'] == templateVars['Policy_Tenant']:
+            if not templateVars['tenant'] == templateVars['Policy_tenant']:
                 # Define the Template Source
                 template_file = "data_ospf_interface_policy.jinja2"
                 template = self.templateEnv.get_template(template_file)
 
                 # Process the template through the Sites
                 dest_file = 'data_Policies_OSPF_Interface_%s.tf' % (templateVars['OSPF_Policy_Name'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                dest_dir = 'tenant_%s' % (templateVars['tenant'])
                 write_to_site(wb, ws_net, row_ospf, 'w', dest_dir, dest_file, template, **templateVars)
 
-                templateVars['L3Out_Tenant'] = templateVars['Tenant']
-                templateVars['Tenant'] = templateVars['Policy_Tenant']
+                templateVars['L3Out_tenant'] = templateVars['tenant']
+                templateVars['tenant'] = templateVars['Policy_tenant']
                 # Define the Template Source
                 template_file = "data_tenant.jinja2"
                 template = self.templateEnv.get_template(template_file)
 
                 # Process the template through the Sites
-                dest_file = 'data_Tenant_%s.tf' % (templateVars['Tenant'])
-                dest_dir = 'Tenant_%s' % (templateVars['L3Out_Tenant'])
+                dest_file = 'data_tenant_%s.tf' % (templateVars['tenant'])
+                dest_dir = 'tenant_%s' % (templateVars['L3Out_tenant'])
                 write_to_site(wb, ws_net, row_ospf, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -1968,11 +1940,11 @@ class tenants(object):
         required_args = {'site_group': '',
                          'Path_Policy_Name': '',
                          'MTU': '',
-                         'Target_DSCP': '',
+                         'target_dscp': '',
                          'SideA_Address': '',
                          'SideA_IPv6_DAD': '',
                          # L3Out Path Profile
-                         'Tenant': '',
+                         'tenant': '',
                          'L3Out': '',
                          'Policy_Name': '',
                          'Node_Profile': '',
@@ -1982,7 +1954,7 @@ class tenants(object):
                          'Node1_ID': '',
                          'Interface_or_PG': ''}
                          # Logical Interface Profile
-        optional_args = {'Encap_Scope': '',
+        optional_args = {'Encap_scope': '',
                          'Mode': '',
                          'VLAN': '',
                          'description': '',
@@ -2014,22 +1986,22 @@ class tenants(object):
         try:
             # Validate Required Arguments Logincal Interface Profile
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_path, ws, 'Path_Policy_Name', templateVars['Path_Policy_Name'])
-            if not templateVars['Encap_Scope'] == None:
-                validating.values(row_num, ws, 'Encap_Scope', templateVars['Encap_Scope'], ['ctx', 'local'])
+            validating.validator(row_path, ws, 'Path_Policy_Name', templateVars['Path_Policy_Name'])
+            if not templateVars['Encap_scope'] == None:
+                validating.values(row_num, ws, 'Encap_scope', templateVars['Encap_scope'], ['ctx', 'local'])
             if not templateVars['Mode'] == None:
                 validating.values(row_num, ws, 'Mode', templateVars['Mode'], ['native', 'regular', 'untagged'])
             if not templateVars['VLAN'] == None:
                 validating.vlans(row_num, ws, 'VLAN', templateVars['VLAN'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
             if not templateVars['Auto_State'] == None:
                 validating.values(row_num, ws, 'Auto_State', templateVars['Auto_State'], ['disabled', 'enabled'])
             if not templateVars['MTU'] == 'inherit':
                 validating.number_check(row_path, ws, 'MTU', templateVars['MTU'], 1300, 9216)
             if not templateVars['MAC_Address'] == None:
                 validating.mac_address(row_num, ws, 'MAC_Address', templateVars['MAC_Address'])
-            validating.dscp(row_num, ws, 'Target_DSCP', templateVars['Target_DSCP'])
+            validating.dscp(row_num, ws, 'target_dscp', templateVars['target_dscp'])
             validating.ip_address(row_num, ws, 'SideA_Address', templateVars['SideA_Address'])
             validating.values(row_num, ws, 'SideA_IPv6_DAD', templateVars['SideA_IPv6_DAD'], ['disabled', 'enabled'])
             if not templateVars['SideA_Secondary'] == None:
@@ -2044,10 +2016,10 @@ class tenants(object):
                 validating.ip_address(row_num, ws, 'SideB_Secondary', templateVars['SideB_Secondary'])
             if not templateVars['SideB_Link_Local'] == None:
                 validating.ip_address(row_num, ws, 'SideB_Link_Local', templateVars['SideB_Link_Local'])
-            validating.name_rule(row_path, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_path, ws, 'L3Out', templateVars['L3Out'])
-            validating.name_rule(row_path, ws, 'Node_Profile', templateVars['Node_Profile'])
-            validating.name_rule(row_path, ws, 'Interface_Profile', templateVars['Interface_Profile'])
+            validating.validator(row_path, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_path, ws, 'L3Out', templateVars['L3Out'])
+            validating.validator(row_path, ws, 'Node_Profile', templateVars['Node_Profile'])
+            validating.validator(row_path, ws, 'Interface_Profile', templateVars['Interface_Profile'])
             validating.values(row_path, ws, 'Interface_Type', templateVars['Interface_Type'], ['ext-svi', 'l3-port', 'sub-interface'])
             validating.number_check(row_path, ws, 'Pod_ID', templateVars['Pod_ID'], 1, 15)
             validating.number_check(row_path, ws, 'Node1_ID', templateVars['Node1_ID'], 101, 4001)
@@ -2075,7 +2047,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         # Create Global Variables for First Template
@@ -2093,7 +2065,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
             templateVars['Address'] = templateVars['SideB_Address']
@@ -2107,7 +2079,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         # Define the Template Source
@@ -2121,7 +2093,7 @@ class tenants(object):
 
                 # Process the template through the Sites
                 dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-                dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+                dest_dir = 'tenant_%s' % (templateVars['tenant'])
                 write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -2130,10 +2102,10 @@ class tenants(object):
     def node_prof(self, wb, ws, row_num, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'L3Out': '',
                          'Node_Profile': '',
-                         'Target_DSCP': '',
+                         'target_dscp': '',
                          'Color_Tag': '',
                          'Pod_ID': '',
                          'Node1_ID': '',
@@ -2151,18 +2123,18 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'L3Out', templateVars['L3Out'])
-            validating.name_rule(row_num, ws, 'Node_Profile', templateVars['Node_Profile'])
-            validating.dscp(row_num, ws, 'Target_DSCP', templateVars['Target_DSCP'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_num, ws, 'L3Out', templateVars['L3Out'])
+            validating.validator(row_num, ws, 'Node_Profile', templateVars['Node_Profile'])
+            validating.dscp(row_num, ws, 'target_dscp', templateVars['target_dscp'])
             validating.tag_check(row_num, ws, 'Color_Tag', templateVars['Color_Tag'])
             validating.number_check(row_num, ws, 'Node1_ID', templateVars['Node1_ID'], 101, 4001)
             validating.ip_address(row_num, ws, 'Node1_Router_ID', templateVars['Node1_Router_ID'])
             validating.values(row_num, ws, 'Node1_Loopback', templateVars['Node1_Loopback'], ['no', 'yes'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.validator(row_num, ws, 'alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
             if not templateVars['Node2_ID'] == None:
                 validating.number_check(row_num, ws, 'Node2_ID', templateVars['Node2_ID'], 101, 4001)
                 validating.ip_address(row_num, ws, 'Node2_Router_ID', templateVars['Node2_Router_ID'])
@@ -2178,7 +2150,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
         # Define the Template Source
@@ -2192,7 +2164,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         if not templateVars['Node2_ID'] == None:
@@ -2203,7 +2175,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'L3Out_%s_Node_Profile_%s.tf' % (templateVars['L3Out'], templateVars['Node_Profile'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -2218,13 +2190,13 @@ class tenants(object):
 
         # Dicts for required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'Subject': '',
-                         'Contract_Type': '',
-                         'Contract': '',
+                         'contract_type': '',
+                         'contract': '',
                          'Reverse_Filter_Ports': '',
                          'qos_class': '',
-                         'Target_DSCP': '',
+                         'target_dscp': '',
                          'Filters_to_Assign': ''}
         optional_args = {'description': '',
                          'alias': '',
@@ -2237,24 +2209,24 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.dscp(row_num, ws, 'Target_DSCP', templateVars['Target_DSCP'])
-            validating.name_rule(row_num, ws, 'Contract', templateVars['Contract'])
-            validating.name_rule(row_num, ws, 'Subject', templateVars['Subject'])
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
+            validating.dscp(row_num, ws, 'target_dscp', templateVars['target_dscp'])
+            validating.validator(row_num, ws, 'contract', templateVars['contract'])
+            validating.validator(row_num, ws, 'Subject', templateVars['Subject'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
             validating.values('qos_class', jsonData, **kwargs)
-            validating.values(row_num, ws, 'Contract_Type', templateVars['Contract_Type'], ['OOB', 'Standard', 'Taboo'])
+            validating.values(row_num, ws, 'contract_type', templateVars['contract_type'], ['OOB', 'Standard', 'Taboo'])
             validating.values(row_num, ws, 'Reverse_Filter_Ports', templateVars['Reverse_Filter_Ports'], ['no', 'yes'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.validator(row_num, ws, 'alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
             if not templateVars['Filters_to_Assign'] == None:
                 if re.search(',', templateVars['Filters_to_Assign']):
                     templateVars['filters_count'] =+ 1
                     for x in templateVars['Filters_to_Assign'].split(','):
-                        validating.name_rule(row_num, ws, 'Filters_to_Assign', x)
+                        validating.validator(row_num, ws, 'Filters_to_Assign', x)
                 else:
-                    validating.name_rule(row_num, ws, 'Filters_to_Assign', templateVars['Filters_to_Assign'])
+                    validating.validator(row_num, ws, 'Filters_to_Assign', templateVars['Filters_to_Assign'])
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
@@ -2265,17 +2237,17 @@ class tenants(object):
         template = self.templateEnv.get_template(template_file)
 
         # Define the Template Source
-        if templateVars['Contract_Type'] == 'OOB':
+        if templateVars['contract_type'] == 'OOB':
             template_file = "contract_subject.jinja2"
-        elif templateVars['Contract_Type'] == 'Standard':
+        elif templateVars['contract_type'] == 'Standard':
             template_file = "contract_subject.jinja2"
-        elif templateVars['Contract_Type'] == 'Taboo':
+        elif templateVars['contract_type'] == 'Taboo':
             template_file = "contract_subject.jinja2"
         template = self.templateEnv.get_template(template_file)
 
         # Process the template through the Sites
-        dest_file = 'Contract_Type_%s_%s_Subj_%s.tf' % (templateVars['Contract_Type'], templateVars['Contract'], templateVars['Subject'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_file = 'contract_type_%s_%s_Subj_%s.tf' % (templateVars['contract_type'], templateVars['contract'], templateVars['Subject'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -2288,7 +2260,7 @@ class tenants(object):
 
         # Dicts for Subnet required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'Bridge_Domain': '',
                          'Subnet': '',
                          'Subnet_Policy': '',
@@ -2324,7 +2296,7 @@ class tenants(object):
             validating.site_group('site_group', **kwargs)
             validating.ip_address(row_num, ws, 'Subnet', templateVars['Subnet'])
             if not templateVars['Subnet_description'] == None:
-                validating.description(row_num, ws, 'Subnet_description', templateVars['Subnet_description'])
+                validating.validator(row_num, ws, 'Subnet_description', templateVars['Subnet_description'])
             validating.values(row_subnet, ws_net, 'virtual', templateVars['virtual'], ['no', 'yes'])
             validating.values(row_subnet, ws_net, 'preferred', templateVars['preferred'], ['no', 'yes'])
             validating.values(row_subnet, ws_net, 'scope', templateVars['scope'], ['private', 'public', 'shared', 'private-shared', 'public-shared'])
@@ -2390,7 +2362,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'Bridge_Domain_%s.tf' % (templateVars['Bridge_Domain'],)
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
     # Method must be called with the following kwargs.
@@ -2406,13 +2378,13 @@ class tenants(object):
         try:
             # Validate Variables
             validating.site_group('site_group', **kwargs)
-            validating.name_rule('tenant', **kwargs)
+            validating.validator('tenant', **kwargs)
             if not templateVars['alias'] == None:
-                validating.name_rule('alias', **kwargs)
+                validating.validator('alias', **kwargs)
             if not kwargs['annotations'] == None:
-                validating.name_maps('annotations', **kwargs)
+                validating.validator_array('annotations', **kwargs)
             if not templateVars['description'] == None:
-                validating.description('description', **kwargs)
+                validating.validator('description', **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
@@ -2440,7 +2412,7 @@ class tenants(object):
 
         # Dicts for required and optional args
         required_args = {'site_group': '',
-                         'Tenant': '',
+                         'tenant': '',
                          'VRF': '',
                          'VRF_Policy': '',
                          'Policy_Name': '',
@@ -2484,18 +2456,18 @@ class tenants(object):
         try:
             # Validate Required Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'Tenant', templateVars['Tenant'])
-            validating.name_rule(row_num, ws, 'VRF', templateVars['VRF'])
+            validating.validator(row_num, ws, 'tenant', templateVars['tenant'])
+            validating.validator(row_num, ws, 'VRF', templateVars['VRF'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.validator(row_num, ws, 'alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.validator(row_num, ws, 'description', templateVars['description'])
             if not templateVars['annotation'] == None:
                 if re.match(',', templateVars['annotation']):
                     for tag in templateVars['annotation'].split(','):
-                        validating.name_rule(row_num, ws, 'annotation', tag)
+                        validating.validator(row_num, ws, 'annotation', tag)
                 else:
-                    validating.name_rule(row_num, ws, 'annotation', templateVars['annotation'])
+                    validating.validator(row_num, ws, 'annotation', templateVars['annotation'])
             validating.values(row_vrf, ws_net, 'bd_enforce', templateVars['bd_enforce'], ['no', 'yes'])
             validating.values(row_vrf, ws_net, 'ip_dp_learning', templateVars['ip_dp_learning'], ['disabled', 'enabled'])
             validating.values(row_vrf, ws_net, 'knw_mcast_act', templateVars['knw_mcast_act'], ['deny', 'permit'])
@@ -2536,7 +2508,7 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
         if templateVars['enf_type'] == 'pref_grp':
@@ -2546,7 +2518,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         elif templateVars['enf_type'] == 'vzAny':
@@ -2556,7 +2528,7 @@ class tenants(object):
 
             # Process the template through the Sites
             dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-            dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+            dest_dir = 'tenant_%s' % (templateVars['tenant'])
             write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
 
         # Define the Template Source
@@ -2565,5 +2537,5 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-        dest_dir = 'Tenant_%s' % (templateVars['Tenant'])
+        dest_dir = 'tenant_%s' % (templateVars['tenant'])
         write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)

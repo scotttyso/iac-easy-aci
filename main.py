@@ -6,33 +6,41 @@ It uses argparse to take in the following CLI arguments:
     w or workbook:   Name of Excel Workbook file for the Data Source
 """
 
+#======================================================
+# Source Modules
+#======================================================
+from class_access import access
+from class_admin import admin
+from class_fabric import fabric
+from class_system_settings import site_policies, system_settings
+from class_tenants import tenants
+from easy_functions import countKeys, findKeys, findVars
+from easy_functions import read_easy_jsonData, read_in, stdout_log
+# from openpyxl import load_workbook
+# from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
+from pathlib import Path
+from git import Repo
 import argparse
 import json
 import os
 import re
-import sys
 import stdiomask
 import subprocess
 import time
-from class_access import access
-from class_admin import admin
-from class_fabric import fabric
-from class_system_settings import system_settings, site_policies
-from class_tenants import tenants
-from easy_functions import countKeys, findKeys, findVars, read_in, stdout_log
-from easy_functions import wr_auto_tfvars
-from openpyxl import load_workbook
-from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
-from openpyxl.utils.dataframe import dataframe_to_rows
-from pathlib import Path
-from git import Repo
 
+#======================================================
 # Global Variables
+#======================================================
 excel_workbook = None
 home = Path.home()
-Parser = argparse.ArgumentParser(description='Intersight Easy IMM Deployment Module')
+Parser = argparse.ArgumentParser(description='IaC Easy ACI Deployment Module')
 workspace_dict = {}
 
+#======================================================
+# Regular Expressions to Control wich rows in the
+# Spreadsheet should be processed.
+#======================================================
 access_regex = re.compile('^(aep_profile|bpdu|cdp|(fibre|port)_(channel|security)|l2_interface|l3_domain|(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|phys_dom|stp|vlan_pool)$')
 admin_regex = re.compile('^(export_policy|firmware|maint_group|radius|realm|remote_host|security|tacacs|tacacs_acct)$')
 system_settings_regex = re.compile('^(apic_preference|bgp_(asn|rr)|global_aes)$')
@@ -40,8 +48,7 @@ bridge_domains_regex = re.compile('^add_bd$')
 contracts_regex = re.compile('(^(contract|filter|subject)_(add|entry|to_epg)$)')
 dhcp_regex = re.compile('^dhcp_add$')
 epgs_regex = re.compile('^((app|epg)_add)$')
-fabric_regex = re.compile('^(date_time|ntp(_key)?)$')
-# fabric_regex = re.compile('(^date_time|dns|dns_profile|domain|pod_policy|ntp(_key)?|sch_dstgrp|sch_receiver|snmp_(client|clgrp|comm|policy|trap|user)|syslog_(dg|rmt)|trap_groups$)')
+fabric_regex = re.compile('^(date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)|snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?)$')
 inventory_regex = re.compile('^(apic_inb|switch|vpc_pair)$')
 l3out_regex = re.compile('^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$')
 mgmt_tenant_regex = re.compile('^(add_bd|mgmt_epg|oob_ext_epg)$')
@@ -50,6 +57,11 @@ tenants_regex = re.compile('^(tenant_add)$')
 # tenants_regex = re.compile('^((tenant|vrf)_add|vrf_community)$')
 vmm_regex = re.compile('^add_vmm$')
 
+#======================================================
+# Function to run 'terraform plan' and
+# 'terraform apply' in the each folder of the
+# Destination Directory.
+#======================================================
 def apply_aci_terraform(folders):
 
     print(f'\n-----------------------------------------------------------------------------\n')
@@ -119,6 +131,9 @@ def apply_aci_terraform(folders):
                 print(f'  A Valid Response is either "M" or "Q"...')
                 print(f'\n-----------------------------------------------------------------------------\n')
 
+#======================================================
+# Function to Check the Git Status of the Destination Folder
+#======================================================
 def check_git_status():
     random_folders = []
     git_path = './'
@@ -190,6 +205,9 @@ def get_user_pass():
     os.environ['TF_VAR_aciUser'] = '%s' % (user)
     os.environ['TF_VAR_aciPass'] = '%s' % (password)
 
+#======================================================
+# Function to Read the Access Worksheet
+#======================================================
 def process_access(easyDict, easy_jsonData, wb):
     # Evaluate Access Worksheet
     class_init = 'access'
@@ -199,6 +217,9 @@ def process_access(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
+#======================================================
+# Function to Read the Admin Worksheet
+#======================================================
 def process_admin(easyDict, easy_jsonData, wb):
     # Evaluate Admin Worksheet
     class_init = 'admin'
@@ -208,6 +229,9 @@ def process_admin(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
+#======================================================
+# Function to Read the Bridge Domains Worksheet
+#======================================================
 def process_bridge_domains(easyDict, easy_jsonData, wb):
     # Evaluate Bridge_Domains Worksheet
     class_init = 'tenants'
@@ -217,6 +241,9 @@ def process_bridge_domains(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
+#======================================================
+# Function to Read the Contracts Worksheet
+#======================================================
 def process_contracts(easyDict, easy_jsonData, wb):
     # Evaluate Contracts Worksheet
     class_init = 'tenants'
@@ -226,15 +253,9 @@ def process_contracts(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-def process_dhcp_relay(easyDict, easy_jsonData, wb):
-    # Evaluate DHCP Relay Worksheet
-    class_init = 'tenants'
-    class_folder = 'tenants'
-    func_regex = dhcp_regex
-    ws = wb['DHCP Relay']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-    return easyDict
-
+#======================================================
+# Function to Read the EPGs Worksheet
+#======================================================
 def process_epgs(easyDict, easy_jsonData, wb):
     # Evaluate EPGs Worksheet
     class_init = 'tenants'
@@ -244,6 +265,9 @@ def process_epgs(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
+#======================================================
+# Function to Read the Fabric Worksheet
+#======================================================
 def process_fabric(easyDict, easy_jsonData, wb):
     # Evaluate Fabric Worksheet
     class_init = 'fabric'
@@ -253,6 +277,9 @@ def process_fabric(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
+#======================================================
+# Function to Read the Fabric Worksheet
+#======================================================
 def process_inventory(easyDict, easy_jsonData, wb):
     # Evaluate Inventory Worksheet
     class_init = 'access'
@@ -262,6 +289,9 @@ def process_inventory(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
+#======================================================
+# Function to Read the L3Out Worksheet
+#======================================================
 def process_l3out(easyDict, easy_jsonData, wb):
     # Evaluate L3Out Worksheet
     class_init = 'tenants'
@@ -271,15 +301,9 @@ def process_l3out(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-def process_mgmt_tenant(easyDict, easy_jsonData, wb):
-    # Evaluate Mgmt_Tenant Worksheet
-    class_init = 'tenants'
-    class_folder = 'tenants'
-    func_regex = mgmt_tenant_regex
-    ws = wb['Mgmt_Tenant']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-    return easyDict
-
+#======================================================
+# Function to Read the Sites Worksheet
+#======================================================
 def process_sites(easyDict, easy_jsonData, wb):
     # Evaluate Sites Worksheet
     class_init = 'site_policies'
@@ -289,6 +313,9 @@ def process_sites(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
+#======================================================
+# Function to Read the System Settings Worksheet
+#======================================================
 def process_system_settings(easyDict, easy_jsonData, wb):
     # Evaluate System_Settings Worksheet
     class_init = 'system_settings'
@@ -298,6 +325,9 @@ def process_system_settings(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
+#======================================================
+# Function to Read the Tenants Worksheet
+#======================================================
 def process_tenants(easyDict, easy_jsonData, wb):
     # Evaluate Tenants Worksheet
     class_init = 'tenants'
@@ -307,15 +337,9 @@ def process_tenants(easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-def process_vmm(easyDict, easy_jsonData, wb):
-    # Evaluate Sites Worksheet
-    class_init = 'access'
-    class_folder = 'access'
-    func_regex = vmm_regex
-    ws = wb['VMM']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-    return easyDict
-
+#======================================================
+# Function to Read the Worksheet and Create Templates
+#======================================================
 def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
     rows = ws.max_row
     func_list = findKeys(ws, func_regex)
@@ -345,6 +369,10 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
     # Return the easyDict
     return easyDict
 
+#======================================================
+# Function to Update the Workbook.  This is not
+# currently utilized.  Likely to Depricate.
+#======================================================
 def wb_update(wr_ws, status, i):
     # build green and red style sheets for excel
     bd1 = Side(style="thick", color="8EA9DB")
@@ -414,6 +442,9 @@ def wb_update(wr_ws, status, i):
         wr_ws.write(i, 1, 'Unkown Failure', yellow_st)
         pass
 
+#======================================================
+# The Main Module
+#======================================================
 def main():
     description = None
     if description is not None:
@@ -474,6 +505,7 @@ def main():
         'admin':{
             'authentication':[],
             'configuration_backups':[],
+            'global_security':[],
             'radius':[],
             'tacacs':[],
         },
@@ -481,7 +513,7 @@ def main():
             'date_and_time':[],
             'dns_profiles':[],
             'smartcallhome':[],
-            'snmp':[],
+            'snmp_policies':[],
             'syslog':[],
         },
         'inventory':{},
@@ -541,16 +573,10 @@ def main():
             process_contracts(easyDict, easy_jsonData, wb)
         elif re.search('l3out', str(args.worksheet)):
             process_l3out(easyDict, easy_jsonData, wb)
-        elif re.search('mgmt', str(args.worksheet)):
-            process_mgmt_tenant(easyDict, easy_jsonData, wb)
         elif re.search('bd', str(args.worksheet)):
             process_bridge_domains(easyDict, easy_jsonData, wb)
-        elif re.search('dhcp', str(args.worksheet)):
-            process_dhcp_relay(easyDict, easy_jsonData, wb)
         elif re.search('epg', str(args.worksheet)):
             process_epgs(easyDict, easy_jsonData, wb)
-        elif re.search('vmm', str(args.worksheet)):
-            process_vmm(easyDict, easy_jsonData, wb)
         else:
             print(f'\n-----------------------------------------------------------------------------\n')
             print(f'   {args.worksheet} is not a valid worksheet.  If you are trying to run')
@@ -562,7 +588,7 @@ def main():
         easyDict = process_fabric(easyDict, easy_jsonData, wb)
         easyDict = process_tenants(easyDict, easy_jsonData, wb)
         # easyDict = process_epgs(easyDict, easy_jsonData, wb)
-        wr_auto_tfvars(easy_jsonData, **easyDict)
+        read_easy_jsonData(easy_jsonData, **easyDict)
         print('Exiting Script')
         exit()
         easyDict = process_bridge_domains(easyDict, easy_jsonData, wb)
@@ -571,9 +597,6 @@ def main():
         easyDict = process_inventory(easyDict, easy_jsonData, wb)
         easyDict = process_l3out(easyDict, easy_jsonData, wb)
         easyDict = process_contracts(easyDict, easy_jsonData, wb)
-        easyDict = process_mgmt_tenant(easyDict, easy_jsonData, wb)
-        # process_dhcp_relay(easyDict, easy_jsonData, wb)
-        # process_vmm(easyDict, easy_jsonData, wb)
 
     folders = check_git_status()
     get_user_pass()

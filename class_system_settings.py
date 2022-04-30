@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+#======================================================
+# Source Modules
+#======================================================
 from class_terraform import terraform_cloud
 from easy_functions import process_kwargs
 from easy_functions import sensitive_var_site_group
@@ -8,7 +11,9 @@ from openpyxl import load_workbook
 import os
 import validating
 
+#======================================================
 # Exception Classes
+#======================================================
 class InsufficientArgs(Exception):
     pass
 
@@ -21,13 +26,17 @@ class InvalidArg(Exception):
 class LoginFailed(Exception):
     pass
 
+#=====================================================================================
+# Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
+# for detailed information on the Arguments used by this Function.
+#=====================================================================================
 class system_settings(object):
     def __init__(self, type):
         self.type = type
 
-    #==============================================
+    #======================================================
     # Function - APIC Connectivity Preference
-    #==============================================
+    #======================================================
     def apic_preference(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['system.apicConnectivityPreference']['allOf'][1]['properties']
@@ -36,7 +45,7 @@ class system_settings(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.values('apic_connectivity_preference', jsonData, **kwargs)
         except Exception as err:
@@ -50,6 +59,9 @@ class system_settings(object):
         kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
+    #======================================================
+    # Function - BGP Autonomous System Number
+    #======================================================
     def bgp_asn(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['system.bgpASN']['allOf'][1]['properties']
@@ -58,7 +70,7 @@ class system_settings(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
@@ -71,6 +83,9 @@ class system_settings(object):
         kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
+    #======================================================
+    # Function - BGP Route Reflectors
+    #======================================================
     def bgp_rr(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['system.bgpRouteReflector']['allOf'][1]['properties']
@@ -79,7 +94,7 @@ class system_settings(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
@@ -92,6 +107,9 @@ class system_settings(object):
         kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
+    #======================================================
+    # Function - Global AES Passphrase Encryption Settings
+    #======================================================
     def global_aes(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['system.globalAesEncryptionSettings']['allOf'][1]['properties']
@@ -100,7 +118,7 @@ class system_settings(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         try:
-            # Validate Required Arguments
+            # Validate Arguments
             validating.site_group('site_group', **kwargs)
             validating.values('enable_encryption', jsonData, **kwargs)
 
@@ -120,14 +138,17 @@ class system_settings(object):
         kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
         return kwargs['easyDict']
 
-# Class must be instantiated with Variables
+#=====================================================================================
+# Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
+# for detailed information on the Arguments used by this Function.
+#=====================================================================================
 class site_policies(object):
     def __init__(self, type):
         self.type = type
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+    #======================================================
+    # Function - Site Settings
+    #======================================================
     def site_id(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['site.Identifiers']['allOf'][1]['properties']
@@ -137,7 +158,7 @@ class site_policies(object):
 
         try:
             # Validate Variables
-            validating.name_complexity('site_name', **kwargs)
+            validating.validator('site_name', **kwargs)
             validating.url('controller', **kwargs)
             validating.values('auth_type', jsonData, **kwargs)
             validating.values('configure_terraform_cloud', jsonData, **kwargs)
@@ -218,11 +239,9 @@ class site_policies(object):
         # Return Dictionary
         return kwargs['easyDict']
 
-    # Method must be called with the following kwargs.
-    # Group: Required.  A Group Name to represent a list of Site_ID's
-    # site_1: Required.  The site_id for the First Site
-    # site_2: Required.  The site_id for the Second Site
-    # site_[3-15]: Optional.  The site_id for the 3rd thru the 15th Site(s)
+    #======================================================
+    # Function - Site Groups
+    #======================================================
     def group_id(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['site.Groups']['allOf'][1]['properties']
