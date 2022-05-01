@@ -22,15 +22,25 @@ def error_enforcement(row_num, epg, ws2, ws3):
 
 def error_policy_names(row_num, ws, policy_1, policy_2):
     print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Error on Row {row_num} of Worksheet {ws}. The Policy {policy_1} was ')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. The Policy {policy_1} was ')
     print(f'   not the same as {policy_2}. Exiting....')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
 def error_int_selector(row_num, ws, int_select):
     print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Error on Row {row_num} of Worksheet {ws}. Interface Selector {int_select}')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. Interface Selector {int_select}')
     print(f'   was not found in the terraform state file.  Exiting....')
+    print(f'\n-----------------------------------------------------------------------------\n')
+    exit()
+
+def error_login_domain(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[f'{var}_realm']
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. When {var} is set to {varValue}')
+    print(f'   The Login Domain cannot be blank.  Exiting....')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
@@ -44,21 +54,21 @@ def error_request(status, text):
 
 def error_snmp_community(row_num, var):
     print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Error on Row {row_num};community_var {var}, was not pre-defined')
+    print(f'   Error on Row {row_num}; community_var {var}, was not pre-defined')
     print(f'   in the snmp_community section of the worksheet.  Exiting....')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
 def error_snmp_user(row_num, var):
     print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Error on Row {row_num};snmp_user {var}, was not pre-defined')
+    print(f'   Error on Row {row_num}; snmp_user {var}, was not pre-defined')
     print(f'   in the snmp_user section of the worksheet.  Exiting....')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
 def error_switch(row_num, ws, switch_ipr):
     print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Error on Row {row_num} of Worksheet {ws}. Interface Profile {switch_ipr}')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. Interface Profile {switch_ipr}')
     print(f'   was not found in the terraform state file.  Exiting....')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
@@ -82,7 +92,7 @@ def error_tenant_users(**templateVars):
 def error_vlan_to_epg(row_num, vlan, ws):
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'   Error on Row {row_num}. Did not Find EPG corresponding to VLAN {vlan}')
-    print(f'   in Worksheet {ws}.  Exiting....')
+    print(f'   in Worksheet {ws.title}.  Exiting....')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
@@ -253,6 +263,29 @@ def link_level(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
+def list_values(var, jsonData, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    if re.search('^(provider_)?version$', var) and ws.title == 'Sites':
+        ctype = kwargs['controller_type']
+        varList = jsonData[f'{var}_{ctype}']['enum']
+    else:
+        varList = jsonData[var]['enum']
+    varValue = kwargs[var]
+    match_count = 0
+    for x in varList:
+        if x == varValue:
+            match_count =+ 1
+    if not match_count > 0:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue}. ')
+        print(f'   {var} should be one of the following:')
+        for x in varList:
+            print(f'    - {x}')
+        print(f'    Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
 def login_type(row_num, ws, var1, var1_value, var2, var2_value):
     login_type_count = 0
     if var1_value == 'console':
@@ -347,6 +380,20 @@ def number_check(var, jsonData, **kwargs):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
+def number_list(var, jsonData, **kwargs):
+    minimum = jsonData[var]['minimum']
+    maximum = jsonData[var]['maximum']
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    for x in varValue.split(','):
+        if not (validators.between(int(x), min=int(minimum), max=int(maximum))):
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {x}. Valid Values ')
+            print(f'   are between {minimum} and {maximum}.  Exiting....')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
+
 def not_empty(var, **kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']
@@ -382,6 +429,27 @@ def secret(row_num, ws, var, var_value):
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   Error on Worksheet {ws.title}, Row {row_num}, {var}, {var_value}')
         print(f'   The Shared Secret cannot contain backslash, space or hashtag.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def string_pattern(var, jsonData, **kwargs):
+    # Get Variables from Library
+    minimum = jsonData[var]['minimum']
+    maximum = jsonData[var]['maximum']
+    pattern = jsonData[var]['pattern']
+    row_num = kwargs['row_num']
+    varValue = kwargs[var]
+    ws = kwargs['ws']
+    if not (re.fullmatch(pattern,  varValue) and validators.length(
+        str(varValue), min=int(minimum), max=int(maximum))):
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. ')
+        print(f'   "{varValue}" is an invalid Value...')
+        print(f'   It failed one of the complexity tests:')
+        print(f'    - Min Length {maximum}')
+        print(f'    - Max Length {maximum}')
+        print(f'    - Regex {pattern}')
+        print(f'    Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
@@ -444,7 +512,7 @@ def url(var, **kwargs):
 
 def validator(var, **kwargs):
     # Get Variables from Library
-    jsonData = kwargs['easy_jsonData']['components']['schemas']['validators']['allOf'][1]['properties']
+    jsonData = kwargs['easy_jsonData']['components']['schemas']['globalData']['allOf'][1]['properties']
     minimum = jsonData[var]['minimum']
     maximum = jsonData[var]['maximum']
     pattern = jsonData[var]['pattern']
@@ -466,7 +534,7 @@ def validator(var, **kwargs):
 
 def validator_array(var, **kwargs):
     # Get Variables from Library
-    jsonData = kwargs['easy_jsonData']['components']['schemas']['validators']['allOf'][1]['properties']
+    jsonData = kwargs['easy_jsonData']['components']['schemas']['globalData']['allOf'][1]['properties']
     minimum = jsonData[var]['minimum']
     maximum = jsonData[var]['maximum']
     pattern = jsonData[var]['pattern']
@@ -502,7 +570,7 @@ def validator_array(var, **kwargs):
 
 def validator_list(var, **kwargs):
     # Get Variables from Library
-    jsonData = kwargs['easy_jsonData']['components']['schemas']['validators']['allOf'][1]['properties']
+    jsonData = kwargs['easy_jsonData']['components']['schemas']['globalData']['allOf'][1]['properties']
     minimum = jsonData[var]['minimum']
     maximum = jsonData[var]['maximum']
     pattern = jsonData[var]['pattern']

@@ -5,11 +5,11 @@
 #======================================================
 from class_terraform import terraform_cloud
 from easy_functions import countKeys, create_selector, create_tf_file
+from easy_functions import easyDict_append, easyDict_update
 from easy_functions import findKeys, findVars
 from easy_functions import process_kwargs, query_module_type, query_switch_model
 from easy_functions import stdout_log
 from easy_functions import vlan_list_full
-from easy_functions import write_to_site
 from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 import ast
@@ -36,19 +36,18 @@ class InvalidArg(Exception):
 class LoginFailed(Exception):
     pass
 
-# Terraform ACI Provider - Access Policies
-# Class must be instantiated with Variables
+#=====================================================================================
+# Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
+# for detailed information on the Arguments used by this Function.
+#=====================================================================================
 class access(object):
     def __init__(self, type):
-        self.templateLoader = jinja2.FileSystemLoader(
-            searchpath=(aci_template_path + '%s/') % (type))
-        self.templateEnv = jinja2.Environment(loader=self.templateLoader)
         self.type = type
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def aep_profile(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Global Policies - AAEP Profiles
+    #======================================================
+    def aep_profile(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -68,36 +67,37 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.values(row_num, ws, 'infra_vlan', templateVars['infra_vlan'], ['no', 'yes'])
+            validating.name_rule('name', templateVars['name'])
+            validating.values('infra_vlan', templateVars['infra_vlan'], ['no', 'yes'])
             if not templateVars['physical_domains'] == None:
                 templateVars['domains'] = 'yes'
                 if re.search(r',', templateVars['physical_domains']):
                     x = templateVars['physical_domains'].split(',')
                     for domain in x:
-                        validating.name_rule(row_num, ws, 'physical_domains', domain)
+                        validating.name_rule('physical_domains', domain)
                 else:
-                    validating.name_rule(row_num, ws, 'physical_domains', templateVars['physical_domains'])
+                    validating.name_rule('physical_domains', templateVars['physical_domains'])
             if not templateVars['l3_domains'] == None:
                 templateVars['domains'] = 'yes'
                 if re.search(r',', templateVars['l3_domains']):
                     x = templateVars['l3_domains'].split(',')
                     for domain in x:
-                        validating.name_rule(row_num, ws, 'l3_domains', domain)
+                        validating.name_rule('l3_domains', domain)
                 else:
-                    validating.name_rule(row_num, ws, 'l3_domains', templateVars['l3_domains'])
+                    validating.name_rule('l3_domains', templateVars['l3_domains'])
             if not templateVars['vmm_domains'] == None:
                 templateVars['domains'] = 'yes'
                 if re.search(r',', templateVars['vmm_domains']):
                     x = templateVars['vmm_domains'].split(',')
                     for domain in x:
-                        validating.name_rule(row_num, ws, 'vmm_domains', domain)
+                        validating.name_rule('vmm_domains', domain)
                 else:
-                    validating.name_rule(row_num, ws, 'vmm_domains', templateVars['vmm_domains'])
+                    validating.name_rule('vmm_domains', templateVars['vmm_domains'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         templateVars['phys_count'] = 0
@@ -138,15 +138,11 @@ class access(object):
         template_file = "global_aep.jinja2"
         template = self.templateEnv.get_template(template_file)
 
-        # Process the template through the Sites
-        dest_file = 'Policies_Global_AEP_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def apic_inb(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - APIC Inband Configuration
+    #======================================================
+    def apic_inb(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -181,10 +177,10 @@ class access(object):
         # Assign the APIC Inband Management IP's
         eval("%s.%s(wb, ws, row_num, **templateVars)" % (class_init, 'mgmt_static'))
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def cdp(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Policies - CDP
+    #======================================================
+    def cdp(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -201,14 +197,15 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.values(row_num, ws, 'admin_state', templateVars['admin_state'], ['disabled', 'enabled'])
+            validating.name_rule('name', templateVars['name'])
+            validating.values('admin_state', templateVars['admin_state'], ['disabled', 'enabled'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
 
@@ -216,15 +213,11 @@ class access(object):
         template_file = "policy_intf_cdp.jinja2"
         template = self.templateEnv.get_template(template_file)
 
-        # Process the template through the Sites
-        dest_file = 'Policies_Interface_CDP_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def fibre_channel(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Policies - Fibre Channel
+    #======================================================
+    def fibre_channel(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -246,19 +239,20 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.number_check(row_num, ws, 'Buffer_Credit', templateVars['Buffer_Credit'], 16, 64)
-            validating.values(row_num, ws, 'Port_Mode', templateVars['Port_Mode'], ['f', 'np'])
-            validating.values(row_num, ws, 'Trunk_Mode', templateVars['Trunk_Mode'], ['auto', 'trunk-off', 'trunk-on'])
-            validating.values(row_num, ws, 'Speed', templateVars['Speed'], ['auto', '4G', '8G', '16G', '32G'])
-            validating.values(row_num, ws, 'Auto_Max_Speed', templateVars['Auto_Max_Speed'], ['4G', '8G', '16G', '32G'])
-            validating.values(row_num, ws, 'Fill_Pattern', templateVars['Fill_Pattern'], ['ARBFF', 'IDLE'])
+            validating.name_rule('name', templateVars['name'])
+            validating.number_check('Buffer_Credit', templateVars['Buffer_Credit'], 16, 64)
+            validating.values('Port_Mode', templateVars['Port_Mode'], ['f', 'np'])
+            validating.values('Trunk_Mode', templateVars['Trunk_Mode'], ['auto', 'trunk-off', 'trunk-on'])
+            validating.values('Speed', templateVars['Speed'], ['auto', '4G', '8G', '16G', '32G'])
+            validating.values('Auto_Max_Speed', templateVars['Auto_Max_Speed'], ['4G', '8G', '16G', '32G'])
+            validating.values('Fill_Pattern', templateVars['Fill_Pattern'], ['ARBFF', 'IDLE'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
 
@@ -266,15 +260,11 @@ class access(object):
         template_file = "policy_intf_fc.jinja2"
         template = self.templateEnv.get_template(template_file)
 
-        # Process the template through the Sites
-        dest_file = 'Policies_Interface_FC_Interface_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def intf_profile(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Profiles
+    #======================================================
+    def intf_profile(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -289,13 +279,14 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'Dest_Folder', templateVars['Dest_Folder'])
-            validating.values(row_num, ws, 'Switch_Role', templateVars['Switch_Role'], ['leaf', 'spine'])
+            validating.name_rule('name', templateVars['name'])
+            validating.name_rule('Dest_Folder', templateVars['Dest_Folder'])
+            validating.values('Switch_Role', templateVars['Switch_Role'], ['leaf', 'spine'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         if templateVars['Switch_Role'] == 'leaf':
@@ -318,11 +309,10 @@ class access(object):
         else:
             dest_dir = 'Access'
 
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
+    #======================================================
+    # Function - Interface Selectors
+    #======================================================
     def intf_selector(self, wb, ws, row_num, wr_file, **kwargs):
         if not kwargs.get('Policy_Group') == None:
             # Dicts for required and optional args
@@ -367,7 +357,7 @@ class access(object):
                             break
 
                     # Open the Network Policies Worksheet to get the Interface_Policy
-                    ws_net = wb['Network Policies']
+                    ws_net = kwargs['wb']['Network Policies']
                     rows = ws_net.max_row
 
                     # Get the Interface Policies from the Network Policies Tab
@@ -450,10 +440,10 @@ class access(object):
                 payload = template.render(templateVars)
                 wr_file.write(payload + '\n\n')
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def l2_interface(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Policies - L2 Interfaces
+    #======================================================
+    def l2_interface(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -472,16 +462,17 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.values(row_num, ws, 'QinQ', templateVars['QinQ'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'Reflective_Relay', templateVars['Reflective_Relay'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'VLAN_Scope', templateVars['VLAN_Scope'], ['global', 'portlocal'])
+            validating.name_rule('name', templateVars['name'])
+            validating.values('QinQ', templateVars['QinQ'], ['disabled', 'enabled'])
+            validating.values('Reflective_Relay', templateVars['Reflective_Relay'], ['disabled', 'enabled'])
+            validating.values('VLAN_Scope', templateVars['VLAN_Scope'], ['global', 'portlocal'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
 
@@ -492,12 +483,11 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Policies_Interface_L2_Interface_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def l3_domain(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Domain - Layer 3
+    #======================================================
+    def l3_domain(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -512,10 +502,11 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'VLAN_Pool', templateVars['VLAN_Pool'])
+            validating.name_rule('name', templateVars['name'])
+            validating.name_rule('VLAN_Pool', templateVars['VLAN_Pool'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
 
@@ -526,11 +517,11 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Policies_Domain_L3_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def leaf_pg(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Leaf Policy Group
+    #======================================================
+    def leaf_pg(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -562,29 +553,30 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'Auth_8021X', templateVars['Auth_8021X'])
-            validating.name_rule(row_num, ws, 'BFD_IPv4', templateVars['BFD_IPv4'])
-            validating.name_rule(row_num, ws, 'BFD_IPv6', templateVars['BFD_IPv6'])
-            validating.name_rule(row_num, ws, 'BFD_MH_IPv4', templateVars['BFD_MH_IPv4'])
-            validating.name_rule(row_num, ws, 'BFD_MH_IPv6', templateVars['BFD_MH_IPv6'])
-            validating.name_rule(row_num, ws, 'CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule(row_num, ws, 'CoPP_Leaf_Policy', templateVars['CoPP_Leaf_Policy'])
-            validating.name_rule(row_num, ws, 'CoPP_Pre_Filter', templateVars['CoPP_Pre_Filter'])
-            validating.name_rule(row_num, ws, 'Flash_Config', templateVars['Flash_Config'])
-            validating.name_rule(row_num, ws, 'Fast_Link_Failover', templateVars['Fast_Link_Failover'])
-            validating.name_rule(row_num, ws, 'FC_SAN_Policy', templateVars['FC_SAN_Policy'])
-            validating.name_rule(row_num, ws, 'FC_Node_Policy', templateVars['FC_Node_Policy'])
-            validating.name_rule(row_num, ws, 'Forward_Scale', templateVars['Forward_Scale'])
-            validating.name_rule(row_num, ws, 'LLDP_Policy', templateVars['LLDP_Policy'])
-            validating.name_rule(row_num, ws, 'Monitoring_Policy', templateVars['Monitoring_Policy'])
-            validating.name_rule(row_num, ws, 'Netflow_Node', templateVars['Netflow_Node'])
-            validating.name_rule(row_num, ws, 'PoE_Policy', templateVars['PoE_Policy'])
-            validating.name_rule(row_num, ws, 'STP_Policy', templateVars['STP_Policy'])
+            validating.name_rule('name', templateVars['name'])
+            validating.name_rule('Auth_8021X', templateVars['Auth_8021X'])
+            validating.name_rule('BFD_IPv4', templateVars['BFD_IPv4'])
+            validating.name_rule('BFD_IPv6', templateVars['BFD_IPv6'])
+            validating.name_rule('BFD_MH_IPv4', templateVars['BFD_MH_IPv4'])
+            validating.name_rule('BFD_MH_IPv6', templateVars['BFD_MH_IPv6'])
+            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
+            validating.name_rule('CoPP_Leaf_Policy', templateVars['CoPP_Leaf_Policy'])
+            validating.name_rule('CoPP_Pre_Filter', templateVars['CoPP_Pre_Filter'])
+            validating.name_rule('Flash_Config', templateVars['Flash_Config'])
+            validating.name_rule('Fast_Link_Failover', templateVars['Fast_Link_Failover'])
+            validating.name_rule('FC_SAN_Policy', templateVars['FC_SAN_Policy'])
+            validating.name_rule('FC_Node_Policy', templateVars['FC_Node_Policy'])
+            validating.name_rule('Forward_Scale', templateVars['Forward_Scale'])
+            validating.name_rule('LLDP_Policy', templateVars['LLDP_Policy'])
+            validating.name_rule('Monitoring_Policy', templateVars['Monitoring_Policy'])
+            validating.name_rule('Netflow_Node', templateVars['Netflow_Node'])
+            validating.name_rule('PoE_Policy', templateVars['PoE_Policy'])
+            validating.name_rule('STP_Policy', templateVars['STP_Policy'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -594,12 +586,11 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Leaf_Policy_Group_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def link_level(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Policies - Link Level (Speed)
+    #======================================================
+    def link_level(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -620,18 +611,19 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.number_check(row_num, ws, 'Port_Delay', templateVars['Port_Delay'], 0, 10000)
-            validating.number_check(row_num, ws, 'Debounce_Interval', templateVars['Debounce_Interval'], 0, 5000)
-            validating.values(row_num, ws, 'Auto_Neg', templateVars['Auto_Neg'], ['off', 'on'])
-            validating.values(row_num, ws, 'Speed', templateVars['Speed'], ['inherit', '100M', '1G', '10G', '25G', '40G', '50G', '100G', '200G', '400G'])
-            validating.values(row_num, ws, 'FEC_Mode', templateVars['FEC_Mode'], ['inherit', 'auto-fec', 'cl74-fc-fec', 'cl91-rs-fec', 'cons16-rs-fec', 'disable-fec', 'ieee-rs-fec', 'kp-fec'])
+            validating.name_rule('name', templateVars['name'])
+            validating.number_check('Port_Delay', templateVars['Port_Delay'], 0, 10000)
+            validating.number_check('Debounce_Interval', templateVars['Debounce_Interval'], 0, 5000)
+            validating.values('Auto_Neg', templateVars['Auto_Neg'], ['off', 'on'])
+            validating.values('Speed', templateVars['Speed'], ['inherit', '100M', '1G', '10G', '25G', '40G', '50G', '100G', '200G', '400G'])
+            validating.values('FEC_Mode', templateVars['FEC_Mode'], ['inherit', 'auto-fec', 'cl74-fc-fec', 'cl91-rs-fec', 'cons16-rs-fec', 'disable-fec', 'ieee-rs-fec', 'kp-fec'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
 
@@ -642,12 +634,11 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Policies_Interface_Link_Level_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def lldp(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Policies - LLDP
+    #======================================================
+    def lldp(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -665,15 +656,16 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.values(row_num, ws, 'Receive_State', templateVars['Receive_State'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'Transmit_State', templateVars['Transmit_State'], ['disabled', 'enabled'])
+            validating.name_rule('name', templateVars['name'])
+            validating.values('Receive_State', templateVars['Receive_State'], ['disabled', 'enabled'])
+            validating.values('Transmit_State', templateVars['Transmit_State'], ['disabled', 'enabled'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
 
@@ -684,12 +676,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Policies_Interface_LLDP_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def maint_group(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Maintenance Profiles
+    #======================================================
+    def maint_group(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'Site_Group': '',
                          'MG_Name': '',
@@ -710,17 +702,18 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'MG_Name', templateVars['MG_Name'])
+            validating.name_rule('MG_Name', templateVars['MG_Name'])
             validating.validator('software_version', **kwargs)
-            validating.values(row_num, ws, 'Admin_State', templateVars['Admin_State'], ['triggered', 'untriggered'])
-            validating.values(row_num, ws, 'Admin_Notify', templateVars['Admin_Notify'], ['notifyAlwaysBetweenSets', 'notifyNever', 'notifyOnlyOnFailures'])
-            validating.values(row_num, ws, 'Graceful', templateVars['Graceful'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Ignore_Compatability',templateVars['Ignore_Compatability'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Run_Mode', templateVars['Run_Mode'], ['pauseAlwaysBetweenSets', 'pauseNever', 'pauseOnlyOnFailures'])
-            validating.values(row_num, ws, 'Ver_Check_Override', templateVars['Ver_Check_Override'], ['trigger', 'trigger-immediate', 'triggered', 'untriggered'])
-            validating.values(row_num, ws, 'MG_Type', templateVars['MG_Type'], ['ALL', 'range'])
+            validating.values('Admin_State', templateVars['Admin_State'], ['triggered', 'untriggered'])
+            validating.values('Admin_Notify', templateVars['Admin_Notify'], ['notifyAlwaysBetweenSets', 'notifyNever', 'notifyOnlyOnFailures'])
+            validating.values('Graceful', templateVars['Graceful'], ['no', 'yes'])
+            validating.values('Ignore_Compatability',templateVars['Ignore_Compatability'], ['no', 'yes'])
+            validating.values('Run_Mode', templateVars['Run_Mode'], ['pauseAlwaysBetweenSets', 'pauseNever', 'pauseOnlyOnFailures'])
+            validating.values('Ver_Check_Override', templateVars['Ver_Check_Override'], ['trigger', 'trigger-immediate', 'triggered', 'untriggered'])
+            validating.values('MG_Type', templateVars['MG_Type'], ['ALL', 'range'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -730,12 +723,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Maintenance_Group_%s.tf' % (templateVars['MG_Name'])
         dest_dir = 'Admin'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def mcp(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Policies - Mis-Cabling Protocol
+    #======================================================
+    def mcp(self, **kwargs):
         # Dicts for required and optional args
         required_args = {
             'site_group': '',
@@ -752,14 +745,15 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.values(row_num, ws, 'admin_state', templateVars['admin_state'], ['disabled', 'enabled'])
+            validating.name_rule('name', templateVars['name'])
+            validating.values('admin_state', templateVars['admin_state'], ['disabled', 'enabled'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
 
@@ -770,12 +764,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Policies_Interface_MCP_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def mgmt_static(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Static Management IPs
+    #======================================================
+    def mgmt_static(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -795,22 +789,23 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.hostname(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'EPG', templateVars['EPG'])
-            validating.number_check(row_num, ws, 'pod_id', templateVars['pod_id'], 1, 15)
+            validating.hostname('name', templateVars['name'])
+            validating.name_rule('EPG', templateVars['EPG'])
+            validating.number_check('pod_id', templateVars['pod_id'], 1, 15)
             if templateVars['Device_Type'] == 'apic':
-                validating.number_check(row_num, ws, 'node_id', templateVars['node_id'], 1, 7)
+                validating.number_check('node_id', templateVars['node_id'], 1, 7)
             else:
-                validating.number_check(row_num, ws, 'node_id', templateVars['node_id'], 101, 4001)
+                validating.number_check('node_id', templateVars['node_id'], 101, 4001)
             if not templateVars['IPv4'] == None:
-                validating.mgmt_network(row_num, ws, 'IPv4', templateVars['IPv4'], 'GWv4', templateVars['GWv4'])
+                validating.mgmt_network('IPv4', templateVars['IPv4'], 'GWv4', templateVars['GWv4'])
             if not templateVars['IPv6'] == None:
-                validating.mgmt_network(row_num, ws, 'IPv6', templateVars['IPv6'], 'GWv6', templateVars['GWv6'])
+                validating.mgmt_network('IPv6', templateVars['IPv6'], 'GWv6', templateVars['GWv6'])
             else:
                 templateVars['IPv6'] = '::'
                 templateVars['GWv6'] = '::'
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -820,14 +815,14 @@ class access(object):
         # Process the template through the Sites
         dest_file = '%s_%s_EPG_%s_Static_Address.tf' % (templateVars['name'], templateVars['Type'], templateVars['EPG'])
         dest_dir = 'Tenant_mgmt'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def pg_access(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Policy Group - Access
+    #======================================================
+    def pg_access(self, **kwargs):
         # Open the Network Policies Worksheet
-        ws_net = wb['Network Policies']
+        ws_net = kwargs['wb']['Network Policies']
         rows = ws_net.max_row
 
         # Dicts for required and optional args
@@ -879,32 +874,32 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'AEP_Policy', templateVars['AEP_Policy'])
-            validating.name_rule(row_num, ws, 'CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule(row_num, ws, 'Link_Level', templateVars['Link_Level'])
-            validating.name_rule(row_num, ws, 'LLDP_Policy', templateVars['LLDP_Policy'])
-            validating.name_rule(row_num, ws, 'MCP_Policy', templateVars['MCP_Policy'])
-            validating.name_rule(row_num, ws, 'STP_Policy', templateVars['STP_Policy'])
+            validating.name_rule('name', templateVars['name'])
+            validating.name_rule('AEP_Policy', templateVars['AEP_Policy'])
+            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
+            validating.name_rule('Link_Level', templateVars['Link_Level'])
+            validating.name_rule('LLDP_Policy', templateVars['LLDP_Policy'])
+            validating.name_rule('MCP_Policy', templateVars['MCP_Policy'])
+            validating.name_rule('STP_Policy', templateVars['STP_Policy'])
             if not templateVars['Fibre_Channel'] == None:
                 validating.name_rule(row_pg, ws_net, 'Fibre_Channel', templateVars['Fibre_Channel'])
             validating.name_rule(row_pg, ws_net, 'L2_Interface', templateVars['L2_Interface'])
             validating.name_rule(row_pg, ws_net, 'Port_Security', templateVars['Port_Security'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
             if not templateVars['Pol_802_1x'] == None:
-                validating.name_rule(row_num, ws, 'Pol_802_1x', templateVars['Pol_802_1x'])
+                validating.name_rule('Pol_802_1x', templateVars['Pol_802_1x'])
                 templateVars['Pol_802_1x'] = 'uni/infra/portauthpol-%s' % (templateVars['Pol_802_1x'])
             if not templateVars['poeIfPol'] == None:
-                validating.name_rule(row_num, ws, 'poeIfPol', templateVars['poeIfPol'])
+                validating.name_rule('poeIfPol', templateVars['poeIfPol'])
                 templateVars['poeIfPol'] = 'uni/infra/poeIfP-%s' % (templateVars['poeIfPol'])
             if not templateVars['monFabricPol'] == None:
-                validating.name_rule(row_num, ws, 'monFabricPol', templateVars['monFabricPol'])
+                validating.name_rule('monFabricPol', templateVars['monFabricPol'])
                 templateVars['monFabricPol'] = 'uni/fabric/monfab-%s' % (templateVars['monFabricPol'])
             if not templateVars['dwdmIfPol'] == None:
-                validating.name_rule(row_num, ws, 'dwdmIfPol', templateVars['dwdmIfPol'])
+                validating.name_rule('dwdmIfPol', templateVars['dwdmIfPol'])
                 templateVars['dwdmIfPol'] = 'uni/infra/dwdmifpol-%s' % (templateVars['dwdmIfPol'])
             if not templateVars['coppIfPol'] == None:
                 validating.name_rule(row_pg, ws_net, 'coppIfPol', templateVars['coppIfPol'])
@@ -937,7 +932,8 @@ class access(object):
                 validating.name_rule(row_pg, ws_net, 'stormctrlIfPol', templateVars['stormctrlIfPol'])
                 templateVars['stormctrlIfPol'] = 'uni/infra/stormctrlifp-%s' % (templateVars['stormctrlIfPol'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -947,17 +943,17 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Leaf_Interface_PG_Access_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def pg_bundle(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Policy Group - VPC/Port-Channel
+    #======================================================
+    def pg_bundle(self, **kwargs):
         # Assign the kwargs to a initial var for each process
         initial_kwargs = kwargs
 
         # Open the Network Policies Worksheet
-        ws_net = wb['Network Policies']
+        ws_net = kwargs['wb']['Network Policies']
         rows = ws_net.max_row
 
         # Dicts for required and optional args
@@ -1008,25 +1004,25 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'AEP_Policy', templateVars['AEP_Policy'])
-            validating.name_rule(row_num, ws, 'CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule(row_num, ws, 'Link_Level', templateVars['Link_Level'])
-            validating.name_rule(row_num, ws, 'LACP_Policy', templateVars['LACP_Policy'])
-            validating.name_rule(row_num, ws, 'LLDP_Policy', templateVars['LLDP_Policy'])
-            validating.name_rule(row_num, ws, 'MCP_Policy', templateVars['MCP_Policy'])
-            validating.name_rule(row_num, ws, 'STP_Policy', templateVars['STP_Policy'])
+            validating.name_rule('name', templateVars['name'])
+            validating.name_rule('AEP_Policy', templateVars['AEP_Policy'])
+            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
+            validating.name_rule('Link_Level', templateVars['Link_Level'])
+            validating.name_rule('LACP_Policy', templateVars['LACP_Policy'])
+            validating.name_rule('LLDP_Policy', templateVars['LLDP_Policy'])
+            validating.name_rule('MCP_Policy', templateVars['MCP_Policy'])
+            validating.name_rule('STP_Policy', templateVars['STP_Policy'])
             if not templateVars['Fibre_Channel'] == None:
                 validating.name_rule(row_pg, ws_net, 'Fibre_Channel', templateVars['Fibre_Channel'])
             validating.name_rule(row_pg, ws_net, 'L2_Interface', templateVars['L2_Interface'])
             validating.name_rule(row_pg, ws_net, 'Port_Security', templateVars['Port_Security'])
-            validating.values(row_num, ws, 'Lag_Type', templateVars['Lag_Type'], ['link', 'node'])
+            validating.values('Lag_Type', templateVars['Lag_Type'], ['link', 'node'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
             if not templateVars['monFabricPol'] == None:
-                validating.name_rule(row_num, ws, 'monFabricPol', templateVars['monFabricPol'])
+                validating.name_rule('monFabricPol', templateVars['monFabricPol'])
                 templateVars['monFabricPol'] = 'uni/fabric/monfab-%s' % (templateVars['monFabricPol'])
             if not templateVars['coppIfPol'] == None:
                 validating.name_rule(row_pg, ws_net, 'coppIfPol', templateVars['coppIfPol'])
@@ -1059,7 +1055,8 @@ class access(object):
                 validating.name_rule(row_pg, ws_net, 'stormctrlIfPol', templateVars['stormctrlIfPol'])
                 templateVars['stormctrlIfPol'] = 'uni/infra/stormctrlifp-%s' % (templateVars['stormctrlIfPol'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -1069,12 +1066,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Leaf_Interface_PG_Bundle_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def pg_breakout(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Policy Group - Breakout
+    #======================================================
+    def pg_breakout(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -1087,12 +1084,13 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.values(row_num, ws, 'Breakout_Map', templateVars['Breakout_Map'], ['100g-2x', '100g-4x', '10g-4x', '25g-4x', '50g-8x'])
+            validating.name_rule('name', templateVars['name'])
+            validating.values('Breakout_Map', templateVars['Breakout_Map'], ['100g-2x', '100g-4x', '10g-4x', '25g-4x', '50g-8x'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -1102,12 +1100,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Leaf_Interface_PG_Breakout_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def pg_spine(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Policy Group - Spine
+    #======================================================
+    def pg_spine(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -1125,22 +1123,23 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'AEP_Policy', templateVars['AEP_Policy'])
-            validating.name_rule(row_num, ws, 'CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule(row_num, ws, 'Link_Level', templateVars['Link_Level'])
+            validating.name_rule('name', templateVars['name'])
+            validating.name_rule('AEP_Policy', templateVars['AEP_Policy'])
+            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
+            validating.name_rule('Link_Level', templateVars['Link_Level'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
             if not templateVars['fabricLinkFlapPol'] == None:
-                validating.name_rule(row_num, ws, 'fabricLinkFlapPol', templateVars['fabricLinkFlapPol'])
+                validating.name_rule('fabricLinkFlapPol', templateVars['fabricLinkFlapPol'])
                 templateVars['fabricLinkFlapPol'] = 'uni/infra/linkflappol-%s' % (templateVars['fabricLinkFlapPol'])
             if not templateVars['macsecIfPol'] == None:
-                validating.name_rule(row_num, ws, 'macsecIfPol', templateVars['macsecIfPol'])
+                validating.name_rule('macsecIfPol', templateVars['macsecIfPol'])
                 templateVars['macsecIfPol'] = 'uni/infra/macsecifpol-%s' % (templateVars['macsecIfPol'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -1150,12 +1149,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Spine_Interface_PG_Access_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def phys_dom(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Domains - Physical
+    #======================================================
+    def phys_dom(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -1168,10 +1167,11 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'VLAN_Pool', templateVars['VLAN_Pool'])
+            validating.name_rule('name', templateVars['name'])
+            validating.name_rule('VLAN_Pool', templateVars['VLAN_Pool'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
 
@@ -1182,12 +1182,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Policies_Domain_Phys_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def port_channel(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Policies - Port Channel
+    #======================================================
+    def port_channel(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -1207,21 +1207,22 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.number_check(row_num, ws, 'Min_Links', templateVars['Min_Links'], 1, 16)
-            validating.number_check(row_num, ws, 'Max_Links', templateVars['Max_Links'], 1, 16)
-            validating.values(row_num, ws, 'Mode', templateVars['Mode'], ['active', 'explicit-failover', 'mac-pin', 'mac-pin-nicload', 'off', 'passive'])
-            validating.values(row_num, ws, 'Fast_Select', templateVars['Fast_Select'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Graceful', templateVars['Graceful'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Load_Defer', templateVars['Load_Defer'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Suspend_Individual', templateVars['Suspend_Individual'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Symmetric_Hash', templateVars['Symmetric_Hash'], ['no', 'yes'])
+            validating.name_rule('name', templateVars['name'])
+            validating.number_check('Min_Links', templateVars['Min_Links'], 1, 16)
+            validating.number_check('Max_Links', templateVars['Max_Links'], 1, 16)
+            validating.values('Mode', templateVars['Mode'], ['active', 'explicit-failover', 'mac-pin', 'mac-pin-nicload', 'off', 'passive'])
+            validating.values('Fast_Select', templateVars['Fast_Select'], ['no', 'yes'])
+            validating.values('Graceful', templateVars['Graceful'], ['no', 'yes'])
+            validating.values('Load_Defer', templateVars['Load_Defer'], ['no', 'yes'])
+            validating.values('Suspend_Individual', templateVars['Suspend_Individual'], ['no', 'yes'])
+            validating.values('Symmetric_Hash', templateVars['Symmetric_Hash'], ['no', 'yes'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Create ctrl templateVars
@@ -1266,12 +1267,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Policies_Interface_Port_Channel_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def port_cnvt(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Port Conversion
+    #======================================================
+    def port_cnvt(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -1285,10 +1286,11 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.hostname(row_num, ws, 'name', templateVars['name'])
-            validating.number_check(row_num, ws, 'node_id', templateVars['node_id'], 101, 4001)
+            validating.hostname('name', templateVars['name'])
+            validating.number_check('node_id', templateVars['node_id'], 101, 4001)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Create Port name Var
@@ -1302,12 +1304,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Downlink_Convert_%s.tf' % (templateVars['Port_name'])
         dest_dir = 'Access/%s' % (templateVars['name'])
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def port_security(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Policies - Port Security
+    #======================================================
+    def port_security(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -1321,15 +1323,16 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.number_check(row_num, ws, 'Timeout', templateVars['Timeout'], 60, 3600)
-            validating.number_check(row_num, ws, 'Maximum_Endpoints', templateVars['Maximum_Endpoints'], 0, 12000)
+            validating.name_rule('name', templateVars['name'])
+            validating.number_check('Timeout', templateVars['Timeout'], 60, 3600)
+            validating.number_check('Maximum_Endpoints', templateVars['Maximum_Endpoints'], 0, 12000)
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
 
@@ -1340,12 +1343,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Policies_Interface_Port_Security_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def spine_pg(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Spine Policy Group
+    #======================================================
+    def spine_pg(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -1363,17 +1366,18 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'BFD_IPv4', templateVars['BFD_IPv4'])
-            validating.name_rule(row_num, ws, 'BFD_IPv6', templateVars['BFD_IPv6'])
-            validating.name_rule(row_num, ws, 'CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule(row_num, ws, 'CoPP_Pre_Filter', templateVars['CoPP_Pre_Filter'])
-            validating.name_rule(row_num, ws, 'CoPP_Spine_Policy', templateVars['CoPP_Spine_Policy'])
-            validating.name_rule(row_num, ws, 'LLDP_Policy', templateVars['LLDP_Policy'])
+            validating.name_rule('name', templateVars['name'])
+            validating.name_rule('BFD_IPv4', templateVars['BFD_IPv4'])
+            validating.name_rule('BFD_IPv6', templateVars['BFD_IPv6'])
+            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
+            validating.name_rule('CoPP_Pre_Filter', templateVars['CoPP_Pre_Filter'])
+            validating.name_rule('CoPP_Spine_Policy', templateVars['CoPP_Spine_Policy'])
+            validating.name_rule('LLDP_Policy', templateVars['LLDP_Policy'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -1383,12 +1387,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Spine_Policy_Group_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def stp(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Interface Policies - Spanning Tree
+    #======================================================
+    def stp(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -1402,15 +1406,16 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.values(row_num, ws, 'Filter', templateVars['Filter'], ['disabled', 'enabled'])
-            validating.values(row_num, ws, 'Guard', templateVars['Guard'], ['disabled', 'enabled'])
+            validating.name_rule('name', templateVars['name'])
+            validating.values('Filter', templateVars['Filter'], ['disabled', 'enabled'])
+            validating.values('Guard', templateVars['Guard'], ['disabled', 'enabled'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Create ctrl templateVars
@@ -1437,12 +1442,12 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'Policies_Interface_STP_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def switch(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Switch Inventory
+    #======================================================
+    def switch(self, **kwargs):
         # Initialize the Class
         lib_aci_ref = 'Access_Policies'
         class_init = '%s(ws)' % (lib_aci_ref)
@@ -1483,26 +1488,27 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.hostname(row_num, ws, 'name', templateVars['name'])
+            validating.hostname('name', templateVars['name'])
             validating.modules(row_num, templateVars['name'], templateVars['Switch_Role'], modules)
             if not templateVars['MG_name'] == None:
-                validating.name_rule(row_num, ws, 'MG_name', templateVars['MG_name'])
-            validating.name_rule(row_num, ws, 'Inband_EPG', templateVars['Inband_EPG'])
-            validating.name_rule(row_num, ws, 'OOB_EPG', templateVars['OOB_EPG'])
-            validating.number_check(row_num, ws, 'node_id', templateVars['node_id'], 101, 4001)
-            validating.number_check(row_num, ws, 'pod_id', templateVars['pod_id'], 1, 12)
-            validating.number_check(row_num, ws, 'Fabric_ID', templateVars['Fabric_ID'], 1, 12)
-            validating.values(row_num, ws, 'Profiles', templateVars['Profiles'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Node_Type', templateVars['Node_Type'], ['remote-leaf-wan', 'unspecified'])
-            validating.values(row_num, ws, 'Switch_Role', templateVars['Switch_Role'], ['leaf', 'spine'])
-            validating.values(row_num, ws, 'Is_Virtual', templateVars['Is_Virtual'], ['no', 'yes'])
-            validating.values(row_num, ws, 'Tier-2', templateVars['Tier-2'], ['no', 'yes'])
+                validating.name_rule('MG_name', templateVars['MG_name'])
+            validating.name_rule('Inband_EPG', templateVars['Inband_EPG'])
+            validating.name_rule('OOB_EPG', templateVars['OOB_EPG'])
+            validating.number_check('node_id', templateVars['node_id'], 101, 4001)
+            validating.number_check('pod_id', templateVars['pod_id'], 1, 12)
+            validating.number_check('Fabric_ID', templateVars['Fabric_ID'], 1, 12)
+            validating.values('Profiles', templateVars['Profiles'], ['no', 'yes'])
+            validating.values('Node_Type', templateVars['Node_Type'], ['remote-leaf-wan', 'unspecified'])
+            validating.values('Switch_Role', templateVars['Switch_Role'], ['leaf', 'spine'])
+            validating.values('Is_Virtual', templateVars['Is_Virtual'], ['no', 'yes'])
+            validating.values('Tier-2', templateVars['Tier-2'], ['no', 'yes'])
             if templateVars['Profiles'] == 'yes':
-                validating.name_rule(row_num, ws, 'Policy_Group', templateVars['Policy_Group'])
+                validating.name_rule('Policy_Group', templateVars['Policy_Group'])
             if not templateVars['Remote_ID'] == None:
-                validating.number_check(row_num, ws, 'Remote_ID', templateVars['Remote_ID'], 1, 255)
+                validating.number_check('Remote_ID', templateVars['Remote_ID'], 1, 255)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Configure the Generic Template Variables for Node Management Inband IP's
@@ -1539,7 +1545,7 @@ class access(object):
             # Process the template through the Sites
             dest_file = 'Maintenance_Group_%s.tf' % (templateVars['MG_name'])
             dest_dir = 'Admin'
-            write_to_site(wb, ws, row_num, 'a+', dest_dir, dest_file, template, **templateVars)
+            
 
         Site_ID = 'Site_ID_%s' % (templateVars['site_group'])
         site_dict = ast.literal_eval(os.environ[Site_ID])
@@ -1617,7 +1623,7 @@ class access(object):
                     ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
             if re.search('^(9396|95[0-1][4-8])', sw_type):
                 row_count = 1
-                for row in ws.rows:
+                for row in kwargs['ws'].rows:
                     if re.search('9396', sw_type):
                         start, end = 2, 2
                     else:
@@ -1644,7 +1650,7 @@ class access(object):
         # Process the template through the Sites
         dest_file = '%s.tf' % (templateVars['name'])
         dest_dir = '%s' % (templateVars['name'])
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
         if templateVars['Profiles'] == 'yes':
             templateVars['description'] = None
@@ -1691,10 +1697,10 @@ class access(object):
             wb_sw.close()
 
         if re.search('Grp_[A-F]', templateVars['site_group']):
-            print(f"\n-----------------------------------------------------------------------------\n")
-            print(f"   Error on Worksheet {ws.title}, Row {row_num} site_group, value {templateVars['site_group']}.")
-            print(f"   A Leaf can only be assigned to one Site.  Exiting....")
-            print(f"\n-----------------------------------------------------------------------------\n")
+            # print(f"\n-----------------------------------------------------------------------------\n")
+            # print(f"   Error on Worksheet {ws.title}, Row {row_num} site_group, value {templateVars['site_group']}.")
+            # print(f"   A Leaf can only be assigned to one Site.  Exiting....")
+            # print(f"\n-----------------------------------------------------------------------------\n")
             exit()
         elif re.search(r'\d+', templateVars['site_group']):
             Site_ID = 'Site_ID_%s' % (templateVars['site_group'])
@@ -1772,12 +1778,12 @@ class access(object):
                 for var in var_list:
                     tf_var_dict = terraform_cloud.tfcVariables(class_init, dest_dir, var, tf_var_dict, **kwargs)
 
-        else:
-            print(f"\n-----------------------------------------------------------------------------\n")
-            print(f"   Error on Worksheet {ws.title}, Row {row_num} site_group, value {templateVars['site_group']}.")
-            print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
-            print(f"\n-----------------------------------------------------------------------------\n")
-            exit()
+        # else:
+        #     print(f"\n-----------------------------------------------------------------------------\n")
+        #     print(f"   Error on Worksheet {ws.title}, Row {row_num} site_group, value {templateVars['site_group']}.")
+        #     print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
+        #     print(f"\n-----------------------------------------------------------------------------\n")
+        #     exit()
 
         self.templateLoader = jinja2.FileSystemLoader(
             searchpath=(aci_template_path))
@@ -1792,10 +1798,10 @@ class access(object):
             template = self.templateEnv.get_template(template_file)
             create_tf_file('w', dest_dir, dest_file, template, **templateVars)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def sw_profile(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - Switch Profiles
+    #======================================================
+    def sw_profile(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'Switch_Role': '',
@@ -1816,20 +1822,21 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.name_rule(row_num, ws, 'Selector_name', templateVars['Selector_name'])
-            validating.name_rule(row_num, ws, 'Nodeblk_name', templateVars['Nodeblk_name'])
-            validating.name_rule(row_num, ws, 'Policy_Group', templateVars['Policy_Group'])
-            validating.name_rule(row_num, ws, 'Interface_Profile', templateVars['Interface_Profile'])
-            validating.name_rule(row_num, ws, 'Dest_Folder', templateVars['Dest_Folder'])
-            validating.number_check(row_num, ws, 'node_id_From', templateVars['node_id_From'], 101, 4001)
-            validating.number_check(row_num, ws, 'node_id_To', templateVars['node_id_To'], 101, 4001)
-            validating.values(row_num, ws, 'Switch_Role', templateVars['Switch_Role'], ['leaf', 'spine'])
-            validating.values(row_num, ws, 'Association_Type', templateVars['Association_Type'], ['ALL', 'range', 'ALL_IN_POD'])
+            validating.name_rule('name', templateVars['name'])
+            validating.name_rule('Selector_name', templateVars['Selector_name'])
+            validating.name_rule('Nodeblk_name', templateVars['Nodeblk_name'])
+            validating.name_rule('Policy_Group', templateVars['Policy_Group'])
+            validating.name_rule('Interface_Profile', templateVars['Interface_Profile'])
+            validating.name_rule('Dest_Folder', templateVars['Dest_Folder'])
+            validating.number_check('node_id_From', templateVars['node_id_From'], 101, 4001)
+            validating.number_check('node_id_To', templateVars['node_id_To'], 101, 4001)
+            validating.values('Switch_Role', templateVars['Switch_Role'], ['leaf', 'spine'])
+            validating.values('Association_Type', templateVars['Association_Type'], ['ALL', 'range', 'ALL_IN_POD'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -1850,12 +1857,11 @@ class access(object):
             dest_dir = '%s' % (templateVars['Dest_Folder'])
         else:
             dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def vlan_pool(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - VLAN Pools
+    #======================================================
+    def vlan_pool(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'name': '',
@@ -1875,25 +1881,26 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.name_rule(row_num, ws, 'name', templateVars['name'])
-            validating.values(row_num, ws, 'Allocation_Mode', templateVars['Allocation_Mode'], ['dynamic', 'static'])
-            validating.values(row_num, ws, 'VGRP1_Allocation', templateVars['VGRP1_Allocation'], ['dynamic', 'static'])
+            validating.name_rule('name', templateVars['name'])
+            validating.values('Allocation_Mode', templateVars['Allocation_Mode'], ['dynamic', 'static'])
+            validating.values('VGRP1_Allocation', templateVars['VGRP1_Allocation'], ['dynamic', 'static'])
             if not templateVars['alias'] == None:
-                validating.name_rule(row_num, ws, 'alias', templateVars['alias'])
+                validating.name_rule('alias', templateVars['alias'])
             if not templateVars['description'] == None:
-                validating.description(row_num, ws, 'description', templateVars['description'])
+                validating.description('description', templateVars['description'])
             if not templateVars['VGRP2_Allocation'] == None:
-                validating.values(row_num, ws, 'VGRP2_Allocation', templateVars['VGRP2_Allocation'], ['dynamic', 'static'])
-            validating.vlans(row_num, ws, 'VLAN_Grp1', templateVars['VLAN_Grp1'])
+                validating.values('VGRP2_Allocation', templateVars['VGRP2_Allocation'], ['dynamic', 'static'])
+            validating.vlans('VLAN_Grp1', templateVars['VLAN_Grp1'])
             if not templateVars['VLAN_Grp2'] == None:
-                validating.vlans(row_num, ws, 'VLAN_Grp2', templateVars['VLAN_Grp2'])
+                validating.vlans('VLAN_Grp2', templateVars['VLAN_Grp2'])
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        if templateVars['name'] == None:
-            errorReturn = 'Error on Worksheet %s Row %s.  Could not Determine the name of the VLAN Pool.' % (ws.title, row_num)
-            raise ErrException(errorReturn)
+        # if templateVars['name'] == None:
+        #     errorReturn = 'Error on Worksheet %s Row %s.  Could not Determine the name of the VLAN Pool.' % (ws.title, row_num)
+        #     raise ErrException(errorReturn)
 
         # Define the Template Source
         template_file = "vlan_pool.jinja2"
@@ -1902,7 +1909,7 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'vlan_pool_%s.tf' % (templateVars['name'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
         # Define the Template Source
         template_file = "data_vlan_pool.jinja2"
@@ -1911,7 +1918,7 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'data_vlan_pool_%s.tf' % (templateVars['name'])
         dest_dir = 'VLANs'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        
 
         # Add VLAN(s) to VLAN Pool FIle
         if re.search('Grp_[A-F]', templateVars['site_group']):
@@ -1980,17 +1987,17 @@ class access(object):
 
                             # Add VLAN to VLAN Pool File
                             create_tf_file('a+', dest_dir, dest_file, template, **templateVars)
-        else:
-            print(f"\n-----------------------------------------------------------------------------\n")
-            print(f"   Error on Worksheet {ws.title}, Row {row_num} site_group, value {templateVars['site_group']}.")
-            print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
-            print(f"\n-----------------------------------------------------------------------------\n")
-            exit()
+        # else:
+        #     print(f"\n-----------------------------------------------------------------------------\n")
+        #     print(f"   Error on Worksheet {ws.title}, Row {row_num} site_group, value {templateVars['site_group']}.")
+        #     print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
+        #     print(f"\n-----------------------------------------------------------------------------\n")
+        #     exit()
 
-    # Method must be called with the following kwargs.
-    # Please Refer to the Input Spreadsheet "Notes" in the relevant column headers
-    # for Detailed information on the Arguments used by this Method.
-    def vpc_pair(self, wb, ws, row_num, **kwargs):
+    #======================================================
+    # Function - VPC Pair
+    #======================================================
+    def vpc_pair(self, **kwargs):
         # Dicts for required and optional args
         required_args = {'site_group': '',
                          'VPC_ID': '',
@@ -2005,11 +2012,12 @@ class access(object):
         try:
             # Validate Arguments
             validating.site_group('site_group', **kwargs)
-            validating.number_check(row_num, ws, 'VPC_ID', templateVars['VPC_ID'], 1, 1000)
-            validating.number_check(row_num, ws, 'Node1_ID', templateVars['Node1_ID'], 101, 4001)
-            validating.number_check(row_num, ws, 'Node2_ID', templateVars['Node2_ID'], 101, 4001)
+            validating.number_check('VPC_ID', templateVars['VPC_ID'], 1, 1000)
+            validating.number_check('Node1_ID', templateVars['Node1_ID'], 101, 4001)
+            validating.number_check('Node2_ID', templateVars['Node2_ID'], 101, 4001)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (SystemExit(err), ws, row_num)
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
         # Define the Template Source
@@ -2019,4 +2027,4 @@ class access(object):
         # Process the template through the Sites
         dest_file = 'vpc_domain_%s.tf' % (templateVars['VPC_ID'])
         dest_dir = 'Access'
-        write_to_site(wb, ws, row_num, 'w', dest_dir, dest_file, template, **templateVars)
+        

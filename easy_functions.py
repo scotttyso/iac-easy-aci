@@ -174,6 +174,65 @@ def create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars):
     wr_file.close()
 
 #======================================================
+# Function to Append the easyDict Dictionary
+#======================================================
+def easyDict_append(templateVars, **kwargs):
+    class_type = templateVars['class_type']
+    data_type = templateVars['data_type']
+    data_subtype = templateVars['data_subtype']
+    policy_name = templateVars['policy_name']
+    templateVars.pop('class_type')
+    templateVars.pop('data_type')
+    templateVars.pop('data_subtype')
+    templateVars.pop('policy_name')
+    count = 0
+    templateVars.pop('site_group')
+    for item in kwargs['easyDict'][class_type][data_type]:
+        for k, v in item.items():
+            if k == kwargs['site_group']:
+                for i in v:
+                    i[data_subtype].append(templateVars)
+                    count += 1
+    if count == 0 and 'Grp_' in kwargs['site_group']:
+        group_id = '%s' % (kwargs['site_group'])
+        site_group = ast.literal_eval(os.environ[group_id])
+        sites = []
+        for x in range(1,16):
+            sitex = 'site_%s' % (x)
+            if not site_group[sitex] == None:
+                sites.append(x)
+        count = 0
+        for x in sites:
+            for item in kwargs['easyDict'][class_type][data_type]:
+                for key, value in item.items():
+                    if int(key) == int(x):
+                        for i in value:
+                            if i['name'] == policy_name:
+                                i[data_subtype].append(templateVars)
+                count += 1
+
+    # Return Dictionary
+    return kwargs['easyDict']
+
+#======================================================
+# Function to Update the easyDict Dictionary
+#======================================================
+def easyDict_update(templateVars, **kwargs):
+    class_type = templateVars['class_type']
+    data_type = templateVars['data_type']
+    templateVars.pop('data_type')
+    if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
+        kwargs['easyDict'][class_type][data_type].append({kwargs['site_group']:[]})
+        
+    count = 0
+    for i in kwargs['easyDict'][class_type][data_type]:
+        for k, v in i.items():
+            if kwargs['site_group'] == k:
+                i[kwargs['site_group']].append(templateVars)
+        count += 1
+    return kwargs['easyDict']
+
+#======================================================
 # Function to find the Keys for each Worksheet
 #======================================================
 def findKeys(ws, func_regex):
@@ -376,7 +435,7 @@ def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, 
     if re.search('Grp_[A-F]', templateVars['site_group']):
         group_id = '%s' % (templateVars['site_group'])
         site_group = ast.literal_eval(os.environ[group_id])
-        for x in range(1, 13):
+        for x in range(1, 16):
             sitex = 'site_%s' % (x)
             if not site_group[sitex] == None:
                 site_id = 'site_id_%s' % (site_group[sitex])
@@ -561,6 +620,24 @@ def read_in(excel_workbook):
     return wb
 
 #======================================================
+# Function to Add Required Arguments
+#======================================================
+def required_args_add(args_list, jsonData):
+    for i in args_list:
+        jsonData['required_args'].update({f'{i}': ''})
+        jsonData['optional_args'].pop(i)
+    return jsonData
+
+#======================================================
+# Function to Add Required Arguments
+#======================================================
+def required_args_remove(args_list, jsonData):
+    for i in args_list:
+        jsonData['optional_args'].update({f'{i}': ''})
+        jsonData['required_args'].pop(i)
+    return jsonData
+
+#======================================================
 # Function to loop through site_groups for sensitve vars
 #======================================================
 def sensitive_var_site_group(**kwargs):
@@ -639,7 +716,7 @@ def sensitive_var_value(**kwargs):
                 elif 'ntp_key' in sensitive_var:
                     sKey = 'key'
                     varTitle = 'NTP Key'
-                elif re.fullmatch('^(authorization|privacy)_key$', sensitive_var):
+                elif re.search('snmp_(authorization|privacy)_key', sensitive_var):
                     sKey = 'snmp_key'
                     x = sensitive_var.split('_')
                     varType = '%s %s' % (x[0].capitalize(), x[1].capitalize())
@@ -651,6 +728,10 @@ def sensitive_var_value(**kwargs):
                 elif 'smtp_password' in sensitive_var:
                     sKey = 'smtp_password'
                     varTitle = 'Smart CallHome SMTP Server Password'
+                else:
+                    print(sensitive_var)
+                    print('Could not Match Sensitive Value Type')
+                    exit()
                 minimum = kwargs['jsonData'][sKey]['minimum']
                 maximum = kwargs['jsonData'][sKey]['maximum']
                 pattern = kwargs['jsonData'][sKey]['pattern']
@@ -687,6 +768,129 @@ def stdout_log(sheet, line):
         print('Evaluating line %s from %s Worksheet...' % (line, sheet.title))
     else:
         return
+
+#======================================================
+# Function to Validate Worksheet User Input
+#======================================================
+def validate_args(jsonData, **kwargs):
+    globalData = kwargs['easy_jsonData']['components']['schemas']['globalData']['allOf'][1]['properties']
+    global_args = [
+        'admin_state',
+        'alias',
+        'application_epg',
+        'application_profile',
+        'annotation',
+        'audit_logs',
+        'description',
+        'events',
+        'faults',
+        'management_epg',
+        'management_epg_type',
+        'name',
+        'name_alias',
+        'pod_id',
+        'qos_class',
+        'session_logs',
+        'tenant',
+        'username',
+    ]
+    for i in jsonData['required_args']:
+        if i in global_args:
+            if globalData[i]['type'] == 'integer':
+                if kwargs[i] == None:
+                    kwargs[i] = globalData[i]['default']
+                else:
+                    validating.number_check(i, globalData, **kwargs)
+            elif globalData[i]['type'] == 'list_values':
+                if kwargs[i] == None:
+                    kwargs[i] = globalData[i]['default']
+                else:
+                    validating.list_values(i, globalData, **kwargs)
+            elif globalData[i]['type'] == 'string':
+                if not kwargs[i] == None:
+                    validating.string_pattern(i, globalData, **kwargs)
+            else:
+                print(f'error validating.  Type not found {i}')
+                exit()
+        elif i == 'site_group':
+            validating.site_group('site_group', **kwargs)
+        elif jsonData[i]['type'] == 'hostname':
+            if not kwargs[i] == None:
+                count = 1
+                for hostname in kwargs[i].split(','):
+                    kwargs[f'{i}_{count}'] = hostname
+                    if ':' in hostname:
+                        validating.ip_address(f'{i}_{count}', **kwargs)
+                    elif re.search('[a-z]', hostname, re.IGNORECASE):
+                        validating.dns_name(f'{i}_{count}', **kwargs)
+                    else:
+                        validating.ip_address(f'{i}_{count}', **kwargs)
+                    kwargs.pop(f'{i}_{count}')
+                    count += 1
+        elif jsonData[i]['type'] == 'email':
+            if not kwargs[i] == None:
+                validating.email(i, **kwargs)
+        elif jsonData[i]['type'] == 'integer':
+            if kwargs[i] == None:
+                kwargs[i] = jsonData[i]['default']
+            else:
+                validating.number_check(i, jsonData, **kwargs)
+        elif jsonData[i]['type'] == 'list_integer':
+            if kwargs[i] == None:
+                kwargs[i] = jsonData[i]['default']
+            else:
+                validating.number_list(i, jsonData, **kwargs)
+        elif jsonData[i]['type'] == 'list_of_domains':
+            if not kwargs[i] == None:
+                count = 1
+                for domain in kwargs[i]:
+                    kwargs[f'domain_{count}'] = domain
+                    validating.domain(f'domain_{count}', **kwargs)
+                    kwargs.pop(f'domain_{count}')
+                    count += 1
+        elif jsonData[i]['type'] == 'list_of_hosts':
+            if not kwargs[i] == None:
+                count = 1
+                for hostname in kwargs[i].split(','):
+                    kwargs[f'{i}_{count}'] = hostname
+                    if ':' in hostname:
+                        validating.ip_address(f'{i}_{count}', **kwargs)
+                    elif re.search('[a-z]', hostname, re.IGNORECASE):
+                        validating.dns_name(f'{i}_{count}', **kwargs)
+                    else:
+                        validating.ip_address(f'{i}_{count}', **kwargs)
+                    kwargs.pop(f'{i}_{count}')
+                    count += 1
+        elif jsonData[i]['type'] == 'list_values':
+            if kwargs[i] == None:
+                kwargs[i] = jsonData[i]['default']
+            else:
+                validating.list_values(i, jsonData, **kwargs)
+        elif jsonData[i]['type'] == 'string':
+            if not kwargs[i] == None:
+                validating.string_pattern(i, jsonData, **kwargs)
+        else:
+            print(f'error validating.  Type not found {i}')
+            exit()
+    for i in jsonData['optional_args']:
+        if not kwargs[i] == None:
+            if i in global_args:
+                validating.validator(i, **kwargs)
+            elif jsonData[i]['type'] == 'domain':
+                validating.domain(i, **kwargs)
+            elif jsonData[i]['type'] == 'email':
+                validating.email(i, **kwargs)
+            elif jsonData[i]['type'] == 'integer':
+                validating.number_check(i, jsonData, **kwargs)
+            elif jsonData[i]['type'] == 'list_values':
+                validating.list_values(i, jsonData, **kwargs)
+            elif jsonData[i]['type'] == 'phone_number':
+                validating.phone_number(i, **kwargs)
+            elif jsonData[i]['type'] == 'string':
+                validating.string_pattern(i, jsonData, **kwargs)
+            else:
+                print(f'error validating.  Type not found {i}')
+                exit()
 
 #======================================================
 # Function to pull variables from easy_jsonData
@@ -1097,20 +1301,3 @@ def write_to_template(**templateVars):
     payload = template.render(templateVars)
     wr_file.write(payload)
     wr_file.close()
-
-#======================================================
-# Function to Update the easyDict Dictionary
-#======================================================
-def update_easyDict(templateVars, **kwargs):
-    class_type = templateVars['class_type']
-    data_type = templateVars['data_type']
-    if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
-        kwargs['easyDict'][class_type][data_type].append({kwargs['site_group']:[]})
-        
-    count = 0
-    for i in kwargs['easyDict'][class_type][data_type]:
-        for k, v in i.items():
-            if kwargs['site_group'] == k:
-                i[kwargs['site_group']].append(templateVars)
-        count += 1
-    return kwargs['easyDict']

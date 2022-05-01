@@ -3,9 +3,12 @@
 #======================================================
 # Source Modules
 #======================================================
+from easy_functions import easyDict_append, easyDict_update
 from easy_functions import process_kwargs
+from easy_functions import required_args_add, required_args_remove
 from easy_functions import sensitive_var_site_group
-from easy_functions import update_easyDict
+from easy_functions import validate_args
+import json
 import re
 import validating
 
@@ -39,23 +42,18 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.DateandTime']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.values('administrative_state', jsonData, **kwargs)
-            validating.values('display_format', jsonData, **kwargs)
-            validating.values('master_mode', jsonData, **kwargs)
-            validating.values('offset_state', jsonData, **kwargs)
-            validating.values('server_state', jsonData, **kwargs)
-            validating.values('stratum_value', jsonData, **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # If NTP server state is disabled disable master mode as well.
         if templateVars['server_state'] == 'disabled':
             templateVars['master_mode'] = 'disabled'
         
@@ -69,7 +67,7 @@ class fabric(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'date_and_time'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -79,39 +77,25 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.dnsProfiles']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        if not kwargs['domain_list'] == None:
+            if ',' in kwargs['domain_list']:
+                kwargs['domain_list'] = kwargs['domain_list'].split(',')
+            else:
+                kwargs['domain_list'] = [kwargs['domain_list']]
+            if not kwargs['default_domain'] == None:
+                if not kwargs['default_domain'] in kwargs['domain_list']:
+                    kwargs['domain_list'].append(kwargs['default_domain'])
 
         try:
-            # Validate Arguments
-            validating.number_check('preferred', jsonData, **kwargs)
-            validating.site_group('site_group', **kwargs)
-            validating.validator('management_epg', **kwargs)
-            validating.values('management_epg_type', jsonData, **kwargs)
-            count = 1
-            for hostname in kwargs['dns_providers'].split(','):
-                kwargs[f'dns_provider_{count}'] = hostname
-                if ':' in hostname:
-                    validating.ip_address(f'dns_provider_{count}', **kwargs)
-                elif re.search('[a-z]', hostname, re.IGNORECASE):
-                    validating.dns_name(f'dns_provider_{count}', **kwargs)
-                else:
-                    validating.ip_address(f'dns_provider_{count}', **kwargs)
-                kwargs.pop(f'dns_provider_{count}')
-                count += 1
-            if not kwargs['default_domain'] in kwargs['domain_list']:
-                kwargs['domain_list'].append(kwargs['default_domain'])
-            count = 1
-            for domain in kwargs['domain_list'].split(','):
-                kwargs[f'domain_{count}'] = domain
-                validating.domain(f'domain_{count}', **kwargs)
-                count += 1
-            if not templateVars['description'] == None:
-                validating.validator('description', **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         Additions = {
             'name':'default',
@@ -120,8 +104,8 @@ class fabric(object):
         
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'dns_profile'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        templateVars['data_type'] = 'dns_profiles'
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -131,31 +115,16 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.Ntp']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.number_check('maximum_polling_interval', jsonData, **kwargs)
-            validating.number_check('minimum_polling_interval', jsonData, **kwargs)
-            validating.validator('management_epg', **kwargs)
-            validating.values('management_epg_type', jsonData, **kwargs)
-            validating.values('preferred', jsonData, **kwargs)
-            if ':' in templateVars['hostname']:
-                validating.ip_address('hostname', **kwargs)
-            elif re.search('[a-z]', templateVars['hostname'], re.IGNORECASE):
-                validating.dns_name('hostname', **kwargs)
-            else:
-                validating.ip_address('hostname', **kwargs)
-            if not templateVars['description'] == None:
-                validating.validator('description', **kwargs)
-            if not templateVars['key_id'] == None:
-                validating.number_check('key_id', jsonData, **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to easyDict
         for items in kwargs['easyDict']['fabric']['date_and_time']:
@@ -174,23 +143,23 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.NtpKeys']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.number_check('key_id', jsonData, **kwargs)
-            validating.values('authentication_type', jsonData, **kwargs)
-            validating.values('trusted', jsonData, **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Check if the NTP Key is in the Environment.  If not Add it.
+        templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'ntp_key_{kwargs["key_id"]}'
         sensitive_var_site_group(**templateVars)
+        templateVars.pop('jsonData')
+        templateVars.pop('Variable')
 
         # Add Dictionary to easyDict
         for items in kwargs['easyDict']['fabric']['date_and_time']:
@@ -209,33 +178,16 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartCallHome']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.values('admin_state', jsonData, **kwargs)
-            validating.values('audit_logs', jsonData, **kwargs)
-            validating.values('events', jsonData, **kwargs)
-            validating.values('faults', jsonData, **kwargs)
-            validating.values('session_logs', jsonData, **kwargs)
-            if not kwargs['customer_contact_email'] == None:
-                validating.email('customer_contact_email', **kwargs)
-            if not kwargs['from_email'] == None:
-                validating.email('from_email', **kwargs)
-            if not kwargs['reply_to_email'] == None:
-                validating.email('reply_to_email', **kwargs)
-            if not kwargs['contact_information'] == None:
-                validating.validator('contact_information', **kwargs)
-            if not kwargs['phone_contact'] == None:
-                validating.phone_number('phone_contact', **kwargs)
-            if not kwargs['street_address'] == None:
-                validating.validator('street_address', **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         Additions = {
             'smtp_server': [],
@@ -247,7 +199,7 @@ class fabric(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'smartcallhome'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -255,22 +207,18 @@ class fabric(object):
     #======================================================
     def smart_destinations(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartCallHome']['allOf'][1]['properties']
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartDestinations']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.email('email', **kwargs)
-            validating.values('admin_state', jsonData, **kwargs)
-            validating.values('rfc_compliant', jsonData, **kwargs)
-            validating.values('format', jsonData, **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to easyDict
         for items in kwargs['easyDict']['fabric']['smartcallhome']:
@@ -289,33 +237,31 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartSmtpServer']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Check for Variable values that could change required arguments
+        if 'secure_smtp' in kwargs:
+            if 'true' in kwargs['secure_smtp']:
+                jsonData = required_args_add(['username'], jsonData)
+        else:
+            kwargs['secure_smtp'] == 'false'
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('management_epg', **kwargs)
-            validating.number_check('port_number', jsonData, **kwargs)
-            validating.values('management_epg_type', jsonData, **kwargs)
-            validating.values('secure_smtp', jsonData, **kwargs)
-            if ':' in kwargs['smtp_server']:
-                validating.ip_address('smtp_server', **kwargs)
-            elif re.search('[a-z]', kwargs['smtp_server'], re.IGNORECASE):
-                validating.dns_name('smtp_server', **kwargs)
-            else:
-                validating.ip_address('smtp_server', **kwargs)
-            if 'true' in kwargs['secure_smtp']:
-                validating.not_empty('username', **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Check if the Smart CallHome SMTP Password is in the Environment and if not add it.
         if 'true' in kwargs['secure_smtp']:
+            templateVars['jsonData'] = jsonData
             templateVars["Variable"] = f'smtp_password'
             sensitive_var_site_group(**templateVars)
+            templateVars.pop('jsonData')
+            templateVars.pop('Variable')
 
         # Add Dictionary to easyDict
         for items in kwargs['easyDict']['fabric']['smartcallhome']:
@@ -323,7 +269,7 @@ class fabric(object):
                 if k == kwargs['site_group']:
                     for i in v:
                         i['smtp_server'].append(templateVars)
-
+        
         # Return Dictionary
         return kwargs['easyDict']
 
@@ -334,41 +280,23 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpClientGroups']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('management_epg',  **kwargs)
-            validating.validator('name',  **kwargs)
-            validating.values('management_epg_type', jsonData, **kwargs)
-            if not templateVars['description'] == None:
-                validating.validator('description', templateVars['description'])
-            count = 1
-            for hostname in kwargs['clients'].split(','):
-                kwargs[f'client_{count}'] = hostname
-                if ':' in hostname:
-                    validating.ip_address(f'client_{count}', **kwargs)
-                elif re.search('[a-z]', hostname, re.IGNORECASE):
-                    validating.dns_name(f'client_{count}', **kwargs)
-                else:
-                    validating.ip_address(f'client_{count}', **kwargs)
-                kwargs.pop(f'client_{count}')
-                count += 1
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['snmp_policies']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['snmp_client_groups'].append(templateVars)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Return Dictionary
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'snmp_policies'
+        templateVars['data_subtype'] = 'snmp_client_groups'
+        templateVars['policy_name'] = 'default'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -378,31 +306,30 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpCommunities']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            if not templateVars['description'] == None:
-                validating.validator('description', **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Check if the SNMP Community is in the Environment.  If not Add it.
+        templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'snmp_community_{kwargs["community_variable"]}'
         sensitive_var_site_group(**templateVars)
+        templateVars.pop('jsonData')
+        templateVars.pop('Variable')
 
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['snmp_policies']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['snmp_communities'].append(templateVars)
-
-        # Return Dictionary
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'snmp_policies'
+        templateVars['data_subtype'] = 'snmp_communities'
+        templateVars['policy_name'] = 'default'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -412,54 +339,38 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpDestinations']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Check for Variable values that could change required arguments
+        if 'version' in kwargs:
+            if re.fullmatch('(v1|v2c)', kwargs['version']):
+                jsonData = required_args_add(['community_variable'], jsonData)
+            elif 'v3' in kwargs['version']:
+                jsonData = required_args_add(['username', 'v3_security_level'], jsonData)
+        else:
+            kwargs['version'] = 'v2c'
 
         try:
-            # Validate Arguments
-            validating.number_check('port', jsonData, **kwargs)
-            validating.site_group('site_group', **kwargs)
-            validating.validator('management_epg',  **kwargs)
-            validating.validator('name',  **kwargs)
-            validating.values('management_epg_type', jsonData, **kwargs)
-            validating.values('version', jsonData, **kwargs)
-            if ':' in kwargs['host']:
-                validating.ip_address('host', **kwargs)
-            elif re.search('[a-z]', kwargs['host'], re.IGNORECASE):
-                validating.dns_name('host', **kwargs)
-            else:
-                validating.ip_address('host', **kwargs)
-            if re.fullmatch('(v1|v2c)', kwargs['version']):
-                validating.number_check('community_variable', **kwargs)
-                count = 0
-                for i in kwargs['easyDict']['fabric']['snmp_policies']['snmp_communities']:
-                    for k, v in i.items():
-                        if int(v['community_variable']) == int(kwargs['community_variable']):
-                            count += 1
-                if not count == 1:
-                    validating.error_snmp_community(kwargs['row_num'], kwargs['community_variable'])
-            elif 'v3' in kwargs['version']:
-                validating.values('v3_security_level', **kwargs)
-                count = 0
-                for i in kwargs['easyDict']['fabric']['snmp_policies']['snmp_users']:
-                    for k, v in i.items():
-                        if int(v['username']) == int(kwargs['username']):
-                            count += 1
-                if not count == 1:
-                    validating.error_snmp_user(kwargs['row_num'], kwargs['username'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['snmp_policies']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['snmp_destinations'].append(templateVars)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Return Dictionary
+        # Reset Arguments
+        if re.fullmatch('(v1|v2c)', kwargs['version']):
+            jsonData = required_args_remove(['community_variable'], jsonData)
+        elif 'v3' in kwargs['version']:
+            jsonData = required_args_remove(['username', 'v3_security_level'], jsonData)
+        
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'snmp_policies'
+        templateVars['data_subtype'] = 'snmp_destinations'
+        templateVars['policy_name'] = 'default'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -469,25 +380,16 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpPolicy']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.values('admin_state', jsonData, **kwargs)
-            validating.values('audit_logs', jsonData, **kwargs)
-            validating.values('events', jsonData, **kwargs)
-            validating.values('faults', jsonData, **kwargs)
-            validating.values('session_logs', jsonData, **kwargs)
-            if not kwargs['contact'] == None:
-                validating.validator('contact', **kwargs)
-            if not kwargs['location'] == None:
-                validating.validator('location', **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         Additions = {
             'name':'default',
@@ -501,7 +403,7 @@ class fabric(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'snmp_policies'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -511,42 +413,44 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpUsers']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Check for Variable values that could change required arguments
+        if 'privacy_key' in kwargs:
+            if not kwargs['privacy_key'] == 'none':
+                jsonData = required_args_add(['privacy_key'], jsonData)
+        else:
+            kwargs['privacy_key'] = 'none'
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('username',  **kwargs)
-            validating.values('authorization_type', jsonData, **kwargs)
-            if not kwargs['authorization_key'] == None:
-                validating.number_check('authorization_key', jsonData, **kwargs)
-            if not kwargs['privacy_key'] == None:
-                validating.number_check('privacy_key', jsonData, **kwargs)
-            if kwargs['privacy_type'] == None:
-                kwargs['privacy_type'] == 'none'
-            else:
-                validating.values('privacy_type', jsonData, **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Check if the Authorization and Privacy Keys are in the environment and if not add them.
+        templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'snmp_authorization_key_{kwargs["authorization_key"]}'
         sensitive_var_site_group(**templateVars)
         if not kwargs['privacy_type'] == 'none':
             templateVars["Variable"] = f'snmp_privacy_key_{kwargs["privacy_key"]}'
             sensitive_var_site_group(**templateVars)
+        templateVars.pop('jsonData')
+        templateVars.pop('Variable')
 
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['snmp_policies']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['users'].append(templateVars)
-
-        # Return Dictionary
+        # Reset jsonData
+        if not kwargs['privacy_key'] == 'none':
+            jsonData = required_args_remove(['privacy_key'], jsonData)
+        
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'snmp_policies'
+        templateVars['data_subtype'] = 'users'
+        templateVars['policy_name'] = 'default'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -556,28 +460,16 @@ class fabric(object):
        # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.Syslog']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.values('admin_state', jsonData, **kwargs)
-            validating.values('audit_logs', jsonData, **kwargs)
-            validating.values('console_admin_state', jsonData, **kwargs)
-            validating.values('console_severity', jsonData, **kwargs)
-            validating.values('events', jsonData, **kwargs)
-            validating.values('faults', jsonData, **kwargs)
-            validating.values('format', jsonData, **kwargs)
-            validating.values('local_admin_state', jsonData, **kwargs)
-            validating.values('local_severity', jsonData, **kwargs)
-            validating.values('session_logs', jsonData, **kwargs)
-            validating.values('show_milliseconds_in_timestamp', jsonData, **kwargs)
-            validating.values('show_time_zone_in_timestamp', jsonData, **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         Additions = {
             'name':'default',
@@ -588,7 +480,7 @@ class fabric(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'syslog'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -598,36 +490,21 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.syslogRemoteDestinations']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.number_check('port', jsonData, **kwargs)
-            validating.site_group('site_group', **kwargs)
-            validating.validator('management_epg',  **kwargs)
-            validating.values('admin_state', jsonData, **kwargs)
-            validating.values('forwarding_facility', jsonData, **kwargs)
-            validating.values('management_epg_type', jsonData, **kwargs)
-            validating.values('severity', jsonData, **kwargs)
-            validating.values('transport', jsonData, **kwargs)
-            if ':' in kwargs['host']:
-                validating.ip_address('host', **kwargs)
-            elif re.search('[a-z]', kwargs['host'], re.IGNORECASE):
-                validating.dns_name('host', **kwargs)
-            else:
-                validating.ip_address('host', **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['syslog']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['remote_destinations'].append(templateVars)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Return Dictionary
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'syslog'
+        templateVars['data_subtype'] = 'remote_destinations'
+        templateVars['policy_name'] = 'default'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']

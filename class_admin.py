@@ -4,9 +4,11 @@
 # Source Modules
 #======================================================
 from easy_functions import countKeys, findVars
+from easy_functions import easyDict_append, easyDict_update
 from easy_functions import process_kwargs
+from easy_functions import required_args_add, required_args_remove
 from easy_functions import sensitive_var_site_group
-from easy_functions import update_easyDict
+from easy_functions import validate_args
 import pkg_resources
 import re
 import validating
@@ -37,34 +39,67 @@ class admin(object):
         self.type = type
 
     #======================================================
+    # Function - Authentication
+    #======================================================
+    def auth(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.Authentication']['allOf'][1]['properties']
+        
+        # Check for Variable values that could change required arguments
+        if 'console_realm' in kwargs:
+            if not kwargs['console_realm'] == 'local':
+                jsonData = required_args_add(['console_login_domain'], jsonData)
+        else:
+            kwargs['console_realm'] == 'local'
+        if 'default_realm' in kwargs:
+            if not kwargs['default_realm'] == 'local':
+                jsonData = required_args_add(['default_login_domain'], jsonData)
+        else:
+            kwargs['default_realm'] == 'local'
+        
+        try:
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
+            raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Reset jsonData
+        if not kwargs['console_realm'] == 'local':
+            jsonData = required_args_remove(['console_login_domain'], jsonData)
+        if not kwargs['default_realm'] == 'local':
+            jsonData = required_args_remove(['default_login_domain'], jsonData)
+        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'admin'
+        templateVars['data_type'] = 'authentication'
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
     # Function - Configuration Backup - Export Policies
     #======================================================
     def export_policy(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.exportPolicy']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.number_check('max_snapshot_count', jsonData, **kwargs)
-            validating.number_check('scheduled_hour', jsonData, **kwargs)
-            validating.number_check('scheduled_minute', jsonData, **kwargs)
-            validating.site_group('site_group', **kwargs)
-            validating.validator('name', **kwargs)
-            validating.values('format', jsonData, **kwargs)
-            validating.values('scheduled_days', jsonData, **kwargs)
-            validating.values('snapshot', jsonData, **kwargs)
-            validating.values('start_now', jsonData, **kwargs)
-            if not templateVars['description'] == None:
-                validating.validator('description', **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         Additions = {
+            'configuration_export': [],
             'window_description': kwargs['description']
         }
         templateVars.update(Additions)
@@ -72,7 +107,7 @@ class admin(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'admin'
         templateVars['data_type'] = 'configuration_backups'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -128,73 +163,32 @@ class admin(object):
             templateVars['sensitive_var'] = 'RADIUS_Secret%s' % (key_number)
 
     #======================================================
-    # Function - Authentication Realms
-    #======================================================
-    def realm(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'Site_Group': '',
-                         'Auth_Realm': '',
-                         'Domain_Type': ''}
-        optional_args = {'Login_Domain': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.login_type('Auth_Realm', templateVars['Auth_Realm'], 'Domain_Type', templateVars['Domain_Type'])
-            if not templateVars['Domain_Type'] == 'local':
-                validating.validator('login_domain', **kwargs)
-            validating.values('Auth_Realm', templateVars['Auth_Realm'], ['console', 'default'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-        if templateVars['Auth_Realm'] == 'console':
-            templateVars['child_class'] = 'aaaConsoleAuth'
-        elif templateVars['Auth_Realm'] == 'default':
-            templateVars['child_class'] = 'aaaDefaultAuth'
-
-    #======================================================
     # Function - Configuration Backup  - Remote Host
     #======================================================
     def remote_host(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.remoteHost']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Check for Variable values that could change required arguments
+        if 'authentication_type' in kwargs:
+            if kwargs['authentication_type'] == 'usePassword':
+                jsonData = required_args_add(['username'], jsonData)
+        else:
+            kwargs['authentication_type'] == 'usePassword'
+            jsonData = required_args_add(['username'], jsonData)
 
         try:
-            # Validate Arguments
-            validating.number_check('remote_port', jsonData, **kwargs)
-            validating.site_group('site_group', **kwargs)
-            validating.validator('management_epg', **kwargs)
-            validating.values('authentication_type', jsonData, **kwargs)
-            validating.values('management_epg_type', jsonData, **kwargs)
-            validating.values('protocol', jsonData, **kwargs)
-            if templateVars['authentication_type'] == 'usePassword':
-                validating.validator('username', **kwargs)
-            if not templateVars['description'] == None:
-                validating.validator('description', **kwargs)
-            count = 1
-            for hostname in kwargs['remote_hosts'].split(','):
-                kwargs[f'remote_host_{count}'] = hostname
-                if ':' in hostname:
-                    validating.ip_address(f'remote_host_{count}', **kwargs)
-                elif re.search('[a-z]', hostname, re.IGNORECASE):
-                    validating.dns_name(f'remote_host_{count}', **kwargs)
-                else:
-                    validating.ip_address(f'remote_host_{count}', **kwargs)
-                kwargs.pop(f'remote_host_{count}')
-                count += 1
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        templateVars['jsonData'] = jsonData
         if templateVars['authentication_type'] == 'usePassword':
             # Check if the Password is in the Environment.  If not Add it.
             templateVars["Variable"] = f'remote_password_{kwargs["password"]}'
@@ -206,67 +200,40 @@ class admin(object):
             templateVars["Variable"] = 'ssh_key_passphrase'
             sensitive_var_site_group(**templateVars)
 
-        # Add Dictionary to easyDict
+        # Reset jsonData
+        if kwargs['authentication_type'] == 'usePassword':
+            jsonData = required_args_remove(['username'], jsonData)
+        
+        # Add Dictionary to Policy
         templateVars['class_type'] = 'admin'
         templateVars['data_type'] = 'configuration_backups'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        templateVars['data_subtype'] = 'configuration_export'
+        templateVars['policy_name'] = kwargs['scheduler_name']
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
-    # Function - Security Settings
+    # Function - Global Security Settings
     #======================================================
     def security(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.globalSecurity']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Dicts for required and optional args
-        required_args = {'Site_Group': '',
-                         'Passwd_Strength': '',
-                         'Enforce_Intv': '',
-                         'Expiration_Warn': '',
-                         'Passwd_Intv': '',
-                         'Number_Allowed': '',
-                         'Passwd_Store': '',
-                         'Lockout': '',
-                         'Failed_Attempts': '',
-                         'Time_Period': '',
-                         'Dur_Lockout': '',
-                         'Token_Timeout': '',
-                         'Maximum_Valid': '',
-                         'Web_Timeout': ''}
-        optional_args = { }
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
         try:
-            # Validate Arguments
-            validating.number_check('lockout_duration', jsonData, **kwargs)
-            validating.number_check('max_failed_attempts', jsonData, **kwargs)
-            validating.number_check('max_failed_attempts_window', jsonData, **kwargs)
-            validating.number_check('maximum_validity_period', jsonData, **kwargs)
-            validating.number_check('password_change_interval', jsonData, **kwargs)
-            validating.number_check('password_changes_within_interval', jsonData, **kwargs)
-            validating.number_check('password_expiration_warn_time', jsonData, **kwargs)
-            validating.number_check('user_passwords_to_store_count', jsonData, **kwargs)
-            validating.number_check('web_session_idle_timeout', jsonData, **kwargs)
-            validating.number_check('web_token_timeout', jsonData, **kwargs)
-            validating.site_group('site_group', **kwargs)
-            validating.values('enable_lockout', jsonData, **kwargs)
-            validating.values('password_change_interval_enforce', jsonData, **kwargs)
-            validating.values('password_strength_check', jsonData, **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'admin'
         templateVars['data_type'] = 'global_security'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================

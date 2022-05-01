@@ -4,9 +4,10 @@
 # Source Modules
 #======================================================
 from class_terraform import terraform_cloud
+from easy_functions import easyDict_append, easyDict_update
 from easy_functions import process_kwargs
 from easy_functions import sensitive_var_site_group
-from easy_functions import update_easyDict
+from easy_functions import validate_args
 from openpyxl import load_workbook
 import os
 import validating
@@ -41,22 +42,21 @@ class system_settings(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['system.apicConnectivityPreference']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.values('apic_connectivity_preference', jsonData, **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'apic_connectivity_preference'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -66,21 +66,21 @@ class system_settings(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['system.bgpASN']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'bgp_asn'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -90,21 +90,21 @@ class system_settings(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['system.bgpRouteReflector']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify input information.' % (
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'bgp_rr'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -135,7 +135,7 @@ class system_settings(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'global_aes_encryption_settings'
-        kwargs['easyDict'] = update_easyDict(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
