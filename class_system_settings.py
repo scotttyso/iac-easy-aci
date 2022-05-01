@@ -3,6 +3,7 @@
 #======================================================
 # Source Modules
 #======================================================
+from collections import OrderedDict
 from class_terraform import terraform_cloud
 from easy_functions import easyDict_update, process_kwargs
 from easy_functions import sensitive_var_site_group, validate_args
@@ -54,6 +55,7 @@ class system_settings(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'apic_connectivity_preference'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -78,6 +80,7 @@ class system_settings(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'bgp_asn'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -102,6 +105,7 @@ class system_settings(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'bgp_rr'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -133,6 +137,7 @@ class system_settings(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'global_aes_encryption_settings'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -235,6 +240,7 @@ class site_policies(object):
             wb_wr.save(filename=site_wb)
 
         # Return Dictionary
+        kwargs['easyDict'] = OrderedDict(sorted(kwargs['easyDict'].items()))
         return kwargs['easyDict']
 
     #======================================================
@@ -271,4 +277,5 @@ class site_policies(object):
         os.environ[group_id] = '%s' % (templateVars)
 
         # Return Dictionary
+        kwargs['easyDict'] = OrderedDict(sorted(kwargs['easyDict'].items()))
         return kwargs['easyDict']

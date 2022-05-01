@@ -591,7 +591,7 @@ def main():
         # easyDict = process_tenants(easyDict, easy_jsonData, wb)
         # easyDict = process_epgs(easyDict, easy_jsonData, wb)
         easyDict.pop('wb')
-        # print(json.dumps(easyDict, indent = 4))
+        print(json.dumps(easyDict, indent = 4))
         exit()
         read_easy_jsonData(easy_jsonData, **easyDict)
         easyDict = process_bridge_domains(easyDict, easy_jsonData, wb)

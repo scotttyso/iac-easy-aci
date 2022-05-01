@@ -3,8 +3,9 @@
 #======================================================
 # Source Modules
 #======================================================
-from easy_functions import countKeys, findVars, easyDict_append
-from easy_functions import easyDict_update, process_kwargs
+from collections import OrderedDict
+from easy_functions import countKeys, findVars
+from easy_functions import easyDict_append, easyDict_update, process_kwargs
 from easy_functions import required_args_add, required_args_remove
 from easy_functions import sensitive_var_site_group, validate_args
 import pkg_resources
@@ -75,6 +76,7 @@ class admin(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'admin'
         templateVars['data_type'] = 'authentication'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -105,6 +107,7 @@ class admin(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'admin'
         templateVars['data_type'] = 'configuration_backups'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -197,6 +200,7 @@ class admin(object):
             sensitive_var_site_group(**templateVars)
             templateVars["Variable"] = 'ssh_key_passphrase'
             sensitive_var_site_group(**templateVars)
+        templateVars.pop('jsonData')
 
         # Reset jsonData
         if kwargs['authentication_type'] == 'usePassword':
@@ -207,6 +211,7 @@ class admin(object):
         templateVars['data_type'] = 'configuration_backups'
         templateVars['data_subtype'] = 'configuration_export'
         templateVars['policy_name'] = kwargs['scheduler_name']
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -231,6 +236,7 @@ class admin(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'admin'
         templateVars['data_type'] = 'global_security'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 

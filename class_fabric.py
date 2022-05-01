@@ -3,6 +3,7 @@
 #======================================================
 # Source Modules
 #======================================================
+from collections import OrderedDict
 from easy_functions import easyDict_append, easyDict_update, process_kwargs
 from easy_functions import required_args_add, required_args_remove
 from easy_functions import sensitive_var_site_group, validate_args
@@ -63,6 +64,7 @@ class fabric(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'date_and_time'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -101,6 +103,7 @@ class fabric(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'dns_profiles'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -127,6 +130,7 @@ class fabric(object):
         templateVars['data_type'] = 'date_and_time'
         templateVars['data_subtype'] = 'ntp_servers'
         templateVars['policy_name'] = 'default'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -182,15 +186,16 @@ class fabric(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         Additions = {
-            'smtp_server': [],
             'name':'default',
+            'smtp_server': [],
             'smart_destinations': [],
         }
         templateVars.update(Additions)
-        
+
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'smartcallhome'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -217,6 +222,7 @@ class fabric(object):
         templateVars['data_type'] = 'smartcallhome'
         templateVars['data_subtype'] = 'smart_destinations'
         templateVars['policy_name'] = 'default'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -258,6 +264,7 @@ class fabric(object):
         templateVars['data_type'] = 'smartcallhome'
         templateVars['data_subtype'] = 'smtp_server'
         templateVars['policy_name'] = 'default'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -284,6 +291,7 @@ class fabric(object):
         templateVars['data_type'] = 'snmp_policies'
         templateVars['data_subtype'] = 'snmp_client_groups'
         templateVars['policy_name'] = 'default'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -317,6 +325,7 @@ class fabric(object):
         templateVars['data_type'] = 'snmp_policies'
         templateVars['data_subtype'] = 'snmp_communities'
         templateVars['policy_name'] = 'default'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -358,6 +367,7 @@ class fabric(object):
         templateVars['data_type'] = 'snmp_policies'
         templateVars['data_subtype'] = 'snmp_destinations'
         templateVars['policy_name'] = 'default'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -391,6 +401,7 @@ class fabric(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'snmp_policies'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -438,6 +449,7 @@ class fabric(object):
         templateVars['data_type'] = 'snmp_policies'
         templateVars['data_subtype'] = 'users'
         templateVars['policy_name'] = 'default'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -468,6 +480,7 @@ class fabric(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'syslog'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -494,5 +507,6 @@ class fabric(object):
         templateVars['data_type'] = 'syslog'
         templateVars['data_subtype'] = 'remote_destinations'
         templateVars['policy_name'] = 'default'
+        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
