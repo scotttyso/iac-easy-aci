@@ -3,12 +3,10 @@
 #======================================================
 # Source Modules
 #======================================================
-from easy_functions import countKeys, findVars
-from easy_functions import easyDict_append, easyDict_update
-from easy_functions import process_kwargs
+from easy_functions import countKeys, findVars, easyDict_append
+from easy_functions import easyDict_update, process_kwargs
 from easy_functions import required_args_add, required_args_remove
-from easy_functions import sensitive_var_site_group
-from easy_functions import validate_args
+from easy_functions import sensitive_var_site_group, validate_args
 import pkg_resources
 import re
 import validating

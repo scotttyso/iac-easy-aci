@@ -387,6 +387,8 @@ def process_kwargs(required_args, optional_args, **kwargs):
     # if all(item in kwargs for item in required_args.keys()) is not True:
     #    error_ = '\n***ERROR***\nREQUIRED Argument Not Found in Input:\n "%s"\nInsufficient required arguments.' % (item)
     #    raise InsufficientArgs(error_)
+    row_num = kwargs["row_num"]
+    ws = kwargs["ws"]
     error_count = 0
     error_list = []
     for item in required_args:
@@ -394,7 +396,7 @@ def process_kwargs(required_args, optional_args, **kwargs):
             error_count =+ 1
             error_list += [item]
     if error_count > 0:
-        error_ = '\n\n***Begin ERROR***\n\n - The Following REQUIRED Key(s) Were Not Found in kwargs: "%s"\n\n****End ERROR****\n' % (error_list)
+        error_ = f'\n\n***Begin ERROR ***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following REQUIRED Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
         raise InsufficientArgs(error_)
 
     error_count = 0
@@ -404,7 +406,7 @@ def process_kwargs(required_args, optional_args, **kwargs):
             error_count =+ 1
             error_list += [item]
     if error_count > 0:
-        error_ = '\n\n***Begin ERROR***\n\n - The Following Optional Key(s) Were Not Found in kwargs: "%s"\n\n****End ERROR****\n' % (error_list)
+        error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following Optional Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
         raise InsufficientArgs(error_)
 
     # Load all required args values from kwargs
@@ -418,7 +420,7 @@ def process_kwargs(required_args, optional_args, **kwargs):
                 error_list += [item]
 
     if error_count > 0:
-        error_ = '\n\n***Begin ERROR***\n\n - The Following REQUIRED Key(s) Argument(s) are Blank:\nPlease Validate "%s"\n\n****End ERROR****\n' % (error_list)
+        error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following REQUIRED Key(s) Argument(s) are Blank:\nPlease Validate "{error_list}"\n\n****End ERROR****\n'
         raise InsufficientArgs(error_)
 
     for item in kwargs:

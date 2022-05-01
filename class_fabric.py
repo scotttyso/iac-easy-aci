@@ -3,14 +3,10 @@
 #======================================================
 # Source Modules
 #======================================================
-from easy_functions import easyDict_append, easyDict_update
-from easy_functions import process_kwargs
+from easy_functions import easyDict_append, easyDict_update, process_kwargs
 from easy_functions import required_args_add, required_args_remove
-from easy_functions import sensitive_var_site_group
-from easy_functions import validate_args
-import json
+from easy_functions import sensitive_var_site_group, validate_args
 import re
-import validating
 
 #======================================================
 # Exception Classes
@@ -126,14 +122,12 @@ class fabric(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['date_and_time']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['ntp_servers'].append(templateVars)
-
-        # Return Dictionary
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'date_and_time'
+        templateVars['data_subtype'] = 'ntp_servers'
+        templateVars['policy_name'] = 'default'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -161,14 +155,12 @@ class fabric(object):
         templateVars.pop('jsonData')
         templateVars.pop('Variable')
 
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['date_and_time']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['authentication_keys'].append(templateVars)
-
-        # Return Dictionary
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'date_and_time'
+        templateVars['data_subtype'] = 'authentication_keys'
+        templateVars['policy_name'] = 'default'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -220,14 +212,12 @@ class fabric(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['smartcallhome']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['smart_destinations'].append(templateVars)
-
-        # Return Dictionary
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'smartcallhome'
+        templateVars['data_subtype'] = 'smart_destinations'
+        templateVars['policy_name'] = 'default'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -263,14 +253,12 @@ class fabric(object):
             templateVars.pop('jsonData')
             templateVars.pop('Variable')
 
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['fabric']['smartcallhome']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['smtp_server'].append(templateVars)
-        
-        # Return Dictionary
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'smartcallhome'
+        templateVars['data_subtype'] = 'smtp_server'
+        templateVars['policy_name'] = 'default'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================

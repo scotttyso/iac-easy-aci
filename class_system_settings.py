@@ -4,10 +4,8 @@
 # Source Modules
 #======================================================
 from class_terraform import terraform_cloud
-from easy_functions import easyDict_append, easyDict_update
-from easy_functions import process_kwargs
-from easy_functions import sensitive_var_site_group
-from easy_functions import validate_args
+from easy_functions import easyDict_update, process_kwargs
+from easy_functions import sensitive_var_site_group, validate_args
 from openpyxl import load_workbook
 import os
 import validating
