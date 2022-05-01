@@ -618,7 +618,6 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
 def read_in(excel_workbook):
     try:
         wb = load_workbook(excel_workbook)
-        print("Workbook Loaded.")
     except Exception as e:
         print(f"Something went wrong while opening the workbook - {excel_workbook}... ABORT!")
         sys.exit(e)
@@ -759,18 +758,25 @@ def sensitive_var_value(**kwargs):
 #======================================================
 # Function to Define stdout_log output
 #======================================================
-def stdout_log(sheet, line):
+def stdout_log(ws, row_num, spot):
     if log_level == 0:
         return
     elif ((log_level == (1) or log_level == (2)) and
-            (sheet) and (line is None)):
-        #print('*' * 80)
+            (ws) and (row_num is None)) and spot == 'begin':
+        print(f'-----------------------------------------------------------------------------\n')
+        print(f'   Begin Worksheet "{ws.title}" evaluation...')
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Starting work on {sheet.title} Worksheet')
+    elif (log_level == (1) or log_level == (2)) and spot == 'end':
         print(f'\n-----------------------------------------------------------------------------\n')
-        #print('*' * 80)
-    elif log_level == (2) and (sheet) and (line is not None):
-        print('Evaluating line %s from %s Worksheet...' % (line, sheet.title))
+        print(f'   Completed Worksheet "{ws.title}" evaluation...')
+        print(f'\n-----------------------------------------------------------------------------')
+    elif log_level == (2) and (ws) and (row_num is not None):
+        if re.fullmatch('[0-9]', str(row_num)):
+            print(f'    - Evaluating Row   {row_num}...')
+        elif re.fullmatch('[0-9][0-9]',  str(row_num)):
+            print(f'    - Evaluating Row  {row_num}...')
+        elif re.fullmatch('[0-9][0-9][0-9]',  str(row_num)):
+            print(f'    - Evaluating Row {row_num}...')
     else:
         return
 

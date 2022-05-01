@@ -21,7 +21,7 @@ import pkg_resources
 import re
 import validating
 
-aci_template_path = pkg_resources.resource_filename('class_access', 'templates/')
+aci_template_path = pkg_resources.resource_filename('classes', 'templates/')
 
 #======================================================
 # Exception Classes
@@ -1674,7 +1674,7 @@ class access(object):
             func_regex = re.compile('^intf_selector$')
             func_list = findKeys(ws_sw, func_regex)
             class_init = '%s(ws_sw)' % (lib_aci_ref)
-            stdout_log(ws_sw, None)
+            stdout_log(ws_sw, None, 'begin')
             for func in func_list:
                 count = countKeys(ws_sw, func)
                 var_dict = findVars(ws_sw, func, rows_sw, count)
@@ -1684,7 +1684,7 @@ class access(object):
                     for x in list(var_dict[pos].keys()):
                         if var_dict[pos][x] == '':
                             del var_dict[pos][x]
-                    stdout_log(ws_sw, row_num)
+                    stdout_log(ws_sw, row_num, 'begin')
                     var_dict[pos]['site_group'] = templateVars['Site_ID']
                     var_dict[pos]['Switch_Role'] = templateVars['Switch_Role']
                     var_dict[pos]['Site_name'] = templateVars['Site_name']

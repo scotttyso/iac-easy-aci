@@ -12,7 +12,8 @@ It uses argparse to take in the following CLI arguments:
 from classes import access, admin, fabric, site_policies, system_settings
 from class_tenants import tenants
 from easy_functions import countKeys, findKeys, findVars
-from easy_functions import read_easy_jsonData, read_in, stdout_log
+from easy_functions import read_easy_jsonData, read_in
+from easy_functions import stdout_log
 # from openpyxl import load_workbook
 # from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
@@ -341,7 +342,7 @@ def process_tenants(easyDict, easy_jsonData, wb):
 def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
     rows = ws.max_row
     func_list = findKeys(ws, func_regex)
-    stdout_log(ws, None)
+    stdout_log(ws, None, 'begin')
     for func in func_list:
         count = countKeys(ws, func)
         var_dict = findVars(ws, func, rows, count)
@@ -351,7 +352,7 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
             for x in list(var_dict[pos].keys()):
                 if var_dict[pos][x] == '':
                     del var_dict[pos][x]
-            stdout_log(ws, row_num)
+            stdout_log(ws, row_num, 'begin')
             var_dict[pos].update(
                 {
                     'class_folder':class_folder,
@@ -364,6 +365,7 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
             )
             easyDict = eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
     
+    stdout_log(ws, row_num, 'end')
     # Return the easyDict
     return easyDict
 
@@ -588,7 +590,7 @@ def main():
         # easyDict = process_tenants(easyDict, easy_jsonData, wb)
         # easyDict = process_epgs(easyDict, easy_jsonData, wb)
         easyDict.pop('wb')
-        print(json.dumps(easyDict, indent = 4))
+        # print(json.dumps(easyDict, indent = 4))
         exit()
         read_easy_jsonData(easy_jsonData, **easyDict)
         easyDict = process_bridge_domains(easyDict, easy_jsonData, wb)
