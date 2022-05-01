@@ -98,6 +98,10 @@ class fabric(object):
         }
         templateVars.update(Additions)
         
+        # Convert to Lists
+        if ',' in templateVars["dns_providers"]:
+            templateVars["dns_providers"] = templateVars["dns_providers"].split(',')
+
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'dns_profiles'
@@ -278,6 +282,10 @@ class fabric(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Convert to Lists
+        if ',' in templateVars["clients"]:
+            templateVars["clients"] = templateVars["clients"].split(',')
 
         # Add Dictionary to Policy
         templateVars['class_type'] = 'fabric'

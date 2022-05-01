@@ -100,6 +100,10 @@ class system_settings(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
+        # Convert to Lists
+        if ',' in templateVars["node_list"]:
+            templateVars["node_list"] = templateVars["node_list"].split(',')
+
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'bgp_rr'

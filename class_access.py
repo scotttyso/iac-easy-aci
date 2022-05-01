@@ -4,7 +4,6 @@
 # Source Modules
 #======================================================
 from class_terraform import terraform_cloud
-from collections import OrderedDict
 from easy_functions import countKeys, create_selector, create_tf_file
 from easy_functions import easyDict_append, easyDict_update
 from easy_functions import findKeys, findVars

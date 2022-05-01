@@ -203,6 +203,10 @@ class admin(object):
         if kwargs['authentication_type'] == 'usePassword':
             jsonData = required_args_remove(['username'], jsonData)
         
+        # Convert to Lists
+        if ',' in templateVars["remote_hosts"]:
+            templateVars["remote_hosts"] = templateVars["remote_hosts"].split(',')
+
         # Add Dictionary to Policy
         templateVars['class_type'] = 'admin'
         templateVars['data_type'] = 'configuration_backups'
