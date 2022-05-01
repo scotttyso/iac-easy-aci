@@ -9,16 +9,12 @@ It uses argparse to take in the following CLI arguments:
 #======================================================
 # Source Modules
 #======================================================
-from classes import access, admin, fabric, site_policies, system_settings
 from class_tenants import tenants
+from classes import access, admin, fabric, site_policies, system_settings
 from easy_functions import countKeys, findKeys, findVars
 from easy_functions import read_easy_jsonData, read_in
 from easy_functions import stdout_log
-# from openpyxl import load_workbook
-# from openpyxl.utils.dataframe import dataframe_to_rows
-from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 from pathlib import Path
-from git import Repo
 import argparse
 import json
 import os
@@ -26,6 +22,11 @@ import re
 import stdiomask
 import subprocess
 import time
+
+#=====================================================================
+# Note: This is simply to make it so the classes don't appear Unused.
+#=====================================================================
+class_list = [access, admin, fabric, site_policies, system_settings, tenants]
 
 #======================================================
 # Global Variables
@@ -37,11 +38,10 @@ workspace_dict = {}
 
 #======================================================
 # Regular Expressions to Control wich rows in the
-# Spreadsheet should be processed.
+# Worksheet should be processed.
 #======================================================
 access_regex = re.compile('^(aep_profile|bpdu|cdp|(fibre|port)_(channel|security)|l2_interface|l3_domain|(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|phys_dom|stp|vlan_pool)$')
-admin_regex = re.compile('^(auth|export_policy|remote_host|security)$')
-# admin_regex = re.compile('^(auth|export_policy|radius|remote_host|security|tacacs)$')
+admin_regex = re.compile('^(auth|export_policy|radius|remote_host|security|tacacs)$')
 system_settings_regex = re.compile('^(apic_preference|bgp_(asn|rr)|global_aes)$')
 bridge_domains_regex = re.compile('^add_bd$')
 contracts_regex = re.compile('(^(contract|filter|subject)_(add|entry|to_epg)$)')
@@ -52,8 +52,7 @@ inventory_regex = re.compile('^(apic_inb|switch|vpc_pair)$')
 l3out_regex = re.compile('^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$')
 mgmt_tenant_regex = re.compile('^(add_bd|mgmt_epg|oob_ext_epg)$')
 sites_regex = re.compile('^(site_id|group_id)$')
-tenants_regex = re.compile('^(tenant_add)$')
-# tenants_regex = re.compile('^((tenant|vrf)_add|vrf_community)$')
+tenants_regex = re.compile('^(tenant|vrf)_add|vrf_community)$')
 vmm_regex = re.compile('^add_vmm$')
 
 #======================================================
@@ -131,7 +130,7 @@ def apply_aci_terraform(folders):
                 print(f'\n-----------------------------------------------------------------------------\n')
 
 #======================================================
-# Function to Check the Git Status of the Destination Folder
+# Function to Check the Git Status of the Folders
 #======================================================
 def check_git_status():
     random_folders = []
@@ -188,6 +187,9 @@ def check_git_status():
     # print(strict_folders)
     return strict_folders
 
+#======================================================
+# Function to Get User Password
+#======================================================
 def get_user_pass():
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'   Beginning Proceedures to Apply Terraform Resources to the environment')
@@ -368,79 +370,6 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
     stdout_log(ws, row_num, 'end')
     # Return the easyDict
     return easyDict
-
-#======================================================
-# Function to Update the Workbook.  This is not
-# currently utilized.  Likely to Depricate.
-#======================================================
-def wb_update(wr_ws, status, i):
-    # build green and red style sheets for excel
-    bd1 = Side(style="thick", color="8EA9DB")
-    bd2 = Side(style="medium", color="8EA9DB")
-    wsh1 = NamedStyle(name="wsh1")
-    wsh1.alignment = Alignment(horizontal="center", vertical="center", wrap_text="True")
-    wsh1.border = Border(left=bd1, top=bd1, right=bd1, bottom=bd1)
-    wsh1.font = Font(bold=True, size=15, color="FFFFFF")
-    wsh2 = NamedStyle(name="wsh2")
-    wsh2.alignment = Alignment(horizontal="center", vertical="center", wrap_text="True")
-    wsh2.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
-    wsh2.fill = PatternFill("solid", fgColor="305496")
-    wsh2.font = Font(bold=True, size=15, color="FFFFFF")
-    green_st = NamedStyle(name="ws_odd")
-    green_st.alignment = Alignment(horizontal="center", vertical="center")
-    green_st.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
-    green_st.fill = PatternFill("solid", fgColor="D9E1F2")
-    green_st.font = Font(bold=False, size=12, color="44546A")
-    red_st = NamedStyle(name="ws_even")
-    red_st.alignment = Alignment(horizontal="center", vertical="center")
-    red_st.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
-    red_st.font = Font(bold=False, size=12, color="44546A")
-    yellow_st = NamedStyle(name="ws_even")
-    yellow_st.alignment = Alignment(horizontal="center", vertical="center")
-    yellow_st.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
-    yellow_st.font = Font(bold=False, size=12, color="44546A")
-    # green_st = xlwt.easyxf('pattern: pattern solid;')
-    # green_st.pattern.pattern_fore_colour = 3
-    # red_st = xlwt.easyxf('pattern: pattern solid;')
-    # red_st.pattern.pattern_fore_colour = 2
-    # yellow_st = xlwt.easyxf('pattern: pattern solid;')
-    # yellow_st.pattern.pattern_fore_colour = 5
-    # if stanzas to catch the status code from the request
-    # and then input the appropriate information in the workbook
-    # this then writes the changes to the doc
-    if status == 200:
-        wr_ws.write(i, 1, 'Success (200)', green_st)
-    if status == 400:
-        print("Error 400 - Bad Request - ABORT!")
-        print("Probably have a bad URL or payload")
-        wr_ws.write(i, 1, 'Bad Request (400)', red_st)
-        pass
-    if status == 401:
-        print("Error 401 - Unauthorized - ABORT!")
-        print("Probably have incorrect credentials")
-        wr_ws.write(i, 1, 'Unauthorized (401)', red_st)
-        pass
-    if status == 403:
-        print("Error 403 - Forbidden - ABORT!")
-        print("Server refuses to handle your request")
-        wr_ws.write(i, 1, 'Forbidden (403)', red_st)
-        pass
-    if status == 404:
-        print("Error 404 - Not Found - ABORT!")
-        print("Seems like you're trying to POST to a page that doesn't"
-              " exist.")
-        wr_ws.write(i, 1, 'Not Found (400)', red_st)
-        pass
-    if status == 666:
-        print("Error - Something failed!")
-        print("The POST failed, see stdout for the exception.")
-        wr_ws.write(i, 1, 'Unkown Failure', yellow_st)
-        pass
-    if status == 667:
-        print("Error - Invalid Input!")
-        print("Invalid integer or other input.")
-        wr_ws.write(i, 1, 'Unkown Failure', yellow_st)
-        pass
 
 #======================================================
 # The Main Module
