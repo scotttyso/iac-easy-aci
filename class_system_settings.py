@@ -55,7 +55,6 @@ class system_settings(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'apic_connectivity_preference'
-        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -80,7 +79,6 @@ class system_settings(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'bgp_asn'
-        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -105,7 +103,6 @@ class system_settings(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'bgp_rr'
-        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -137,7 +134,6 @@ class system_settings(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'global_aes_encryption_settings'
-        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 

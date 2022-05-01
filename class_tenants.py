@@ -3,7 +3,6 @@
 #======================================================
 # Source Modules
 #======================================================
-from collections import OrderedDict
 from easy_functions import countKeys, findVars
 from easy_functions import easyDict_append, easyDict_update
 from easy_functions import process_kwargs, process_workbook
@@ -77,7 +76,6 @@ class tenants(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'date_and_time'
-        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -2341,7 +2339,6 @@ class tenants(object):
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
         templateVars['data_type'] = 'tenants'
-        templateVars = OrderedDict(sorted(templateVars.items()))
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 

@@ -3,6 +3,7 @@
 #======================================================
 # Source Modules
 #======================================================
+from collections import OrderedDict
 from openpyxl import load_workbook
 from ordered_set import OrderedSet
 from textwrap import fill
@@ -177,6 +178,7 @@ def create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars):
 # Function to Append the easyDict Dictionary
 #======================================================
 def easyDict_append(templateVars, **kwargs):
+    templateVars = OrderedDict(sorted(templateVars.items()))
     class_type = templateVars['class_type']
     data_type = templateVars['data_type']
     data_subtype = templateVars['data_subtype']
@@ -218,6 +220,7 @@ def easyDict_append(templateVars, **kwargs):
 # Function to Update the easyDict Dictionary
 #======================================================
 def easyDict_update(templateVars, **kwargs):
+    templateVars = OrderedDict(sorted(templateVars.items()))
     class_type = templateVars['class_type']
     data_type = templateVars['data_type']
     templateVars.pop('data_type')
