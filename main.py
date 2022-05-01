@@ -9,10 +9,7 @@ It uses argparse to take in the following CLI arguments:
 #======================================================
 # Source Modules
 #======================================================
-from class_access import access
-from class_admin import admin
-from class_fabric import fabric
-from class_system_settings import site_policies, system_settings
+from classes import access, admin, fabric, site_policies, system_settings
 from class_tenants import tenants
 from easy_functions import countKeys, findKeys, findVars
 from easy_functions import read_easy_jsonData, read_in, stdout_log
