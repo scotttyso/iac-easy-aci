@@ -15,7 +15,11 @@
                             },
                             "class.fabric":{
                                 "enum": [
-                                    "date_and_time"
+                                    "date_and_time",
+                                    "dns_profiles",
+                                    "smart_callhome",
+                                    "snmp_policies",
+                                    "syslog"
                                 ]
                             },
                             "class.system_settings":{
@@ -31,6 +35,118 @@
                                     "tenants"
                                 ]
                             },
+                            "files":{
+                                "description": "Files to Pull down from the Easy ACI Project.",
+                                "access": [
+                                    "README.md",
+                                    "data_sources.tf",
+                                    "domains.tf",
+                                    "firmware.tf",
+                                    "global_policies.tf",
+                                    "interface_policies.tf",
+                                    "inventory.tf",
+                                    "leaf_interface_policy_groups.tf",
+                                    "leaf_policy_groups.tf",
+                                    "leaf_profiles.tf",
+                                    "locals.tf",
+                                    "outputs.tf",
+                                    "pools.tf",
+                                    "provider.tf",
+                                    "spine_interface_policy_groups.tf",
+                                    "spine_policy_groups.tf",
+                                    "spine_profiles.tf",
+                                    "variables.tf",
+                                    "virtual_networking.tf",
+                                    "vpc_domains.tf"
+                                ],
+                                "admin": [
+                                    "README.md",
+                                    "authentication.tf",
+                                    "backups/",
+                                    "configuration_backups.tf",
+                                    "data_sources.tf",
+                                    "locals.tf",
+                                    "outputs.tf",
+                                    "provider.tf",
+                                    "radius.tf",
+                                    "security.tf",
+                                    "tacacs.tf",
+                                    "variables.tf"
+                                ],
+                                "fabric": [
+                                    "README.md",
+                                    "date_and_time.tf",
+                                    "dns_profiles.tf",
+                                    "fabric_node_controls.tf",
+                                    "l3_interface.tf",
+                                    "locals.tf",
+                                    "outputs.tf",
+                                    "pod_profiles.tf",
+                                    "provider.tf",
+                                    "smart_callhome.tf",
+                                    "snmp_policies.tf",
+                                    "syslog.tf",
+                                    "variables.tf"
+                                ],
+                                "system_settings": [
+                                    "README.md",
+                                    "apic_connectivity_preference.tf",
+                                    "bgp.tf",
+                                    "coop_group.tf",
+                                    "data_sources.tf",
+                                    "endpoint_controls.tf",
+                                    "fabric_wide_settings.tf",
+                                    "global_aes_encryption_settings.tf",
+                                    "isis_policy.tf",
+                                    "locals.tf",
+                                    "outputs.tf",
+                                    "port_tracking.tf",
+                                    "provider.tf",
+                                    "variables.tf"
+                                ],
+                                "tenant": [
+                                    "README.md",
+                                    "application_epgs.tf",
+                                    "application_profiles.tf",
+                                    "bfd_interface_policies.tf",
+                                    "bgp_policies.tf",
+                                    "bridge_domains.tf",
+                                    "contracts.tf",
+                                    "data_sources.tf",
+                                    "endpoint_retention_policies.tf",
+                                    "filters.tf",
+                                    "l3outs.tf",
+                                    "locals.tf",
+                                    "ospf_policies.tf",
+                                    "outputs.tf",
+                                    "provider.tf",
+                                    "route_map_match_rules.tf",
+                                    "route_map_set_rules.tf",
+                                    "route_maps_for_route_control.tf",
+                                    "schemas.tf",
+                                    "tenants.tf",
+                                    "variables.tf",
+                                    "vrfs.tf"
+                                ]
+                            },
+                            "remove_files": [
+                                "coop_group.tf",
+                                "data_sources.tf",
+                                "endpoint_controls.tf",
+                                "fabric_node_controls.tf",
+                                "fabric_wide_settings.tf",
+                                "isis_policy.tf",
+                                "l3_interface.tf",
+                                "locals.tf",
+                                "main.tf",
+                                "output.tf",
+                                "outputs.tf",
+                                "pod_profiles.tf",
+                                "port_tracking.tf",
+                                "provider.tf",
+                                "README.md",
+                                "variables.tf"
+                            ],
                             "version":"0.9.5"
                         }
                     }
@@ -1014,7 +1130,7 @@
                                 "type": "list_of_hosts",
                                 "x-omitempty": true
                             },
-                            "domain_list":{
+                            "dns_domains":{
                                 "description": "List of Remote Hosts.",
                                 "type": "list_of_domains",
                                 "x-omitempty": true
@@ -1024,16 +1140,13 @@
                                 "description": ""                                
                             },
                             "preferred":{
-                                "description": "Prefer DNS Server 1 or 2.",
-                                "type": "integer",
-                                "format": "int64",
-                                "minimum": 1,
-                                "maximum": 2,
+                                "description": "Preferred DNS Server.",
+                                "type": "hostname",
                                 "x-omitempty": true
                             },
                             "required_args": {
+                                "dns_domains": "",
                                 "dns_providers": "",
-                                "domain_list": "",
                                 "management_epg": "",
                                 "management_epg_type": "",
                                 "preferred": "",

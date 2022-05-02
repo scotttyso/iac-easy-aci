@@ -2356,14 +2356,14 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.dnsProfiles']['allOf'][1]['properties']
 
-        if not kwargs['domain_list'] == None:
-            if ',' in kwargs['domain_list']:
-                kwargs['domain_list'] = kwargs['domain_list'].split(',')
+        if not kwargs['dns_domains'] == None:
+            if ',' in kwargs['dns_domains']:
+                kwargs['dns_domains'] = kwargs['dns_domains'].split(',')
             else:
-                kwargs['domain_list'] = [kwargs['domain_list']]
+                kwargs['dns_domains'] = [kwargs['dns_domains']]
             if not kwargs['default_domain'] == None:
-                if not kwargs['default_domain'] in kwargs['domain_list']:
-                    kwargs['domain_list'].append(kwargs['default_domain'])
+                if not kwargs['default_domain'] in kwargs['dns_domains']:
+                    kwargs['dns_domains'].append(kwargs['default_domain'])
 
         try:
             # Validate User Input
@@ -2477,7 +2477,7 @@ class fabric(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'smartcallhome'
+        templateVars['data_type'] = 'smart_callhome'
         kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -2501,7 +2501,7 @@ class fabric(object):
 
         # Add Dictionary to Policy
         templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'smartcallhome'
+        templateVars['data_type'] = 'smart_callhome'
         templateVars['data_subtype'] = 'smart_destinations'
         templateVars['policy_name'] = 'default'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
@@ -2542,7 +2542,7 @@ class fabric(object):
 
         # Add Dictionary to Policy
         templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'smartcallhome'
+        templateVars['data_type'] = 'smart_callhome'
         templateVars['data_subtype'] = 'smtp_server'
         templateVars['policy_name'] = 'default'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)

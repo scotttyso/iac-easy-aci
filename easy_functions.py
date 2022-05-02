@@ -574,23 +574,27 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
             for item in easyDict[class_type][func]:
                 for k, v in item.items():
                     for i in v:
-                        kwargs = i
+                        templateVars = i
+                        # print(json.dumps(templateVars, indent=4))
+                        # exit()
+                        kwargs = {}
                         kwargs['row_num'] = f'{func}_section'
+                        kwargs['site_group'] = k
                         kwargs['site_group'] = k
                         kwargs['ws'] = easyDict['wb']['System Settings']
                         
                         # Add Variables for Template Functions
-                        kwargs['template_type'] = func
+                        templateVars['template_type'] = func
                             
                         if re.search('(apic|bgp_asn)', func):
                             kwargs["template_file"] = 'template_open2.jinja2'
                         else:
                             kwargs["template_file"] = 'template_open.jinja2'
                         if 'bgp' in func:
-                            kwargs['policy_type'] = func.replace('_', ' ').upper()
+                            templateVars['policy_type'] = func.replace('_', ' ').upper()
                             kwargs['tfvars_file'] = 'bgp'
                         else:
-                            kwargs['policy_type'] = func.replace('_', ' ').capitalize()
+                            templateVars['policy_type'] = func.replace('_', ' ').capitalize()
                             kwargs['tfvars_file'] = func
                         
                         # Write the Header to the Template File
@@ -598,19 +602,19 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                             kwargs["initial_write"] = False
                         else:
                             kwargs["initial_write"] = True
-                        write_to_site(**kwargs)
+                        write_to_site(templateVars, **kwargs)
 
                         # Write the template to the Template File
                         kwargs["initial_write"] = False
                         kwargs["template_file"] = f'{func}.jinja2'
-                        write_to_site(**kwargs)
+                        write_to_site(templateVars, **kwargs)
 
                         kwargs["initial_write"] = False
                         kwargs["template_file"] = 'template_close.jinja2'
 
                         if not re.search('apic|bgp_asn', func):
                             # Write the Footer to the Template File
-                            write_to_site(**kwargs)
+                            write_to_site(templateVars, **kwargs)
 
 #======================================================
 # Function to Read Excel Workbook Data
@@ -1188,9 +1192,12 @@ def vlan_range(vlan_list, **templateVars):
 #======================================================
 # Function to Determine which sites to write files to.
 #======================================================
-def write_to_site(**kwargs):
-    class_type = kwargs['class_type']
-    aci_template_path = pkg_resources.resource_filename(f'class_{class_type}', 'templates/')
+def write_to_site(templateVars, **kwargs):
+    class_type = templateVars['class_type']
+    if re.search('(access|admin|fabric|site_policies|system_settings)', class_type):
+        aci_template_path = pkg_resources.resource_filename(f'classes', 'templates/')
+    else:
+        aci_template_path = pkg_resources.resource_filename(f'class_{class_type}', 'templates/')
 
     templateLoader = jinja2.FileSystemLoader(
         searchpath=(aci_template_path + '%s/') % (class_type))
@@ -1213,14 +1220,15 @@ def write_to_site(**kwargs):
     else:
         kwargs["write_method"] = 'a'
 
-    def process_siteDetails(site_dict, **kwargs):
+    def process_siteDetails(site_dict, templateVars, **kwargs):
         # Create kwargs for site_name controller and controller_type
         kwargs['controller'] = site_dict.get('controller')
         kwargs['controller_type'] = site_dict.get('controller_type')
+        templateVars['controller_type'] = site_dict.get('controller_type')
         kwargs['site_name'] = site_dict.get('site_name')
         kwargs['version'] = site_dict.get('version')
 
-        if kwargs['controller_type'] == 'ndo' and kwargs['template_type'] == 'tenants':
+        if kwargs['controller_type'] == 'ndo' and templateVars['template_type'] == 'tenants':
             if kwargs['users'] == None:
                 validating.error_tenant_users(**kwargs)
             else:
@@ -1228,7 +1236,7 @@ def write_to_site(**kwargs):
                     regexp = '^[a-zA-Z0-9\_\-]+$'
                     validating.length_and_regex(regexp, 'users', user, 1, 63)
         # Create Terraform file from Template
-        write_to_template(**kwargs)
+        write_to_template(templateVars, **kwargs)
 
     if re.search('Grp_[A-F]', site_group):
         group_id = '%s' % (site_group)
@@ -1239,14 +1247,14 @@ def write_to_site(**kwargs):
                 site_dict = ast.literal_eval(os.environ[site_id])
 
                 # Add Site Detials to kwargs and write to template
-                process_siteDetails(site_dict, **kwargs)
+                process_siteDetails(site_dict, templateVars, **kwargs)
 
     elif re.search(r'\d+', site_group):
         site_id = 'site_id_%s' % (site_group)
         site_dict = ast.literal_eval(os.environ[site_id])
 
         # Add Site Detials to kwargs and write to template
-        process_siteDetails(site_dict, **kwargs)
+        process_siteDetails(site_dict, templateVars, **kwargs)
 
     else:
         print(f"\n-----------------------------------------------------------------------------\n")
@@ -1258,13 +1266,13 @@ def write_to_site(**kwargs):
 #======================================================
 # Function to write files from Templates
 #======================================================
-def write_to_template(**templateVars):    
-    opSystem = platform.system()
-    dest_dir = templateVars["dest_dir"]
-    dest_file = templateVars["dest_file"]
-    site_name = templateVars["site_name"]
-    template = templateVars["template"]
-    wr_method = templateVars["write_method"]
+def write_to_template(templateVars, **kwargs):
+    opSystem  = platform.system()
+    dest_dir  = kwargs["dest_dir"]
+    dest_file = kwargs["dest_file"]
+    site_name = kwargs["site_name"]
+    template  = kwargs["template"]
+    wr_method = kwargs["write_method"]
 
     if opSystem == 'Windows':
         if os.environ.get('TF_DEST_DIR') is None:
@@ -1308,7 +1316,14 @@ def write_to_template(**templateVars):
         tf_file = dest_file_path
         wr_file = open(tf_file, wr_method)
 
+    # Remove Uneccessary Arguments
+
     # Render Payload and Write to File
-    payload = template.render(templateVars)
+    templateVars = json.loads(json.dumps(templateVars))
+    if templateVars['class_type'] == 'system_settings':
+        payload = template.render(templateVars)
+    else:
+        templateVars = {'keys':templateVars}
+        payload = template.render(templateVars)
     wr_file.write(payload)
     wr_file.close()

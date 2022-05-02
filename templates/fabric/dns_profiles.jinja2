@@ -1,0 +1,50 @@
+
+  "{{ keys['name'] }}" = {
+{%- for k, v in keys.items() %}
+  {%- if k == 'controller_type' or k == 'class_type' or k == 'name' %}
+  {%- elif k == 'policy_type' or k == 'site_group' or k == 'template_type' %}
+  {%- elif k == 'default_domain' or k == 'preferred' %}
+  {%- elif v == None %}
+  {%- elif v | int(-1) != -1 %}
+    {{ k }} = {{ v }}
+  {%- elif v == 'false' or v == 'true' %}
+    {{ k }} = {{ v }}
+  {%- elif k == 'dns_domains' %}
+  {{ k }} = [
+    {%- for item in v %}
+    {
+      domain = "{{ item }}"
+      {%- if item == keys['default_domain'] %}
+      default_domain = true
+      {%- else %}
+      default_domain = false
+      {%- endif %}
+      {%- if not loop.last %}
+    },
+      {%- else %}
+    }
+      {%- endif %}
+    {%- endfor %}
+  ]
+  {%- elif k == 'dns_providers' %}
+  {{ k }} = [
+    {%- for item in v %}
+    {
+      dns_provider = "{{ item }}"
+      {%- if item == keys['preferred'] %}
+      preferred = true
+      {%- else %}
+      preferred = false
+      {%- endif %}
+      {%- if not loop.last %}
+    },
+      {%- else %}
+    }
+      {%- endif %}
+    {%- endfor %}
+  ]
+  {%- else %}
+    {{ k }} = "{{ v }}"
+  {%- endif %}
+{%- endfor %}
+  }

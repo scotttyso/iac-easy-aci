@@ -1,4 +1,12 @@
 
   "{{ pod_id }}" = {
-    node_list = [{{ node_list }}]
+    node_list = [
+{%- for item in node_list %}
+  {%- if not loop.last %}
+    "{{ item }}",
+  {%- else %}
+    "{{ item }}"
+  {%- endif %}
+{%- endfor %}
+    ]
   }

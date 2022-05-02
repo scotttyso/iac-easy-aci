@@ -18,7 +18,9 @@ from pathlib import Path
 import argparse
 import json
 import os
+import platform
 import re
+import requests
 import stdiomask
 import subprocess
 import time
@@ -33,7 +35,6 @@ class_list = [access, admin, fabric, site_policies, system_settings, tenants]
 #======================================================
 excel_workbook = None
 home = Path.home()
-Parser = argparse.ArgumentParser(description='IaC Easy ACI Deployment Module')
 workspace_dict = {}
 
 #======================================================
@@ -42,18 +43,17 @@ workspace_dict = {}
 #======================================================
 access_regex = re.compile('^(aep_profile|bpdu|cdp|(fibre|port)_(channel|security)|l2_interface|l3_domain|(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|phys_dom|stp|vlan_pool)$')
 admin_regex = re.compile('^(auth|export_policy|radius|remote_host|security|tacacs)$')
+admin_regex = re.compile('^(auth|export_policy|remote_host|security)$')
 system_settings_regex = re.compile('^(apic_preference|bgp_(asn|rr)|global_aes)$')
 bridge_domains_regex = re.compile('^add_bd$')
 contracts_regex = re.compile('(^(contract|filter|subject)_(add|entry|to_epg)$)')
-dhcp_regex = re.compile('^dhcp_add$')
 epgs_regex = re.compile('^((app|epg)_add)$')
-fabric_regex = re.compile('^(date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)|snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?)$')
+fabric_regex = '^(date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)|snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?)$'
 inventory_regex = re.compile('^(apic_inb|switch|vpc_pair)$')
 l3out_regex = re.compile('^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$')
 mgmt_tenant_regex = re.compile('^(add_bd|mgmt_epg|oob_ext_epg)$')
 sites_regex = re.compile('^(site_id|group_id)$')
-tenants_regex = re.compile('^(tenant|vrf)_add|vrf_community)$')
-vmm_regex = re.compile('^add_vmm$')
+tenants_regex = re.compile('^((tenant|vrf)_add|vrf_community)$')
 
 #======================================================
 # Function to run 'terraform plan' and
@@ -205,6 +205,194 @@ def get_user_pass():
 
     os.environ['TF_VAR_aciUser'] = '%s' % (user)
     os.environ['TF_VAR_aciPass'] = '%s' % (password)
+
+def merge_easy_aci_repository(easy_jsonData):
+    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
+    
+    # Obtain Operating System and Get TF_DEST_DIR variable from Environment
+    opSystem = platform.system()
+    if os.environ.get('TF_DEST_DIR') is None:
+        tfDir = 'Intersight'
+    else:
+        tfDir = os.environ.get('TF_DEST_DIR')
+
+    # Get All sub-folders from the TF_DEST_DIR
+    folders = []
+    for root, dirs, files in os.walk(tfDir):
+        for name in dirs:
+            # print(os.path.join(root, name))
+            folders.append(os.path.join(root, name))
+    folders.sort()
+
+    # Remove the First Level Folders from the List
+    for folder in folders:
+        print(f'folder is {folder}')
+        if '/' in folder:
+            x = folder.split('/')
+            if len(x) == 2:
+                folders.remove(folder)
+
+    # Get the Latest Release Tag for the terraform-intersight-imm repository
+    url = f'https://github.com/terraform-cisco-modules/terraform-easy-aci/tags/'
+    r = requests.get(url, stream=True)
+    repoVer = 'BLANK'
+    stringMatch = False
+    while stringMatch == False:
+        for line in r.iter_lines():
+            toString = line.decode("utf-8")
+            if re.search('/releases/tag/(\d+\.\d+\.\d+)', toString):
+                repoVer = re.search('/releases/tag/(\d+\.\d+\.\d+)', toString).group(1)
+                break
+        stringMatch = True
+
+    for folder in folders:
+        folderVer = "0.0.0"
+        # Get the version.txt file if exist to compare to the latest Git Release of the repository
+        if opSystem == 'Windows':
+            if os.path.isfile(f'{folder}\\version.txt'):
+                with open(f'{folder}\\version.txt') as f:
+                    folderVer = f.readline().rstrip()
+        else:
+            if os.path.isfile(f'{folder}/version.txt'):
+                with open(f'{folder}/version.txt') as f:
+                    folderVer = f.readline().rstrip()
+        
+        # Determine the Type of Folder. i.e. Is this for Access Policies
+        if os.path.isdir(folder):
+            if opSystem == 'Windows':
+                folder_length = len(folder.split('\\'))
+                folder_type = folder.split('\\')[folder_length -1]
+            else:
+                folder_length = len(folder.split('/'))
+                folder_type = folder.split('/')[folder_length -1]
+            if re.search('^tenant_', folder_type):
+                folder_type = 'tenant'
+            
+            # Get List of Files to download from jsonData
+            files = jsonData['files'][folder_type]
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+            print(f'\n  Beginning Easy ACI Module Downloads for "{folder}"\n')
+
+            # Run the process to check for the files in the folder and if it doesn't exist download from Github
+            for file in files:
+                git_url = 'https://raw.github.com/terraform-cisco-modules/terraform-easy-aci/master/modules'
+                if opSystem == 'Windows':
+                    dest_file = f'{folder}\\{file}'
+                else:
+                    dest_file = f'{folder}/{file}'
+                if not os.path.isfile(dest_file):
+                    print(f'  Downloading "{file}"')
+                    url = f'{git_url}/{folder_type}/{file}'
+                    r = requests.get(url)
+                    open(dest_file, 'wb').write(r.content)
+                    print(f'  "{file}" Download Complete!\n')
+                else:
+                    if opSystem == 'Windows':
+                        if not os.path.isfile(f'{folder}\\version.txt'):
+                            print(f'  Downloading "{file}"')
+                            url = f'{git_url}/{folder_type}/{file}'
+                            r = requests.get(url)
+                            open(dest_file, 'wb').write(r.content)
+                            print(f'  "{file}" Download Complete!\n')
+                        elif not os.path.isfile(f'{folder}\\version.txt'):
+                            print(f'  Downloading "{file}"')
+                            url = f'{git_url}/{folder_type}/{file}'
+                            r = requests.get(url)
+                            open(dest_file, 'wb').write(r.content)
+                            print(f'  "{file}" Download Complete!\n')
+                        elif os.path.isfile(f'{folder}\\version.txt'):
+                            if not folderVer == repoVer:
+                                print(f'  Downloading "{file}"')
+                                url = f'{git_url}/{folder_type}/{file}'
+                                r = requests.get(url)
+                                open(dest_file, 'wb').write(r.content)
+                                print(f'  "{file}" Download Complete!\n')
+                    else:
+                        if not os.path.isfile(f'{folder}/version.txt'):
+                            print(f'  Downloading "{file}"')
+                            url = f'{git_url}/{folder_type}/{file}'
+                            r = requests.get(url)
+                            open(dest_file, 'wb').write(r.content)
+                            print(f'  "{file}" Download Complete!\n')
+                        elif not os.path.isfile(f'{folder}/version.txt'):
+                            print(f'  Downloading "{file}"')
+                            url = f'{git_url}/{folder_type}/{file}'
+                            r = requests.get(url)
+                            open(dest_file, 'wb').write(r.content)
+                            print(f'  "{file}" Download Complete!\n')
+                        elif os.path.isfile(f'{folder}/version.txt'):
+                            if not folderVer == repoVer:
+                                print(f'  Downloading "{file}"')
+                                url = f'{git_url}/{folder_type}/{file}'
+                                r = requests.get(url)
+                                open(dest_file, 'wb').write(r.content)
+                                print(f'  "{file}" Download Complete!\n')
+
+            # Create the version.txt file to prevent redundant downloads for the same Github release
+            if not os.path.isfile(f'{folder}/version.txt'):
+                print(f'* Creating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
+                open(f'{folder}/version.txt', 'w').write('%s\n' % (repoVer))
+            elif not folderVer == repoVer:
+                print(f'* Updating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
+                open(f'{folder}/version.txt', 'w').write('%s\n' % (repoVer))
+
+            print(f'\n  Completed Easy IMM Module Downloads for "{folder}"')
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+
+    # Loop over the folder list again and create blank auto.tfvars files for anything that doesn't already exist
+    for folder in folders:
+        if os.path.isdir(folder):
+            if opSystem == 'Windows':
+                folder_length = len(folder.split('\\'))
+                folder_type = folder.split('\\')[folder_length -1]
+            else:
+                folder_length = len(folder.split('/'))
+                folder_type = folder.split('/')[folder_length -1]
+            if re.search('^tenant_', folder_type):
+                folder_type = 'tenant'
+            files = jsonData['files'][folder_type]
+            removeList = jsonData['remove_files']
+            for xRemove in removeList:
+                if xRemove in files:
+                    files.remove(xRemove)
+            for file in files:
+                varFiles = f"{file.split('.')[0]}.auto.tfvars"
+                if opSystem == 'Windows':
+                    dest_file = f'{folder}\\{varFiles}'
+                else:    
+                    dest_file = f'{folder}/{varFiles}'
+                if not os.path.isfile(dest_file):
+                    wr_file = open(dest_file, 'w')
+                    x = file.split('.')
+                    x2 = x[0].split('_')
+                    varList = []
+                    for var in x2:
+                        var = var.capitalize()
+                        varList.append(var)
+                    varDescr = ' '.join(varList)
+                    varDescr = varDescr + '- Variables'
+
+                    wrString = f'#______________________________________________\n#\n# {varDescr}\n'\
+                        '#______________________________________________\n'\
+                        '\n%s = {\n}\n' % (file.split('.')[0])
+                    wr_file.write(wrString)
+                    wr_file.close()
+
+            # Run terraform fmt to cleanup the formating for all of the auto.tfvar files and tf files if needed
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+            print(f'  Running "terraform fmt" in folder "{folder}",')
+            print(f'  to correct variable formatting!')
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+            p = subprocess.Popen(
+                ['terraform', 'fmt', folder],
+                stdout = subprocess.PIPE,
+                stderr = subprocess.PIPE
+            )
+            print('Format updated for the following Files:')
+            for line in iter(p.stdout.readline, b''):
+                line = line.decode("utf-8")
+                line = line.strip()
+                print(f'- {line}')
 
 #======================================================
 # Function to Read the Access Worksheet
@@ -375,17 +563,29 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
 # The Main Module
 #======================================================
 def main():
-    description = None
-    if description is not None:
-        Parser.description = description
-    Parser.add_argument('-d', '--dir', default='ACI',
-                        help='The Directory to Publish the Terraform Files to.'
+    Parser = argparse.ArgumentParser(description='IaC Easy ACI Deployment Module')
+    Parser.add_argument('-d', '--dir',
+        default = 'ACI',
+        help = 'The Directory to use for the Creation of the Terraform Files.'
     )
-    Parser.add_argument('-wb', '--workbook', default='ACI_Base_Workbookv2.xlsx',
-                        help='The Workbook to read for Input.'
+    Parser.add_argument('-wb', '--workbook',
+        default = 'ACI_Base_Workbookv2.xlsx',
+        help = 'The source Workbook.'
     )
-    Parser.add_argument('-ws', '--worksheet', default=None,
-                        help='The Workbook to read for Input.'
+    Parser.add_argument('-ws', '--worksheet', 
+        default = None,
+        help = 'Only evaluate this single worksheet. Worksheet values are:\
+            1. access - for Access\
+            2. admin: for Admin\
+            3. bridge_domains: for Bridge_Domains\
+            4. contracts: for Contracts\
+            5. epgs: for EPGs\
+            6. fabric: for Fabric\
+            7. inventory: for Inventory\
+            8. l3out: for L3Out\
+            9. sites: for Sites\
+            10. system_settings: for System_Settings\
+            11. tenants: for Tenants'
     )
     args = Parser.parse_args()
 
@@ -393,6 +593,24 @@ def main():
     jsonOpen = open(jsonFile, 'r')
     easy_jsonData = json.load(jsonOpen)
     jsonOpen.close()
+
+    destdirCheck = False
+    while destdirCheck == False:
+        splitDir = args.dir.split("/")
+        for folder in splitDir:
+            if folder == '':
+                folderCount = 0
+            elif not re.search(r'^[\w\-\.\:\/\\]+$', folder):
+                print(folder)
+                print(f'\n-------------------------------------------------------------------------------------------\n')
+                print(f'  !!ERROR!!')
+                print(f'  The Directory structure can only contain the following characters:')
+                print(f'  letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or and underscore(-).')
+                print(f'  It can be a short path or a fully qualified path.')
+                print(f'\n-------------------------------------------------------------------------------------------\n')
+                exit()
+        os.environ['TF_DEST_DIR'] = '%s' % (args.dir)
+        destdirCheck = True
 
     # Ask user for required Information: ACI_DEPLOY_FILE
     if os.path.isfile(args.workbook):
@@ -414,7 +632,6 @@ def main():
     wb = read_in(excel_workbook)
 
     # Create Dictionary for Worksheets in the Workbook
-
     easyDict = {
         'access':{
             'domains':[],
@@ -441,7 +658,7 @@ def main():
         'fabric':{
             'date_and_time':[],
             'dns_profiles':[],
-            'smartcallhome':[],
+            'smart_callhome':[],
             'snmp_policies':[],
             'syslog':[],
         },
@@ -484,32 +701,15 @@ def main():
 
     # Either Run All Remaining Proceedures or Just Specific based on sys.argv[2:]
     if not args.worksheet == None:
-        if re.search('site', str(args.worksheet)):
-            process_sites(easyDict, easy_jsonData, wb)
-        elif re.search('access', str(args.worksheet)):
-            process_access(easyDict, easy_jsonData, wb)
-        elif re.search('admin', str(args.worksheet)):
-            process_admin(easyDict, easy_jsonData, wb)
-        elif re.search('inventory', str(args.worksheet)):
-            process_inventory(easyDict, easy_jsonData, wb)
-        elif re.search('system_settings', str(args.worksheet)):
-            process_system_settings(easyDict, easy_jsonData, wb)
-        elif re.search('fabric', str(args.worksheet)):
-            process_fabric(easyDict, easy_jsonData, wb)
-        elif re.search('tenant', str(args.worksheet)):
-            process_tenants(easyDict, easy_jsonData, wb)
-        elif re.search('contract', str(args.worksheet)):
-            process_contracts(easyDict, easy_jsonData, wb)
-        elif re.search('l3out', str(args.worksheet)):
-            process_l3out(easyDict, easy_jsonData, wb)
-        elif re.search('bd', str(args.worksheet)):
-            process_bridge_domains(easyDict, easy_jsonData, wb)
-        elif re.search('epg', str(args.worksheet)):
-            process_epgs(easyDict, easy_jsonData, wb)
+        ws_regex = '^(access|admin|bridge_domains|contracts|epgs|fabric|inventory|l3out|sites|system_settings|tenants)$'
+        if re.search(ws_regex, str(args.worksheet)):
+            process_type = f'process_{args.worksheet}'
+            eval(f"{process_type}(easyDict, easy_jsonData, wb)")
         else:
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   {args.worksheet} is not a valid worksheet.  If you are trying to run')
-            print(f'   a single worksheet please re-enter the -ws argument.  Exiting...')
+            print(f'   ERROR: "{args.worksheet}" is not a valid worksheet.  If you are trying ')
+            print(f'   to run a single worksheet please re-enter the -ws argument.')
+            print(f'   Exiting...')
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     else:
@@ -518,15 +718,17 @@ def main():
         easyDict = process_admin(easyDict, easy_jsonData, wb)
         # easyDict = process_tenants(easyDict, easy_jsonData, wb)
         # easyDict = process_epgs(easyDict, easy_jsonData, wb)
-        easyDict.pop('wb')
-        # print(json.dumps(easyDict, indent = 4))
-        exit()
-        read_easy_jsonData(easy_jsonData, **easyDict)
-        easyDict = process_bridge_domains(easyDict, easy_jsonData, wb)
-        easyDict = process_access(easyDict, easy_jsonData, wb)
-        easyDict = process_inventory(easyDict, easy_jsonData, wb)
-        easyDict = process_l3out(easyDict, easy_jsonData, wb)
-        easyDict = process_contracts(easyDict, easy_jsonData, wb)
+        # easyDict = process_bridge_domains(easyDict, easy_jsonData, wb)
+        # easyDict = process_access(easyDict, easy_jsonData, wb)
+        # easyDict = process_inventory(easyDict, easy_jsonData, wb)
+        # easyDict = process_l3out(easyDict, easy_jsonData, wb)
+        # easyDict = process_contracts(easyDict, easy_jsonData, wb)
+
+    # Begin Proceedures to Create files
+    read_easy_jsonData(easy_jsonData, **easyDict)
+    merge_easy_aci_repository(easy_jsonData)
+    easyDict.pop('wb')
+    # print(json.dumps(easyDict, indent = 4))
 
     folders = check_git_status()
     get_user_pass()
