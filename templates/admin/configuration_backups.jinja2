@@ -1,0 +1,76 @@
+
+  "{{ keys['name'] }}" = {
+    configuration_export = [
+{%- for i in keys['configuration_export'] %}
+      {
+  {%- for key, value in i.items() %}
+    {%- if value == None %}
+    {%- elif value | int(-1) != -1 %}
+        {{ key }} = {{ value }}
+    {%- elif key == 'description' %}
+        {{ key }} = "{{ value }}"
+        format                = "{{ keys['format'] }}"
+        include_secure_fields = {{ keys['include_secure_fields'] }}
+    {%- elif key == 'management_epg_type' %}
+        {{ key }} = "{{ value }}"
+        max_snapshot_count    = {{ keys['max_snapshot_count'] }}
+      {%- if i['authentication_type'] == 'UsePassword' %}
+        password = {{ i['password'] }}
+      {%- endif %}
+    {%- elif key == 'password' %}
+    {%- elif key == 'scheduler_name' %}
+    {%- elif value is iterable and (value is not string and value is not mapping) %}
+        {{ key }} = [  
+      {%- for item in value %}
+        {%- if not loop.last %}
+          "{{ item }}",
+        {%- else %}
+          "{{ item }}"
+        {%- endif %}
+      {%- endfor %}
+        ]
+    {%- elif key == 'remote_port' %}
+        {{ key }} = {{ value }}
+        snapshot    = {{ keys['snapshot'] }}
+      {%- if i['authentication_type'] == 'SshKeyContents' %}
+        ssh_key_contents      = 1
+        ssh_key_passphrase    = 1
+      {%- endif %}
+        start_now             = "{{ keys['start_now'] }}"
+      {%- if i['authentication_type'] == 'UsePassword' %}
+        username = "{{ i['username'] }}"
+      {%- endif %}
+    {%- elif value == 'false' or value == 'true' %}
+        {{ key }} = {{ value }}
+    {%- else %}
+        {{ key }} = "{{ value }}"
+    {%- endif %}
+  {%- endfor %}
+  {%- if not loop.last %}
+      },
+  {%- else %}
+      }
+  {%- endif %}
+{%- endfor %}
+    ]
+    configuration_export = [
+      {
+{%- for k, v in keys.items() %}
+  {%- if k == 'controller_type' or k == 'class_type' or k == 'name' %}
+  {%- elif k == 'policy_type' or k == 'site_group' or k == 'template_type' %}
+  {%- elif k == 'configuration_export' or k == 'format' or k == 'include_secure_fields' %}
+  {%- elif k == 'max_snapshot_count' or k == 'name' or k == 'start_now' %}
+  {%- elif k == 'snapshot' or k == 'start_now' %}
+  {%- elif v == None %}
+  {%- elif v | int(-1) != -1 %}
+        {{ k }} = {{ v }}
+  {%- elif v == 'false' or v == 'true' %}
+        {{ k }} = {{ v }}
+  {%- else %}
+        {{ k }} = "{{ v }}"
+  {%- endif %}
+{%- endfor %}
+      }
+    ]
+
+  }

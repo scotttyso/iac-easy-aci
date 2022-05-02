@@ -2100,7 +2100,6 @@ class admin(object):
 
         Additions = {
             'configuration_export': [],
-            'window_description': kwargs['description']
         }
         templateVars.update(Additions)
         
@@ -2114,53 +2113,47 @@ class admin(object):
     # Function - RADIUS Authentication
     #======================================================
     def radius(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'Site_Group': '',
-                         'RADIUS_Server': '',
-                         'Port': '',
-                         'RADIUS_Secret': '',
-                         'Authz_Proto': '',
-                         'Timeout': '',
-                         'Retry_Interval': '',
-                         'Mgmt_EPG': '',
-                         'Login_Domain': '',
-                         'Domain_Order': ''}
-        optional_args = {'Description': '',
-                         'Domain_Descr': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.Radius']['allOf'][1]['properties']
+        
+        # Check for Variable values that could change required arguments
+        if 'server_monitoring' in kwargs:
+            if kwargs['server_monitoring'] == 'enabled':
+                jsonData = required_args_add(['monitoring_password', 'username'], jsonData)
+        else:
+            kwargs['server_monitoring'] == 'disabled'
+        
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.ip_address('RADIUS_Server', templateVars['RADIUS_Server'])
-            validating.validator('login_domain', **kwargs)
-            validating.number_check('Domain_Order', templateVars['Domain_Order'], 0, 17)
-            validating.number_check('Port', templateVars['Port'], 1, 65535)
-            validating.number_check('Retry_Interval', templateVars['Retry_Interval'], 1, 5)
-            validating.sensitive_var('RADIUS_Secret', templateVars['RADIUS_Secret'])
-            validating.timeout('Timeout', templateVars['Timeout'])
-            validating.values('Authz_Proto', templateVars['Authz_Proto'], ['chap', 'mschap', 'pap'])
-            templateVars['Mgmt_EPG'] = validating.mgmt_epg('Mgmt_EPG', templateVars['Mgmt_EPG'])
-            if not templateVars['Description'] == None:
-                validating.description('Description', templateVars['Description'])
-            if not templateVars['Domain_Descr'] == None:
-                validating.description('Domain_Descr', templateVars['Domain_Descr'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        if re.search(r'\.', templateVars['RADIUS_Server']):
-            templateVars['RADIUS_Server_'] = templateVars['RADIUS_Server'].replace('.', '-')
-        else:
-            templateVars['RADIUS_Server_'] = templateVars['RADIUS_Server'].replace(':', '-')
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        if not templateVars['RADIUS_Secret'] == None:
-            x = templateVars['RADIUS_Secret'].split('r')
-            key_number = x[1]
-            templateVars['sensitive_var'] = 'RADIUS_Secret%s' % (key_number)
+        # Check if the secert is in the Environment.  If not Add it.
+        templateVars['jsonData'] = jsonData
+        templateVars["Variable"] = f'radius_key_{kwargs["key"]}'
+        sensitive_var_site_group(**templateVars)
+        if templateVars['server_monitoring'] == 'enabled':
+            # Check if the Password is in the Environment.  If not Add it.
+            templateVars["Variable"] = f'radius_monitoring_password_{kwargs["monitoring_password"]}'
+            sensitive_var_site_group(**templateVars)
+        templateVars.pop('jsonData')
+        templateVars.pop('Variable')
+
+        # Reset jsonData
+        if not kwargs['server_monitoring'] == 'disabled':
+            jsonData = required_args_remove(['monitoring_password', 'username'], jsonData)
+        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'admin'
+        templateVars['data_type'] = 'radius'
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Configuration Backup  - Remote Host
@@ -2200,6 +2193,7 @@ class admin(object):
             templateVars["Variable"] = 'ssh_key_passphrase'
             sensitive_var_site_group(**templateVars)
         templateVars.pop('jsonData')
+        templateVars.pop('Variable')
 
         # Reset jsonData
         if kwargs['authentication_type'] == 'usePassword':
@@ -2245,66 +2239,47 @@ class admin(object):
     # Function - TACACS+ Authentication
     #======================================================
     def tacacs(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'Site_Group': '',
-                         'TACACS_Server': '',
-                         'Port': '',
-                         'TACACS_Secret': '',
-                         'Auth_Proto': '',
-                         'Timeout': '',
-                         'Retry_Interval': '',
-                         'Mgmt_EPG': '',
-                         'Login_Domain': '',
-                         'Domain_Order': '',
-                         'Acct_DestGrp_Name': ''}
-        optional_args = {'Description': '',
-                         'Domain_Descr': '',
-                         'Login_Domain_Descr': ''}
-
-        # Temporarily Move the Provider Description
-        tacacs_descr = kwargs['Description']
-
-        ws_admin = kwargs['wb']['Admin']
-        rows = ws_admin.max_row
-        row_bundle = ''
-        func = 'login_domain'
-        count = countKeys(ws_admin, func)
-        var_dict = findVars(ws_admin, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Name') == kwargs.get('Policy_Group'):
-                row_bundle = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-                break
-
-        kwargs['Login_Domain_Descr'] = kwargs['Description']
-        kwargs['Description'] = tacacs_descr
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.Tacacs']['allOf'][1]['properties']
+        
+        # Check for Variable values that could change required arguments
+        if 'server_monitoring' in kwargs:
+            if kwargs['server_monitoring'] == 'enabled':
+                jsonData = required_args_add(['monitoring_password', 'username'], jsonData)
+        else:
+            kwargs['server_monitoring'] == 'disabled'
+        
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.ip_address('TACACS_Server', templateVars['TACACS_Server'])
-            validating.validator('login_domain', **kwargs)
-            validating.number_check('Domain_Order', templateVars['Domain_Order'], 0, 17)
-            validating.number_check('Port', templateVars['Port'], 1, 65535)
-            validating.number_check('Retry_Interval', templateVars['Retry_Interval'], 1, 5)
-            validating.sensitive_var('TACACS_Secret', templateVars['TACACS_Secret'])
-            validating.timeout('Timeout', templateVars['Timeout'])
-            validating.values('Auth_Proto', templateVars['Auth_Proto'], ['chap', 'mschap', 'pap'])
-            templateVars['Mgmt_EPG'] = validating.mgmt_epg('Mgmt_EPG', templateVars['Mgmt_EPG'])
-            if not templateVars['Description'] == None:
-                validating.description('Description', templateVars['Description'])
-            if not templateVars['Domain_Descr'] == None:
-                validating.description('Domain_Descr', templateVars['Domain_Descr'])
-            if not templateVars['Login_Domain_Descr'] == None:
-                validating.description('Login_Domain_Descr', templateVars['Login_Domain_Descr'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Check if the secert is in the Environment.  If not Add it.
+        templateVars['jsonData'] = jsonData
+        templateVars["Variable"] = f'tacacs_key_{kwargs["key"]}'
+        sensitive_var_site_group(**templateVars)
+        if templateVars['server_monitoring'] == 'enabled':
+            # Check if the Password is in the Environment.  If not Add it.
+            templateVars["Variable"] = f'tacacs_monitoring_password_{kwargs["monitoring_password"]}'
+            sensitive_var_site_group(**templateVars)
+        templateVars.pop('jsonData')
+        templateVars.pop('Variable')
+
+        # Reset jsonData
+        if not kwargs['server_monitoring'] == 'disabled':
+            jsonData = required_args_remove(['monitoring_password', 'username'], jsonData)
+        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'admin'
+        templateVars['data_type'] = 'tacacs'
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
+        return kwargs['easyDict']
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet

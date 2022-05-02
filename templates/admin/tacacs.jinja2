@@ -1,0 +1,56 @@
+
+  "{{ keys['login_domain'] }}" = {
+{%- for k, v in keys.items() %}
+  {%- if k == 'controller_type' or k == 'class_type' or k == 'name' %}
+  {%- elif k == 'policy_type' or k == 'site_group' or k == 'template_type' %}
+  {%- elif k == 'events' or k == 'faults' or k == 'session_logs' %}
+  {%- elif k == 'key' or k == 'login_domain' or k == 'management_epg' or k == 'management_epg_type' %}
+  {%- elif k == 'monitoring_password' or k == 'username' %}
+  {%- elif k == 'audit_logs' %}
+    {%- if v == None %}
+    {%- else %}
+    {{ k }} = "{{ v }}"
+    {%- endif %}
+    accounting_include = [
+      {
+      {%- for key, value in keys.items() %}
+        {%- if key == 'audit_logs' or key == 'events' or key == 'faults' or key == 'session_logs' %}
+        {{ key }} = {{ value }}
+        {%- endif %}
+      {%- endfor %}
+      }
+    ]
+  {%- elif k == 'hosts' %}
+    hosts = [
+    {%- for item in v.split(',') %}
+      {
+        host                = "{{ item }}"
+        key                 = {{ keys['key'] }}
+        management_epg      = "{{ keys['management_epg'] }}"
+        management_epg_type = "{{ keys['management_epg_type'] }}"
+        order               = {{ loop.index + 5 }}
+      {%- if not loop.last %}
+      },
+      {%- else %}
+      }
+      {%- endif %}
+    {%- endfor %}
+    ]
+  {%- elif k == 'server_monitoring' and v == 'enabled' %}
+    server_monitoring = [
+      {
+          admin_state = "{{ keys['server_monitoring'] }}"
+          password    = {{ keys['monitoring_password'] }}
+          username    = "{{ keys['username'] }}"
+      }
+    ]
+  {%- elif v == None %}
+  {%- elif v | int(-1) != -1 %}
+    {{ k }} = {{ v }}
+  {%- elif v == 'false' or v == 'true' %}
+    {{ k }} = {{ v }}
+  {%- else %}
+    {{ k }} = "{{ v }}"
+  {%- endif %}
+{%- endfor %}
+  }

@@ -8,9 +8,19 @@
                         "properties":{
                             "classes":{
                                 "enum": [
+                                    "admin",
                                     "fabric",
                                     "system_settings",
                                     "tenants"
+                                ]
+                            },
+                            "class.admin":{
+                                "enum": [
+                                    "authentication",
+                                    "configuration_backups",
+                                    "global_security",
+                                    "radius",
+                                    "tacacs"
                                 ]
                             },
                             "class.fabric":{
@@ -34,6 +44,68 @@
                                 "enum": [
                                     "tenants"
                                 ]
+                            },
+                            "easyDict":{
+                                "access":{
+                                    "domains":[],
+                                    "firmware":[],
+                                    "global_policies":[],
+                                    "interface_policies":[],
+                                    "inventory":[],
+                                    "leaf_interface_policy_groups":[],
+                                    "leaf_policy_groups":[],
+                                    "leaf_profiles":[],
+                                    "spine_interface_policy_groups":[],
+                                    "spine_policy_groups":[],
+                                    "spine_profiles":[],
+                                    "vmm":[],
+                                    "vpc_domains":[]
+                                },
+                                "admin":{
+                                    "authentication":[],
+                                    "configuration_backups":[],
+                                    "global_security":[],
+                                    "radius":[],
+                                    "tacacs":[]
+                                },
+                                "fabric":{
+                                    "date_and_time":[],
+                                    "dns_profiles":[],
+                                    "smart_callhome":[],
+                                    "snmp_policies":[],
+                                    "syslog":[]
+                                },
+                                "inventory":{},
+                                "sites":{},
+                                "system_settings":{
+                                    "apic_connectivity_preference":[],
+                                    "bgp_asn":[],
+                                    "bgp_rr":[],
+                                    "global_aes_encryption_settings":[]
+                                },
+                                "tenants":{
+                                    "application_epgs":[],
+                                    "application_profiles":[],
+                                    "bfd_interface_policies":[],
+                                    "bgp_policies":[],
+                                    "bridge_domains":[],
+                                    "dhcp_option_policies":[],
+                                    "dhcp_relay_policies":[],
+                                    "endpoint_retention_policies":[],
+                                    "filters":[],
+                                    "hsrp_policies":[],
+                                    "l3out_floating_svi":[],
+                                    "l3out_hsrp":[],
+                                    "l3out_static_route":[],
+                                    "l3outs":[],
+                                    "ospf_policies":[],
+                                    "route_map_match_rules":[],
+                                    "route_map_set_rules":[],
+                                    "route_maps_for_route_control":[],
+                                    "schemas":[],
+                                    "tenants":[],
+                                    "vrfs":[]
+                                }
                             },
                             "files":{
                                 "description": "Files to Pull down from the Easy ACI Project.",
@@ -167,6 +239,16 @@
                                 "default": "json",
                                 "x-omitempty": true
                             },
+                            "include_secure_fields":{
+                                "description": "Flag to include secure fields.",
+                                "type": "list_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
                             "max_snapshot_count":{
                                 "description": "Maximum Number of Snapshots to allow.",
                                 "type": "integer",
@@ -181,6 +263,7 @@
                             },
                             "required_args": {
                                 "format" : "",
+                                "include_secure_fields" : "",
                                 "max_snapshot_count" : "",
                                 "name" : "",
                                 "scheduled_days" : "",
@@ -497,6 +580,137 @@
                     }
                 ]
             },
+            "admin.Radius":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "authorization_protocol":{
+                                "description": "Authorization Protocol to Use.",
+                                "type": "list_values",
+                                "enum": [
+                                    "chap",
+                                    "mschap",
+                                    "pap"
+                                ],
+                                "default": "pap",
+                                "x-omitempty": true
+                            },
+                            "hosts":{
+                                "description": "List of RADIUS Servers.",
+                                "type": "list_of_hosts",
+                                "x-omitempty": true
+                            },
+                            "key":{
+                                "description": "Secret Key Variable Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "default": 1,
+                                "x-omitempty": true
+                            },
+                            "login_domain":{
+                                "description": "Login Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 10,
+                                "pattern":"^([a-zA-Z0-9][a-zA-Z0-9\\_]+)$",
+                                "x-omitempty": true
+                            },
+                            "monitoring_password":{
+                                "description": "RADIUS Server Monitoring Password Identifier.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "monitoring_password" : "",
+                                "username" : ""
+                            },
+                            "port":{
+                                "description": "RADIUS Port.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 1812,
+                                "x-omitempty": true
+                            },
+                            "radius_key":{
+                                "description": "Radius secret key.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 32,
+                                "pattern":"[\\\\ #]",
+                                "x-omitempty": true
+                            },
+                            "radius_monitoring_password":{
+                                "description": "Radius monitoring password.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 32,
+                                "pattern":"^.*$",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "authorization_protocol" : "",
+                                "hosts" : "",
+                                "key" : "",
+                                "login_domain" : "",
+                                "management_epg" : "",
+                                "management_epg_type" : "",
+                                "port" : "",
+                                "retries" : "",
+                                "server_monitoring" : "",
+                                "site_group" : "",
+                                "timeout" : "",
+                                "type" : ""
+                            },
+                            "retries":{
+                                "description": "Number of Retries to Attempt.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "default": 2,
+                                "x-omitempty": true
+                            },
+                            "server_monitoring":{
+                                "description": "Flag to enable or disable RADIUS Server Monitoring.",
+                                "type": "list_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "timeout":{
+                                "description": "Timeout in Seconds.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 5,
+                                "maximum": 60,
+                                "default": 5,
+                                "x-omitempty": true
+                            },
+                            "type":{
+                                "description": "RADIUS Server Type.",
+                                "type": "list_values",
+                                "enum": [
+                                    "duo",
+                                    "radius",
+                                    "rsa"
+                                ],
+                                "default": "radius",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "admin.remoteHost":{
                 "allOf":[
                     {},
@@ -598,6 +812,129 @@
                                 "minimum": 512,
                                 "maximum": 512,
                                 "pattern":"^.*$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "admin.Tacacs":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "authorization_protocol":{
+                                "description": "Authorization Protocol to Use.",
+                                "type": "list_values",
+                                "enum": [
+                                    "chap",
+                                    "mschap",
+                                    "pap"
+                                ],
+                                "default": "pap",
+                                "x-omitempty": true
+                            },
+                            "hosts":{
+                                "description": "List of TACACS+ Servers.",
+                                "type": "list_of_hosts",
+                                "x-omitempty": true
+                            },
+                            "key":{
+                                "description": "Secret Key Variable Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "default": 1,
+                                "x-omitempty": true
+                            },
+                            "login_domain":{
+                                "description": "Login Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 10,
+                                "pattern":"^([a-zA-Z0-9][a-zA-Z0-9\\_]+)$",
+                                "x-omitempty": true
+                            },
+                            "monitoring_password":{
+                                "description": "TACACS+ Server Monitoring Password Identifier.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "monitoring_password" : "",
+                                "username" : ""
+                            },
+                            "port":{
+                                "description": "TACACS+ Port.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 49,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "audit_logs" : "",
+                                "authorization_protocol" : "",
+                                "events" : "",
+                                "faults" : "",
+                                "hosts" : "",
+                                "key" : "",
+                                "login_domain" : "",
+                                "management_epg" : "",
+                                "management_epg_type" : "",
+                                "port" : "",
+                                "retries" : "",
+                                "server_monitoring" : "",
+                                "session_logs" : "",
+                                "site_group" : "",
+                                "timeout" : ""
+                                },
+                            "retries":{
+                                "description": "Number of Retries to Attempt.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "default": 2,
+                                "x-omitempty": true
+                            },
+                            "server_monitoring":{
+                                "description": "Flag to enable or disable TACACS+ Server Monitoring.",
+                                "type": "list_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "tacacs_key":{
+                                "description": "TACACS+ secret key.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 32,
+                                "pattern":"[\\\\ #]",
+                                "x-omitempty": true
+                            },
+                            "tacacs_monitoring_password":{
+                                "description": "TACACS+ monitoring password.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 32,
+                                "pattern":"^.*$",
+                                "x-omitempty": true
+                            },
+                            "timeout":{
+                                "description": "Timeout in Seconds.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 5,
+                                "maximum": 60,
+                                "default": 5,
                                 "x-omitempty": true
                             }
                         }

@@ -10,6 +10,7 @@ ACI/
 
 # Crash log files
 APIC-IN.xsd
+~$ACI_Base_Workbookv2.xlsx
 crash.log
 
 # Ignore any .tfvars files that are generated automatically for each Terraform run. Most

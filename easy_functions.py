@@ -14,9 +14,11 @@ import os
 import pkg_resources
 import platform
 import re
+import requests
 import subprocess
 import sys
 import stdiomask
+import time
 import validating
 
 #======================================================
@@ -38,6 +40,138 @@ class InvalidArg(Exception):
 
 class LoginFailed(Exception):
     pass
+
+#======================================================
+# Function to run 'terraform plan' and
+# 'terraform apply' in the each folder of the
+# Destination Directory.
+#======================================================
+def apply_aci_terraform(folders):
+
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'  Found the Followng Folders with uncommitted changes:\n')
+    for folder in folders:
+        print(f'  - {folder}')
+    print(f'\n  Beginning Terraform Plan and Apply in each folder.')
+    print(f'\n-----------------------------------------------------------------------------\n')
+
+    time.sleep(7)
+
+    response_p = ''
+    response_a = ''
+    for folder in folders:
+        path = './%s' % (folder)
+        lock_count = 0
+        p = subprocess.Popen(['terraform', 'init', '-plugin-dir=../../../terraform-plugins/providers/'],
+                             cwd=path,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+        for line in iter(p.stdout.readline, b''):
+            print(line)
+            if re.search('does not match configured version', line.decode("utf-8")):
+                lock_count =+ 1
+
+        if lock_count > 0:
+            p = subprocess.Popen(['terraform', 'init', '-upgrade', '-plugin-dir=../../../terraform-plugins/providers/'], cwd=path)
+            p.wait()
+        p = subprocess.Popen(['terraform', 'plan', '-out=main.plan'], cwd=path)
+        p.wait()
+        while True:
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'  Terraform Plan Complete.  Please Review the Plan and confirm if you want')
+            print(f'  to move forward.  "A" to Apply the Plan. "S" to Skip.  "Q" to Quit.')
+            print(f'  Current Working Directory: {folder}')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            response_p = input('  Please Enter ["A", "S" or "Q"]: ')
+            if re.search('^(A|S)$', response_p):
+                break
+            elif response_p == 'Q':
+                exit()
+            else:
+                print(f'\n-----------------------------------------------------------------------------\n')
+                print(f'  A Valid Response is either "A", "S" or "Q"...')
+                print(f'\n-----------------------------------------------------------------------------\n')
+
+        if response_p == 'A':
+            p = subprocess.Popen(['terraform', 'apply', '-parallelism=1', 'main.plan'], cwd=path)
+            p.wait()
+
+        while True:
+            if response_p == 'A':
+                response_p = ''
+                print(f'\n-----------------------------------------------------------------------------\n')
+                print(f'  Terraform Apply Complete.  Please Review for any errors and confirm if you')
+                print(f'  want to move forward.  "M" to Move to the Next Section. "Q" to Quit..')
+                print(f'\n-----------------------------------------------------------------------------\n')
+                response_a = input('  Please Enter ["M" or "Q"]: ')
+            elif response_p == 'S':
+                break
+            if response_a == 'M':
+                break
+            elif response_a == 'Q':
+                exit()
+            else:
+                print(f'\n-----------------------------------------------------------------------------\n')
+                print(f'  A Valid Response is either "M" or "Q"...')
+                print(f'\n-----------------------------------------------------------------------------\n')
+
+#======================================================
+# Function to Check the Git Status of the Folders
+#======================================================
+def check_git_status():
+    random_folders = []
+    git_path = './'
+    result = subprocess.Popen(['python3', '-m', 'git_status_checker'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while(True):
+        # returns None while subprocess is running
+        retcode = result.poll()
+        line = result.stdout.readline()
+        line = line.decode('utf-8')
+        if re.search(r'M (.*/).*.tf\n', line):
+            folder = re.search(r'M (.*/).*.tf\n', line).group(1)
+            if not re.search(r'ACI.templates', folder):
+                if not folder in random_folders:
+                    random_folders.append(folder)
+        elif re.search(r'\?\? (.*/).*.tf\n', line):
+            folder = re.search(r'\?\? (.*/).*.tf\n', line).group(1)
+            if not re.search(r'ACI.templates', folder):
+                if not folder in random_folders:
+                    random_folders.append(folder)
+        elif re.search(r'\?\? (ACI/.*/)\n', line):
+            folder = re.search(r'\?\? (ACI/.*/)\n', line).group(1)
+            if not (re.search(r'ACI.templates', folder) or re.search(r'\.terraform', folder)):
+                if os.path.isdir(folder):
+                    folder = [folder]
+                    random_folders = random_folders + folder
+                else:
+                    group_x = [os.path.join(folder, o) for o in os.listdir(folder) if os.path.isdir(os.path.join(folder,o))]
+                    random_folders = random_folders + group_x
+        if retcode is not None:
+            break
+
+    if not random_folders:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   There were no uncommitted changes in the environment.')
+        print(f'   Proceedures Complete!!! Closing Environment and Exiting Script.')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+    strict_folders = []
+    folder_order = ['Access', 'System', 'Tenant_common', 'Tenant_infra', 'Tenant_mgmt', 'Fabric', 'Admin', 'VLANs', 'Tenant_infra',]
+    for folder in folder_order:
+        for fx in random_folders:
+            if folder in fx:
+                if 'ACI' in folder:
+                    strict_folders.append(fx)
+    for folder in strict_folders:
+        if folder in random_folders:
+            random_folders.remove(folder)
+    for folder in random_folders:
+        if 'ACI' in folder:
+            strict_folders.append(folder)
+
+    # print(strict_folders)
+    return strict_folders
 
 #======================================================
 # Function to Count the Number of Keys/Columns
@@ -275,6 +409,216 @@ def findVars(ws, func, rows, count):
         var_dict[vcount]['row'] = i + vcount - 1
         vcount += 1
     return var_dict
+
+#======================================================
+# Function to Get User Password
+#======================================================
+def get_user_pass():
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'   Beginning Proceedures to Apply Terraform Resources to the environment')
+    print(f'\n-----------------------------------------------------------------------------\n')
+
+    user = input('Enter APIC username: ')
+    while True:
+        try:
+            password = stdiomask.getpass(prompt='Enter APIC password: ')
+            break
+        except Exception as e:
+            print('Something went wrong. Error received: {}'.format(e))
+
+    os.environ['TF_VAR_aciUser'] = '%s' % (user)
+    os.environ['TF_VAR_aciPass'] = '%s' % (password)
+
+#======================================================
+# Function to Merge Easy ACI Repository to Dest Folder
+#======================================================
+def merge_easy_aci_repository(easy_jsonData):
+    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
+    
+    # Obtain Operating System and Get TF_DEST_DIR variable from Environment
+    opSystem = platform.system()
+    if os.environ.get('TF_DEST_DIR') is None:
+        tfDir = 'Intersight'
+    else:
+        tfDir = os.environ.get('TF_DEST_DIR')
+
+    # Get All sub-folders from the TF_DEST_DIR
+    folders = []
+    for root, dirs, files in os.walk(tfDir):
+        for name in dirs:
+            # print(os.path.join(root, name))
+            folders.append(os.path.join(root, name))
+    folders.sort()
+
+    # Remove the First Level Folders from the List
+    for folder in folders:
+        print(f'folder is {folder}')
+        if '/' in folder:
+            x = folder.split('/')
+            if len(x) == 2:
+                folders.remove(folder)
+
+    # Get the Latest Release Tag for the terraform-intersight-imm repository
+    url = f'https://github.com/terraform-cisco-modules/terraform-easy-aci/tags/'
+    r = requests.get(url, stream=True)
+    repoVer = 'BLANK'
+    stringMatch = False
+    while stringMatch == False:
+        for line in r.iter_lines():
+            toString = line.decode("utf-8")
+            if re.search('/releases/tag/(\d+\.\d+\.\d+)', toString):
+                repoVer = re.search('/releases/tag/(\d+\.\d+\.\d+)', toString).group(1)
+                break
+        stringMatch = True
+
+    for folder in folders:
+        folderVer = "0.0.0"
+        # Get the version.txt file if exist to compare to the latest Git Release of the repository
+        if opSystem == 'Windows':
+            if os.path.isfile(f'{folder}\\version.txt'):
+                with open(f'{folder}\\version.txt') as f:
+                    folderVer = f.readline().rstrip()
+        else:
+            if os.path.isfile(f'{folder}/version.txt'):
+                with open(f'{folder}/version.txt') as f:
+                    folderVer = f.readline().rstrip()
+        
+        # Determine the Type of Folder. i.e. Is this for Access Policies
+        if os.path.isdir(folder):
+            if opSystem == 'Windows':
+                folder_length = len(folder.split('\\'))
+                folder_type = folder.split('\\')[folder_length -1]
+            else:
+                folder_length = len(folder.split('/'))
+                folder_type = folder.split('/')[folder_length -1]
+            if re.search('^tenant_', folder_type):
+                folder_type = 'tenant'
+            
+            # Get List of Files to download from jsonData
+            files = jsonData['files'][folder_type]
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+            print(f'\n  Beginning Easy ACI Module Downloads for "{folder}"\n')
+
+            # Run the process to check for the files in the folder and if it doesn't exist download from Github
+            for file in files:
+                git_url = 'https://raw.github.com/terraform-cisco-modules/terraform-easy-aci/master/modules'
+                if opSystem == 'Windows':
+                    dest_file = f'{folder}\\{file}'
+                else:
+                    dest_file = f'{folder}/{file}'
+                if not os.path.isfile(dest_file):
+                    print(f'  Downloading "{file}"')
+                    url = f'{git_url}/{folder_type}/{file}'
+                    r = requests.get(url)
+                    open(dest_file, 'wb').write(r.content)
+                    print(f'  "{file}" Download Complete!\n')
+                else:
+                    if opSystem == 'Windows':
+                        if not os.path.isfile(f'{folder}\\version.txt'):
+                            print(f'  Downloading "{file}"')
+                            url = f'{git_url}/{folder_type}/{file}'
+                            r = requests.get(url)
+                            open(dest_file, 'wb').write(r.content)
+                            print(f'  "{file}" Download Complete!\n')
+                        elif not os.path.isfile(f'{folder}\\version.txt'):
+                            print(f'  Downloading "{file}"')
+                            url = f'{git_url}/{folder_type}/{file}'
+                            r = requests.get(url)
+                            open(dest_file, 'wb').write(r.content)
+                            print(f'  "{file}" Download Complete!\n')
+                        elif os.path.isfile(f'{folder}\\version.txt'):
+                            if not folderVer == repoVer:
+                                print(f'  Downloading "{file}"')
+                                url = f'{git_url}/{folder_type}/{file}'
+                                r = requests.get(url)
+                                open(dest_file, 'wb').write(r.content)
+                                print(f'  "{file}" Download Complete!\n')
+                    else:
+                        if not os.path.isfile(f'{folder}/version.txt'):
+                            print(f'  Downloading "{file}"')
+                            url = f'{git_url}/{folder_type}/{file}'
+                            r = requests.get(url)
+                            open(dest_file, 'wb').write(r.content)
+                            print(f'  "{file}" Download Complete!\n')
+                        elif not os.path.isfile(f'{folder}/version.txt'):
+                            print(f'  Downloading "{file}"')
+                            url = f'{git_url}/{folder_type}/{file}'
+                            r = requests.get(url)
+                            open(dest_file, 'wb').write(r.content)
+                            print(f'  "{file}" Download Complete!\n')
+                        elif os.path.isfile(f'{folder}/version.txt'):
+                            if not folderVer == repoVer:
+                                print(f'  Downloading "{file}"')
+                                url = f'{git_url}/{folder_type}/{file}'
+                                r = requests.get(url)
+                                open(dest_file, 'wb').write(r.content)
+                                print(f'  "{file}" Download Complete!\n')
+
+            # Create the version.txt file to prevent redundant downloads for the same Github release
+            if not os.path.isfile(f'{folder}/version.txt'):
+                print(f'* Creating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
+                open(f'{folder}/version.txt', 'w').write('%s\n' % (repoVer))
+            elif not folderVer == repoVer:
+                print(f'* Updating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
+                open(f'{folder}/version.txt', 'w').write('%s\n' % (repoVer))
+
+            print(f'\n  Completed Easy IMM Module Downloads for "{folder}"')
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+
+    # Loop over the folder list again and create blank auto.tfvars files for anything that doesn't already exist
+    for folder in folders:
+        if os.path.isdir(folder):
+            if opSystem == 'Windows':
+                folder_length = len(folder.split('\\'))
+                folder_type = folder.split('\\')[folder_length -1]
+            else:
+                folder_length = len(folder.split('/'))
+                folder_type = folder.split('/')[folder_length -1]
+            if re.search('^tenant_', folder_type):
+                folder_type = 'tenant'
+            files = jsonData['files'][folder_type]
+            removeList = jsonData['remove_files']
+            for xRemove in removeList:
+                if xRemove in files:
+                    files.remove(xRemove)
+            for file in files:
+                varFiles = f"{file.split('.')[0]}.auto.tfvars"
+                if opSystem == 'Windows':
+                    dest_file = f'{folder}\\{varFiles}'
+                else:    
+                    dest_file = f'{folder}/{varFiles}'
+                if not os.path.isfile(dest_file):
+                    wr_file = open(dest_file, 'w')
+                    x = file.split('.')
+                    x2 = x[0].split('_')
+                    varList = []
+                    for var in x2:
+                        var = var.capitalize()
+                        varList.append(var)
+                    varDescr = ' '.join(varList)
+                    varDescr = varDescr + '- Variables'
+
+                    wrString = f'#______________________________________________\n#\n# {varDescr}\n'\
+                        '#______________________________________________\n'\
+                        '\n%s = {\n}\n' % (file.split('.')[0])
+                    wr_file.write(wrString)
+                    wr_file.close()
+
+            # Run terraform fmt to cleanup the formating for all of the auto.tfvar files and tf files if needed
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+            print(f'  Running "terraform fmt" in folder "{folder}",')
+            print(f'  to correct variable formatting!')
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+            p = subprocess.Popen(
+                ['terraform', 'fmt', folder],
+                stdout = subprocess.PIPE,
+                stderr = subprocess.PIPE
+            )
+            print('Format updated for the following Files:')
+            for line in iter(p.stdout.readline, b''):
+                line = line.decode("utf-8")
+                line = line.strip()
+                print(f'- {line}')
 
 #======================================================
 # Function to Create Terraform auto.tfvars files
@@ -729,6 +1073,12 @@ def sensitive_var_value(**kwargs):
                     x = sensitive_var.split('_')
                     varType = '%s %s' % (x[0].capitalize(), x[1].capitalize())
                     varTitle = f'{varType}'
+                elif 'radius_key' in sensitive_var:
+                    sKey = 'radius_key'
+                    varTitle = 'The RADIUS shared secret cannot contain backslashes, space, or hashtag "#".'
+                elif 'radius_monitoring_password' in sensitive_var:
+                    sKey = 'radius_monitoring_password'
+                    varTitle = 'RADIUS Monitoring Password.'
                 elif 'snmp_community' in sensitive_var:
                     sKey = 'snmp_community'
                     varTitle = 'The Community may only contain letters, numbers and the special characters of \
@@ -736,6 +1086,12 @@ def sensitive_var_value(**kwargs):
                 elif 'smtp_password' in sensitive_var:
                     sKey = 'smtp_password'
                     varTitle = 'Smart CallHome SMTP Server Password'
+                elif 'tacacs_key' in sensitive_var:
+                    sKey = 'tacacs_key'
+                    varTitle = 'The TACACS+ shared secret cannot contain backslashes, space, or hashtag "#".'
+                elif 'tacacs_monitoring_password' in sensitive_var:
+                    sKey = 'tacacs_monitoring_password'
+                    varTitle = 'TACACS+ Monitoring Password.'
                 else:
                     print(sensitive_var)
                     print('Could not Match Sensitive Value Type')
@@ -1211,7 +1567,7 @@ def write_to_site(templateVars, **kwargs):
 
     # Process the template
     if 'tenants' in class_type:
-        kwargs["dest_dir"] = 'tenant_%s' % (kwargs['tenant'])
+        kwargs["dest_dir"] = 'tenant_%s' % (templateVars['tenant'])
     else:
         kwargs["dest_dir"] = '%s' % (class_type)
     kwargs["dest_file"] = '%s.auto.tfvars' % (kwargs["tfvars_file"])

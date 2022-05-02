@@ -238,7 +238,13 @@ def length_and_regex_sensitive(pattern, varName, varValue, minimum, maximum):
         print(f'   !!! {varName} is Invalid!!!')
         print(f'   Length Must be between {minimum} and {maximum} characters.')
         print(f'\n--------------------------------------------------------------------------------------\n')
-    if not re.search(pattern, varValue):
+    if 'hashtag' in varName:
+        if re.search(pattern, varValue):
+            invalid_count += 1
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   The Shared Secret cannot contain backslash, space or hashtag.')
+            print(f'\n-----------------------------------------------------------------------------\n')
+    elif not re.search(pattern, varValue):
         invalid_count += 1
         print(f'\n--------------------------------------------------------------------------------------\n')
         print(f'   !!! Invalid Characters in {varName}.  The allowed characters are:')

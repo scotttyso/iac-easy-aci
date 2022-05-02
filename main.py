@@ -11,19 +11,16 @@ It uses argparse to take in the following CLI arguments:
 #======================================================
 from class_tenants import tenants
 from classes import access, admin, fabric, site_policies, system_settings
-from easy_functions import countKeys, findKeys, findVars
+from easy_functions import apply_aci_terraform, check_git_status
+from easy_functions import countKeys, findKeys, findVars, get_user_pass
+from easy_functions import merge_easy_aci_repository
 from easy_functions import read_easy_jsonData, read_in
 from easy_functions import stdout_log
 from pathlib import Path
 import argparse
 import json
 import os
-import platform
 import re
-import requests
-import stdiomask
-import subprocess
-import time
 
 #=====================================================================
 # Note: This is simply to make it so the classes don't appear Unused.
@@ -43,7 +40,6 @@ workspace_dict = {}
 #======================================================
 access_regex = re.compile('^(aep_profile|bpdu|cdp|(fibre|port)_(channel|security)|l2_interface|l3_domain|(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|phys_dom|stp|vlan_pool)$')
 admin_regex = re.compile('^(auth|export_policy|radius|remote_host|security|tacacs)$')
-admin_regex = re.compile('^(auth|export_policy|remote_host|security)$')
 system_settings_regex = re.compile('^(apic_preference|bgp_(asn|rr)|global_aes)$')
 bridge_domains_regex = re.compile('^add_bd$')
 contracts_regex = re.compile('(^(contract|filter|subject)_(add|entry|to_epg)$)')
@@ -54,345 +50,7 @@ l3out_regex = re.compile('^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$')
 mgmt_tenant_regex = re.compile('^(add_bd|mgmt_epg|oob_ext_epg)$')
 sites_regex = re.compile('^(site_id|group_id)$')
 tenants_regex = re.compile('^((tenant|vrf)_add|vrf_community)$')
-
-#======================================================
-# Function to run 'terraform plan' and
-# 'terraform apply' in the each folder of the
-# Destination Directory.
-#======================================================
-def apply_aci_terraform(folders):
-
-    print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'  Found the Followng Folders with uncommitted changes:\n')
-    for folder in folders:
-        print(f'  - {folder}')
-    print(f'\n  Beginning Terraform Plan and Apply in each folder.')
-    print(f'\n-----------------------------------------------------------------------------\n')
-
-    time.sleep(7)
-
-    response_p = ''
-    response_a = ''
-    for folder in folders:
-        path = './%s' % (folder)
-        lock_count = 0
-        p = subprocess.Popen(['terraform', 'init', '-plugin-dir=../../../terraform-plugins/providers/'],
-                             cwd=path,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        for line in iter(p.stdout.readline, b''):
-            print(line)
-            if re.search('does not match configured version', line.decode("utf-8")):
-                lock_count =+ 1
-
-        if lock_count > 0:
-            p = subprocess.Popen(['terraform', 'init', '-upgrade', '-plugin-dir=../../../terraform-plugins/providers/'], cwd=path)
-            p.wait()
-        p = subprocess.Popen(['terraform', 'plan', '-out=main.plan'], cwd=path)
-        p.wait()
-        while True:
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'  Terraform Plan Complete.  Please Review the Plan and confirm if you want')
-            print(f'  to move forward.  "A" to Apply the Plan. "S" to Skip.  "Q" to Quit.')
-            print(f'  Current Working Directory: {folder}')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            response_p = input('  Please Enter ["A", "S" or "Q"]: ')
-            if re.search('^(A|S)$', response_p):
-                break
-            elif response_p == 'Q':
-                exit()
-            else:
-                print(f'\n-----------------------------------------------------------------------------\n')
-                print(f'  A Valid Response is either "A", "S" or "Q"...')
-                print(f'\n-----------------------------------------------------------------------------\n')
-
-        if response_p == 'A':
-            p = subprocess.Popen(['terraform', 'apply', '-parallelism=1', 'main.plan'], cwd=path)
-            p.wait()
-
-        while True:
-            if response_p == 'A':
-                response_p = ''
-                print(f'\n-----------------------------------------------------------------------------\n')
-                print(f'  Terraform Apply Complete.  Please Review for any errors and confirm if you')
-                print(f'  want to move forward.  "M" to Move to the Next Section. "Q" to Quit..')
-                print(f'\n-----------------------------------------------------------------------------\n')
-                response_a = input('  Please Enter ["M" or "Q"]: ')
-            elif response_p == 'S':
-                break
-            if response_a == 'M':
-                break
-            elif response_a == 'Q':
-                exit()
-            else:
-                print(f'\n-----------------------------------------------------------------------------\n')
-                print(f'  A Valid Response is either "M" or "Q"...')
-                print(f'\n-----------------------------------------------------------------------------\n')
-
-#======================================================
-# Function to Check the Git Status of the Folders
-#======================================================
-def check_git_status():
-    random_folders = []
-    git_path = './'
-    result = subprocess.Popen(['python3', '-m', 'git_status_checker'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    while(True):
-        # returns None while subprocess is running
-        retcode = result.poll()
-        line = result.stdout.readline()
-        line = line.decode('utf-8')
-        if re.search(r'M (.*/).*.tf\n', line):
-            folder = re.search(r'M (.*/).*.tf\n', line).group(1)
-            if not re.search(r'ACI.templates', folder):
-                if not folder in random_folders:
-                    random_folders.append(folder)
-        elif re.search(r'\?\? (.*/).*.tf\n', line):
-            folder = re.search(r'\?\? (.*/).*.tf\n', line).group(1)
-            if not re.search(r'ACI.templates', folder):
-                if not folder in random_folders:
-                    random_folders.append(folder)
-        elif re.search(r'\?\? (ACI/.*/)\n', line):
-            folder = re.search(r'\?\? (ACI/.*/)\n', line).group(1)
-            if not (re.search(r'ACI.templates', folder) or re.search(r'\.terraform', folder)):
-                if os.path.isdir(folder):
-                    folder = [folder]
-                    random_folders = random_folders + folder
-                else:
-                    group_x = [os.path.join(folder, o) for o in os.listdir(folder) if os.path.isdir(os.path.join(folder,o))]
-                    random_folders = random_folders + group_x
-        if retcode is not None:
-            break
-
-    if not random_folders:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   There were no uncommitted changes in the environment.')
-        print(f'   Proceedures Complete!!! Closing Environment and Exiting Script.')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-    strict_folders = []
-    folder_order = ['Access', 'System', 'Tenant_common', 'Tenant_infra', 'Tenant_mgmt', 'Fabric', 'Admin', 'VLANs', 'Tenant_infra',]
-    for folder in folder_order:
-        for fx in random_folders:
-            if folder in fx:
-                if 'ACI' in folder:
-                    strict_folders.append(fx)
-    for folder in strict_folders:
-        if folder in random_folders:
-            random_folders.remove(folder)
-    for folder in random_folders:
-        if 'ACI' in folder:
-            strict_folders.append(folder)
-
-    # print(strict_folders)
-    return strict_folders
-
-#======================================================
-# Function to Get User Password
-#======================================================
-def get_user_pass():
-    print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Beginning Proceedures to Apply Terraform Resources to the environment')
-    print(f'\n-----------------------------------------------------------------------------\n')
-
-    user = input('Enter APIC username: ')
-    while True:
-        try:
-            password = stdiomask.getpass(prompt='Enter APIC password: ')
-            break
-        except Exception as e:
-            print('Something went wrong. Error received: {}'.format(e))
-
-    os.environ['TF_VAR_aciUser'] = '%s' % (user)
-    os.environ['TF_VAR_aciPass'] = '%s' % (password)
-
-def merge_easy_aci_repository(easy_jsonData):
-    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
-    
-    # Obtain Operating System and Get TF_DEST_DIR variable from Environment
-    opSystem = platform.system()
-    if os.environ.get('TF_DEST_DIR') is None:
-        tfDir = 'Intersight'
-    else:
-        tfDir = os.environ.get('TF_DEST_DIR')
-
-    # Get All sub-folders from the TF_DEST_DIR
-    folders = []
-    for root, dirs, files in os.walk(tfDir):
-        for name in dirs:
-            # print(os.path.join(root, name))
-            folders.append(os.path.join(root, name))
-    folders.sort()
-
-    # Remove the First Level Folders from the List
-    for folder in folders:
-        print(f'folder is {folder}')
-        if '/' in folder:
-            x = folder.split('/')
-            if len(x) == 2:
-                folders.remove(folder)
-
-    # Get the Latest Release Tag for the terraform-intersight-imm repository
-    url = f'https://github.com/terraform-cisco-modules/terraform-easy-aci/tags/'
-    r = requests.get(url, stream=True)
-    repoVer = 'BLANK'
-    stringMatch = False
-    while stringMatch == False:
-        for line in r.iter_lines():
-            toString = line.decode("utf-8")
-            if re.search('/releases/tag/(\d+\.\d+\.\d+)', toString):
-                repoVer = re.search('/releases/tag/(\d+\.\d+\.\d+)', toString).group(1)
-                break
-        stringMatch = True
-
-    for folder in folders:
-        folderVer = "0.0.0"
-        # Get the version.txt file if exist to compare to the latest Git Release of the repository
-        if opSystem == 'Windows':
-            if os.path.isfile(f'{folder}\\version.txt'):
-                with open(f'{folder}\\version.txt') as f:
-                    folderVer = f.readline().rstrip()
-        else:
-            if os.path.isfile(f'{folder}/version.txt'):
-                with open(f'{folder}/version.txt') as f:
-                    folderVer = f.readline().rstrip()
-        
-        # Determine the Type of Folder. i.e. Is this for Access Policies
-        if os.path.isdir(folder):
-            if opSystem == 'Windows':
-                folder_length = len(folder.split('\\'))
-                folder_type = folder.split('\\')[folder_length -1]
-            else:
-                folder_length = len(folder.split('/'))
-                folder_type = folder.split('/')[folder_length -1]
-            if re.search('^tenant_', folder_type):
-                folder_type = 'tenant'
-            
-            # Get List of Files to download from jsonData
-            files = jsonData['files'][folder_type]
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'\n  Beginning Easy ACI Module Downloads for "{folder}"\n')
-
-            # Run the process to check for the files in the folder and if it doesn't exist download from Github
-            for file in files:
-                git_url = 'https://raw.github.com/terraform-cisco-modules/terraform-easy-aci/master/modules'
-                if opSystem == 'Windows':
-                    dest_file = f'{folder}\\{file}'
-                else:
-                    dest_file = f'{folder}/{file}'
-                if not os.path.isfile(dest_file):
-                    print(f'  Downloading "{file}"')
-                    url = f'{git_url}/{folder_type}/{file}'
-                    r = requests.get(url)
-                    open(dest_file, 'wb').write(r.content)
-                    print(f'  "{file}" Download Complete!\n')
-                else:
-                    if opSystem == 'Windows':
-                        if not os.path.isfile(f'{folder}\\version.txt'):
-                            print(f'  Downloading "{file}"')
-                            url = f'{git_url}/{folder_type}/{file}'
-                            r = requests.get(url)
-                            open(dest_file, 'wb').write(r.content)
-                            print(f'  "{file}" Download Complete!\n')
-                        elif not os.path.isfile(f'{folder}\\version.txt'):
-                            print(f'  Downloading "{file}"')
-                            url = f'{git_url}/{folder_type}/{file}'
-                            r = requests.get(url)
-                            open(dest_file, 'wb').write(r.content)
-                            print(f'  "{file}" Download Complete!\n')
-                        elif os.path.isfile(f'{folder}\\version.txt'):
-                            if not folderVer == repoVer:
-                                print(f'  Downloading "{file}"')
-                                url = f'{git_url}/{folder_type}/{file}'
-                                r = requests.get(url)
-                                open(dest_file, 'wb').write(r.content)
-                                print(f'  "{file}" Download Complete!\n')
-                    else:
-                        if not os.path.isfile(f'{folder}/version.txt'):
-                            print(f'  Downloading "{file}"')
-                            url = f'{git_url}/{folder_type}/{file}'
-                            r = requests.get(url)
-                            open(dest_file, 'wb').write(r.content)
-                            print(f'  "{file}" Download Complete!\n')
-                        elif not os.path.isfile(f'{folder}/version.txt'):
-                            print(f'  Downloading "{file}"')
-                            url = f'{git_url}/{folder_type}/{file}'
-                            r = requests.get(url)
-                            open(dest_file, 'wb').write(r.content)
-                            print(f'  "{file}" Download Complete!\n')
-                        elif os.path.isfile(f'{folder}/version.txt'):
-                            if not folderVer == repoVer:
-                                print(f'  Downloading "{file}"')
-                                url = f'{git_url}/{folder_type}/{file}'
-                                r = requests.get(url)
-                                open(dest_file, 'wb').write(r.content)
-                                print(f'  "{file}" Download Complete!\n')
-
-            # Create the version.txt file to prevent redundant downloads for the same Github release
-            if not os.path.isfile(f'{folder}/version.txt'):
-                print(f'* Creating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
-                open(f'{folder}/version.txt', 'w').write('%s\n' % (repoVer))
-            elif not folderVer == repoVer:
-                print(f'* Updating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
-                open(f'{folder}/version.txt', 'w').write('%s\n' % (repoVer))
-
-            print(f'\n  Completed Easy IMM Module Downloads for "{folder}"')
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-
-    # Loop over the folder list again and create blank auto.tfvars files for anything that doesn't already exist
-    for folder in folders:
-        if os.path.isdir(folder):
-            if opSystem == 'Windows':
-                folder_length = len(folder.split('\\'))
-                folder_type = folder.split('\\')[folder_length -1]
-            else:
-                folder_length = len(folder.split('/'))
-                folder_type = folder.split('/')[folder_length -1]
-            if re.search('^tenant_', folder_type):
-                folder_type = 'tenant'
-            files = jsonData['files'][folder_type]
-            removeList = jsonData['remove_files']
-            for xRemove in removeList:
-                if xRemove in files:
-                    files.remove(xRemove)
-            for file in files:
-                varFiles = f"{file.split('.')[0]}.auto.tfvars"
-                if opSystem == 'Windows':
-                    dest_file = f'{folder}\\{varFiles}'
-                else:    
-                    dest_file = f'{folder}/{varFiles}'
-                if not os.path.isfile(dest_file):
-                    wr_file = open(dest_file, 'w')
-                    x = file.split('.')
-                    x2 = x[0].split('_')
-                    varList = []
-                    for var in x2:
-                        var = var.capitalize()
-                        varList.append(var)
-                    varDescr = ' '.join(varList)
-                    varDescr = varDescr + '- Variables'
-
-                    wrString = f'#______________________________________________\n#\n# {varDescr}\n'\
-                        '#______________________________________________\n'\
-                        '\n%s = {\n}\n' % (file.split('.')[0])
-                    wr_file.write(wrString)
-                    wr_file.close()
-
-            # Run terraform fmt to cleanup the formating for all of the auto.tfvar files and tf files if needed
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'  Running "terraform fmt" in folder "{folder}",')
-            print(f'  to correct variable formatting!')
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            p = subprocess.Popen(
-                ['terraform', 'fmt', folder],
-                stdout = subprocess.PIPE,
-                stderr = subprocess.PIPE
-            )
-            print('Format updated for the following Files:')
-            for line in iter(p.stdout.readline, b''):
-                line = line.decode("utf-8")
-                line = line.strip()
-                print(f'- {line}')
+tenants_regex = re.compile('^((tenant)_add)$')
 
 #======================================================
 # Function to Read the Access Worksheet
@@ -632,69 +290,8 @@ def main():
     wb = read_in(excel_workbook)
 
     # Create Dictionary for Worksheets in the Workbook
-    easyDict = {
-        'access':{
-            'domains':[],
-            'firmware':[],
-            'global_policies':[],
-            'interface_policies':[],
-            'inventory':[],
-            'leaf_interface_policy_groups':[],
-            'leaf_policy_groups':[],
-            'leaf_profiles':[],
-            'spine_interface_policy_groups':[],
-            'spine_policy_groups':[],
-            'spine_profiles':[],
-            'vmm':[],
-            'vpc_domains':[],
-        },
-        'admin':{
-            'authentication':[],
-            'configuration_backups':[],
-            'global_security':[],
-            'radius':[],
-            'tacacs':[],
-        },
-        'fabric':{
-            'date_and_time':[],
-            'dns_profiles':[],
-            'smart_callhome':[],
-            'snmp_policies':[],
-            'syslog':[],
-        },
-        'inventory':{},
-        'sites':{},
-        'system_settings':{
-            'apic_connectivity_preference':[],
-            'bgp_asn':[],
-            'bgp_rr':[],
-            'global_aes_encryption_settings':[]
-        },
-        'tenants':{
-            'application_epgs':[],
-            'application_profiles':[],
-            'bfd_interface_policies':[],
-            'bgp_policies':[],
-            'bridge_domains':[],
-            'dhcp_option_policies':[],
-            'dhcp_relay_policies':[],
-            'endpoint_retention_policies':[],
-            'filters':[],
-            'hsrp_policies':[],
-            'l3out_floating_svi':[],
-            'l3out_hsrp':[],
-            'l3out_static_route':[],
-            'l3outs':[],
-            'ospf_policies':[],
-            'route_map_match_rules':[],
-            'route_map_set_rules':[],
-            'route_maps_for_route_control':[],
-            'schemas':[],
-            'tenants':[],
-            'vrfs':[],
-        },
-        'wb':wb
-    }
+    easyDict = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['easyDict']
+    easyDict['wb'] = wb
 
     # Run Proceedures for Worksheets in the Workbook
     easyDict = process_sites(easyDict, easy_jsonData, wb)
@@ -713,22 +310,19 @@ def main():
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     else:
-        easyDict = process_system_settings(easyDict, easy_jsonData, wb)
-        easyDict = process_fabric(easyDict, easy_jsonData, wb)
-        easyDict = process_admin(easyDict, easy_jsonData, wb)
-        # easyDict = process_tenants(easyDict, easy_jsonData, wb)
-        # easyDict = process_epgs(easyDict, easy_jsonData, wb)
-        # easyDict = process_bridge_domains(easyDict, easy_jsonData, wb)
-        # easyDict = process_access(easyDict, easy_jsonData, wb)
-        # easyDict = process_inventory(easyDict, easy_jsonData, wb)
-        # easyDict = process_l3out(easyDict, easy_jsonData, wb)
-        # easyDict = process_contracts(easyDict, easy_jsonData, wb)
+        process_list = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['classes']['enum']
+        for x in process_list:
+            process_type = f'process_{x}'
+            eval(f"{process_type}(easyDict, easy_jsonData, wb)")
+
+    easyDict.pop('wb')
+    # print(json.dumps(easyDict['admin'], indent = 4))
+    # exit()
 
     # Begin Proceedures to Create files
+    easyDict['wb'] = wb
     read_easy_jsonData(easy_jsonData, **easyDict)
     merge_easy_aci_repository(easy_jsonData)
-    easyDict.pop('wb')
-    # print(json.dumps(easyDict, indent = 4))
 
     folders = check_git_status()
     get_user_pass()
