@@ -255,28 +255,10 @@ def length_and_regex_sensitive(pattern, varName, varValue, minimum, maximum):
     else:
         return False
 
-def link_level(row_num, ws, var, var_value):
-    if not re.search('(_Auto|_NoNeg)$', var_value):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, value {var_value}:')
-        print(f'   Please Select a valid Link Level from the drop-down menu.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-    if not re.search('^(100M_|1G_|(1|4|5)0G_|25G_|[1-2]00G_|400G_|inherit_)', var_value):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, value {var_value}:')
-        print(f'   Please Select a valid Link Level from the drop-down menu.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
 def list_values(var, jsonData, **kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']
-    if re.search('^(provider_)?version$', var) and ws.title == 'Sites':
-        ctype = kwargs['controller_type']
-        varList = jsonData[f'{var}_{ctype}']['enum']
-    else:
-        varList = jsonData[var]['enum']
+    varList = jsonData[var]['enum']
     varValue = kwargs[var]
     match_count = 0
     for x in varList:
@@ -289,26 +271,6 @@ def list_values(var, jsonData, **kwargs):
         for x in varList:
             print(f'    - {x}')
         print(f'    Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def login_type(row_num, ws, var1, var1_value, var2, var2_value):
-    login_type_count = 0
-    if var1_value == 'console':
-        if not re.fullmatch('^(local|ldap|radius|tacacs|rsa)$', var2_value):
-            login_type_count += 1
-    elif var1_value == 'default':
-        if not re.fullmatch('^(local|ldap|radius|tacacs|rsa|saml)$', var2_value):
-            login_type_count += 1
-    if not login_type_count == 0:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error in Worksheet {ws.title} Row {row_num}.  The Login Domain Type should be')
-        print(f'   one of the following:')
-        if var1_value == 'console':
-            print(f'       [local|ldap|radius|tacacs|rsa]')
-        elif var1_value == 'default':
-            print(f'       [local|ldap|radius|tacacs|rsa|saml]')
-        print(f'   "{var2_value}" did not match one of these types.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
@@ -424,19 +386,27 @@ def phone_number(var, **kwargs):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-def secret(row_num, ws, var, var_value):
-    if not validators.length(var_value, min=1, max=32):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num}, {var}, {var_value}')
-        print(f'   The Shared Secret Length must be between 1 and 32 characters.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-    if re.search('[\\\\ #]+', var_value):
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num}, {var}, {var_value}')
-        print(f'   The Shared Secret cannot contain backslash, space or hashtag.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
+def string_list(var, jsonData, **kwargs):
+    # Get Variables from Library
+    minimum = jsonData[var]['minimum']
+    maximum = jsonData[var]['maximum']
+    pattern = jsonData[var]['pattern']
+    row_num = kwargs['row_num']
+    varValues = kwargs[var]
+    ws = kwargs['ws']
+    for varValue in varValues.split(','):
+        if not (re.fullmatch(pattern,  varValue) and validators.length(
+            str(varValue), min=int(minimum), max=int(maximum))):
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. ')
+            print(f'   "{varValue}" is an invalid Value...')
+            print(f'   It failed one of the complexity tests:')
+            print(f'    - Min Length {maximum}')
+            print(f'    - Max Length {maximum}')
+            print(f'    - Regex {pattern}')
+            print(f'    Exiting....')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
 
 def string_pattern(var, jsonData, **kwargs):
     # Get Variables from Library

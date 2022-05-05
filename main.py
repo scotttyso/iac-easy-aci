@@ -13,7 +13,7 @@ from class_tenants import tenants
 from classes import access, admin, fabric, site_policies, system_settings
 from easy_functions import apply_aci_terraform, check_git_status
 from easy_functions import countKeys, findKeys, findVars, get_user_pass
-from easy_functions import merge_easy_aci_repository
+from easy_functions import get_latest_versions, merge_easy_aci_repository
 from easy_functions import read_easy_jsonData, read_in
 from easy_functions import stdout_log
 from pathlib import Path
@@ -50,7 +50,8 @@ l3out_regex = re.compile('^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$')
 mgmt_tenant_regex = re.compile('^(add_bd|mgmt_epg|oob_ext_epg)$')
 sites_regex = re.compile('^(site_id|group_id)$')
 tenants_regex = re.compile('^((tenant|vrf)_add|vrf_community)$')
-tenants_regex = re.compile('^((tenant)_add)$')
+tenants_regex = re.compile('^((tenant)_block)$')
+virtual_regex = re.compile('^(vmm_(controllers|creds|domain|elagp|vswitch))$')
 
 #======================================================
 # Function to Read the Access Worksheet
@@ -185,6 +186,18 @@ def process_tenants(easyDict, easy_jsonData, wb):
     return easyDict
 
 #======================================================
+# Function to Read the Virtual Networking Worksheet
+#======================================================
+def process_virtual_networking(easyDict, easy_jsonData, wb):
+    # Evaluate Tenants Worksheet
+    class_init = 'access'
+    class_folder = 'access'
+    func_regex = virtual_regex
+    ws = wb['Virtual Networking']
+    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    return easyDict
+
+#======================================================
 # Function to Read the Worksheet and Create Templates
 #======================================================
 def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
@@ -243,7 +256,8 @@ def main():
             8. l3out: for L3Out\
             9. sites: for Sites\
             10. system_settings: for System_Settings\
-            11. tenants: for Tenants'
+            11. tenants: for Tenants\
+            12. virtual_networking: for Virtual Networking'
     )
     args = Parser.parse_args()
 
@@ -291,9 +305,14 @@ def main():
 
     # Create Dictionary for Worksheets in the Workbook
     easyDict = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['easyDict']
-    easyDict['wb'] = wb
+
+    # Obtain the Latest Provider Releases
+    easyDict = get_latest_versions(easyDict)
+    # print(json.dumps(easyDict, indent=4))
+    # exit()
 
     # Run Proceedures for Worksheets in the Workbook
+    easyDict['wb'] = wb
     easyDict = process_sites(easyDict, easy_jsonData, wb)
 
     # Either Run All Remaining Proceedures or Just Specific based on sys.argv[2:]
@@ -310,7 +329,7 @@ def main():
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     else:
-        process_list = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['classes']['enum']
+        process_list = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['processes']['enum']
         for x in process_list:
             process_type = f'process_{x}'
             eval(f"{process_type}(easyDict, easy_jsonData, wb)")

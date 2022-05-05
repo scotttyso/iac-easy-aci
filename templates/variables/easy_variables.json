@@ -6,12 +6,31 @@
                     {},
                     {
                         "properties":{
+                            "apic_versions":{
+                                "description": "APIC Releases.  Select the Version that Most Closely matches your version.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "5.2(4e)",
+                                    "5.2(4d)",
+                                    "5.2(3g)",
+                                    "5.1(4c)",
+                                    "5.0(2h)",
+                                    "4.2(7t)"
+                                ],
+                                "default": "5.2(4d)",
+                                "x-omitempty": true
+                            },
                             "classes":{
                                 "enum": [
+                                    "access",
                                     "admin",
                                     "fabric",
-                                    "system_settings",
-                                    "tenants"
+                                    "system_settings"
+                                ]
+                            },
+                            "class.access":{
+                                "enum": [
+                                    "virtual_networking"
                                 ]
                             },
                             "class.admin":{
@@ -45,6 +64,14 @@
                                     "tenants"
                                 ]
                             },
+                            "processes":{
+                                "enum": [
+                                    "admin",
+                                    "fabric",
+                                    "system_settings",
+                                    "virtual_networking"
+                                ]
+                            },
                             "easyDict":{
                                 "access":{
                                     "domains":[],
@@ -58,7 +85,7 @@
                                     "spine_interface_policy_groups":[],
                                     "spine_policy_groups":[],
                                     "spine_profiles":[],
-                                    "vmm":[],
+                                    "virtual_networking":[],
                                     "vpc_domains":[]
                                 },
                                 "admin":{
@@ -76,6 +103,11 @@
                                     "syslog":[]
                                 },
                                 "inventory":{},
+                                "latest_versions":{
+                                    "aci_provider_version":"",
+                                    "ndo_provider_version":"",
+                                    "terraform_version":""
+                                },
                                 "sites":{},
                                 "system_settings":{
                                     "apic_connectivity_preference":[],
@@ -134,7 +166,6 @@
                                 "admin": [
                                     "README.md",
                                     "authentication.tf",
-                                    "backups/",
                                     "configuration_backups.tf",
                                     "data_sources.tf",
                                     "locals.tf",
@@ -201,6 +232,18 @@
                                     "vrfs.tf"
                                 ]
                             },
+                            "ndo_versions":{
+                                "description": "Nexus Dashboard Orchestrotor Releases.  Select the Version that Most Closely matches your version.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "3.7(1g)",
+                                    "3.7(1d)",
+                                    "3.5(2f)",
+                                    "3.4(1i)"
+                                ],
+                                "default": "3.7(1g)",
+                                "x-omitempty": true
+                            },
                             "remove_files": [
                                 "coop_group.tf",
                                 "data_sources.tf",
@@ -224,6 +267,1061 @@
                     }
                 ]
             },
+            "access.domains.Physical":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args": {
+                            },
+                            "required_args": {
+                                "name": "",
+                                "site_group": "",
+                                "vlan_pool": ""
+                            },
+                            "vlan_pool":{
+                                "description": "Name of the VLAN Pool to Associate to the Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.domains.Layer3":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args": {
+                            },
+                            "required_args": {
+                                "name": "",
+                                "site_group": "",
+                                "vlan_pool": ""
+                            },
+                            "vlan_pool":{
+                                "description": "Name of the VLAN Pool to Associate to the Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.global.attachableAccessEntityProfile":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "infra_vlan":{
+                                "description": "Flag to Include the Infrastructure VLAN.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "l3_domains":{
+                                "description": "Names of a Layer3 Domains.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": ""
+                            },
+                            "physical_domains":{
+                                "description": "Names of a Physical Domains.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "infra_vlan": "",
+                                "l3_domains": "",
+                                "name": "",
+                                "physical_domains": "",
+                                "site_group": "",
+                                "vmm_domains": ""
+                            },
+                            "vmm_domains":{
+                                "description": "Name(s) of Virtual Networking Domains.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policies.cdpInterface":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args": {
+                                "description": "",
+                                "global_alias": ""
+                            },
+                            "required_args": {
+                                "admin_state": "",
+                                "name": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policies.fibreChannelInterface":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "auto_max_speed":{
+                                "description": "Auto-max-speed for object interface FC policy.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "4G",
+                                    "8G",
+                                    "16G",
+                                    "32G"
+                                ],
+                                "default": "32G",
+                                "x-omitempty": true
+                            },
+                            "fill_pattern":{
+                                "description": "Fill Pattern for native FC ports.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "ARBFF",
+                                    "IDLE"
+                                ],
+                                "default": "ARBFF",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": ""
+                            },
+                            "port_mode":{
+                                "description": "In which mode Ports should be used.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "f",
+                                    "np"
+                                ],
+                                "default": "f",
+                                "x-omitempty": true
+                            },
+                            "receive_buffer_credit":{
+                                "description": "Receive buffer credits for native FC ports.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 16,
+                                "maximum": 64,
+                                "default": 64,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "auto_max_speed": "",
+                                "fill_pattern": "",
+                                "port_mode": "",
+                                "receive_buffer_credit": "",
+                                "speed": "",
+                                "trunk_mode": ""
+                            },
+                            "speed":{
+                                "description": "CPU or port speed.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "4G",
+                                    "8G",
+                                    "16G",
+                                    "32G",
+                                    "auto"
+                                ],
+                                "default": "auto",
+                                "x-omitempty": true
+                            },
+                            "trunk_mode":{
+                                "description": "Trunking on/off for native FC ports.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "un-init",
+                                    "trunk-off",
+                                    "trunk-on",
+                                    "auto"
+                                ],
+                                "default": "trunk-off",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policies.L2Interface":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args": {
+                                "description": "",
+                                "global_alias": ""
+                            },
+                            "auto_max_speed":{
+                                "description": "To enable or disable an interface for Dot1q Tunnel or Q-in-Q encapsulation modes",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "corePort",
+                                    "disabled",
+                                    "doubleQtagPort",
+                                    "edgePort"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "reflective_relay":{
+                                "description": "Enable or disable reflective relay for ports that consume the policy.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "name": "",
+                                "QinQ": "",
+                                "reflective_relay": "",
+                                "site_group": "",
+                                "vlan_scope": ""
+                            }
+                        },
+                        "vlan_scope":{
+                            "description": "The layer 2 interface VLAN scope.",
+                            "type": "list_of_values",
+                            "enum": [
+                                "global",
+                                "portlocal"
+                            ],
+                            "default": "global",
+                            "x-omitempty": true
+                        }
+                }
+                ]
+            },
+            "access.policies.linkLevel":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "auto_negotiation":{
+                                "description": "Auto-max-speed for object interface FC policy.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "4G",
+                                    "8G",
+                                    "16G",
+                                    "32G"
+                                ],
+                                "default": "32G",
+                                "x-omitempty": true
+                            },
+                            "emi_retrain":{
+                                "description": "The electromagnetic interference (EMI) retrain feature filters any noise on a link due to electromagnetic interference, and retrains the link to avoid a link flap. Enable EMI retrain if your data center environment has a lot of EMI noise.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "forwarding_error_correction":{
+                                "description": "Forwarding Error Correction (FEC) is a method of obtaining error control in data transmission over an unreliable or noisy channel in which the source (transmitter) encodes the data in a redundant way using Error Correcting Code and the destination (receiver) recognizes it and corrects the errors without needing a retransmission.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "inherit",
+                                    "auto-fec",
+                                    "cl74-fc-fec",
+                                    "cl91-rs-fec",
+                                    "cons16-rs-fec",
+                                    "disable-fec",
+                                    "ieee-rs-fec",
+                                    "kp-fec"
+                                ],
+                                "default": "f",
+                                "x-omitempty": true
+                            },
+                            "link_debounce_interval":{
+                                "description": "The interface policy administrative port link debounce interval. Enables the debounce timer for physical interface ports and sets it for a specified amount of time in milliseconds. The debounce timer is disabled if you specify a value of 0.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 5000,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": "",
+                                "global_alias": ""
+                            },
+                            "physical_media_type":{
+                                "description": "The trasnceiver type.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "auto",
+                                    "sfp_10g_tx"
+                                ],
+                                "default": "auto",
+                                "x-omitempty": true
+                            },
+                            "port_delay_when_coming_up":{
+                                "description": "The time in milliseconds that the DFE tuning is delayed when a port is coming up. The delay is used to help avoid CRC errors during link bringup. You should set the delay only as required; in most cases, you do not need to set a delay.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 10000,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "auto_negotiation": "",
+                                "emi_retrain": "",
+                                "forwarding_error_correction": "",
+                                "link_debounce_interval": "",
+                                "name": "",
+                                "physical_media_type": "",
+                                "port_delay_when_coming_up": "",
+                                "site_group": "",
+                                "speed": ""
+                            },
+                            "speed":{
+                                "description": "The interface policy administrative port speed. The data transfer rate for the port should match the destination to which the port is linked. The administrative speed can be changed only for certain ports, and not all speeds are available on all systems. For more information, see the Hardware Installation Guide for your fabric interconnect.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "inherit",
+                                    "100M",
+                                    "1G",
+                                    "10G",
+                                    "25G",
+                                    "40G",
+                                    "50G",
+                                    "100G",
+                                    "200G",
+                                    "400G"
+                                ],
+                                "default": "inherit",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policies.lldpInterface":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args": {
+                                "description": "",
+                                "global_alias": ""
+                            },
+                            "receive_state":{
+                                "description": "The reception of LLDP packets on an interface.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "name": "",
+                                "receive_state": "",
+                                "site_group": "",
+                                "transmit_state": ""
+                            },
+                            "transmit_state":{
+                                "description": "The transmission of LLDP packets on an interface.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policies.mcpInterface":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args": {
+                                "description": ""
+                            },
+                            "required_args": {
+                                "admin_state": "",
+                                "name": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policies.PortChannels":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "fast_select_hot_standby_ports":{
+                                "description": "Configures fast select for hot standby ports. Enabling this feature will allow fast selection of a hot standby port when last active port in the port-channel is going down.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "graceful_convergence":{
+                                "description": "Configures port-channel LACP graceful convergence. Disable this only with LACP ports connected to a Non-Nexus peer. Disabling this with Nexus peer can lead to port suspension.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "load_defer_member_ports":{
+                                "description": "Configures the load-balancing algorithm for port channels that applies to the entire device or to only one module.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "maximum_number_of_links":{
+                                "description": "Maximum number of links.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 16,
+                                "default": 16,
+                                "x-omitempty": true
+                            },
+                            "minimum_number_of_links":{
+                                "description": "Minimum number of links in port channel.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 16,
+                                "default": 1,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": "",
+                                "global_alias": ""
+                            },
+                            "required_args": {
+                                "fast_select_hot_standby_ports": "",
+                                "graceful_convergence": "",
+                                "load_defer_member_ports": "",
+                                "maximum_number_of_links": "",
+                                "minimum_number_of_links": "",
+                                "mode": "",
+                                "name": "",
+                                "site_group": "",
+                                "suspend_individual_port": "",
+                                "symmetric_hashing": ""
+                            },
+                            "suspend_individual_port":{
+                                "description": "LACP sets a port to the suspended state if it does not receive an LACP bridge protocol data unit (BPDU) from the peer ports in a port channel. This can cause some servers to fail to boot up as they require LACP to logically bring up the port.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "symmetric_hashing":{
+                                "description": "Bidirectional traffic is forced to use the same physical interface and each physical interface in the port channel is effectively mapped to a set of flows.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policies.portSecurity":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args": {
+                                "description": ""
+                            },
+                            "maximum_endpoints":{
+                                "description": "The maximum number of endpoints that can be learned on the interface.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 12000,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "port_security_timeout":{
+                                "description": "The delay time before MAC learning is re-enabled.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 60,
+                                "maximum": 3600,
+                                "default": 60,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "name": "",
+                                "maximum_endpoints": "",
+                                "port_security_timeout": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policies.spanningTreeInterface":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args": {
+                                "description": "",
+                                "global_alias": ""
+                            },
+                            "filter":{
+                                "description": "The interface level control that enables the BPDU filter for extended chassis ports.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "guard":{
+                                "description": "The interface level control that enables the BPDU guard for extended chassis ports.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "name": "",
+                                "filter": "",
+                                "guard": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policyGroups.leafBreakOutPortGroup":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "breakout_map":{
+                                "description": "Enable the port as a breakout port.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "100g-2x",
+                                    "100g-4x",
+                                    "10g-4x",
+                                    "25g-4x",
+                                    "50g-8x"
+                                ],
+                                "default": "25g-4x",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": ""
+                            },
+                            "required_args": {
+                                "breakout_map": "",
+                                "name": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.pools.Vlan":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "allocation_mode":{
+                                "description": "VLAN Allocation Mode.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "dynamic",
+                                    "static"
+                                ],
+                                "default": "static",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": "",
+                                "global_alias": "",
+                                "vlan_group1_allocation": "",
+                                "vlan_group2": "",
+                                "vlan_group2_allocation": ""
+                            },
+                            "required_args": {
+                                "name": "",
+                                "allocation_mode": "",
+                                "site_group": "",
+                                "vlan_group1": ""
+                            },
+                            "vlan_group1":{
+                                "description": "1st List of VLANs to Add to the VLAN Pool.",
+                                "type": "list_of_vlans",
+                                "x-omitempty": true
+                            },
+                            "vlan_group1_allocation":{
+                                "description": "VLAN Allocation Mode.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "dynamic",
+                                    "static"
+                                ],
+                                "default": "static",
+                                "x-omitempty": true
+                            },
+                            "vlan_group2":{
+                                "description": "2nd List of VLANs to Add to the VLAN Pool.",
+                                "type": "list_of_vlans",
+                                "x-omitempty": true
+                            },
+                            "vlan_group2_allocation":{
+                                "description": "VLAN Allocation Mode.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "dynamic",
+                                    "static"
+                                ],
+                                "default": "static",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.vmm.Controllers":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "datacenter":{
+                                "description": "Name of the Data Center.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 255,
+                                "pattern":"^.+$",
+                                "x-omitempty": true
+                            },
+                            "domain_name":{
+                                "description": "Name of the VMM Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "dvs_version":{
+                                "description": "Version fo the DVS Switch for a VMware DVS.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "6.5",
+                                    "6.6",
+                                    "7.0",
+                                    "unmanaged"
+                                ],
+                                "default": "unmanaged",
+                                "x-omitempty": true
+                            },
+                            "hostname":{
+                                "description": "Hostname.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "monitoring_policy": ""
+                            },
+                            "required_args": {
+                                "datacenter": "",
+                                "domain_name": "",
+                                "dvs_version": "",
+                                "hostname": "",
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "site_group": "",
+                                "stats_collection": "",
+                                "switch_scope": "",
+                                "trigger_inventory_sync": ""
+                            },
+                            "stats_collection":{
+                                "description": "Flag to Enable Stats Collection from the Virtual Networking Switch.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "switch_scope":{
+                                "description": "The scope of Virtual Switch.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "MicrosoftSCVMM",
+                                    "cloudfoundry",
+                                    "iaas",
+                                    "kubernetes",
+                                    "network",
+                                    "nsx",
+                                    "openshift",
+                                    "openstack",
+                                    "rhev",
+                                    "unmanaged",
+                                    "vm"
+                                ],
+                                "default": "read-write",
+                                "x-omitempty": true
+                            },
+                            "trigger_inventory_sync":{
+                                "description": "Trigger Inventory Sync with the Controller.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "triggered",
+                                    "untriggered"
+                                ],
+                                "default": "untriggered",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.vmm.Credentials":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "domain_name":{
+                                "description": "Name of the VMM Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": ""
+                            },
+                            "password":{
+                                "description": "Controller Login Password Identifier.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "domain_name": "",
+                                "password": "",
+                                "site_group": "",
+                                "username": ""
+                            },
+                            "vmm_password":{
+                                "description": "Controller Login Password.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 255,
+                                "pattern":"^.*$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.vmm.Domains":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "access_mode":{
+                                "description": "Virtual Networking Read or Write Mode.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "read-only",
+                                    "read-write"
+                                ],
+                                "default": "read-write",
+                                "x-omitempty": true
+                            },
+                            "delimiter":{
+                                "description": "Delimiter.",
+                                "type": "string",
+                                "minimum": 0,
+                                "maximum": 1,
+                                "pattern":"^[|~!@^+=]$",
+                                "x-omitempty": true
+                            },
+                            "enable_tag_collection":{
+                                "description": "vCenter Tag collection for micro-Segmentation.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "enable_vm_folder_data_retrieval":{
+                                "description": "vCenter VM Folder collection for micro-Segmentation.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "endpoint_retention_time":{
+                                "description": "The number of seconds an endpoint is retained after it has been marked for deletion.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 600,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "uplink_names": ""
+                            },
+                            "required_args": {
+                                "access_mode": "",
+                                "delimiter": "",
+                                "enable_tag_collection": "",
+                                "endpoint_retention_time": "",
+                                "enable_vm_folder_data_retrieval": "",
+                                "name": "",
+                                "site_group": "",
+                                "switch_mode": "",
+                                "switch_provider": "",
+                                "vlan_pool": ""
+                            },
+                            "switch_mode":{
+                                "description": "The mode of Virtual Switch.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "cf",
+                                    "default",
+                                    "k8s",
+                                    "nsx",
+                                    "ovs",
+                                    "rancher",
+                                    "rhev",
+                                    "openshift",
+                                    "unknown"
+                                ],
+                                "default": "default",
+                                "x-omitempty": true
+                            },
+                            "switch_provider":{
+                                "description": "The Switch Vendor.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "CloudFoundry",
+                                    "Kubernetes",
+                                    "Microsoft",
+                                    "OpenShift",
+                                    "OpenStack",
+                                    "Redhat",
+                                    "VMware"
+                                ],
+                                "default": "VMware",
+                                "x-omitempty": true
+                            },
+                            "uplink_names":{
+                                "description": "Names for the Virtual Networking Uplinks.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "vlan_pool":{
+                                "description": "Name of the VLAN Pool to Assign.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.vmm.enhancedLag":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "domain_name":{
+                                "description": "Name of the VMM Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "mode":{
+                                "description": "LACP Mode.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "active",
+                                    "passive"
+                                ],
+                                "default": "active",
+                                "x-omitempty": true
+                            },
+                            "load_balancing_mode":{
+                                "description": "Load balancing algorithm.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "dst-ip",
+                                    "dst-ip-l4port",
+                                    "dst-ip-l4port-vlan",
+                                    "dst-ip-vlan",
+                                    "dst-l4port",
+                                    "dst-mac",
+                                    "src-dst-ip",
+                                    "src-dst-ip-l4port",
+                                    "src-dst-ip-l4port-vlan",
+                                    "src-dst-ip-vlan",
+                                    "src-dst-l4port",
+                                    "src-dst-mac",
+                                    "src-ip",
+                                    "src-ip-l4port",
+                                    "src-ip-l4port-vlan",
+                                    "src-ip-vlan",
+                                    "src-l4port",
+                                    "src-mac",
+                                    "src-port-id",
+                                    "vlan"
+                                ],
+                                "default": "src-dst-ip",
+                                "x-omitempty": true
+                            },
+                            "number_of_links":{
+                                "description": "The number of links to add to the enhanced LAG Policy.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 2,
+                                "maximum": 8,
+                                "default": 2,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                            },
+                            "required_args": {
+                                "domain_name": "",
+                                "mode": "",
+                                "load_balancing_mode": "",
+                                "number_of_links": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.vmm.vswitchPolicy":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "domain_name":{
+                                "description": "Name of the VMM Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "mtu_policy":{
+                                "description": "Name of the L2 Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "vmm_netflow_exporter_policy": ""
+                            },
+                            "required_args": {
+                                "cdp_interface_policy": "",
+                                "domain_name": "",
+                                "lldp_interface_policy": "",
+                                "mtu_policy": "",
+                                "port_channel_policy": "",
+                                "site_group": ""
+                            },
+                            "vmm_netflow_exporter_policy":{
+                                "description": "Name of the Netlfow Exporters for VM Networking Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "admin.exportPolicy":{
                 "allOf":[
                     {},
@@ -231,7 +1329,7 @@
                         "properties":{
                             "format":{
                                 "description": "Format of the Backup File.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "json",
                                     "xml"
@@ -241,7 +1339,7 @@
                             },
                             "include_secure_fields":{
                                 "description": "Flag to include secure fields.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -259,23 +1357,23 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "description" : ""
+                                "description": ""
                             },
                             "required_args": {
-                                "format" : "",
-                                "include_secure_fields" : "",
-                                "max_snapshot_count" : "",
-                                "name" : "",
-                                "scheduled_days" : "",
-                                "scheduled_hour" : "",
-                                "scheduled_minute" : "",
-                                "site_group" : "",
-                                "snapshot" : "",
-                                "start_now" : ""
+                                "format": "",
+                                "include_secure_fields": "",
+                                "max_snapshot_count": "",
+                                "name": "",
+                                "scheduled_days": "",
+                                "scheduled_hour": "",
+                                "scheduled_minute": "",
+                                "site_group": "",
+                                "snapshot": "",
+                                "start_now": ""
                             },
                             "scheduled_days":{
                                 "description": "Scheduled Days.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "every-day",
                                     "even-day",
@@ -312,7 +1410,7 @@
                             },
                             "snapshot":{
                                 "description": "Flag to define if the backup is a snapshot.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -322,7 +1420,7 @@
                             },
                             "start_now":{
                                 "description": "Flag to Start the Backup now.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "triggered",
                                     "untriggered"
@@ -341,7 +1439,7 @@
                         "properties":{
                             "enable_lockout":{
                                 "description": "Enable User Lockout.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disable",
                                     "enable"
@@ -397,7 +1495,7 @@
                             },
                             "password_change_interval_enforce":{
                                 "description": "Password Change Interval Enforce.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disable",
                                     "enable"
@@ -425,7 +1523,7 @@
                             },
                             "password_strength_check":{
                                 "description": "Password Strength Check.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -434,20 +1532,20 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "enable_lockout" : "",
-                                "lockout_duration" : "",
-                                "max_failed_attempts" : "",
-                                "max_failed_attempts_window" : "",
-                                "maximum_validity_period" : "",
-                                "password_change_interval" : "",
-                                "password_change_interval_enforce" : "",
-                                "password_changes_within_interval" : "",
-                                "password_expiration_warn_time" : "",
-                                "password_strength_check" : "",
-                                "site_group" : "",
-                                "user_passwords_to_store_count" : "",
-                                "web_session_idle_timeout" : "",
-                                "web_token_timeout" : ""
+                                "enable_lockout": "",
+                                "lockout_duration": "",
+                                "max_failed_attempts": "",
+                                "max_failed_attempts_window": "",
+                                "maximum_validity_period": "",
+                                "password_change_interval": "",
+                                "password_change_interval_enforce": "",
+                                "password_changes_within_interval": "",
+                                "password_expiration_warn_time": "",
+                                "password_strength_check": "",
+                                "site_group": "",
+                                "user_passwords_to_store_count": "",
+                                "web_session_idle_timeout": "",
+                                "web_token_timeout": ""
                             },
                             "user_passwords_to_store_count":{
                                 "description": "User Passwords To Store Count.",
@@ -495,7 +1593,7 @@
                             },
                             "console_realm":{
                                 "description": "Available Realms for Console Authentication.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "duo_proxy_ldap",
                                     "duo_proxy_radius",
@@ -520,7 +1618,7 @@
                             },
                             "default_realm":{
                                 "description": "Available Realms for Default Authentication.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "duo_proxy_ldap",
                                     "duo_proxy_radius",
@@ -537,7 +1635,7 @@
                             },
                             "fallback_domain_avialability":{
                                 "description": "Should the local domain be available when the default authentication is not local and the providers are reachable.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -546,12 +1644,12 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "console_login_domain" : "",
-                                "default_login_domain" : ""
+                                "console_login_domain": "",
+                                "default_login_domain": ""
                             },
                             "remote_user_login_policy":{
                                 "description": "What is the default Policy if user fails login due to invalid credentials.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "assign-default-role",
                                     "no-login"
@@ -560,15 +1658,15 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "console_realm" : "",
-                                "default_realm" : "",
-                                "fallback_domain_avialability" : "",
-                                "remote_user_login_policy" : "",
-                                "use_icmp_reachable_providers_only" : ""
+                                "console_realm": "",
+                                "default_realm": "",
+                                "fallback_domain_avialability": "",
+                                "remote_user_login_policy": "",
+                                "use_icmp_reachable_providers_only": ""
                             },
                             "use_icmp_reachable_providers_only":{
                                 "description": "Flag to turn on ICMP check for Providers.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -587,7 +1685,7 @@
                         "properties":{
                             "authorization_protocol":{
                                 "description": "Authorization Protocol to Use.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "chap",
                                     "mschap",
@@ -626,8 +1724,8 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "monitoring_password" : "",
-                                "username" : ""
+                                "monitoring_password": "",
+                                "username": ""
                             },
                             "port":{
                                 "description": "RADIUS Port.",
@@ -655,18 +1753,18 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "authorization_protocol" : "",
-                                "hosts" : "",
-                                "key" : "",
-                                "login_domain" : "",
-                                "management_epg" : "",
-                                "management_epg_type" : "",
-                                "port" : "",
-                                "retries" : "",
-                                "server_monitoring" : "",
-                                "site_group" : "",
-                                "timeout" : "",
-                                "type" : ""
+                                "authorization_protocol": "",
+                                "hosts": "",
+                                "key": "",
+                                "login_domain": "",
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "port": "",
+                                "retries": "",
+                                "server_monitoring": "",
+                                "site_group": "",
+                                "timeout": "",
+                                "type": ""
                             },
                             "retries":{
                                 "description": "Number of Retries to Attempt.",
@@ -679,7 +1777,7 @@
                             },
                             "server_monitoring":{
                                 "description": "Flag to enable or disable RADIUS Server Monitoring.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
@@ -698,7 +1796,7 @@
                             },
                             "type":{
                                 "description": "RADIUS Server Type.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "duo",
                                     "radius",
@@ -718,7 +1816,7 @@
                         "properties":{
                             "authentication_type":{
                                 "description": "Remote Host authentication type.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "usePassword",
                                     "useSshKeyContents"
@@ -727,13 +1825,13 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "description" : "",
-                                "password" : "",
-                                "username" : ""
+                                "description": "",
+                                "password": "",
+                                "username": ""
                             },
                             "protocol":{
                                 "description": "Remote Host authentication type.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "ftp",
                                     "scp",
@@ -780,15 +1878,15 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "authentication_type" : "",
-                                "management_epg" : "",
-                                "management_epg_type" : "",
-                                "protocol" : "",
-                                "remote_hosts" : "",
-                                "remote_path" : "",
-                                "remote_port" : "",
-                                "scheduler_name" : "",
-                                "site_group" : ""
+                                "authentication_type": "",
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "protocol": "",
+                                "remote_hosts": "",
+                                "remote_path": "",
+                                "remote_port": "",
+                                "scheduler_name": "",
+                                "site_group": ""
                             },
                             "scheduler_name":{
                                 "description": "Scheduler Name.",
@@ -825,7 +1923,7 @@
                         "properties":{
                             "authorization_protocol":{
                                 "description": "Authorization Protocol to Use.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "chap",
                                     "mschap",
@@ -864,8 +1962,8 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "monitoring_password" : "",
-                                "username" : ""
+                                "monitoring_password": "",
+                                "username": ""
                             },
                             "port":{
                                 "description": "TACACS+ Port.",
@@ -877,21 +1975,21 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "audit_logs" : "",
-                                "authorization_protocol" : "",
-                                "events" : "",
-                                "faults" : "",
-                                "hosts" : "",
-                                "key" : "",
-                                "login_domain" : "",
-                                "management_epg" : "",
-                                "management_epg_type" : "",
-                                "port" : "",
-                                "retries" : "",
-                                "server_monitoring" : "",
-                                "session_logs" : "",
-                                "site_group" : "",
-                                "timeout" : ""
+                                "audit_logs": "",
+                                "authorization_protocol": "",
+                                "events": "",
+                                "faults": "",
+                                "hosts": "",
+                                "key": "",
+                                "login_domain": "",
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "port": "",
+                                "retries": "",
+                                "server_monitoring": "",
+                                "session_logs": "",
+                                "site_group": "",
+                                "timeout": ""
                                 },
                             "retries":{
                                 "description": "Number of Retries to Attempt.",
@@ -904,7 +2002,7 @@
                             },
                             "server_monitoring":{
                                 "description": "Flag to enable or disable TACACS+ Server Monitoring.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
@@ -948,7 +2046,7 @@
                         "properties":{
                             "administrative_state":{
                                 "description": "Date and Time Policy Administrative State.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
@@ -958,7 +2056,7 @@
                             },
                             "display_format":{
                                 "description": "Date and Time Display Format.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "local",
                                     "utc"
@@ -968,7 +2066,7 @@
                             },
                             "master_mode":{
                                 "description": "Date and Time Display Format.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
@@ -978,7 +2076,7 @@
                             },
                             "offset_state":{
                                 "description": "Date and Time Policy Offset State.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
@@ -999,7 +2097,7 @@
                             },
                             "server_state":{
                                 "description": "Date and Time Server State.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
@@ -1007,7 +2105,7 @@
                             },
                             "stratum_value":{
                                 "description": "Date and Time Server Stratum Value.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     1,
                                     2,
@@ -1028,7 +2126,7 @@
                             },
                             "time_zone":{
                                 "description": "List of Time Zones.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "UTC",
                                     "Africa/Abidjan",
@@ -1533,7 +2631,7 @@
                             },
                             "preferred":{
                                 "description": "If the NTP Server is Preferred or not.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -1561,7 +2659,7 @@
                         "properties":{
                             "authentication_type":{
                                 "description": "The Authentication Protocol to use.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "md5",
                                     "sha1"
@@ -1594,7 +2692,7 @@
                             },
                             "trusted":{
                                 "description": "If the NTP Key is trusted or not.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -1630,15 +2728,15 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "contact_information" : "",
-                                "contract_id" : "",
-                                "customer_id" : "",
-                                "customer_contact_email" : "",
-                                "from_email" : "",
-                                "phone_contact" : "",
-                                "reply_to_email" : "",
-                                "site_id" : "",
-                                "street_address" : ""
+                                "contact_information": "",
+                                "contract_id": "",
+                                "customer_id": "",
+                                "customer_contact_email": "",
+                                "from_email": "",
+                                "phone_contact": "",
+                                "reply_to_email": "",
+                                "site_id": "",
+                                "street_address": ""
                             },
                             "phone_contact":{
                                 "description": "Callhome contact phone number.",
@@ -1651,12 +2749,12 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "admin_state" : "",
-                                "audit_logs" : "",
-                                "events" : "",
-                                "faults" : "",
-                                "session_logs" : "",
-                                "site_group" : ""
+                                "admin_state": "",
+                                "audit_logs": "",
+                                "events": "",
+                                "faults": "",
+                                "session_logs": "",
+                                "site_group": ""
                             },
                             "street_address":{
                                 "description": "Smart CallHome street address.",
@@ -1682,7 +2780,7 @@
                             },
                             "format":{
                                 "description": "Format of the Email.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "aml",
                                     "short-txt",
@@ -1693,15 +2791,15 @@
                             },
                             "optional_args": {},
                             "required_args": {
-                                "admin_state" : "",
-                                "email" : "",
-                                "format" : "",
-                                "rfc_compliant" : "",
-                                "site_group" : ""
+                                "admin_state": "",
+                                "email": "",
+                                "format": "",
+                                "rfc_compliant": "",
+                                "site_group": ""
                             },
                             "rfc_compliant":{
                                 "description": "Should the Message be RFC Compliant.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -1719,7 +2817,7 @@
                     {
                         "properties":{
                             "optional_args": {
-                                "username" : ""
+                                "username": ""
                             },
                             "port_number":{
                                 "description": "Smart SMTP Server",
@@ -1733,14 +2831,14 @@
                             "required_args": {
                                 "management_epg": "",
                                 "management_epg_type": "",
-                                "port_number" : "",
-                                "secure_smtp" : "",
-                                "smtp_server" : "",
-                                "site_group" : ""
+                                "port_number": "",
+                                "secure_smtp": "",
+                                "smtp_server": "",
+                                "site_group": ""
                             },
                             "secure_smtp":{
                                 "description": "Does the SMTP Server Require Credentials.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -1776,14 +2874,14 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "description" : ""
+                                "description": ""
                             },
                             "required_args": {
-                                "clients" : "",
-                                "management_epg" : "",
-                                "management_epg_type" : "",
-                                "name" : "",
-                                "site_group" : ""
+                                "clients": "",
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "name": "",
+                                "site_group": ""
                             }
                         }
                     }
@@ -1802,11 +2900,11 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "description" : ""
+                                "description": ""
                             },
                             "required_args": {
-                                "community_variable" : "",
-                                "site_group" : ""
+                                "community_variable": "",
+                                "site_group": ""
                             },
                             "snmp_community":{
                                 "description": "Community String.",
@@ -1838,9 +2936,9 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "community_variable" : "",
-                                "username" : "",
-                                "v3_security_level" : ""
+                                "community_variable": "",
+                                "username": "",
+                                "v3_security_level": ""
                             },
                             "port":{
                                 "description": "SNMP Trap Port.",
@@ -1863,13 +2961,13 @@
                                 "host": "",
                                 "management_epg": "",
                                 "management_epg_type": "",
-                                "port" : "",
-                                "site_group" : "",
-                                "version" : ""
+                                "port": "",
+                                "site_group": "",
+                                "version": ""
                             },
                             "v3_security_level":{
                                 "description": "The SNMPv3 Security Level.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "auth",
                                     "noauth",
@@ -1880,7 +2978,7 @@
                             },
                             "version":{
                                 "description": "SNMP Version.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "v1",
                                     "v2c",
@@ -1900,7 +2998,7 @@
                         "properties":{
                             "audit_logs":{
                                 "description": "Audit Log Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -1918,7 +3016,7 @@
                             },
                             "events":{
                                 "description": "Audit Log Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -1928,7 +3026,7 @@
                             },
                             "faults":{
                                 "description": "Faults Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -1945,20 +3043,20 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "contact" : "",
-                                "location" : ""
+                                "contact": "",
+                                "location": ""
                             },
                             "required_args": {
-                                "admin_state" : "",
-                                "audit_logs" : "",
-                                "events" : "",
-                                "faults" : "",
-                                "session_logs" : "",
-                                "site_group" : ""
+                                "admin_state": "",
+                                "audit_logs": "",
+                                "events": "",
+                                "faults": "",
+                                "session_logs": "",
+                                "site_group": ""
                             },
                             "session_logs":{
                                 "description": "Session Log Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -1985,7 +3083,7 @@
                             },
                             "authorization_type":{
                                 "description": "SNMP User Authorization Type.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "hmac-md5-96",
                                     "hmac-sha1-96",
@@ -1998,8 +3096,8 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "privacy_key" : "",
-                                "privacy_type" : ""
+                                "privacy_key": "",
+                                "privacy_type": ""
                             },
                             "privacy_key":{
                                 "description": "SNMP Privacy Variable Number.",
@@ -2011,7 +3109,7 @@
                             },
                             "privacy_type":{
                                 "description": "SNMP User Privacy Type.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "aes-128",
                                     "des",
@@ -2021,10 +3119,10 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "authorization_key" : "",
+                                "authorization_key": "",
                                 "authorization_type": "",
-                                "site_group" : "",
-                                "username" : ""
+                                "site_group": "",
+                                "username": ""
                             },
                             "snmp_key":{
                                 "description": "SNMP Authorization/Privacy Keys.",
@@ -2045,7 +3143,7 @@
                         "properties":{
                             "audit_logs":{
                                 "description": "Audit Log Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2055,7 +3153,7 @@
                             },
                             "console_admin_state":{
                                 "description": "Console Syslog Admin State.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
@@ -2065,7 +3163,7 @@
                             },
                             "console_severity":{
                                 "description": "Console Severity.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "alerts",
                                     "critical",
@@ -2076,7 +3174,7 @@
                             },
                             "events":{
                                 "description": "Audit Log Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2086,7 +3184,7 @@
                             },
                             "faults":{
                                 "description": "Faults Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2096,7 +3194,7 @@
                             },
                             "format":{
                                 "description": "Syslog Format.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "aci",
                                     "nxos"
@@ -2106,7 +3204,7 @@
                             },
                             "local_admin_state":{
                                 "description": "Local Syslog Admin State.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
@@ -2116,7 +3214,7 @@
                             },
                             "local_severity":{
                                 "description": "Local Severity.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "alerts",
                                     "critical",
@@ -2132,23 +3230,23 @@
                             },
                             "optional_args": {},
                             "required_args": {
-                                "admin_state" : "",
-                                "audit_logs" : "",
-                                "console_admin_state" : "",
-                                "console_severity" : "",
-                                "events" : "",
-                                "faults" : "",
-                                "format" : "",
-                                "local_admin_state" : "",
-                                "local_severity" : "",
-                                "session_logs" : "",
-                                "show_milliseconds_in_timestamp" : "",
-                                "show_time_zone_in_timestamp" : "",
-                                "site_group" : ""
+                                "admin_state": "",
+                                "audit_logs": "",
+                                "console_admin_state": "",
+                                "console_severity": "",
+                                "events": "",
+                                "faults": "",
+                                "format": "",
+                                "local_admin_state": "",
+                                "local_severity": "",
+                                "session_logs": "",
+                                "show_milliseconds_in_timestamp": "",
+                                "show_time_zone_in_timestamp": "",
+                                "site_group": ""
                             },
                             "session_logs":{
                                 "description": "Session Log Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2158,7 +3256,7 @@
                             },
                             "show_milliseconds_in_timestamp":{
                                 "description": "Flag to show milliseconds in timestamp.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2168,7 +3266,7 @@
                             },
                             "show_time_zone_in_timestamp":{
                                 "description": "Flag to show timezone in timestamp.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2187,7 +3285,7 @@
                         "properties":{
                             "forwarding_facility":{
                                 "description": "The Remote Syslog Server Facility.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "local0",
                                     "local1",
@@ -2217,19 +3315,19 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "admin_state" : "",
-                                "forwarding_facility" : "",
-                                "host" : "",
-                                "management_epg" : "",
-                                "management_epg_type" : "",
-                                "port" : "",
-                                "severity" : "",
-                                "site_group" : "",
-                                "transport" : ""
+                                "admin_state": "",
+                                "forwarding_facility": "",
+                                "host": "",
+                                "management_epg": "",
+                                "management_epg_type": "",
+                                "port": "",
+                                "severity": "",
+                                "site_group": "",
+                                "transport": ""
                             },
                             "severity":{
                                 "description": "The Syslog Severity Level.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "alerts",
                                     "critical",
@@ -2245,7 +3343,7 @@
                             },
                             "transport":{
                                 "description": "Send Syslog using TCP or UDP.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "tcp",
                                     "udp"
@@ -2263,21 +3361,13 @@
                     {
                         "properties":{
                             "admin_state":{
-                                "description": "Admin State of the Smart Call Home Policy.",
-                                "type": "list_values",
+                                "description": "Admin State Global Value.",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
                                 ],
                                 "default": "enabled",
-                                "x-omitempty": true
-                            },
-                            "alias":{
-                                "description": "Alias field.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "annotation":{
@@ -2290,12 +3380,20 @@
                             },
                             "audit_logs":{
                                 "description": "Audit Log Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
                                 ],
                                 "default": "true",
+                                "x-omitempty": true
+                            },
+                            "cdp_interface_policy":{
+                                "description": "Name of the CDP Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "description":{
@@ -2308,7 +3406,7 @@
                             },
                             "events":{
                                 "description": "Audit Log Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2318,7 +3416,7 @@
                             },
                             "faults":{
                                 "description": "Faults Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2328,6 +3426,22 @@
                             },
                             "filter_name":{
                                 "description": "Filter entry name field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "global_alias":{
+                                "description": "Alias field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "lldp_interface_policy":{
+                                "description": "Name of the LLDP Interface Policy.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -2344,12 +3458,20 @@
                             },
                             "management_epg_type":{
                                 "description": "The Type of Management EPG.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "inb",
                                     "oob"
                                 ],
                                 "default": "oob",
+                                "x-omitempty": true
+                            },
+                            "monitoring_policy":{
+                                "description": "Monitoring Policy Name.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "name":{
@@ -2385,9 +3507,17 @@
                                 "default": 1,
                                 "x-omitempty": true
                             },
+                            "port_channel_policy":{
+                                "description": "Name of the Port-Channel Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "qos_class":{
                                 "description": "QoS Class Levels.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "level1",
                                     "level2",
@@ -2402,7 +3532,7 @@
                             },
                             "session_logs":{
                                 "description": "Session Log Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2428,7 +3558,7 @@
                             },
                             "target_dscp":{
                                 "description": "Target DSCP Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "AF11",
                                     "AF12",
@@ -2523,7 +3653,7 @@
                         "properties":{
                             "auth_type":{
                                 "description": "Type of Authentication to use for the Target System.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "ssh-key",
                                     "username"
@@ -2533,7 +3663,7 @@
                             },
                             "configure_terraform_cloud":{
                                 "description": "Flag to Enable or Disable Terraform Cloud.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2541,9 +3671,14 @@
                                 "default": "true",
                                 "x-omitempty": true
                             },
+                            "controller":{
+                                "description": "Site Controller (APIC/NDO).",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
                             "controller_type":{
                                 "description": "Type of Controller for the Target Site.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "apic",
                                     "ndo"
@@ -2552,41 +3687,18 @@
                                 "x-omitempty": true
                             },
                             "optional_args":{},
-                            "provider_version_apic":{
-                                "description": "Provider Version for the ACI Site.",
-                                "type": "list_values",
-                                "enum": [
-                                    "1.2.0",
-                                    "1.1.0"
-                                ],
-                                "default": "oob",
-                                "x-omitempty": true
-                            },
-                            "provider_version_ndo":{
-                                "description": "Provider Version for the Nexus Dashboard Orchestrator Site.",
-                                "type": "list_values",
-                                "enum": [
-                                    "0.6.1",
-                                    "0.6.0"
-                                ],
-                                "default": "0.6.1",
-                                "x-omitempty": true
-                            },
                             "required_args":{
                                 "auth_type": "",
                                 "configure_terraform_cloud": "",
                                 "controller": "",
                                 "controller_type": "",
-                                "provider_version": "",
                                 "run_location": "",
                                 "site_id": "",
-                                "site_name": "",
-                                "terraform_version": "",
-                                "version": ""
+                                "site_name": ""
                             },
                             "run_location":{
                                 "description": "Will the Code be executed in Terraform Cloud or on the local Machine.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "local",
                                     "tfc"
@@ -2594,46 +3706,21 @@
                                 "default": "tfc",
                                 "x-omitempty": true
                             },
-                            "terraform_version":{
-                                "description": "Version of Terraform to Use.",
-                                "type": "list_values",
-                                "enum": [
-                                    "1.1.9",
-                                    "1.1.8",
-                                    "1.1.7",
-                                    "1.1.6",
-                                    "1.1.5",
-                                    "1.1.4",
-                                    "1.1.3",
-                                    "1.1.2",
-                                    "1.1.1"
-                                ],
-                                "default": "1.1.9",
+                            "site_id":{
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 15,
+                                "default": 1,
                                 "x-omitempty": true
                             },
-                            "version_apic":{
-                                "description": "Version of Code on the Controller.",
-                                "type": "list_values",
-                                "enum": [
-                                    "5.2",
-                                    "5.1",
-                                    "5.0",
-                                    "4.2",
-                                    "3.2"
-                                ],
-                                "default": "5.2",
-                                "x-omitempty": true
-                            },
-                            "version_ndo":{
-                                "description": "Version of Code on the Controller.",
-                                "type": "list_values",
-                                "enum": [
-                                    "3.7",
-                                    "3.6",
-                                    "3.5",
-                                    "3.4"
-                                ],
-                                "default": "3.7",
+                            "site_name":{
+                                "description": "Site Name Field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 32,
+                                "pattern":"^[a-zA-Z0-9_]+$",
                                 "x-omitempty": true
                             }
                         }
@@ -2647,7 +3734,7 @@
                         "properties":{
                             "apic_connectivity_preference":{
                                 "description": "APIC connectivity Preference.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "ooband",
                                     "inband"
@@ -2693,8 +3780,8 @@
                     {
                         "properties":{
                             "node_list":{
-                                "description": "BGP ASN.",
-                                "type": "list_integer",
+                                "description": "BGP Route Reflector List.",
+                                "type": "list_of_integer",
                                 "format": "int64",
                                 "minimum": 101,
                                 "maximum": 4000,
@@ -2721,9 +3808,19 @@
                                 "maximum": 32,
                                 "pattern":"^[\\S+]{16,32}$"
                             },
+                            "clear_passphrase":{
+                                "description": "Flag to Remove the current encryption passphrase.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
                             "enable_encryption":{
                                 "description": "If Encryption should be Enabled or Not.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2732,6 +3829,15 @@
                                 "x-omitempty": true
                             },
                             "optional_args":{},
+                            "passphrase_key_derivation_version":{
+                                "description": "Flag for Key Derivation Version.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "v1"
+                                ],
+                                "default": "v1",
+                                "x-omitempty": true
+                            },
                             "required_args":{
                                 "clear_passphrase": "",
                                 "enable_encryption": "",
@@ -2748,9 +3854,9 @@
                     {
                         "properties":{
                             "optional_args":{
-                                "alias": "",
-                                "annotations": "",
                                 "description": "",
+                                "global_alias": "",
+                                "name_alias": "",
                                 "qos_class": "",
                                 "schema": "",
                                 "sites": "",
@@ -2758,7 +3864,7 @@
                             },
                             "preferred_group_member":{
                                 "description": "Preferred Group Member.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "exclude",
                                     "include"
@@ -2782,7 +3888,7 @@
                         "properties":{
                             "epg_admin_state":{
                                 "description": "EPG Admin State.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "admin_up",
                                     "admin_shut"
@@ -2792,7 +3898,7 @@
                             },
                             "flood_in_encapsulation":{
                                 "description": "Flood in Encapsulation.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "disabled",
                                     "enabled"
@@ -2802,7 +3908,7 @@
                             },
                             "intra_epg_isolation":{
                                 "description": "Intra EPG Isolation.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "enforced",
                                     "unenforced"
@@ -2812,7 +3918,7 @@
                             },
                             "label_match_criteria":{
                                 "description": "Label Match Criteria.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "All",
                                     "AtleastOne",
@@ -2823,8 +3929,6 @@
                                 "x-omitempty": true
                             },
                             "optional_args":{
-                                "alias": "",
-                                "annotations": "",
                                 "contract_exception_tag": "",
                                 "custom_qos": "",
                                 "data_plane_policer": "",
@@ -2834,6 +3938,7 @@
                                 "global_alias": "",
                                 "fhs_trust_control_policy": "",
                                 "fibre_channel_domain_association": "",
+                                "name_alias": "",
                                 "physical_domains": "",
                                 "PVLAN": "",
                                 "vmm_domains": "",
@@ -2843,7 +3948,7 @@
                             },
                             "preferred_group_member":{
                                 "description": "Preferred Group Member.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "exclude",
                                     "include"
@@ -2869,7 +3974,7 @@
                             },
                             "useg_epg":{
                                 "description": "Microseg EPG.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -2888,7 +3993,7 @@
                         "properties":{
                             "epg_admin_state":{
                                 "description": "EPG Admin State.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "admin_up",
                                     "admin_shut"
@@ -2898,7 +4003,7 @@
                             },
                             "flood_in_encapsulation":{
                                 "description": "Flood in Encapsulation.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "admin_up",
                                     "admin_shut"
@@ -2908,7 +4013,7 @@
                             },
                             "intra_epg_isolation":{
                                 "description": "Intra EPG Isolation.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "enforced",
                                     "unenforced"
@@ -2918,7 +4023,7 @@
                             },
                             "label_match_criteria":{
                                 "description": "Label Match Criteria.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "All",
                                     "AtleastOne",
@@ -2929,13 +4034,12 @@
                                 "x-omitempty": true
                             },
                             "optional_args":{
-                                "alias": "",
-                                "annotations": "",
                                 "description": "",
-                                "first_hop_security_policy" : "",
+                                "first_hop_security_policy": "",
                                 "global_alias": "",
                                 "fhs_trust_control_policy": "",
                                 "fibre_channel_domain_association": "",
+                                "name_alias": "",
                                 "physical_domains": "",
                                 "PVLAN": "",
                                 "vmm_domains": "",
@@ -2944,7 +4048,7 @@
                             },
                             "preferred_group_member":{
                                 "description": "Preferred Group Member.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "exclude",
                                     "include"
@@ -2953,45 +4057,45 @@
                                 "x-omitempty": true
                             },
                             "required_args":{
-                                "arp_flooding" : "",
-                                "bd_policy" : "",
-                                "disable_ip_data_plane_learning_for_pbr" : "",
-                                "endpoint_clear" : "",
-                                "endpoint_retention_policy" : "",
-                                "ep_move_detection_mode" : "",
-                                "igmp_interface_policy" : "",
-                                "igmp_snooping_policy" : "",
-                                "intersite_bum_traffic_allow" : "",
-                                "intersite_l2_stretch" : "",
-                                "ipv6_l3_unknown_multicast" : "",
-                                "l2_unknown_unicast" : "",
-                                "l3_unknown_multicast_flooding" : "",
-                                "l3out" : "",
-                                "l3out_for_route_profile" : "",
-                                "limit_ip_learn_to_subnets" : "",
-                                "link_local_ipv6" : "",
-                                "mac_address" : "",
-                                "mld_snoop_policy" : "",
-                                "multi_destionation_flooding" : "",
-                                "name" : "",
-                                "ndIfPol" : "",
-                                "netflow_monitor_policies" : "",
-                                "optimize_wan_bandwidth" : "",
-                                "pim" : "",
-                                "pimv6" : "",
-                                "policy_name" : "",
-                                "schema" : "",
-                                "site_group" : "",
-                                "sites" : "",
-                                "template" : "",
-                                "tenant" : "",
-                                "type" : "",
-                                "unicast_routing" : "",
-                                "vrf" : ""
+                                "arp_flooding": "",
+                                "bd_policy": "",
+                                "disable_ip_data_plane_learning_for_pbr": "",
+                                "endpoint_clear": "",
+                                "endpoint_retention_policy": "",
+                                "ep_move_detection_mode": "",
+                                "igmp_interface_policy": "",
+                                "igmp_snooping_policy": "",
+                                "intersite_bum_traffic_allow": "",
+                                "intersite_l2_stretch": "",
+                                "ipv6_l3_unknown_multicast": "",
+                                "l2_unknown_unicast": "",
+                                "l3_unknown_multicast_flooding": "",
+                                "l3out": "",
+                                "l3out_for_route_profile": "",
+                                "limit_ip_learn_to_subnets": "",
+                                "link_local_ipv6": "",
+                                "mac_address": "",
+                                "mld_snoop_policy": "",
+                                "multi_destionation_flooding": "",
+                                "name": "",
+                                "ndIfPol": "",
+                                "netflow_monitor_policies": "",
+                                "optimize_wan_bandwidth": "",
+                                "pim": "",
+                                "pimv6": "",
+                                "policy_name": "",
+                                "schema": "",
+                                "site_group": "",
+                                "sites": "",
+                                "template": "",
+                                "tenant": "",
+                                "type": "",
+                                "unicast_routing": "",
+                                "vrf": ""
                             },
                             "useg_epg":{
                                 "description": "Microseg EPG.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
@@ -3009,22 +4113,22 @@
                     {
                         "properties":{
                             "optional_args":{
-                                "alias" : "",
-                                "annotations" : "",
-                                "description" : "",
-                                "schema" : "",
-                                "sites" : "",
-                                "template" : ""
+                                "description": "",
+                                "global_alias": "",
+                                "name_alias": "",
+                                "schema": "",
+                                "sites": "",
+                                "template": ""
                             },
                             "required_args":{
-                                "enable_policy_compression" : "",
-                                "name" : "",
-                                "qos_class" : "",
-                                "contract_type" : "",
-                                "scope" : "",
-                                "site_group" : "",
-                                "target_dscp" : "",
-                                "tenant" : ""
+                                "enable_policy_compression": "",
+                                "name": "",
+                                "qos_class": "",
+                                "contract_type": "",
+                                "scope": "",
+                                "site_group": "",
+                                "target_dscp": "",
+                                "tenant": ""
                             }
                         }
                     }
@@ -3037,7 +4141,7 @@
                         "properties":{
                             "acknowledgement":{
                                 "description": "TCP Session Rules - Option Acknowledgement.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false", 
                                     "true"
@@ -3047,7 +4151,7 @@
                             },
                             "arp_flag":{
                                 "description": "ARP Flag Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "req",
                                     "reply",
@@ -3058,7 +4162,7 @@
                             },
                             "established":{
                                 "description": "TCP Session Rules - Option Established.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false", 
                                     "true"
@@ -3068,7 +4172,7 @@
                             },
                             "ethertype":{
                                 "description": "Ether Type Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "arp",
                                     "fcoe",
@@ -3085,7 +4189,7 @@
                             },
                             "finish":{
                                 "description": "TCP Session Rules - Option Finish.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false", 
                                     "true"
@@ -3095,7 +4199,7 @@
                             },
                             "icmpv4_type":{
                                 "description": "ICMPv4 Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "dst-unreach",
                                     "echo",
@@ -3109,7 +4213,7 @@
                             },
                             "icmpv6_type":{
                                 "description": "ICMPv6 Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "dst-unreach",
                                     "echo-req",
@@ -3125,7 +4229,7 @@
                             },
                             "ip_protocol":{
                                 "description": "ICMPv6 Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "egp",
                                     "eigrp",
@@ -3145,7 +4249,7 @@
                             },
                             "match_dscp":{
                                 "description": "Target DSCP Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "AF11",
                                     "AF12",
@@ -3176,7 +4280,7 @@
                             },
                             "match_only_fragments":{
                                 "description": "Match Only Fragements Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false", 
                                     "true"
@@ -3185,8 +4289,8 @@
                                 "x-omitempty": true
                             },
                             "optional_args":{
-                                "alias" : "",
-                                "description" : ""
+                                "description": "",
+                                "global_alias": ""
                             },
                             "required_args" : {
                                 "acknowledgement": "",
@@ -3214,7 +4318,7 @@
                             },
                             "reset":{
                                 "description": "TCP Session Rules - Option Reset.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false", 
                                     "true"
@@ -3224,7 +4328,7 @@
                             },
                             "stateful":{
                                 "description": "Stateful Flag Values.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false", 
                                     "true"
@@ -3234,7 +4338,7 @@
                             },
                             "synchronize":{
                                 "description": "TCP Session Rules - Option Synchronize.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "false", 
                                     "true"
@@ -3252,26 +4356,26 @@
                     {
                         "properties":{
                             "optional_args":{
-                                "alias" : "",
-                                "annotations" : "",
-                                "description" : "",
-                                "schema" : "",
-                                "sites" : "",
-                                "template" : ""
+                                "description": "",
+                                "global_alias": "",
+                                "name_alias": "",
+                                "schema": "",
+                                "sites": "",
+                                "template": ""
                             },
                             "required_args":{
-                                "enable_policy_compression" : "",
-                                "name" : "",
-                                "qos_class" : "",
-                                "contract_type" : "",
-                                "scope" : "",
-                                "site_group" : "",
-                                "target_dscp" : "",
-                                "tenant" : ""
+                                "enable_policy_compression": "",
+                                "name": "",
+                                "qos_class": "",
+                                "contract_type": "",
+                                "scope": "",
+                                "site_group": "",
+                                "target_dscp": "",
+                                "tenant": ""
                             },
                             "color_tag":{
                                 "description": "Specifies the color of a policy label.",
-                                "type": "list_values",
+                                "type": "list_of_values",
                                 "enum": [
                                     "alice-blue",
                                     "antique-white",
@@ -3427,9 +4531,9 @@
                     {
                         "properties":{
                             "optional_args":{
-                                "alias": "",
-                                "annotations": "",
-                                "description": ""
+                                "description": "",
+                                "global_alias": "",
+                                "name_alias": ""
                             },
                             "required_args":{
                                 "tenant": "",

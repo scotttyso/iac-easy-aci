@@ -315,6 +315,25 @@ def easyDict_append(templateVars, **kwargs):
     templateVars = OrderedDict(sorted(templateVars.items()))
     class_type = templateVars['class_type']
     data_type = templateVars['data_type']
+    templateVars.pop('data_type')
+    if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
+        kwargs['easyDict'][class_type][data_type].append({kwargs['site_group']:[]})
+        
+    count = 0
+    for i in kwargs['easyDict'][class_type][data_type]:
+        for k, v in i.items():
+            if kwargs['site_group'] == k:
+                i[kwargs['site_group']].append(templateVars)
+        count += 1
+    return kwargs['easyDict']
+
+#======================================================
+# Function to Append Subtype easyDict Dictionary
+#======================================================
+def easyDict_append_subtype(templateVars, **kwargs):
+    templateVars = OrderedDict(sorted(templateVars.items()))
+    class_type = templateVars['class_type']
+    data_type = templateVars['data_type']
     data_subtype = templateVars['data_subtype']
     policy_name = templateVars['policy_name']
     templateVars.pop('class_type')
@@ -348,25 +367,6 @@ def easyDict_append(templateVars, **kwargs):
                 count += 1
 
     # Return Dictionary
-    return kwargs['easyDict']
-
-#======================================================
-# Function to Update the easyDict Dictionary
-#======================================================
-def easyDict_update(templateVars, **kwargs):
-    templateVars = OrderedDict(sorted(templateVars.items()))
-    class_type = templateVars['class_type']
-    data_type = templateVars['data_type']
-    templateVars.pop('data_type')
-    if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
-        kwargs['easyDict'][class_type][data_type].append({kwargs['site_group']:[]})
-        
-    count = 0
-    for i in kwargs['easyDict'][class_type][data_type]:
-        for k, v in i.items():
-            if kwargs['site_group'] == k:
-                i[kwargs['site_group']].append(templateVars)
-        count += 1
     return kwargs['easyDict']
 
 #======================================================
@@ -409,6 +409,74 @@ def findVars(ws, func, rows, count):
         var_dict[vcount]['row'] = i + vcount - 1
         vcount += 1
     return var_dict
+
+#======================================================
+# Function to Merge Easy ACI Repository to Dest Folder
+#======================================================
+def get_latest_versions(easyDict):
+    # Get the Latest Release Tag for the provider-aci repository
+    url = f'https://github.com/CiscoDevNet/terraform-provider-aci/tags/'
+    r = requests.get(url, stream=True)
+    repoVer = 'BLANK'
+    stringMatch = False
+    while stringMatch == False:
+        for line in r.iter_lines():
+            toString = line.decode("utf-8")
+            if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
+                repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
+                break
+        stringMatch = True
+    
+    aci_provider_version = repoVer
+
+    # Get the Latest Release Tag for the provider-mso repository
+    url = f'https://github.com/CiscoDevNet/terraform-provider-mso/tags/'
+    r = requests.get(url, stream=True)
+    repoVer = 'BLANK'
+    stringMatch = False
+    while stringMatch == False:
+        for line in r.iter_lines():
+            toString = line.decode("utf-8")
+            if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
+                repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
+                break
+        stringMatch = True
+    
+    ndo_provider_version = repoVer
+
+    # Get the Latest Release Tag for Terraform
+    url = f'https://github.com/hashicorp/terraform/tags'
+    r = requests.get(url, stream=True)
+    repoVer = 'BLANK'
+    stringMatch = False
+    while stringMatch == False:
+        for line in r.iter_lines():
+            toString = line.decode("utf-8")
+            if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
+                repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
+                break
+        stringMatch = True
+    
+    terraform_version = repoVer
+
+    easyDict['latest_versions']['aci_provider_version'] = aci_provider_version
+    easyDict['latest_versions']['ndo_provider_version'] = ndo_provider_version
+    easyDict['latest_versions']['terraform_version'] = terraform_version
+
+    # Get the Latest Release Tag for Terraform
+    # url = f'https://software.cisco.com/download/home/285968390/type/286278832/release/5.2(4d)'
+    # r = requests.get(url, stream=True)
+    # repoVer = 'BLANK'
+    # stringMatch = False
+    # while stringMatch == False:
+    #     for line in r.iter_lines():
+    #         toString = line.decode("utf-8")
+    #         print(toString)
+    #         if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
+    #             repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
+    #             break
+    #     stringMatch = True
+    return easyDict
 
 #======================================================
 # Function to Get User Password
@@ -458,7 +526,7 @@ def merge_easy_aci_repository(easy_jsonData):
             if len(x) == 2:
                 folders.remove(folder)
 
-    # Get the Latest Release Tag for the terraform-intersight-imm repository
+    # Get the Latest Release Tag for the terraform-easy-aci repository
     url = f'https://github.com/terraform-cisco-modules/terraform-easy-aci/tags/'
     r = requests.get(url, stream=True)
     repoVer = 'BLANK'
@@ -938,7 +1006,19 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                             templateVars['policy_type'] = func.replace('_', ' ').upper()
                             kwargs['tfvars_file'] = 'bgp'
                         else:
-                            templateVars['policy_type'] = func.replace('_', ' ').capitalize()
+                            templateVars['policy_type'] = func.replace('_', ' ')
+                            x = templateVars['policy_type'].split('_')
+                            templateVars['policy_type'] = ''
+                            for i in x:
+                                if not i == 'and':
+                                    templateVars['policy_type'] = templateVars['policy_type'] + i.capitalize()
+                                else:
+                                    templateVars['policy_type'] = templateVars['policy_type'] + i
+                            templateVars['policy_type'] = func.replace('Aes', 'AES')
+                            templateVars['policy_type'] = func.replace('Apic', 'APIC')
+                            templateVars['policy_type'] = func.replace('Radius', 'RADIUS')
+                            templateVars['policy_type'] = func.replace('Snmp', 'SNMP')
+                            templateVars['policy_type'] = func.replace('Tacacs', 'TACACS+')
                             kwargs['tfvars_file'] = func
                         
                         # Write the Header to the Template File
@@ -1002,7 +1082,7 @@ def sensitive_var_site_group(**kwargs):
                 if site_dict['run_location'] == 'local':
                     sensitive_var_value(**kwargs)
     else:
-        site_id = 'site_id_%s' % (site_group[kwargs['site_group']])
+        site_id = 'site_id_%s' % (kwargs['site_group'])
         site_dict = ast.literal_eval(os.environ[site_id])
         if site_dict['run_location'] == 'local':
             sensitive_var_value(**kwargs)
@@ -1092,6 +1172,9 @@ def sensitive_var_value(**kwargs):
                 elif 'tacacs_monitoring_password' in sensitive_var:
                     sKey = 'tacacs_monitoring_password'
                     varTitle = 'TACACS+ Monitoring Password.'
+                elif 'vmm_password' in sensitive_var:
+                    sKey = 'vmm_password'
+                    varTitle = 'Virtual Networking Controller Password.'
                 else:
                     print(sensitive_var)
                     print('Could not Match Sensitive Value Type')
@@ -1147,19 +1230,23 @@ def validate_args(jsonData, **kwargs):
     globalData = kwargs['easy_jsonData']['components']['schemas']['globalData']['allOf'][1]['properties']
     global_args = [
         'admin_state',
-        'alias',
         'application_epg',
         'application_profile',
         'annotation',
         'audit_logs',
+        'cdp_interface_policy',
         'description',
         'events',
         'faults',
+        'global_alias',
+        'lldp_interface_policy',
         'management_epg',
         'management_epg_type',
+        'monitoring_policy',
         'name',
         'name_alias',
         'pod_id',
+        'port_channel_policy',
         'qos_class',
         'session_logs',
         'tenant',
@@ -1172,7 +1259,7 @@ def validate_args(jsonData, **kwargs):
                     kwargs[i] = globalData[i]['default']
                 else:
                     validating.number_check(i, globalData, **kwargs)
-            elif globalData[i]['type'] == 'list_values':
+            elif globalData[i]['type'] == 'list_of_values':
                 if kwargs[i] == None:
                     kwargs[i] = globalData[i]['default']
                 else:
@@ -1181,7 +1268,7 @@ def validate_args(jsonData, **kwargs):
                 if not kwargs[i] == None:
                     validating.string_pattern(i, globalData, **kwargs)
             else:
-                print(f'error validating.  Type not found {i}')
+                print(f'error validating.  Type not found {i}. 1')
                 exit()
         elif i == 'site_group':
             validating.site_group('site_group', **kwargs)
@@ -1206,11 +1293,6 @@ def validate_args(jsonData, **kwargs):
                 kwargs[i] = jsonData[i]['default']
             else:
                 validating.number_check(i, jsonData, **kwargs)
-        elif jsonData[i]['type'] == 'list_integer':
-            if kwargs[i] == None:
-                kwargs[i] = jsonData[i]['default']
-            else:
-                validating.number_list(i, jsonData, **kwargs)
         elif jsonData[i]['type'] == 'list_of_domains':
             if not kwargs[i] == None:
                 count = 1
@@ -1232,7 +1314,14 @@ def validate_args(jsonData, **kwargs):
                         validating.ip_address(f'{i}_{count}', **kwargs)
                     kwargs.pop(f'{i}_{count}')
                     count += 1
-        elif jsonData[i]['type'] == 'list_values':
+        elif jsonData[i]['type'] == 'list_of_integer':
+            if kwargs[i] == None:
+                kwargs[i] = jsonData[i]['default']
+            else:
+                validating.number_list(i, jsonData, **kwargs)
+        elif jsonData[i]['type'] == 'list_of_string':
+                validating.string_list(i, jsonData, **kwargs)
+        elif jsonData[i]['type'] == 'list_of_values':
             if kwargs[i] == None:
                 kwargs[i] = jsonData[i]['default']
             else:
@@ -1241,7 +1330,7 @@ def validate_args(jsonData, **kwargs):
             if not kwargs[i] == None:
                 validating.string_pattern(i, jsonData, **kwargs)
         else:
-            print(f'error validating.  Type not found {i}')
+            print(f'error validating.  Type not found {i}. 2')
             exit()
     for i in jsonData['optional_args']:
         if not kwargs[i] == None:
@@ -1253,7 +1342,7 @@ def validate_args(jsonData, **kwargs):
                 validating.email(i, **kwargs)
             elif jsonData[i]['type'] == 'integer':
                 validating.number_check(i, jsonData, **kwargs)
-            elif jsonData[i]['type'] == 'list_values':
+            elif jsonData[i]['type'] == 'list_of_values':
                 validating.list_values(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'phone_number':
                 validating.phone_number(i, **kwargs)
@@ -1585,12 +1674,13 @@ def write_to_site(templateVars, **kwargs):
         kwargs['version'] = site_dict.get('version')
 
         if kwargs['controller_type'] == 'ndo' and templateVars['template_type'] == 'tenants':
-            if kwargs['users'] == None:
-                validating.error_tenant_users(**kwargs)
-            else:
-                for user in kwargs['users'].split(','):
-                    regexp = '^[a-zA-Z0-9\_\-]+$'
-                    validating.length_and_regex(regexp, 'users', user, 1, 63)
+            print('hello')
+            # if kwargs['users'] == None:
+            #     validating.error_tenant_users(**kwargs)
+            # else:
+            #     for user in kwargs['users'].split(','):
+            #         regexp = '^[a-zA-Z0-9\_\-]+$'
+            #         validating.length_and_regex(regexp, 'users', user, 1, 63)
         # Create Terraform file from Template
         write_to_template(templateVars, **kwargs)
 
