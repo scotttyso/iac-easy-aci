@@ -383,7 +383,6 @@ def findKeys(ws, func_regex):
 #======================================================
 # Function to Create Terraform auto.tfvars files
 #======================================================
-# Function to Assign the Variables to the Keys
 def findVars(ws, func, rows, count):
     var_list = []
     var_dict = {}
@@ -427,6 +426,7 @@ def get_latest_versions(easyDict):
                 break
         stringMatch = True
     
+    # Set ACI Provider Version
     aci_provider_version = repoVer
 
     # Get the Latest Release Tag for the provider-mso repository
@@ -442,6 +442,7 @@ def get_latest_versions(easyDict):
                 break
         stringMatch = True
     
+    # Set NDO Provider Version
     ndo_provider_version = repoVer
 
     # Get the Latest Release Tag for Terraform
@@ -456,26 +457,40 @@ def get_latest_versions(easyDict):
                 repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
                 break
         stringMatch = True
-    
+
+    # Set Terraform Version
     terraform_version = repoVer
 
+     # Get the Latest Release Tag for Nexus Dashboard Orchestrator
+    url = f'https://dcappcenter.cisco.com/nexus-dashboard-orchestrator.html'
+    r = requests.get(url, stream=True)
+    ndoVer = None
+    stringMatch = False
+    while stringMatch == False:
+        for line in r.iter_lines():
+            toString = line.decode("utf-8")
+            if re.search(r'product-id=\"(\d+)\"', toString):
+                ndoVer = re.search(r'product-id=\"(\d+)\"', toString).group(1)
+                break
+        stringMatch = True
+
+    if ndoVer == None:
+        print('\n   Error!!!  Could not find the version of NDO on the dcappcenter.\n')
+        exit()
+    url = f'https://dcappcenter.cisco.com/rest/V1/product/platforms?id={ndoVer}&approvedOnly=true'
+    r = requests.post(url, stream=True)
+    ndoVersions = []
+    stringMatch = False
+    while stringMatch == False:
+        for item in r.json():
+            ndoVersions.append(item['label'])
+        stringMatch = True
     easyDict['latest_versions']['aci_provider_version'] = aci_provider_version
     easyDict['latest_versions']['ndo_provider_version'] = ndo_provider_version
+    easyDict['latest_versions']['ndo_versions']['enum'] = ndoVersions
+    easyDict['latest_versions']['ndo_versions']['default'] = ndoVersions[0]
     easyDict['latest_versions']['terraform_version'] = terraform_version
 
-    # Get the Latest Release Tag for Terraform
-    # url = f'https://software.cisco.com/download/home/285968390/type/286278832/release/5.2(4d)'
-    # r = requests.get(url, stream=True)
-    # repoVer = 'BLANK'
-    # stringMatch = False
-    # while stringMatch == False:
-    #     for line in r.iter_lines():
-    #         toString = line.decode("utf-8")
-    #         print(toString)
-    #         if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
-    #             repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
-    #             break
-    #     stringMatch = True
     return easyDict
 
 #======================================================
@@ -983,9 +998,31 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
     for class_type in classes:
         funcList = jsonData[f'class.{class_type}']['enum']
         for func in funcList:
+            sites = []
+            site_groups = {}
             for item in easyDict[class_type][func]:
                 for k, v in item.items():
+                    if re.search('[0-9]+', k):
+                        sites.append(k)
+                for k, v in item.items():
+                    if re.search('Grp_', k):
+                        site_groups.update({k:[]})
+                        site_group = ast.literal_eval(os.environ[k])
+                        gsites = []
+                        for kk, vv in site_group.items():
+                            if not vv == None and re.search('site_[0-9]+', kk):
+                                gsites.append(vv)
+                        for site in sites:
+                            for gsite in gsites:
+                                if int(site) == int(gsite):
+                                    site_groups[k].append(site)
+            for item in easyDict[class_type][func]:
+                loop_count = 1
+                for k, v in item.items():
+                    dummy_count = 1
+                    countlength = len(v)
                     for i in v:
+                        # print(i)
                         templateVars = i
                         # print(json.dumps(templateVars, indent=4))
                         # exit()
@@ -1006,27 +1043,53 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                             templateVars['policy_type'] = func.replace('_', ' ').upper()
                             kwargs['tfvars_file'] = 'bgp'
                         else:
-                            templateVars['policy_type'] = func.replace('_', ' ')
-                            x = templateVars['policy_type'].split('_')
-                            templateVars['policy_type'] = ''
+                            if re.search('aaep_policies', func):
+                                kwargs['tfvars_file'] = 'global_policies'
+                            elif re.search('(layer3|physical)_domains', func):
+                                kwargs['tfvars_file'] = 'domains'
+                            elif 'access' in class_type and re.search('policies', func):
+                                kwargs['tfvars_file'] = 'interface_policies'
+                            elif re.search('leaf_port_group', func):
+                                kwargs['tfvars_file'] = 'leaf_interface_policy_groups'
+                            elif re.search('spine_port_group', func):
+                                kwargs['tfvars_file'] = 'spine_interface_policy_groups'
+                            elif 'access' in class_type and re.search('pools', func):
+                                kwargs['tfvars_file'] = 'pools'
+                            else:
+                                kwargs['tfvars_file'] = func
+                            x = func.split('_')
+                            policyType = ''
+                            xcount = 0
                             for i in x:
-                                if not i == 'and':
-                                    templateVars['policy_type'] = templateVars['policy_type'] + i.capitalize()
+                                if not i == 'and' and xcount == 0:
+                                    policyType = policyType + i.capitalize()
+                                elif 'and' in i:
+                                    policyType = policyType + ' ' + i
                                 else:
-                                    templateVars['policy_type'] = templateVars['policy_type'] + i
-                            templateVars['policy_type'] = func.replace('Aes', 'AES')
-                            templateVars['policy_type'] = func.replace('Apic', 'APIC')
-                            templateVars['policy_type'] = func.replace('Radius', 'RADIUS')
-                            templateVars['policy_type'] = func.replace('Snmp', 'SNMP')
-                            templateVars['policy_type'] = func.replace('Tacacs', 'TACACS+')
-                            kwargs['tfvars_file'] = func
+                                    policyType = policyType + ' ' + i.capitalize()
+                                xcount += 1
+                            policyType = policyType.replace('Aaep', 'AAEP')
+                            policyType = policyType.replace('Aes', 'AES')
+                            policyType = policyType.replace('Apic', 'APIC')
+                            policyType = policyType.replace('Cdp', 'CDP')
+                            policyType = policyType.replace('Lldp', 'LLDP')
+                            policyType = policyType.replace('Radius', 'RADIUS')
+                            policyType = policyType.replace('Snmp', 'SNMP')
+                            policyType = policyType.replace('Tacacs', 'TACACS+')
+                            templateVars['policy_type'] = policyType
                         
                         # Write the Header to the Template File
-                        if 'bgp_rr' in func:
+                        if re.search('aaep|cdp|layer3|group_access|virtual|vlan_p', func) and loop_count == 1:
+                            kwargs["initial_write"] = True
+                        elif re.search('bgp_rr|policies|port_group|domains|virtual|vlan_p', func):
                             kwargs["initial_write"] = False
                         else:
                             kwargs["initial_write"] = True
-                        write_to_site(templateVars, **kwargs)
+                        if re.search('Grp_', k):
+                            if not len(site_groups[k]) > 0 and loop_count == 1:
+                                write_to_site(templateVars, **kwargs)
+                        elif loop_count == 1:
+                            write_to_site(templateVars, **kwargs)
 
                         # Write the template to the Template File
                         kwargs["initial_write"] = False
@@ -1036,9 +1099,21 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                         kwargs["initial_write"] = False
                         kwargs["template_file"] = 'template_close.jinja2'
 
-                        if not re.search('apic|bgp_asn', func):
-                            # Write the Footer to the Template File
+                        
+                        if countlength > 1 and countlength != loop_count:
+                            dummy_count += 1
+                        elif re.search('apic|bgp_asn', func):
+                            dummy_count += 1
+                        elif re.search('[0-9]+', k):
+                            scount = 0
+                            for kk, vv in site_groups.items():
+                                if k in vv:
+                                    scount += 1
+                            if scount == 0:
+                                write_to_site(templateVars, **kwargs)
+                        else:
                             write_to_site(templateVars, **kwargs)
+                        loop_count += 1
 
 #======================================================
 # Function to Read Excel Workbook Data
@@ -1682,15 +1757,15 @@ def write_to_site(templateVars, **kwargs):
         templateVars['controller_type'] = site_dict.get('controller_type')
         kwargs['site_name'] = site_dict.get('site_name')
         kwargs['version'] = site_dict.get('version')
-
+        if templateVars['template_type'] == 'firmware':
+            templateVars['version'] = kwargs['version']
         if kwargs['controller_type'] == 'ndo' and templateVars['template_type'] == 'tenants':
-            print('hello')
-            # if kwargs['users'] == None:
-            #     validating.error_tenant_users(**kwargs)
-            # else:
-            #     for user in kwargs['users'].split(','):
-            #         regexp = '^[a-zA-Z0-9\_\-]+$'
-            #         validating.length_and_regex(regexp, 'users', user, 1, 63)
+            if templateVars['users'] == None:
+                validating.error_tenant_users(**kwargs)
+            else:
+                for user in templateVars['users'].split(','):
+                    regexp = '^[a-zA-Z0-9\_\-]+$'
+                    validating.length_and_regex(regexp, 'users', user, 1, 64)
         # Create Terraform file from Template
         write_to_template(templateVars, **kwargs)
 

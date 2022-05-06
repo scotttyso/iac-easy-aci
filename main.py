@@ -41,8 +41,8 @@ workspace_dict = {}
 part1 = 'aep_profile|cdp|(fibre|port)_(channel|security)|interface_policy|l2_interface|(phys|l3)_domain|'
 part2 = '(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|stp|vlan_pool'
 access_regex = f'^({part1}{part2})$'
-admin_regex = re.compile('^(auth|export_policy|radius|remote_host|security|tacacs)$')
-system_settings_regex = re.compile('^(apic_preference|bgp_(asn|rr)|global_aes)$')
+admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
+system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
 bridge_domains_regex = re.compile('^add_bd$')
 contracts_regex = re.compile('(^(contract|filter|subject)_(add|entry|to_epg)$)')
 epgs_regex = re.compile('^((app|epg)_add)$')
@@ -340,7 +340,7 @@ def main():
             eval(f"{process_type}(easyDict, easy_jsonData, wb)")
 
     easyDict.pop('wb')
-    # print(json.dumps(easyDict['admin'], indent = 4))
+    # print(json.dumps(easyDict['access']['virtual_networking'], indent = 4))
     # exit()
 
     # Begin Proceedures to Create files

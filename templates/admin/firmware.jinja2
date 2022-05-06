@@ -1,0 +1,48 @@
+
+  "{{ keys['name'] }}" = {
+{%- for k, v in keys.items() %}
+  {%- if k == 'controller_type' or k == 'class_type' or k == 'name' %}
+  {%- elif k == 'policy_type' or k == 'site_group' or k == 'template_type' %}
+  {%- elif k == 'key' or k == 'name' %}
+  {%- elif k == 'maintenance_groups' %}
+    {{ k }} = [
+    {%- for i in v %}
+      {
+      {%- for key, value in i.items() %}
+        {%- if value == None %}
+        {%- elif key == 'domain_name' %}
+        {%- elif value is iterable and (value is not string and value is not mapping) %}
+        {{ key }} = [
+          {%- for item in value %}
+            {%- if not loop.last %}
+          "{{ item }}",
+            {%- else %}
+          "{{ item }}"
+            {%- endif %}
+          {%- endfor %}
+        ]
+        {%- elif value | int(-1) != -1 %}
+        {{ key }} = {{ value }}
+        {%- elif value == 'false' or value == 'true' %}
+        {{ key }} = {{ value }}
+        {%- else %}
+        {{ key }} = "{{ value }}"
+        {%- endif %}
+      {%- endfor %}
+      {%- if not loop.last %}
+      },
+      {%- else %}
+      }
+      {%- endif %}
+    {%- endfor %}
+    ]
+  {%- elif v == None %}
+  {%- elif v | int(-1) != -1 %}
+    {{ k }} = {{ v }}
+  {%- elif v == 'false' or v == 'true' %}
+    {{ k }} = {{ v }}
+  {%- else %}
+    {{ k }} = "{{ v }}"
+  {%- endif %}
+{%- endfor %}
+  }

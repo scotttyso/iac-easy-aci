@@ -486,52 +486,6 @@ class access(object):
         return kwargs['easyDict']
 
     #======================================================
-    # Function - Maintenance Profiles
-    #======================================================
-    def maint_group(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'Site_Group': '',
-                         'MG_Name': '',
-                         'Admin_State': '',
-                         'Admin_Notify': '',
-                         'Graceful': '',
-                         'Ignore_Compatability': '',
-                         'Run_Mode': '',
-                         'SW_Version': '',
-                         'Ver_Check_Override': '',
-                         'FW_Type': '',
-                         'MG_Type': ''}
-        optional_args = { }
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('MG_Name', templateVars['MG_Name'])
-            validating.validator('software_version', **kwargs)
-            validating.values('Admin_State', templateVars['Admin_State'], ['triggered', 'untriggered'])
-            validating.values('Admin_Notify', templateVars['Admin_Notify'], ['notifyAlwaysBetweenSets', 'notifyNever', 'notifyOnlyOnFailures'])
-            validating.values('Graceful', templateVars['Graceful'], ['no', 'yes'])
-            validating.values('Ignore_Compatability',templateVars['Ignore_Compatability'], ['no', 'yes'])
-            validating.values('Run_Mode', templateVars['Run_Mode'], ['pauseAlwaysBetweenSets', 'pauseNever', 'pauseOnlyOnFailures'])
-            validating.values('Ver_Check_Override', templateVars['Ver_Check_Override'], ['trigger', 'trigger-immediate', 'triggered', 'untriggered'])
-            validating.values('MG_Type', templateVars['MG_Type'], ['ALL', 'range'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-        # Define the Template Source
-        template_file = "maintenance_group.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Maintenance_Group_%s.tf' % (templateVars['MG_Name'])
-        dest_dir = 'Admin'
-        
-    #======================================================
     # Function - Interface Policies - Mis-Cabling Protocol
     #======================================================
     def mcp(self, **kwargs):
@@ -629,7 +583,6 @@ class access(object):
                     for i in value:
                         if i['interface_policy'] == templateVars['interface_policy']:
                             templateVars.update(i)
-                            print(json.dumps(templateVars, indent=4))
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
@@ -661,7 +614,6 @@ class access(object):
                     for i in value:
                         if i['interface_policy'] == templateVars['interface_policy']:
                             templateVars.update(i)
-                            print(json.dumps(templateVars, indent=4))
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
@@ -1574,6 +1526,61 @@ class admin(object):
         return kwargs['easyDict']
 
     #======================================================
+    # Function - Global Security Settings
+    #======================================================
+    def mg_policy(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.firmware.Policy']['allOf'][1]['properties']
+
+        try:
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
+            raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['maintenance_groups'] = []
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'admin'
+        templateVars['data_type'] = 'firmware'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Configuration Backup  - Remote Host
+    #======================================================
+    def maint_group(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.firmware.MaintenanceGroups']['allOf'][1]['properties']
+
+        try:
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
+            raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Convert to Lists
+        if ',' in templateVars["node_list"]:
+            templateVars["node_list"] = templateVars["node_list"].split(',')
+
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'admin'
+        templateVars['data_type'] = 'firmware'
+        templateVars['data_subtype'] = 'maintenance_groups'
+        templateVars['policy_name'] = kwargs['maintenance_group_policy']
+        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
     # Function - RADIUS Authentication
     #======================================================
     def radius(self, **kwargs):
@@ -1695,7 +1702,7 @@ class admin(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'admin'
-        templateVars['data_type'] = 'global_security'
+        templateVars['data_type'] = 'security'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -2370,20 +2377,21 @@ class site_policies(object):
 
         kwargs["multi_select"] = False
         jsonVars = kwargs['easy_jsonData']['components']['schemas']['easy_aci']['allOf'][1]['properties']
-
         # Prompt User for the Version of the Controller
         if templateVars['controller_type'] == 'apic':
             # APIC Version
-            kwargs["var_description"] = f"Select the Version that Most Closely matches your version for {templateVars['site_name']}."
+            kwargs["var_description"] = f"Select the Version that Most Closely matches "\
+                f'your version for the Site "{templateVars["site_name"]}".'
             kwargs["jsonVars"] = jsonVars['apic_versions']['enum']
             kwargs["defaultVar"] = jsonVars['apic_versions']['default']
             kwargs["varType"] = 'APIC Version'
             templateVars['version'] = variablesFromAPI(**kwargs)
         else:
             # NDO Version
-            kwargs["var_description"] = f"Select the Version that Most Closely matches your version for {templateVars['site_name']}."
-            kwargs["jsonVars"] = jsonVars['ndo_versions']['enum']
-            kwargs["defaultVar"] = jsonVars['ndo_versions']['default']
+            kwargs["var_description"] = f'Select the Version that Most Closely matches '\
+                f'your version for the Site "{templateVars["site_name"]}".'
+            kwargs["jsonVars"] = jsonVars['easyDict']['latest_versions']['ndo_versions']['enum']
+            kwargs["defaultVar"] = jsonVars['easyDict']['latest_versions']['ndo_versions']['default']
             kwargs["varType"] = 'NDO Version'
             templateVars['version'] = variablesFromAPI(**kwargs)
 

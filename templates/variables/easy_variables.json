@@ -43,7 +43,7 @@
                                     "lldp_interface_policies",
                                     "mcp_interface_policies",
                                     "physical_domains",
-                                    "port_channel_interface_policies",
+                                    "port_channel_policies",
                                     "port_security_policies",
                                     "spanning_tree_interface_policies",
                                     "spine_policy_groups",
@@ -57,7 +57,8 @@
                                 "enum": [
                                     "authentication",
                                     "configuration_backups",
-                                    "global_security",
+                                    "firmware",
+                                    "security",
                                     "radius",
                                     "tacacs"
                                 ]
@@ -124,7 +125,8 @@
                                 "admin":{
                                     "authentication":[],
                                     "configuration_backups":[],
-                                    "global_security":[],
+                                    "firmware":[],
+                                    "security":[],
                                     "radius":[],
                                     "tacacs":[]
                                 },
@@ -139,6 +141,12 @@
                                 "latest_versions":{
                                     "aci_provider_version":"",
                                     "ndo_provider_version":"",
+                                    "ndo_versions":{
+                                        "description": "List of NDO Versions obtained from dcappcenter.",
+                                        "type": "list_of_values",
+                                        "enum":[],
+                                        "default":""
+                                    },
                                     "terraform_version":""
                                 },
                                 "sites":{},
@@ -264,18 +272,6 @@
                                     "variables.tf",
                                     "vrfs.tf"
                                 ]
-                            },
-                            "ndo_versions":{
-                                "description": "Nexus Dashboard Orchestrotor Releases.  Select the Version that Most Closely matches your version.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "3.7(1g)",
-                                    "3.7(1d)",
-                                    "3.5(2f)",
-                                    "3.4(1i)"
-                                ],
-                                "default": "3.7(1g)",
-                                "x-omitempty": true
                             },
                             "remove_files": [
                                 "coop_group.tf",
@@ -472,6 +468,7 @@
                             "required_args": {
                                 "auto_max_speed": "",
                                 "fill_pattern": "",
+                                "name": "",
                                 "port_mode": "",
                                 "receive_buffer_credit": "",
                                 "speed": "",
@@ -1343,9 +1340,10 @@
                                 "type": "list_of_values",
                                 "enum": [
                                     "dynamic",
+                                    "inherit",
                                     "static"
                                 ],
-                                "default": "static",
+                                "default": "inherit",
                                 "x-omitempty": true
                             },
                             "vlan_group2":{
@@ -1358,9 +1356,10 @@
                                 "type": "list_of_values",
                                 "enum": [
                                     "dynamic",
+                                    "inherit",
                                     "static"
                                 ],
-                                "default": "static",
+                                "default": "inherit",
                                 "x-omitempty": true
                             }
                         }
@@ -2094,6 +2093,204 @@
                                     "untriggered"
                                 ],
                                 "default": "untriggered",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "admin.firmware.Policy":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "compatibility_check":{
+                                "description": "A property for specifying whether compatibility checks should be ignored when applying the firmware policy.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "graceful_upgrade":{
+                                "description": "This option will enable Graceful Insertion and Removal mode.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "notify_conditions":{
+                                "description": "Maintenance Policy Admin Notification.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "notifyAlwaysBetweenSets",
+                                    "notifyNever",
+                                    "notifyOnlyOnFailures"
+                                ],
+                                "default": "notifyOnlyOnFailures",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                            },
+                            "policy_type":{
+                                "description": "The Firmware Type for the Maintenance Group.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "controller",
+                                    "switch"
+                                ],
+                                "default": "switch",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "compatibility_check": "",
+                                "graceful_upgrade": "",
+                                "name": "",
+                                "notify_conditions": "",
+                                "policy_type": "",
+                                "run_mode": "",
+                                "simulator": "",
+                                "site_group": "",
+                                "version_check_override": ""
+                            },
+                            "run_mode":{
+                                "description": "Maintenance Policy Admin Notification.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "pauseAlwaysBetweenSets",
+                                    "pauseNever",
+                                    "pauseOnlyOnFailures"
+                                ],
+                                "default": "pauseOnlyOnFailures",
+                                "x-omitempty": true
+                            },
+                            "simulator":{
+                                "description": "Is this an APIC Simulator.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "version_check_override":{
+                                "description": "A property for specifying whether the firmware upgrade should be triggered or not. .",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "trigger",
+                                    "trigger-immediate",
+                                    "triggered",
+                                    "untriggered"
+                                ],
+                                "default": "untriggered",
+                                "x-omitempty": true
+                            },
+                            "scheduled_days":{
+                                "description": "Scheduled Days.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "every-day",
+                                    "even-day",
+                                    "odd-day",
+                                    "Sunday",
+                                    "Monday",
+                                    "Tuesday",
+                                    "Wednesday",
+                                    "Thursday",
+                                    "Friday",
+                                    "Saturday",
+                                    "Sunday"
+                                ],
+                                "default": "json",
+                                "x-omitempty": true
+                            },
+                            "scheduled_hour":{
+                                "description": "Hour of the day to perform the backup.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 23,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "scheduled_minute":{
+                                "description": "Minute of the day to perform the backup.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 59,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "snapshot":{
+                                "description": "Flag to define if the backup is a snapshot.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "start_now":{
+                                "description": "Flag to Start the Backup now.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "triggered",
+                                    "untriggered"
+                                ],
+                                "default": "untriggered",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "admin.firmware.MaintenanceGroups":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "maintenance_group_policy":{
+                                "description": "Name of the Firmware Maintenance Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "node_list":{
+                                "description": "List of Switches to add to the Maintenance Group.",
+                                "type": "list_of_integer",
+                                "format": "int64",
+                                "minimum": 101,
+                                "maximum": 4000,
+                                "default": 101,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                            },
+                            "required_args": {
+                                "maintenance_group_policy": "",
+                                "name": "",
+                                "node_list": "",
+                                "site_group": "",
+                                "start_now": ""
+                            },
+                            "start_now":{
+                                "description": "Flag to Start an Upgrade right now.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
                                 "x-omitempty": true
                             }
                         }
