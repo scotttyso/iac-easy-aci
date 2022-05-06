@@ -603,13 +603,13 @@ def vlans(var, **kwargs):
                     if not validators.between(int(z), min=1, max=4095):
                         print(f'\n-----------------------------------------------------------------------------\n')
                         print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid VLAN Values are:')
-                        print(f'   between 1 and 4095.  Exiting....')
+                        print(f'   between 1 and 4095.  "{z}" is not valid.  Exiting....')
                         print(f'\n-----------------------------------------------------------------------------\n')
                         exit()
             elif not validators.between(int(x), min=1, max=4095):
                 print(f'\n-----------------------------------------------------------------------------\n')
                 print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid VLAN Values are:')
-                print(f'   between 1 and 4095.  Exiting....')
+                print(f'   between 1 and 4095.  "{x}" is not valid.  Exiting....')
                 print(f'\n-----------------------------------------------------------------------------\n')
                 exit()
     elif re.search('\\-', str(varValue)):
@@ -618,12 +618,12 @@ def vlans(var, **kwargs):
             if not validators.between(int(x), min=1, max=4095):
                 print(f'\n-----------------------------------------------------------------------------\n')
                 print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid VLAN Values are:')
-                print(f'   between 1 and 4095.  Exiting....')
+                print(f'   between 1 and 4095.  "{x}" is not valid.  Exiting....')
                 print(f'\n-----------------------------------------------------------------------------\n')
                 exit()
     elif not validators.between(int(varValue), min=1, max=4095):
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. Valid VLAN Values are:')
-        print(f'   between 1 and 4095.  Exiting....')
+        print(f'   between 1 and 4095.  "{varValue}" is not valid.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()

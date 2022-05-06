@@ -38,13 +38,18 @@ workspace_dict = {}
 # Regular Expressions to Control wich rows in the
 # Worksheet should be processed.
 #======================================================
-access_regex = re.compile('^(aep_profile|bpdu|cdp|(fibre|port)_(channel|security)|l2_interface|l3_domain|(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|phys_dom|stp|vlan_pool)$')
+part1 = 'aep_profile|cdp|(fibre|port)_(channel|security)|interface_policy|l2_interface|(phys|l3)_domain|'
+part2 = '(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|stp|vlan_pool'
+access_regex = f'^({part1}{part2})$'
 admin_regex = re.compile('^(auth|export_policy|radius|remote_host|security|tacacs)$')
 system_settings_regex = re.compile('^(apic_preference|bgp_(asn|rr)|global_aes)$')
 bridge_domains_regex = re.compile('^add_bd$')
 contracts_regex = re.compile('(^(contract|filter|subject)_(add|entry|to_epg)$)')
 epgs_regex = re.compile('^((app|epg)_add)$')
-fabric_regex = '^(date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)|snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?)$'
+
+part1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)|'
+part2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'
+fabric_regex = f'^({part1}{part2})$'
 inventory_regex = re.compile('^(apic_inb|switch|vpc_pair)$')
 l3out_regex = re.compile('^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$')
 mgmt_tenant_regex = re.compile('^(add_bd|mgmt_epg|oob_ext_epg)$')

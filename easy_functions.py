@@ -1320,12 +1320,16 @@ def validate_args(jsonData, **kwargs):
             else:
                 validating.number_list(i, jsonData, **kwargs)
         elif jsonData[i]['type'] == 'list_of_string':
+            if not kwargs[i] == None:
                 validating.string_list(i, jsonData, **kwargs)
         elif jsonData[i]['type'] == 'list_of_values':
             if kwargs[i] == None:
                 kwargs[i] = jsonData[i]['default']
             else:
                 validating.list_values(i, jsonData, **kwargs)
+        elif jsonData[i]['type'] == 'list_of_vlans':
+            if not kwargs[i] == None:
+                validating.vlans(i, **kwargs)
         elif jsonData[i]['type'] == 'string':
             if not kwargs[i] == None:
                 validating.string_pattern(i, jsonData, **kwargs)
@@ -1344,12 +1348,18 @@ def validate_args(jsonData, **kwargs):
                 validating.number_check(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'list_of_values':
                 validating.list_values(i, jsonData, **kwargs)
+            elif jsonData[i]['type'] == 'list_of_vlans':
+                if not kwargs[i] == None:
+                    validating.vlans(i, **kwargs)
+            elif jsonData[i]['type'] == 'list_of_string':
+                if not kwargs[i] == None:
+                    validating.string_list(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'phone_number':
                 validating.phone_number(i, **kwargs)
             elif jsonData[i]['type'] == 'string':
                 validating.string_pattern(i, jsonData, **kwargs)
             else:
-                print(f'error validating.  Type not found {i}')
+                print(f'error validating.  Type not found {i}. 3.')
                 exit()
 
 #======================================================

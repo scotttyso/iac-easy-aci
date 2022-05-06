@@ -51,96 +51,31 @@ class access(object):
     # Function - Global Policies - AAEP Profiles
     #======================================================
     def aep_profile(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'infra_vlan': ''
-        }
-        optional_args = {
-            'description': '',
-            'physical_domains': '',
-            'l3_domains': '',
-            'vmm_domains': ''
-        }
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.global.attachableAccessEntityProfile']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.values('infra_vlan', templateVars['infra_vlan'], ['no', 'yes'])
-            if not templateVars['physical_domains'] == None:
-                templateVars['domains'] = 'yes'
-                if re.search(r',', templateVars['physical_domains']):
-                    x = templateVars['physical_domains'].split(',')
-                    for domain in x:
-                        validating.name_rule('physical_domains', domain)
-                else:
-                    validating.name_rule('physical_domains', templateVars['physical_domains'])
-            if not templateVars['l3_domains'] == None:
-                templateVars['domains'] = 'yes'
-                if re.search(r',', templateVars['l3_domains']):
-                    x = templateVars['l3_domains'].split(',')
-                    for domain in x:
-                        validating.name_rule('l3_domains', domain)
-                else:
-                    validating.name_rule('l3_domains', templateVars['l3_domains'])
-            if not templateVars['vmm_domains'] == None:
-                templateVars['domains'] = 'yes'
-                if re.search(r',', templateVars['vmm_domains']):
-                    x = templateVars['vmm_domains'].split(',')
-                    for domain in x:
-                        validating.name_rule('vmm_domains', domain)
-                else:
-                    validating.name_rule('vmm_domains', templateVars['vmm_domains'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        templateVars['phys_count'] = 0
-        templateVars['l3_count'] = 0
-        templateVars['vmm_count'] = 0
-        if not templateVars['physical_domains'] == None:
-            if re.search(r',', templateVars['physical_domains']):
-                x = templateVars['physical_domains'].split(',')
-                templateVars['physical_domains'] = []
-                for domain in x:
-                    templateVars['physical_domains'].append(domain)
-                    templateVars['phys_count'] =+ 1
-            else:
-                templateVars['physical_domains'] = [templateVars['physical_domains']]
-                templateVars['phys_count'] =+ 1
-        if not templateVars['l3_domains'] == None:
-            if re.search(r',', templateVars['l3_domains']):
-                x = templateVars['l3_domains'].split(',')
-                templateVars['l3_domains'] = []
-                for domain in x:
-                    templateVars['l3_domains'].append(domain)
-                    templateVars['l3_count'] =+ 1
-            else:
-                templateVars['l3_domains'] = [templateVars['l3_domains']]
-                templateVars['l3_count'] =+ 1
-        if not templateVars['vmm_domains'] == None:
-            if re.search(r',', templateVars['vmm_domains']):
-                x = templateVars['vmm_domains'].split(',')
-                templateVars['vmm_domains'] = []
-                for domain in x:
-                    templateVars['vmm_domains'].append(domain)
-                    templateVars['vmm_count'] =+ 1
-            else:
-                templateVars['vmm_domains'] = [templateVars['vmm_domains']]
-                templateVars['vmm_count'] =+ 1
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "global_aep.jinja2"
-        template = self.templateEnv.get_template(template_file)
+        domain_list = ['physical_domains', 'l3_domains', 'vmm_domains']
+        for i in domain_list:
+            if not templateVars[f'{i}'] == None:
+                if ',' in templateVars[f'{i}']:
+                    templateVars[f'{i}'] = templateVars[f'{i}'].split(',')
 
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'aaep_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - APIC Inband Configuration
@@ -184,85 +119,49 @@ class access(object):
     # Function - Interface Policies - CDP
     #======================================================
     def cdp(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'admin_state': ''
-        }
-        optional_args = {
-            'description': '',
-            'alias': ''
-        }
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.cdpInterface']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.values('admin_state', templateVars['admin_state'], ['disabled', 'enabled'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "policy_intf_cdp.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'cdp_interface_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Interface Policies - Fibre Channel
     #======================================================
     def fibre_channel(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'Port_Mode': '',
-            'Trunk_Mode': '',
-            'Speed': '',
-            'Auto_Max_Speed': '',
-            'Fill_Pattern': '',
-            'Buffer_Credit': ''
-        }
-        optional_args = {
-            'description': '',
-            'alias': ''
-        }
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.fibreChannelInterface']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.number_check('Buffer_Credit', templateVars['Buffer_Credit'], 16, 64)
-            validating.values('Port_Mode', templateVars['Port_Mode'], ['f', 'np'])
-            validating.values('Trunk_Mode', templateVars['Trunk_Mode'], ['auto', 'trunk-off', 'trunk-on'])
-            validating.values('Speed', templateVars['Speed'], ['auto', '4G', '8G', '16G', '32G'])
-            validating.values('Auto_Max_Speed', templateVars['Auto_Max_Speed'], ['4G', '8G', '16G', '32G'])
-            validating.values('Fill_Pattern', templateVars['Fill_Pattern'], ['ARBFF', 'IDLE'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "policy_intf_fc.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'fibre_channel_interface_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Interface Profiles
@@ -312,6 +211,30 @@ class access(object):
         else:
             dest_dir = 'Access'
 
+    #======================================================
+    # Function - Policy Groups - Interface Policies
+    # Shared Policies with Access and Bundle Poicies Groups
+    #======================================================
+    def interface_policy(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.interfacePolicies']['allOf'][1]['properties']
+
+        try:
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
+        except Exception as err:
+            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
+                SystemExit(err), kwargs['ws'], kwargs['row_num'])
+            raise ErrException(errorReturn)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'interface_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Interface Selectors
@@ -447,239 +370,120 @@ class access(object):
     # Function - Interface Policies - L2 Interfaces
     #======================================================
     def l2_interface(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'QinQ': '',
-            'Reflective_Relay': '',
-            'VLAN_Scope': ''
-        }
-        optional_args = {
-            'description': '',
-            'alias': ''
-        }
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.L2Interface']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.values('QinQ', templateVars['QinQ'], ['disabled', 'enabled'])
-            validating.values('Reflective_Relay', templateVars['Reflective_Relay'], ['disabled', 'enabled'])
-            validating.values('VLAN_Scope', templateVars['VLAN_Scope'], ['global', 'portlocal'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "policy_intf_l2_interface.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Policies_Interface_L2_Interface_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'l2_interface_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Domain - Layer 3
     #======================================================
     def l3_domain(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'VLAN_Pool': ''
-        }
-        optional_args = { }
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.domains.Layer3']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.name_rule('VLAN_Pool', templateVars['VLAN_Pool'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "domain_l3.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Policies_Domain_L3_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'layer3_domains'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Leaf Policy Group
     #======================================================
     def leaf_pg(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'Auth_8021X': '',
-            'BFD_IPv4': '',
-            'BFD_IPv6': '',
-            'BFD_MH_IPv4': '',
-            'BFD_MH_IPv6': '',
-            'CDP_Policy': '',
-            'CoPP_Leaf_Policy': '',
-            'CoPP_Pre_Filter': '',
-            'Flash_Config': '',
-            'Fast_Link_Failover': '',
-            'FC_SAN_Policy': '',
-            'FC_Node_Policy': '',
-            'Forward_Scale': '',
-            'LLDP_Policy': '',
-            'Monitoring_Policy': '',
-            'Netflow_Node': '',
-            'PoE_Policy': '',
-            'STP_Policy': ''
-        }
-        optional_args = {'description': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.switches.leafPolicyGroup']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.name_rule('Auth_8021X', templateVars['Auth_8021X'])
-            validating.name_rule('BFD_IPv4', templateVars['BFD_IPv4'])
-            validating.name_rule('BFD_IPv6', templateVars['BFD_IPv6'])
-            validating.name_rule('BFD_MH_IPv4', templateVars['BFD_MH_IPv4'])
-            validating.name_rule('BFD_MH_IPv6', templateVars['BFD_MH_IPv6'])
-            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule('CoPP_Leaf_Policy', templateVars['CoPP_Leaf_Policy'])
-            validating.name_rule('CoPP_Pre_Filter', templateVars['CoPP_Pre_Filter'])
-            validating.name_rule('Flash_Config', templateVars['Flash_Config'])
-            validating.name_rule('Fast_Link_Failover', templateVars['Fast_Link_Failover'])
-            validating.name_rule('FC_SAN_Policy', templateVars['FC_SAN_Policy'])
-            validating.name_rule('FC_Node_Policy', templateVars['FC_Node_Policy'])
-            validating.name_rule('Forward_Scale', templateVars['Forward_Scale'])
-            validating.name_rule('LLDP_Policy', templateVars['LLDP_Policy'])
-            validating.name_rule('Monitoring_Policy', templateVars['Monitoring_Policy'])
-            validating.name_rule('Netflow_Node', templateVars['Netflow_Node'])
-            validating.name_rule('PoE_Policy', templateVars['PoE_Policy'])
-            validating.name_rule('STP_Policy', templateVars['STP_Policy'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Define the Template Source
-        template_file = "leaf_policy_group.jinja2"
-        template = self.templateEnv.get_template(template_file)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Process the template through the Sites
-        dest_file = 'Leaf_Policy_Group_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'leaf_policy_groups'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Interface Policies - Link Level (Speed)
     #======================================================
     def link_level(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'Auto_Neg': '',
-            'Speed': '',
-            'Port_Delay': '',
-            'Debounce_Interval': '',
-            'FEC_Mode': ''
-        }
-        optional_args = {
-            'description': '',
-            'alias': ''
-        }
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.linkLevel']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.number_check('Port_Delay', templateVars['Port_Delay'], 0, 10000)
-            validating.number_check('Debounce_Interval', templateVars['Debounce_Interval'], 0, 5000)
-            validating.values('Auto_Neg', templateVars['Auto_Neg'], ['off', 'on'])
-            validating.values('Speed', templateVars['Speed'], ['inherit', '100M', '1G', '10G', '25G', '40G', '50G', '100G', '200G', '400G'])
-            validating.values('FEC_Mode', templateVars['FEC_Mode'], ['inherit', 'auto-fec', 'cl74-fc-fec', 'cl91-rs-fec', 'cons16-rs-fec', 'disable-fec', 'ieee-rs-fec', 'kp-fec'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "policy_intf_link_level.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Policies_Interface_Link_Level_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'link_level_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
     #======================================================
     # Function - Interface Policies - LLDP
     #======================================================
     def lldp(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'Receive_State': '',
-            'Transmit_State': ''
-        }
-        optional_args = {
-            'description': '',
-            'alias': ''
-        }
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.lldpInterface']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.values('Receive_State', templateVars['Receive_State'], ['disabled', 'enabled'])
-            validating.values('Transmit_State', templateVars['Transmit_State'], ['disabled', 'enabled'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "policy_intf_lldp.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Policies_Interface_LLDP_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'lldp_interface_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Maintenance Profiles
@@ -727,47 +531,29 @@ class access(object):
         dest_file = 'Maintenance_Group_%s.tf' % (templateVars['MG_Name'])
         dest_dir = 'Admin'
         
-
     #======================================================
     # Function - Interface Policies - Mis-Cabling Protocol
     #======================================================
     def mcp(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'admin_state': ''
-        }
-        optional_args = {
-            'description': '',
-            'alias': ''
-        }
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.mcpInterface']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.values('admin_state', templateVars['admin_state'], ['disabled', 'enabled'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "policy_intf_mcp.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Policies_Interface_MCP_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'mcp_interface_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Static Management IPs
@@ -819,458 +605,165 @@ class access(object):
         dest_file = '%s_%s_EPG_%s_Static_Address.tf' % (templateVars['name'], templateVars['Type'], templateVars['EPG'])
         dest_dir = 'Tenant_mgmt'
         
-
     #======================================================
     # Function - Policy Group - Access
     #======================================================
     def pg_access(self, **kwargs):
-        # Open the Network Policies Worksheet
-        ws_net = kwargs['wb']['Network Policies']
-        rows = ws_net.max_row
-
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'AEP_Policy': '',
-                         'CDP_Policy': '',
-                         'Link_Level': '',
-                         'LLDP_Policy': '',
-                         'MCP_Policy': '',
-                         'STP_Policy': '',
-                         'Interface_Policy': '',
-                         'Policy_name': ''}
-        optional_args = {'description': '',
-                         'alias': '',
-                         'Pol_802_1x': '',
-                         'poeIfPol': '',
-                         'monFabricPol': '',
-                         'dwdmIfPol': '',
-                         'coppIfPol': '',
-                         'qosDppPol_egress': '',
-                         'qosDppPol_ingress': '',
-                         'Fibre_Channel': '',
-                         'L2_Interface': '',
-                         'fabricLinkFlapPol': '',
-                         'qosLlfcIfPol': '',
-                         'macsecIfPol': '',
-                         'netflowMonitorPol': '',
-                         'Port_Security': '',
-                         'qosPfcIfPol': '',
-                         'qosSdIfPol': '',
-                         'stormctrlIfPol': ''}
-
-        # Get the Application Profile Policies from the Network Policies Tab
-        func = 'intf_polgrp'
-        count = countKeys(ws_net, func)
-        row_pg = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_name') == kwargs.get('Interface_Policy'):
-                row_pg = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-                break
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.leafAccessPort']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.name_rule('AEP_Policy', templateVars['AEP_Policy'])
-            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule('Link_Level', templateVars['Link_Level'])
-            validating.name_rule('LLDP_Policy', templateVars['LLDP_Policy'])
-            validating.name_rule('MCP_Policy', templateVars['MCP_Policy'])
-            validating.name_rule('STP_Policy', templateVars['STP_Policy'])
-            if not templateVars['Fibre_Channel'] == None:
-                validating.name_rule(row_pg, ws_net, 'Fibre_Channel', templateVars['Fibre_Channel'])
-            validating.name_rule(row_pg, ws_net, 'L2_Interface', templateVars['L2_Interface'])
-            validating.name_rule(row_pg, ws_net, 'Port_Security', templateVars['Port_Security'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
-            if not templateVars['Pol_802_1x'] == None:
-                validating.name_rule('Pol_802_1x', templateVars['Pol_802_1x'])
-                templateVars['Pol_802_1x'] = 'uni/infra/portauthpol-%s' % (templateVars['Pol_802_1x'])
-            if not templateVars['poeIfPol'] == None:
-                validating.name_rule('poeIfPol', templateVars['poeIfPol'])
-                templateVars['poeIfPol'] = 'uni/infra/poeIfP-%s' % (templateVars['poeIfPol'])
-            if not templateVars['monFabricPol'] == None:
-                validating.name_rule('monFabricPol', templateVars['monFabricPol'])
-                templateVars['monFabricPol'] = 'uni/fabric/monfab-%s' % (templateVars['monFabricPol'])
-            if not templateVars['dwdmIfPol'] == None:
-                validating.name_rule('dwdmIfPol', templateVars['dwdmIfPol'])
-                templateVars['dwdmIfPol'] = 'uni/infra/dwdmifpol-%s' % (templateVars['dwdmIfPol'])
-            if not templateVars['coppIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'coppIfPol', templateVars['coppIfPol'])
-                templateVars['coppIfPol'] = 'uni/infra/coppifpol-%s' % (templateVars['coppIfPol'])
-            if not templateVars['qosDppPol_egress'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosDppPol_egress', templateVars['qosDppPol_egress'])
-                templateVars['qosDppPol_egress'] = 'uni/infra/qosdpppol-%s' % (templateVars['qosDppPol_egress'])
-            if not templateVars['qosDppPol_ingress'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosDppPol_ingress', templateVars['qosDppPol_ingress'])
-                templateVars['qosDppPol_ingress'] = 'uni/infra/qosdpppol-%s' % (templateVars['qosDppPol_ingress'])
-            if not templateVars['fabricLinkFlapPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'fabricLinkFlapPol', templateVars['fabricLinkFlapPol'])
-                templateVars['fabricLinkFlapPol'] = 'uni/infra/linkflappol-%s' % (templateVars['fabricLinkFlapPol'])
-            if not templateVars['qosLlfcIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosLlfcIfPol', templateVars['qosLlfcIfPol'])
-                templateVars['qosLlfcIfPol'] = 'uni/infra/llfc-%s' % (templateVars['qosLlfcIfPol'])
-            if not templateVars['macsecIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'macsecIfPol', templateVars['macsecIfPol'])
-                templateVars['macsecIfPol'] = 'uni/infra/macsecifp-%s' % (templateVars['macsecIfPol'])
-            if not templateVars['netflowMonitorPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'netflowMonitorPol', templateVars['netflowMonitorPol'])
-                templateVars['netflowMonitorPol'] = 'uni/infra/poeIfP-%s' % (templateVars['netflowMonitorPol'])
-            if not templateVars['qosPfcIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosPfcIfPol', templateVars['qosPfcIfPol'])
-                templateVars['qosPfcIfPol'] = 'uni/infra/pfc-%s' % (templateVars['qosPfcIfPol'])
-            if not templateVars['qosSdIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosSdIfPol', templateVars['qosSdIfPol'])
-                templateVars['qosSdIfPol'] = 'uni/infra/qossdpol-%s' % (templateVars['qosSdIfPol'])
-            if not templateVars['stormctrlIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'stormctrlIfPol', templateVars['stormctrlIfPol'])
-                templateVars['stormctrlIfPol'] = 'uni/infra/stormctrlifp-%s' % (templateVars['stormctrlIfPol'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Define the Template Source
-        template_file = "leaf_intf_pg_access.jinja2"
-        template = self.templateEnv.get_template(template_file)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Process the template through the Sites
-        dest_file = 'Leaf_Interface_PG_Access_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        for item in kwargs['easyDict']['access']['interface_policies']:
+            for key, value in item.items():
+                if key == kwargs['site_group']:
+                    for i in value:
+                        if i['interface_policy'] == templateVars['interface_policy']:
+                            templateVars.update(i)
+                            print(json.dumps(templateVars, indent=4))
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'leaf_port_group_access'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Policy Group - VPC/Port-Channel
     #======================================================
     def pg_bundle(self, **kwargs):
-        # Assign the kwargs to a initial var for each process
-        initial_kwargs = kwargs
-
-        # Open the Network Policies Worksheet
-        ws_net = kwargs['wb']['Network Policies']
-        rows = ws_net.max_row
-
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'Lag_Type': '',
-                         'AEP_Policy': '',
-                         'CDP_Policy': '',
-                         'Link_Level': '',
-                         'LACP_Policy': '',
-                         'LLDP_Policy': '',
-                         'MCP_Policy': '',
-                         'STP_Policy': '',
-                         'Interface_Policy': '',
-                         'Policy_name': ''}
-        optional_args = {'description': '',
-                         'alias': '',
-                         'monFabricPol': '',
-                         'coppIfPol': '',
-                         'qosDppPol_egress': '',
-                         'qosDppPol_ingress': '',
-                         'Fibre_Channel': '',
-                         'L2_Interface': '',
-                         'fabricLinkFlapPol': '',
-                         'qosLlfcIfPol': '',
-                         'macsecIfPol': '',
-                         'netflowMonitorPol': '',
-                         'Port_Security': '',
-                         'qosPfcIfPol': '',
-                         'qosSdIfPol': '',
-                         'stormctrlIfPol': ''}
-
-        # Get the Application Profile Policies from the Network Policies Tab
-        func = 'intf_polgrp'
-        count = countKeys(ws_net, func)
-        row_pg = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_name') == kwargs.get('Interface_Policy'):
-                row_pg = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-                break
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.leafBundle']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.name_rule('AEP_Policy', templateVars['AEP_Policy'])
-            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule('Link_Level', templateVars['Link_Level'])
-            validating.name_rule('LACP_Policy', templateVars['LACP_Policy'])
-            validating.name_rule('LLDP_Policy', templateVars['LLDP_Policy'])
-            validating.name_rule('MCP_Policy', templateVars['MCP_Policy'])
-            validating.name_rule('STP_Policy', templateVars['STP_Policy'])
-            if not templateVars['Fibre_Channel'] == None:
-                validating.name_rule(row_pg, ws_net, 'Fibre_Channel', templateVars['Fibre_Channel'])
-            validating.name_rule(row_pg, ws_net, 'L2_Interface', templateVars['L2_Interface'])
-            validating.name_rule(row_pg, ws_net, 'Port_Security', templateVars['Port_Security'])
-            validating.values('Lag_Type', templateVars['Lag_Type'], ['link', 'node'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
-            if not templateVars['monFabricPol'] == None:
-                validating.name_rule('monFabricPol', templateVars['monFabricPol'])
-                templateVars['monFabricPol'] = 'uni/fabric/monfab-%s' % (templateVars['monFabricPol'])
-            if not templateVars['coppIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'coppIfPol', templateVars['coppIfPol'])
-                templateVars['coppIfPol'] = 'uni/infra/coppifpol-%s' % (templateVars['coppIfPol'])
-            if not templateVars['qosDppPol_egress'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosDppPol_egress', templateVars['qosDppPol_egress'])
-                templateVars['qosDppPol_egress'] = 'uni/infra/qosdpppol-%s' % (templateVars['qosDppPol_egress'])
-            if not templateVars['qosDppPol_ingress'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosDppPol_ingress', templateVars['qosDppPol_ingress'])
-                templateVars['qosDppPol_ingress'] = 'uni/infra/qosdpppol-%s' % (templateVars['qosDppPol_ingress'])
-            if not templateVars['fabricLinkFlapPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'fabricLinkFlapPol', templateVars['fabricLinkFlapPol'])
-                templateVars['fabricLinkFlapPol'] = 'uni/infra/linkflappol-%s' % (templateVars['fabricLinkFlapPol'])
-            if not templateVars['qosLlfcIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosLlfcIfPol', templateVars['qosLlfcIfPol'])
-                templateVars['qosLlfcIfPol'] = 'uni/infra/llfc-%s' % (templateVars['qosLlfcIfPol'])
-            if not templateVars['macsecIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'macsecIfPol', templateVars['macsecIfPol'])
-                templateVars['macsecIfPol'] = 'uni/infra/macsecifp-%s' % (templateVars['macsecIfPol'])
-            if not templateVars['netflowMonitorPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'netflowMonitorPol', templateVars['netflowMonitorPol'])
-                templateVars['netflowMonitorPol'] = 'uni/infra/poeIfP-%s' % (templateVars['netflowMonitorPol'])
-            if not templateVars['qosPfcIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosPfcIfPol', templateVars['qosPfcIfPol'])
-                templateVars['qosPfcIfPol'] = 'uni/infra/pfc-%s' % (templateVars['qosPfcIfPol'])
-            if not templateVars['qosSdIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'qosSdIfPol', templateVars['qosSdIfPol'])
-                templateVars['qosSdIfPol'] = 'uni/infra/qossdpol-%s' % (templateVars['qosSdIfPol'])
-            if not templateVars['stormctrlIfPol'] == None:
-                validating.name_rule(row_pg, ws_net, 'stormctrlIfPol', templateVars['stormctrlIfPol'])
-                templateVars['stormctrlIfPol'] = 'uni/infra/stormctrlifp-%s' % (templateVars['stormctrlIfPol'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Define the Template Source
-        template_file = "leaf_intf_pg_bundle.jinja2"
-        template = self.templateEnv.get_template(template_file)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Process the template through the Sites
-        dest_file = 'Leaf_Interface_PG_Bundle_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        for item in kwargs['easyDict']['access']['interface_policies']:
+            for key, value in item.items():
+                if key == kwargs['site_group']:
+                    for i in value:
+                        if i['interface_policy'] == templateVars['interface_policy']:
+                            templateVars.update(i)
+                            print(json.dumps(templateVars, indent=4))
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'leaf_port_group_bundle'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Policy Group - Breakout
     #======================================================
     def pg_breakout(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'Breakout_Map': ''}
-        optional_args = {'description': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.leafBreakOut']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.values('Breakout_Map', templateVars['Breakout_Map'], ['100g-2x', '100g-4x', '10g-4x', '25g-4x', '50g-8x'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Define the Template Source
-        template_file = "leaf_intf_pg_breakout.jinja2"
-        template = self.templateEnv.get_template(template_file)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Process the template through the Sites
-        dest_file = 'Leaf_Interface_PG_Breakout_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'leaf_port_group_breakout'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Policy Group - Spine
     #======================================================
     def pg_spine(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'AEP_Policy': '',
-                         'CDP_Policy': '',
-                         'Link_Level': ''}
-        optional_args = {'description': '',
-                         'alias': '',
-                         'fabricLinkFlapPol': '',
-                         'macsecIfPol': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.spineAccessPort']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.name_rule('AEP_Policy', templateVars['AEP_Policy'])
-            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule('Link_Level', templateVars['Link_Level'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
-            if not templateVars['fabricLinkFlapPol'] == None:
-                validating.name_rule('fabricLinkFlapPol', templateVars['fabricLinkFlapPol'])
-                templateVars['fabricLinkFlapPol'] = 'uni/infra/linkflappol-%s' % (templateVars['fabricLinkFlapPol'])
-            if not templateVars['macsecIfPol'] == None:
-                validating.name_rule('macsecIfPol', templateVars['macsecIfPol'])
-                templateVars['macsecIfPol'] = 'uni/infra/macsecifpol-%s' % (templateVars['macsecIfPol'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Define the Template Source
-        template_file = "spine_intf_pg_access.jinja2"
-        template = self.templateEnv.get_template(template_file)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Process the template through the Sites
-        dest_file = 'Spine_Interface_PG_Access_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'spine_port_group_access'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Domains - Physical
     #======================================================
-    def phys_dom(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'VLAN_Pool': ''}
-        optional_args = { }
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+    def phys_domain(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.domains.Physical']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.name_rule('VLAN_Pool', templateVars['VLAN_Pool'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "domain_phys.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Policies_Domain_Phys_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'physical_domains'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Interface Policies - Port Channel
     #======================================================
     def port_channel(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'Mode': '',
-                         'Min_Links': '',
-                         'Max_Links': '',
-                         'Fast_Select': '',
-                         'Graceful': '',
-                         'Load_Defer': '',
-                         'Suspend_Individual': '',
-                         'Symmetric_Hash': ''}
-        optional_args = {'description': '',
-                         'alias': ''}
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.PortChannel']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.number_check('Min_Links', templateVars['Min_Links'], 1, 16)
-            validating.number_check('Max_Links', templateVars['Max_Links'], 1, 16)
-            validating.values('Mode', templateVars['Mode'], ['active', 'explicit-failover', 'mac-pin', 'mac-pin-nicload', 'off', 'passive'])
-            validating.values('Fast_Select', templateVars['Fast_Select'], ['no', 'yes'])
-            validating.values('Graceful', templateVars['Graceful'], ['no', 'yes'])
-            validating.values('Load_Defer', templateVars['Load_Defer'], ['no', 'yes'])
-            validating.values('Suspend_Individual', templateVars['Suspend_Individual'], ['no', 'yes'])
-            validating.values('Symmetric_Hash', templateVars['Symmetric_Hash'], ['no', 'yes'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Create ctrl templateVars
-        ctrl_count = 0
-        Ctrl = ''
-        if templateVars['Fast_Select'] == 'yes':
-            Ctrl = '"fast-sel-hot-stdby"'
-            ctrl_count =+ 1
-        if templateVars['Graceful'] == 'yes' and ctrl_count > 0:
-            Ctrl = Ctrl + ',' + '"graceful-conv"'
-            ctrl_count =+ 1
-        elif templateVars['Graceful'] == 'yes':
-            ctrl = '"graceful-conv"'
-            ctrl_count =+ 1
-        if templateVars['Load_Defer'] == 'yes' and ctrl_count > 0:
-            Ctrl = Ctrl + ',' + '"load-defer"'
-            ctrl_count =+ 1
-        elif templateVars['Load_Defer'] == 'yes':
-            Ctrl = '"load-defer"'
-            ctrl_count =+ 1
-        if templateVars['Suspend_Individual'] == 'yes' and ctrl_count > 0:
-            Ctrl = Ctrl + ',' + '"susp-individual"'
-            ctrl_count =+ 1
-        elif templateVars['Suspend_Individual'] == 'yes':
-            Ctrl = '"susp-individual"'
-            ctrl_count =+ 1
-        if templateVars['Symmetric_Hash'] == 'yes' and ctrl_count > 0:
-            Ctrl = Ctrl + ',' + '"symmetric-hash"'
-            ctrl_count =+ 1
-        elif templateVars['Symmetric_Hash'] == 'yes':
-            Ctrl = '"symmetric-hash"'
-            ctrl_count =+ 1
-        if ctrl_count > 0:
-            templateVars['Ctrl'] = '[%s]' % (Ctrl)
-        else:
-            templateVars['Ctrl'] = '["unspecified"]'
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "policy_intf_lacp.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Policies_Interface_Port_Channel_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'port_channel_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Port Conversion
@@ -1308,144 +801,77 @@ class access(object):
         dest_file = 'Downlink_Convert_%s.tf' % (templateVars['Port_name'])
         dest_dir = 'Access/%s' % (templateVars['name'])
         
-
     #======================================================
     # Function - Interface Policies - Port Security
     #======================================================
     def port_security(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'Timeout': '',
-                         'Maximum_Endpoints': ''}
-        optional_args = {'description': '',
-                         'alias': ''}
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.portSecurity']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.number_check('Timeout', templateVars['Timeout'], 60, 3600)
-            validating.number_check('Maximum_Endpoints', templateVars['Maximum_Endpoints'], 0, 12000)
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "policy_intf_port_sec.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Policies_Interface_Port_Security_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'port_security_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Spine Policy Group
     #======================================================
     def spine_pg(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'BFD_IPv4': '',
-                         'BFD_IPv6': '',
-                         'CDP_Policy': '',
-                         'CoPP_Pre_Filter': '',
-                         'CoPP_Spine_Policy': '',
-                         'LLDP_Policy': ''}
-        optional_args = {'description': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.switches.spinePolicyGroup']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.name_rule('BFD_IPv4', templateVars['BFD_IPv4'])
-            validating.name_rule('BFD_IPv6', templateVars['BFD_IPv6'])
-            validating.name_rule('CDP_Policy', templateVars['CDP_Policy'])
-            validating.name_rule('CoPP_Pre_Filter', templateVars['CoPP_Pre_Filter'])
-            validating.name_rule('CoPP_Spine_Policy', templateVars['CoPP_Spine_Policy'])
-            validating.name_rule('LLDP_Policy', templateVars['LLDP_Policy'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Define the Template Source
-        template_file = "spine_policy_group.jinja2"
-        template = self.templateEnv.get_template(template_file)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Process the template through the Sites
-        dest_file = 'Spine_Policy_Group_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'spine_policy_groups'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Interface Policies - Spanning Tree
     #======================================================
     def stp(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'Filter': '',
-                         'Guard': ''}
-        optional_args = {'description': '',
-                         'alias': ''}
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.spanningTreeInterface']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.values('Filter', templateVars['Filter'], ['disabled', 'enabled'])
-            validating.values('Guard', templateVars['Guard'], ['disabled', 'enabled'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # Create ctrl templateVars
-        ctrl_count = 0
-        Ctrl = ''
-        if templateVars['Filter'] == 'enabled':
-            Ctrl = '"bpdu-filter"'
-            ctrl_count =+ 1
-        if templateVars['Guard'] == 'enabled' and ctrl_count > 0:
-            Ctrl = Ctrl + ',' + '"bpdu-guard"'
-            ctrl_count =+ 1
-        elif templateVars['Guard'] == 'enabled':
-            Ctrl = '"bpdu-guard"'
-            ctrl_count =+ 1
-        if ctrl_count > 0:
-            templateVars['Ctrl'] = '[%s]' % (Ctrl)
-        else:
-            templateVars['Ctrl'] = '["unspecified"]'
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "policy_intf_stp.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Policies_Interface_STP_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'spanning_tree_interface_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Switch Inventory
@@ -1865,137 +1291,25 @@ class access(object):
     # Function - VLAN Pools
     #======================================================
     def vlan_pool(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'name': '',
-                         'Allocation_Mode': '',
-                         'VLAN_Grp1': '',
-                         'VGRP1_Allocation': ''}
-        optional_args = {'description': '',
-                         'alias': '',
-                         'VLAN_Grp1': '',
-                         'VGRP1_Allocation': '',
-                         'VLAN_Grp2': '',
-                         'VGRP2_Allocation': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.pools.Vlan']['allOf'][1]['properties']
 
         try:
-            # Validate Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.name_rule('name', templateVars['name'])
-            validating.values('Allocation_Mode', templateVars['Allocation_Mode'], ['dynamic', 'static'])
-            validating.values('VGRP1_Allocation', templateVars['VGRP1_Allocation'], ['dynamic', 'static'])
-            if not templateVars['alias'] == None:
-                validating.name_rule('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.description('description', templateVars['description'])
-            if not templateVars['VGRP2_Allocation'] == None:
-                validating.values('VGRP2_Allocation', templateVars['VGRP2_Allocation'], ['dynamic', 'static'])
-            validating.vlans('VLAN_Grp1', templateVars['VLAN_Grp1'])
-            if not templateVars['VLAN_Grp2'] == None:
-                validating.vlans('VLAN_Grp2', templateVars['VLAN_Grp2'])
+            # Validate User Input
+            validate_args(jsonData, **kwargs)
         except Exception as err:
             errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
                 SystemExit(err), kwargs['ws'], kwargs['row_num'])
             raise ErrException(errorReturn)
 
-        # if templateVars['name'] == None:
-        #     errorReturn = 'Error on Worksheet %s Row %s.  Could not Determine the name of the VLAN Pool.' % (ws.title, row_num)
-        #     raise ErrException(errorReturn)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Define the Template Source
-        template_file = "vlan_pool.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'vlan_pool_%s.tf' % (templateVars['name'])
-        dest_dir = 'Access'
-        
-
-        # Define the Template Source
-        template_file = "data_vlan_pool.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'data_vlan_pool_%s.tf' % (templateVars['name'])
-        dest_dir = 'VLANs'
-        
-
-        # Add VLAN(s) to VLAN Pool FIle
-        if re.search('Grp_[A-F]', templateVars['site_group']):
-            Group_ID = '%s' % (templateVars['site_group'])
-            site_group = ast.literal_eval(os.environ[Group_ID])
-            for x in range(1, 13):
-                sitex = 'Site_%s' % (x)
-                if not site_group[sitex] == None:
-                    Site_ID = 'Site_ID_%s' % (site_group[sitex])
-                    site_dict = ast.literal_eval(os.environ[Site_ID])
-
-                    # Create templateVars for Site_name and APIC_URL
-                    templateVars['Site_name'] = site_dict.get('Site_name')
-                    templateVars['APIC_URL'] = site_dict.get('APIC_URL')
-
-                    # Create Blank VLAN Pool VLAN(s) File
-                    dest_file = './ACI/%s/VLANs/vlp_%s.tf' % (templateVars['Site_name'], templateVars['name'])
-                    wr_file = open(dest_file, 'w')
-                    wr_file.close()
-                    dest_file = 'vlan_pool_%s.tf' % (templateVars['name'])
-                    dest_dir = 'VLANs'
-                    template_file = "add_vlan_to_pool.jinja2"
-                    template = self.templateEnv.get_template(template_file)
-
-                    for z in range(1, 3):
-                        vgroup = 'VLAN_Grp%s' % (z)
-                        vgrp = 'VGRP%s_Allocation' % (z)
-                        templateVars['Allocation_Mode'] = templateVars[vgrp]
-                        if re.search(r'\d+', str(templateVars[vgroup])):
-                            vlan_list = vlan_list_full(templateVars[vgroup])
-                            for v in vlan_list:
-                                vlan = str(v)
-                                if re.fullmatch(r'\d+', vlan):
-                                    templateVars['VLAN_ID'] = int(vlan)
-
-                                    # Add VLAN to VLAN Pool File
-                                    create_tf_file('a+', dest_dir, dest_file, template, **templateVars)
-
-        elif re.search(r'\d+', templateVars['site_group']):
-            Site_ID = 'Site_ID_%s' % (templateVars['site_group'])
-            site_dict = ast.literal_eval(os.environ[Site_ID])
-
-            # Create templateVars for Site_name and APIC_URL
-            templateVars['Site_name'] = site_dict.get('Site_name')
-            templateVars['APIC_URL'] = site_dict.get('APIC_URL')
-
-            # Create Blank VLAN Pool VLAN(s) File
-            dest_file = './ACI/%s/VLANs/vlan_pool_%s.tf' % (templateVars['Site_name'], templateVars['name'])
-            wr_file = open(dest_file, 'w')
-            wr_file.close()
-            dest_file = 'vlan_pool_%s.tf' % (templateVars['name'])
-            dest_dir = 'VLANs'
-            template_file = "add_vlan_to_pool.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            for z in range(1, 3):
-                vgroup = 'VLAN_Grp%s' % (z)
-                vgrp = 'VGRP%s_Allocation' % (z)
-                templateVars['Allocation_Mode'] = templateVars[vgrp]
-                if re.search(r'\d+', str(templateVars[vgroup])):
-                    vlan_list = vlan_list_full(templateVars[vgroup])
-                    for v in vlan_list:
-                        vlan = str(v)
-                        if re.fullmatch(r'\d+', vlan):
-                            templateVars['VLAN_ID'] = int(vlan)
-
-                            # Add VLAN to VLAN Pool File
-                            create_tf_file('a+', dest_dir, dest_file, template, **templateVars)
-        # else:
-        #     print(f"\n-----------------------------------------------------------------------------\n")
-        #     print(f"   Error on Worksheet {ws.title}, Row {row_num} site_group, value {templateVars['site_group']}.")
-        #     print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
-        #     print(f"\n-----------------------------------------------------------------------------\n")
-        #     exit()
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'vlan_pools'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Virtual Networking - Controllers

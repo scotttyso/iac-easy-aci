@@ -30,7 +30,27 @@
                             },
                             "class.access":{
                                 "enum": [
-                                    "virtual_networking"
+                                    "aaep_policies",
+                                    "cdp_interface_policies",
+                                    "fibre_channel_interface_policies",
+                                    "l2_interface_policies",
+                                    "layer3_domains",
+                                    "leaf_policy_groups",
+                                    "leaf_port_group_access",
+                                    "leaf_port_group_breakout",
+                                    "leaf_port_group_bundle",
+                                    "link_level_policies",
+                                    "lldp_interface_policies",
+                                    "mcp_interface_policies",
+                                    "physical_domains",
+                                    "port_channel_interface_policies",
+                                    "port_security_policies",
+                                    "spanning_tree_interface_policies",
+                                    "spine_policy_groups",
+                                    "spine_port_group_access",
+                                    "virtual_networking",
+                                    "vlan_pools",
+                                    "vpc_domains"
                                 ]
                             },
                             "class.admin":{
@@ -66,6 +86,7 @@
                             },
                             "processes":{
                                 "enum": [
+                                    "access",
                                     "admin",
                                     "fabric",
                                     "system_settings",
@@ -74,18 +95,30 @@
                             },
                             "easyDict":{
                                 "access":{
-                                    "domains":[],
+                                    "aaep_policies":[],
+                                    "cdp_interface_policies":[],
+                                    "fibre_channel_interface_policies":[],
                                     "firmware":[],
-                                    "global_policies":[],
                                     "interface_policies":[],
-                                    "inventory":[],
-                                    "leaf_interface_policy_groups":[],
+                                    "l2_interface_policies":[],
+                                    "layer3_domains":[],
+                                    "link_level_policies":[],
                                     "leaf_policy_groups":[],
+                                    "leaf_port_group_access":[],
+                                    "leaf_port_group_breakout":[],
+                                    "leaf_port_group_bundle":[],
                                     "leaf_profiles":[],
-                                    "spine_interface_policy_groups":[],
+                                    "lldp_interface_policies":[],
+                                    "mcp_interface_policies":[],
+                                    "physical_domains":[],
+                                    "port_channel_policies":[],
+                                    "port_security_policies":[],
+                                    "spanning_tree_interface_policies":[],
                                     "spine_policy_groups":[],
+                                    "spine_port_group_access":[],
                                     "spine_profiles":[],
                                     "virtual_networking":[],
+                                    "vlan_pools":[],
                                     "vpc_domains":[]
                                 },
                                 "admin":{
@@ -339,7 +372,10 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "description": ""
+                                "description": "",
+                                "l3_domains": "",
+                                "physical_domains": "",
+                                "vmm_domains": ""
                             },
                             "physical_domains":{
                                 "description": "Names of a Physical Domains.",
@@ -351,11 +387,8 @@
                             },
                             "required_args": {
                                 "infra_vlan": "",
-                                "l3_domains": "",
                                 "name": "",
-                                "physical_domains": "",
-                                "site_group": "",
-                                "vmm_domains": ""
+                                "site_group": ""
                             },
                             "vmm_domains":{
                                 "description": "Name(s) of Virtual Networking Domains.",
@@ -479,10 +512,9 @@
                     {
                         "properties":{
                             "optional_args": {
-                                "description": "",
-                                "global_alias": ""
+                                "description": ""
                             },
-                            "auto_max_speed":{
+                            "QinQ":{
                                 "description": "To enable or disable an interface for Dot1q Tunnel or Q-in-Q encapsulation modes",
                                 "type": "list_of_values",
                                 "enum": [
@@ -510,19 +542,20 @@
                                 "reflective_relay": "",
                                 "site_group": "",
                                 "vlan_scope": ""
+                            },
+                            "vlan_scope":{
+                                "description": "The layer 2 interface VLAN scope.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "global",
+                                    "portlocal"
+                                ],
+                                "default": "global",
+                                "x-omitempty": true
                             }
-                        },
-                        "vlan_scope":{
-                            "description": "The layer 2 interface VLAN scope.",
-                            "type": "list_of_values",
-                            "enum": [
-                                "global",
-                                "portlocal"
-                            ],
-                            "default": "global",
-                            "x-omitempty": true
+
                         }
-                }
+                    }
                 ]
             },
             "access.policies.linkLevel":{
@@ -531,25 +564,24 @@
                     {
                         "properties":{
                             "auto_negotiation":{
-                                "description": "Auto-max-speed for object interface FC policy.",
+                                "description": "Policy auto negotiation for object fabric if pol.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "4G",
-                                    "8G",
-                                    "16G",
-                                    "32G"
+                                    "off",
+                                    "on",
+                                    "on-enforce"
                                 ],
-                                "default": "32G",
+                                "default": "on",
                                 "x-omitempty": true
                             },
                             "emi_retrain":{
                                 "description": "The electromagnetic interference (EMI) retrain feature filters any noise on a link due to electromagnetic interference, and retrains the link to avoid a link flap. Enable EMI retrain if your data center environment has a lot of EMI noise.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "disabled",
-                                    "enabled"
+                                    "disable",
+                                    "enable"
                                 ],
-                                "default": "disabled",
+                                "default": "disable",
                                 "x-omitempty": true
                             },
                             "forwarding_error_correction":{
@@ -689,7 +721,7 @@
                     }
                 ]
             },
-            "access.policies.PortChannels":{
+            "access.policies.PortChannel":{
                 "allOf":[
                     {},
                     {
@@ -722,6 +754,19 @@
                                     "true"
                                 ],
                                 "default": "false",
+                                "x-omitempty": true
+                            },
+                            "mode":{
+                                "description": "Port-channel policy mode.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "active",
+                                    "mac-pin",
+                                    "mac-pin-nicload",
+                                    "off",
+                                    "passive"
+                                ],
+                                "default": "active",
                                 "x-omitempty": true
                             },
                             "maximum_number_of_links":{
@@ -857,7 +902,327 @@
                     }
                 ]
             },
-            "access.policyGroups.leafBreakOutPortGroup":{
+            "access.policyGroups.interfacePolicies":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "copp_interface_policy":{
+                                "description": "Name of the Control Plane Policing Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "data_plane_policing_egress":{
+                                "description": "Name of the egress Data Plane Policing Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "data_plane_policing_ingress":{
+                                "description": "Name of the ingress Data Plane Policing Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "fibre_channel_interface_policy":{
+                                "description": "Name of the Fibre Channel Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "interface_policy":{
+                                "description": "Name for this Shared Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "l2_interface_policy":{
+                                "description": "Name of the L2 Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_flap_policy":{
+                                "description": "Name of the Link Flap Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_level_flow_control_policy":{
+                                "description": "Name of the Link Level Flow Control Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_level_policy":{
+                                "description": "Name of the Link Level Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "macsec_policy":{
+                                "description": "Name of the MacSec Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "mcp_interface_policy":{
+                                "description": "Name of the Mis-Cabling Protocol Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "monitoring_policy":{
+                                "description": "Name of the Monitoring Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "cdp_interface_policy": "",
+                                "copp_interface_policy": "",
+                                "data_plane_policing_egress": "",
+                                "data_plane_policing_ingress": "",
+                                "fibre_channel_interface_policy": "",
+                                "l2_interface_policy": "",
+                                "link_flap_policy": "",
+                                "link_level_flow_control_policy": "",
+                                "link_level_policy": "",
+                                "lldp_interface_policy": "",
+                                "macsec_policy": "",
+                                "mcp_interface_policy": "",
+                                "monitoring_policy": "",
+                                "port_security_policy": "",
+                                "priority_flow_control_policy": "",
+                                "slow_drain_policy": "",
+                                "spanning_tree_interface_policy": "",
+                                "storm_control_policy": ""
+                            },
+                            "port_security_policy":{
+                                "description": "Name of the Port Security Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "priority_flow_control_policy":{
+                                "description": "Name of the Priority Flow Control Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "interface_policy": "",
+                                "site_group": ""
+                            },
+                            "slow_drain_policy":{
+                                "description": "Name of the Slow Drain Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "spanning_tree_interface_policy":{
+                                "description": "Name of the Spanning Tree Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "storm_control_policy":{
+                                "description": "Name of the Storm Control Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policyGroups.leafAccessPort":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "attachable_entity_profile":{
+                                "description": "Name of the Attachable Access Entity Profile.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "dot1x_port_authentication_policy":{
+                                "description": "Name of the 802.1x Port Authentication Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "dwdm_policy":{
+                                "description": "Name of the DWDM Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "interface_policy":{
+                                "description": "Name of the Shared Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "netflow_monitor_policies":{
+                                "description": "Names of the Netflow Monitor Policies, appended with the type.  i.e ce, ipv4, ipv6.  In example default:ipv4,default:ipv6.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": "",
+                                "dot1x_port_authentication_policy": "",
+                                "dwdm_policy": "",
+                                "global_alias": "",
+                                "netflow_monitor_policies": "",
+                                "poe_interface_policy": "",
+                                "synce_interface_policy": ""
+                            },
+                            "poe_interface_policy":{
+                                "description": "Name of the PoE Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "attachable_entity_profile": "",
+                                "interface_policy": "",
+                                "name": "",
+                                "site_group": ""
+                            },
+                            "synce_interface_policy":{
+                                "description": "Name of the Synce Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policyGroups.leafBundle":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "attachable_entity_profile":{
+                                "description": "Name of the Attachable Access Entity Profile.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_aggregation_policy":{
+                                "description": "Name of the Port-Channel Interface Policy (LACP).",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_aggregation_type":{
+                                "description": "Defines if the Port-Channel is local to a switch (pc) or redundant accross a pair (vpc)",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "pc",
+                                    "vpc"
+                                ],
+                                "default": "link",
+                                "x-omitempty": true
+                            },
+                            "interface_policy":{
+                                "description": "Name of the Shared Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "netflow_monitor_policies":{
+                                "description": "Names of the Netflow Monitor Policies, appended with the type.  i.e ce, ipv4, ipv6.  In example default:ipv4,default:ipv6.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": "",
+                                "netflow_monitor_policies": ""
+                            },
+                            "poe_interface":{
+                                "description": "Name of the PoE Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "attachable_entity_profile": "",
+                                "interface_policy": "",
+                                "link_aggregation_policy": "",
+                                "link_aggregation_type": "",
+                                "name": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policyGroups.leafBreakOut":{
                 "allOf":[
                     {},
                     {
@@ -880,6 +1245,59 @@
                             },
                             "required_args": {
                                 "breakout_map": "",
+                                "name": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policyGroups.spineAccessPort":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "attachable_entity_profile":{
+                                "description": "Name of the Attachable Access Entity Profile.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_level_policy":{
+                                "description": "Name of the Link Level Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_flap_policy":{
+                                "description": "Name of the Link Flap Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "macsec_policy":{
+                                "description": "Name of the MacSec Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "cdp_interface_policy": "",
+                                "description": "",
+                                "link_level_policy": "",
+                                "link_flap_policy": "",
+                                "macsec_policy": ""
+                            },
+                            "required_args": {
+                                "attachable_entity_profile": "",
                                 "name": "",
                                 "site_group": ""
                             }
@@ -943,6 +1361,256 @@
                                     "static"
                                 ],
                                 "default": "static",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.switches.leafPolicyGroup":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "bfd_ipv4_policy":{
+                                "description": "Name of the BFD IPv4 Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "bfd_ipv6_policy":{
+                                "description": "Name of the BFD IPv6 Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "bfd_multihop_ipv4_policy":{
+                                "description": "Name of the BFD MultiHop IPv4 Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "bfd_multihop_ipv6_policy":{
+                                "description": "Name of the BFD MultiHop IPv6 Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "copp_leaf_policy":{
+                                "description": "Name of the Control Plane Policing Leaf Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "copp_pre-filter":{
+                                "description": "Name of the Control Plane Policing Pre-Filter Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "dot1x_node_authentication_policy":{
+                                "description": "Name of the 802.1x Node Authentication Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "equipment_flash_config":{
+                                "description": "Name of the Equipment Flash Config Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "fast_link_failover_policy":{
+                                "description": "Name of the Fast Link Failover Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "fibre_channel_node_policy":{
+                                "description": "Name of the Fibre Channel Node Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "fibre_channel_san_policy":{
+                                "description": "Name of the Fibre Channel SAN Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "forward_scale_profile_policy":{
+                                "description": "Name of the Forward Scale Profile Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "monitoring_policy":{
+                                "description": "Name of the Monitoring Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "netflow_node_policy":{
+                                "description": "Name of the Netflow Node Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "bfd_ipv4_policy": "",
+                                "bfd_ipv6_policy": "",
+                                "bfd_multihop_ipv4_policy": "",
+                                "bfd_multihop_ipv6_policy": "",
+                                "cdp_interface_policy": "",
+                                "copp_leaf_policy": "",
+                                "copp_pre-filter": "",
+                                "description": "",
+                                "dot1x_node_authentication_policy": "",
+                                "fast_link_failover_policy": "",
+                                "fibre_channel_node_policy": "",
+                                "fibre_channel_san_policy": "",
+                                "forward_scale_profile_policy": "",
+                                "lldp_interface_policy": "",
+                                "netflow_node_policy": "",
+                                "poe_node_policy": "",
+                                "ptp_node_policy": "",
+                                "spanning_tree_interface_policy": "",
+                                "synce_node_policy": "",
+                                "usb_configuration_policy": ""
+                            },
+                            "poe_node_policy":{
+                                "description": "Name of the PoE Node Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "ptp_node_policy":{
+                                "description": "Name of the Precision Time Protocol Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "name": "",
+                                "site_group": ""
+                            },
+                            "spanning_tree_interface_policy":{
+                                "description": "Name of the Spanning Tree Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "synce_node_policy":{
+                                "description": "Name of the Synce Node Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "usb_configuration_policy":{
+                                "description": "Name of the USB Configuration Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.switches.spinePolicyGroup":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "bfd_ipv4_policy":{
+                                "description": "Name of the BFD IPv4 Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "bfd_ipv6_policy":{
+                                "description": "Name of the BFD IPv6 Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "copp_pre-filter":{
+                                "description": "Name of the Control Plane Policing Pre-Filter Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "copp_spine_policy":{
+                                "description": "Name of the Control Plane Policing Spine Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "bfd_ipv4_policy": "",
+                                "bfd_ipv6_policy": "",
+                                "cdp_interface_policy": "",
+                                "copp_pre-filter": "",
+                                "copp_spine_policy": "",
+                                "description": "",
+                                "lldp_interface_policy": "",
+                                "usb_configuration_policy": ""
+                            },
+                            "required_args": {
+                                "name": "",
+                                "site_group": ""
+                            },
+                            "usb_configuration_policy":{
+                                "description": "Name of the USB Configuration Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             }
                         }
