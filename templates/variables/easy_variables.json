@@ -25,6 +25,7 @@
                                     "access",
                                     "admin",
                                     "fabric",
+                                    "switches",
                                     "system_settings"
                                 ]
                             },
@@ -49,8 +50,7 @@
                                     "spine_policy_groups",
                                     "spine_port_group_access",
                                     "virtual_networking",
-                                    "vlan_pools",
-                                    "vpc_domains"
+                                    "vlan_pools"
                                 ]
                             },
                             "class.admin":{
@@ -72,6 +72,12 @@
                                     "syslog"
                                 ]
                             },
+                            "class.switches":{
+                                "enum": [
+                                    "switch_profiles",
+                                    "vpc_domains"
+                                ]
+                            },
                             "class.system_settings":{
                                 "enum": [
                                     "apic_connectivity_preference",
@@ -90,6 +96,7 @@
                                     "access",
                                     "admin",
                                     "fabric",
+                                    "switches",
                                     "system_settings",
                                     "virtual_networking"
                                 ]
@@ -108,19 +115,17 @@
                                     "leaf_port_group_access":[],
                                     "leaf_port_group_breakout":[],
                                     "leaf_port_group_bundle":[],
-                                    "leaf_profiles":[],
                                     "lldp_interface_policies":[],
                                     "mcp_interface_policies":[],
                                     "physical_domains":[],
                                     "port_channel_policies":[],
                                     "port_security_policies":[],
                                     "spanning_tree_interface_policies":[],
+                                    "spine_modules":[],
                                     "spine_policy_groups":[],
                                     "spine_port_group_access":[],
-                                    "spine_profiles":[],
                                     "virtual_networking":[],
-                                    "vlan_pools":[],
-                                    "vpc_domains":[]
+                                    "vlan_pools":[]
                                 },
                                 "admin":{
                                     "authentication":[],
@@ -150,6 +155,10 @@
                                     "terraform_version":""
                                 },
                                 "sites":{},
+                                "switches":{
+                                    "switch_profiles":[],
+                                    "vpc_domains":[]
+                                },
                                 "system_settings":{
                                     "apic_connectivity_preference":[],
                                     "bgp_asn":[],
@@ -186,29 +195,25 @@
                                     "README.md",
                                     "data_sources.tf",
                                     "domains.tf",
-                                    "firmware.tf",
                                     "global_policies.tf",
                                     "interface_policies.tf",
-                                    "inventory.tf",
                                     "leaf_interface_policy_groups.tf",
                                     "leaf_policy_groups.tf",
-                                    "leaf_profiles.tf",
                                     "locals.tf",
                                     "outputs.tf",
                                     "pools.tf",
                                     "provider.tf",
                                     "spine_interface_policy_groups.tf",
                                     "spine_policy_groups.tf",
-                                    "spine_profiles.tf",
                                     "variables.tf",
-                                    "virtual_networking.tf",
-                                    "vpc_domains.tf"
+                                    "virtual_networking.tf"
                                 ],
                                 "admin": [
                                     "README.md",
                                     "authentication.tf",
                                     "configuration_backups.tf",
                                     "data_sources.tf",
+                                    "firmware.tf",
                                     "locals.tf",
                                     "outputs.tf",
                                     "provider.tf",
@@ -231,6 +236,15 @@
                                     "snmp_policies.tf",
                                     "syslog.tf",
                                     "variables.tf"
+                                ],
+                                "switch": [
+                                    "README.md",
+                                    "locals.tf",
+                                    "outputs.tf",
+                                    "provider.tf",
+                                    "switch_profiles.tf",
+                                    "variables.tf",
+                                    "vpc_domains.tf"
                                 ],
                                 "system_settings": [
                                     "README.md",
@@ -1360,6 +1374,323 @@
                                     "static"
                                 ],
                                 "default": "inherit",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.profiles.interfaceSelectors":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "access_or_native_vlan":{
+                                "description": "Access or Native VLAN Identifier.",
+                                "type": "list_of_integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 4095,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "interface_profile":{
+                                "description": "Name of the Interface Profile.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "interface_selector":{
+                                "description": "Name of the Interface Selector.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "access_or_native_vlan": "",
+                                "description": "",
+                                "policy_group": "",
+                                "policy_group_type": "",
+                                "switchport_mode": "",
+                                "trunk_port_allowed_vlans": ""
+                            },
+                            "policy_group":{
+                                "description": "Name of the Policy Group.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "policy_group_type":{
+                                "description": "The type of Policy Group.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "access",
+                                    "breakout",
+                                    "bundle"
+                                ],
+                                "default": "bundle",
+                                "x-omitempty": true
+                            },
+                            "port":{
+                                "description": "Switchport.",
+                                "type": "string",
+                                "minimum": 3,
+                                "maximum": 5,
+                                "pattern":"^[\\d]/[\\d]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "interface_profile": "",
+                                "interface_selector": "",
+                                "node_id": "",
+                                "pod_id": "",
+                                "port": "",
+                                "site_group": ""
+                            },
+                            "switchport_mode":{
+                                "description": "Switchport Trunk Modes.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "aaep_encap",
+                                    "access",
+                                    "trunk"
+                                ],
+                                "default": "trunk",
+                                "x-omitempty": true
+                            },
+                            "trunk_port_allowed_vlans":{
+                                "description": "List of allowed VLANs.",
+                                "type": "list_of_vlans",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.profiles.switchModules":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "modules":{
+                                "description": "Types of Modules.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "EMPTY",
+                                    "X9716D-GX",
+                                    "X9732C-EX",
+                                    "X9736C-FX",
+                                    "X9736PQ"
+                                ],
+                                "default": "EMPTY",
+                                "x-omitempty": true
+                            },
+                            "node_list":{
+                                "description": "List of Switches and modules.",
+                                "type": "list_of_integer",
+                                "format": "int64",
+                                "minimum": 101,
+                                "maximum": 4000,
+                                "default": 101,
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "module_1": "",
+                                "module_2": "",
+                                "module_3": "",
+                                "module_4": "",
+                                "module_5": "",
+                                "module_6": "",
+                                "module_7": "",
+                                "module_8": "",
+                                "module_9": "",
+                                "module_10": "",
+                                "module_11": "",
+                                "module_12": "",
+                                "module_13": "",
+                                "module_14": "",
+                                "module_15": "",
+                                "module_16": ""
+                            },
+                            "required_args":{
+                                "node_list": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.profiles.switchProfiles":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "external_pool_id":{
+                                "description": "The Remote Leaf pool ID.",
+                                "type": "list_of_integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 255,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "inband_ipv4":{
+                                "description": "IPv4 Address of the Inband Management Interface.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "inband_ipv4_gateway":{
+                                "description": "IPv4 Gateway of the Inband Management Interface.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "inband_ipv6":{
+                                "description": "IPv6 Address of the Inband Management Interface.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "inband_ipv6_gateway":{
+                                "description": "IPv6 Gateway of the Inband Management Interface.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "inband_mgmt_epg":{
+                                "description": "Name of the Inband Management EPG.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "node_type":{
+                                "description": "What is the Role of the Switch in the Fabric.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "leaf",
+                                    "remote-leaf",
+                                    "spine",
+                                    "tier-2-leaf"
+                                ],
+                                "default": "leaf",
+                                "x-omitempty": true
+                            },
+                            "ooband_ipv4":{
+                                "description": "IPv4 Address of the Out-of-Band Management Interface.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "ooband_ipv4_gateway":{
+                                "description": "IPv4 Gateway of the Out-of-Band Management Interface.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "ooband_ipv6":{
+                                "description": "IPv6 Address of the Out-of-Band Management Interface.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "ooband_ipv6_gateway":{
+                                "description": "IPv6 Gateway of the Out-of-Band Management Interface.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "external_pool_id": "",
+                                "inband_ipv4": "",
+                                "inband_ipv4_gateway": "",
+                                "inband_ipv6": "",
+                                "inband_ipv6_gateway": "",
+                                "ooband_ipv4": "",
+                                "ooband_ipv4_gateway": "",
+                                "ooband_ipv6": "",
+                                "ooband_ipv6_gateway": "",
+                                "vpc_domain_id": "",
+                                "vpc_name": ""
+                            },
+                            "ooband_mgmt_epg":{
+                                "description": "Name of the Out-of-Band Management EPG.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "inband_mgmt_epg": "",
+                                "node_id": "",
+                                "node_type": "",
+                                "ooband_mgmt_epg": "",
+                                "pod_id": "",
+                                "serial_number": "",
+                                "site_group": "",
+                                "switch_model": "",
+                                "switch_name": ""
+                            },
+                            "serial_number":{
+                                "description": "Serial Number of the Switch.",
+                                "type": "string",
+                                "minimum": 9,
+                                "maximum": 11,
+                                "pattern":"^([A-Z]{3}[2-3][\\d]([0][1-9]|[1-4][0-9]|[5][1-3])[\\dA-Z]{4}|TEP-1-[\\d]{3})$",
+                                "x-omitempty": true
+                            },
+                            "switch_model":{
+                                "description": "Switch Models.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "9504",
+                                    "9508",
+                                    "9516",
+                                    "93108TC-EX",
+                                    "93108TC-FX",
+                                    "93120TX",
+                                    "9316D-GX",
+                                    "93180YC-EX",
+                                    "93180YC-FX",
+                                    "93180YC-FX3",
+                                    "93216TC-FX2",
+                                    "93240YC-FX2",
+                                    "9332C",
+                                    "9332D-GX2B",
+                                    "93360YC-FX2",
+                                    "9336C-FX2",
+                                    "9336PQ",
+                                    "9348GC-FXP",
+                                    "93600CD-GX",
+                                    "9364C",
+                                    "9364C-GX",
+                                    "9364D-GX2A",
+                                    "9396PX"
+                                ],
+                                "default": "93180YC-FX",
+                                "x-omitempty": true
+                            },
+                            "switch_name":{
+                                "description": "Hostname of the Switch.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "vpc_domain_id":{
+                                "description": "An ID Number between 1 and 1001 to Identify the VPC pair.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 1001,
+                                "default": 201,
+                                "x-omitempty": true
+                            },
+                            "vpc_name":{
+                                "description": "Name of the VPC Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             }
                         }
@@ -4353,6 +4684,15 @@
                                 "minimum": 1,
                                 "maximum": 63,
                                 "pattern":"^[a-zA-Z0-9_.-]+$",
+                                "x-omitempty": true
+                            },
+                            "node_id":{
+                                "description": "Node Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 101,
+                                "maximum": 4000,
+                                "default": 101,
                                 "x-omitempty": true
                             },
                             "physical_domain":{

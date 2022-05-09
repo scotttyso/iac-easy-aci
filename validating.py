@@ -262,6 +262,25 @@ def list_values(var, jsonData, **kwargs):
     varValue = kwargs[var]
     match_count = 0
     for x in varList:
+        if str(x) == str(varValue):
+            match_count =+ 1
+    if not match_count > 0:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {varValue}. ')
+        print(f'   {var} should be one of the following:')
+        for x in varList:
+            print(f'    - {x}')
+        print(f'    Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def list_values_key(dictkey, var, jsonData, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varList = jsonData[dictkey]['enum']
+    varValue = kwargs[var]
+    match_count = 0
+    for x in varList:
         if x == varValue:
             match_count =+ 1
     if not match_count > 0:
@@ -313,25 +332,6 @@ def mgmt_network(row_num, ws, var1, var1_value, var2, var2_value):
         print(f'   Mgmt IP/Prefix: "{var1_value}"')
         print(f'   Gateway IP: "{var2_value}"')
         print(f'   Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-def modules(row_num, name, switch_role, modules):
-    module_count = 0
-    if switch_role == 'leaf' and int(modules) == 1:
-        module_count += 1
-    elif switch_role == 'leaf':
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Row {row_num}. {name} module count is not valid.')
-        print(f'   A Leaf can only have one module.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-    elif switch_role == 'spine' and int(modules) < 17:
-        module_count += 1
-    elif switch_role == 'spine':
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Row {row_num}. {name} module count is not valid.')
-        print(f'   A Spine needs between 1 and 16 modules.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
@@ -578,7 +578,9 @@ def values(var, jsonData, **kwargs):
     varValue = kwargs[var]
     match_count = 0
     for x in varList:
-        if x == varValue:
+        if '95' in varValue:
+            print(f'x is {x} and {varValue}')
+        if str(x) == str(varValue):
             match_count =+ 1
     if not match_count > 0:
         print(f'\n-----------------------------------------------------------------------------\n')

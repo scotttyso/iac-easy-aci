@@ -5,11 +5,13 @@
 #======================================================
 from collections import OrderedDict
 from openpyxl import load_workbook
+from openpyxl.worksheet.datavalidation import DataValidation
 from ordered_set import OrderedSet
 from textwrap import fill
 import ast
 import jinja2
 import json
+import openpyxl
 import os
 import pkg_resources
 import platform
@@ -188,29 +190,56 @@ def countKeys(ws, func):
 # Function to Create Interface Selectors
 #======================================================
 def create_selector(ws_sw, ws_sw_row_count, **templateVars):
-    print(templateVars['port_count'])
-    Port_Selector = ''
+    port_selector = ''
     for port in range(1, int(templateVars['port_count']) + 1):
         if port < 10:
-            Port_Selector = 'Eth%s-0%s' % (templateVars['module'], port)
+            port_selector = 'Eth%s-0%s' % (templateVars['module'], port)
         elif port < 100:
-            Port_Selector = 'Eth%s-%s' % (templateVars['module'], port)
+            port_selector = 'Eth%s-%s' % (templateVars['module'], port)
         elif port > 99:
-            Port_Selector = 'Eth%s_%s' % (templateVars['module'], port)
-        modp = '%s/%s' % (templateVars['module'],port)
+            port_selector = 'Eth%s_%s' % (templateVars['module'], port)
+        modport = '%s/%s' % (templateVars['module'],port)
         # Copy the Port Selector to the Worksheet
-        data = ['intf_selector',templateVars['Pod_ID'],templateVars['Node_ID'],templateVars['Name'],Port_Selector,modp,'','','','','','']
+        if templateVars['node_type'] == 'spine':
+            data = [
+                'intf_selector',
+                templateVars['site_group'],
+                templateVars['pod_id'],
+                templateVars['node_id'],
+                templateVars['switch_name'],
+                port_selector,modport,
+                'access','','','','',''
+            ]
+        else:
+            data = [
+                'intf_selector',
+                templateVars['site_group'],
+                templateVars['pod_id'],
+                templateVars['node_id'],
+                templateVars['switch_name'],
+                port_selector,modport,
+                '','','','','',''
+            ]
         ws_sw.append(data)
-        rc = '%s:%s' % (ws_sw_row_count, ws_sw_row_count)
+        rc = f'{ws_sw_row_count}:{ws_sw_row_count}'
         for cell in ws_sw[rc]:
             if ws_sw_row_count % 2 == 0:
                 cell.style = 'ws_odd'
             else:
                 cell.style = 'ws_even'
-        dv1_cell = 'A%s' % (ws_sw_row_count)
-        dv2_cell = 'H%s' % (ws_sw_row_count)
+        if templateVars['node_type'] == 'spine':
+            templateVars['dv3'] = DataValidation(type="list", formula1='spine_policy_groups', allow_blank=True)
+        else:
+            templateVars['dv3'] = DataValidation(type="list", formula1=f'INDIRECT(H{ws_sw_row_count})', allow_blank=True)
+        ws_sw.add_data_validation(templateVars['dv3'])
+        dv1_cell = f'A{ws_sw_row_count}'
+        dv2_cell = f'H{ws_sw_row_count}'
+        dv3_cell = f'I{ws_sw_row_count}'
+        dv4_cell = f'K{ws_sw_row_count}'
         templateVars['dv1'].add(dv1_cell)
         templateVars['dv2'].add(dv2_cell)
+        templateVars['dv3'].add(dv3_cell)
+        templateVars['dv4'].add(dv4_cell)
         ws_sw_row_count += 1
     return ws_sw_row_count
 
@@ -346,8 +375,9 @@ def easyDict_append_subtype(templateVars, **kwargs):
         for k, v in item.items():
             if k == kwargs['site_group']:
                 for i in v:
-                    i[data_subtype].append(templateVars)
-                    count += 1
+                    if i['name'] == policy_name:
+                        i[data_subtype].append(templateVars)
+                        count += 1
     if count == 0 and 'Grp_' in kwargs['site_group']:
         group_id = '%s' % (kwargs['site_group'])
         site_group = ast.literal_eval(os.environ[group_id])
@@ -513,6 +543,183 @@ def get_user_pass():
     os.environ['TF_VAR_aciPass'] = '%s' % (password)
 
 #======================================================
+# Function to Create Interface Selector Workbooks
+#======================================================
+def interface_selector_workbook(templateVars, **kwargs):
+    # Set the Workbook var
+    wb_sw = kwargs['wb_sw']
+
+    # Use Switch_Type to Determine the Number of ports on the switch
+    modules,port_count = switch_model_ports(kwargs['row_num'], templateVars['switch_model'])
+
+    # Get the Interface Policy Groups from EasyDict
+    if templateVars['node_type'] == 'spine':
+        pg_list = ['spine_port_group_access']
+    else:
+        pg_list = ['leaf_port_group_access', 'leaf_port_group_breakout', 'leaf_port_group_bundle']
+    switch_pgs = {}
+    for pgroup in pg_list:
+        switch_pgs[pgroup] = []
+        for item in kwargs['easyDict']['access'][pgroup]:
+            for key, value in item.items():
+                if re.search('Grp_', key):
+                    site_group = ast.literal_eval(os.environ[key])
+                    for x in range(1, 16):
+                        sitex = 'site_%s' % (x)
+                        if not site_group[sitex] == None:
+                            if int(templateVars['site_group']) == int(x):
+                                for i in value:
+                                    switch_pgs[pgroup].append(i['name'])
+                else:
+                    if int(key) == int(templateVars['site_group']):
+                        for i in value:
+                            switch_pgs[pgroup].append(i['name'])
+
+    # Sort the Policy Group List and Convert to a string
+    for pgroup in pg_list:
+        switch_pgs[pgroup].sort()
+
+    if not 'formulas' in wb_sw.sheetnames:
+        ws_sw = wb_sw.create_sheet(title = 'formulas')
+        ws_sw.column_dimensions['A'].width = 30
+        ws_sw.column_dimensions['B'].width = 30
+        ws_sw.column_dimensions['C'].width = 30
+        ws_sw.column_dimensions['D'].width = 30
+        data = ['access', 'breakout', 'bundle', 'spine_policy_groups']
+        ws_sw.append(data)
+        for cell in ws_sw['1:1']:
+            cell.style = 'Heading 1'
+        wb_sw.save(kwargs['excel_workbook'])
+
+    ws_sw = wb_sw['formulas']
+    for pgroup in pg_list:
+        if pgroup == 'leaf_port_group_access':
+            x = 1
+        elif pgroup == 'leaf_port_group_breakout':
+            x = 2
+        elif pgroup == 'leaf_port_group_bundle':
+            x = 3
+        elif templateVars['node_type'] == 'spine':
+            x = 4
+        if len(switch_pgs[pgroup]) > 0:
+            row_start = 2
+            row_end = len(switch_pgs[pgroup]) + row_start - 1
+            sw_pgs_count = 0
+            for row_num in range(row_start, row_end + 1):
+                rc = f'{row_num}:{row_num}'
+                for cell in ws_sw[rc]:
+                    if row_num % 2 == 0:
+                        cell.style = 'ws_odd'
+                    else:
+                        cell.style = 'ws_even'
+                ws_sw.cell(row=row_num, column=x, value=switch_pgs[pgroup][sw_pgs_count])
+                sw_pgs_count += 1
+
+        wb_sw.save(kwargs['excel_workbook'])
+        last_row = len(switch_pgs[pgroup]) + 1
+        defined_names = ['DSCP', 'leaf', 'spine', 'spine_modules', 'spine_type', 'switch_role', 'tag', 'Time_Zone']
+        for dname in defined_names:
+            if dname in wb_sw.defined_names:
+                wb_sw.defined_names.delete(dname)
+        if templateVars['node_type'] == 'spine':
+            new_range = openpyxl.workbook.defined_name.DefinedName('spine_policy_groups',attr_text=f"formulas!$D$2:$D{last_row}")
+            if 'spine_policy_groups' in wb_sw.defined_names:
+                wb_sw.defined_names.delete('spine_policy_groups')
+                wb_sw.defined_names.append(new_range)
+        elif pgroup == 'leaf_port_group_access':
+            new_range = openpyxl.workbook.defined_name.DefinedName('access',attr_text=f"formulas!$A$2:$A{last_row}")
+            if not 'access' in wb_sw.defined_names:
+                # wb_sw.defined_names.delete('access')
+                wb_sw.defined_names.append(new_range)
+        elif pgroup == 'leaf_port_group_breakout':
+            new_range = openpyxl.workbook.defined_name.DefinedName('breakout',attr_text=f"formulas!$B$2:$B{last_row}")
+            if not 'breakout' in wb_sw.defined_names:
+                # wb_sw.defined_names.delete('breakout')
+                wb_sw.defined_names.append(new_range)
+        elif pgroup == 'leaf_port_group_bundle':
+            new_range = openpyxl.workbook.defined_name.DefinedName('bundle',attr_text=f"formulas!$C$2:$C{last_row}")
+            if not 'bundle' in wb_sw.defined_names:
+                # wb_sw.defined_names.delete('bundle')
+                wb_sw.defined_names.append(new_range)
+        wb_sw.save(kwargs['excel_workbook'])
+
+    # Check if there is a Worksheet for the Switch Already
+    if not templateVars['switch_name'] in wb_sw.sheetnames:
+        ws_sw = wb_sw.create_sheet(title = templateVars['switch_name'])
+        ws_sw = wb_sw[templateVars['switch_name']]
+        ws_sw.column_dimensions['A'].width = 15
+        ws_sw.column_dimensions['B'].width = 15
+        ws_sw.column_dimensions['C'].width = 10
+        ws_sw.column_dimensions['D'].width = 10
+        ws_sw.column_dimensions['E'].width = 20
+        ws_sw.column_dimensions['F'].width = 20
+        ws_sw.column_dimensions['G'].width = 20
+        ws_sw.column_dimensions['H'].width = 20
+        ws_sw.column_dimensions['I'].width = 20
+        ws_sw.column_dimensions['J'].width = 20
+        ws_sw.column_dimensions['K'].width = 20
+        ws_sw.column_dimensions['L'].width = 25
+        ws_sw.column_dimensions['M'].width = 30
+        dv1 = DataValidation(type="list", formula1='"intf_selector"', allow_blank=True)
+        if templateVars['node_type'] == 'spine':
+            dv2 = DataValidation(type="list", formula1='"access"', allow_blank=True)
+        else:
+            dv2 = DataValidation(type="list", formula1='"access,breakout,bundle"', allow_blank=True)
+        dv4 = DataValidation(type="list", formula1='"access,aaep_encap,trunk"', allow_blank=True)
+        ws_sw.add_data_validation(dv1)
+        ws_sw.add_data_validation(dv2)
+        ws_sw.add_data_validation(dv4)
+        ws_header = '%s Interface Selectors' % (kwargs['switch_name'])
+        data = [ws_header]
+        ws_sw.append(data)
+        ws_sw.merge_cells('A1:M1')
+        for cell in ws_sw['1:1']:
+            cell.style = 'Heading 1'
+        data = ['','Notes:']
+        ws_sw.append(data)
+        ws_sw.merge_cells('B2:M2')
+        for cell in ws_sw['2:2']:
+            cell.style = 'Heading 2'
+        data = [
+            'Type','site_group','pod_id','node_id','interface_profile','interface_selector','port','policy_group_type',
+            'policy_group','description','switchport_mode','access_or_native_vlan','trunk_port_allowed_vlans'
+        ]
+        ws_sw.append(data)
+        for cell in ws_sw['3:3']:
+            cell.style = 'Heading 3'
+
+        ws_sw_row_count = 4
+        templateVars['dv1'] = dv1
+        templateVars['dv2'] = dv2
+        templateVars['dv4'] = dv4
+        templateVars['port_count'] = port_count
+        sw_type = str(templateVars['switch_model'])
+        if re.search('^(95[0-1][4-8])', sw_type):
+            spine_modules = kwargs['easyDict']['access']['spine_modules']
+            for item in spine_modules:
+                for key, value in item.items():
+                    if key == templateVars["site_group"]:
+                        for i in value:
+                            if str(templateVars['node_id']) == str(i['node_id']):
+                                modDict = i
+                                break
+            
+            start, end = 1, int(modules)
+            for x in range(start, end + 1):
+                module_type = modDict[f'module_{x}']
+                if re.search('^X97', module_type):
+                    templateVars['module'] = x
+                    templateVars['port_count'] = spine_module_port_count(module_type)
+                    ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
+        else:
+            templateVars['module'] = 1
+            ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
+
+        # Save the Workbook
+        wb_sw.save(kwargs['excel_workbook'])
+        wb_sw.close()
+
+#======================================================
 # Function to Merge Easy ACI Repository to Dest Folder
 #======================================================
 def merge_easy_aci_repository(easy_jsonData):
@@ -521,7 +728,7 @@ def merge_easy_aci_repository(easy_jsonData):
     # Obtain Operating System and Get TF_DEST_DIR variable from Environment
     opSystem = platform.system()
     if os.environ.get('TF_DEST_DIR') is None:
-        tfDir = 'Intersight'
+        tfDir = 'ACI'
     else:
         tfDir = os.environ.get('TF_DEST_DIR')
 
@@ -659,6 +866,8 @@ def merge_easy_aci_repository(easy_jsonData):
                 folder_type = folder.split('/')[folder_length -1]
             if re.search('^tenant_', folder_type):
                 folder_type = 'tenant'
+            elif re.search('^switch_', folder_type):
+                folder_type = 'switch'
             files = jsonData['files'][folder_type]
             removeList = jsonData['remove_files']
             for xRemove in removeList:
@@ -913,83 +1122,6 @@ def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, 
         exit()
 
 #======================================================
-# Function to Determine Port Count on Modules
-#======================================================
-def query_module_type(row_num, module_type):
-    if re.search('^M4', module_type):
-        port_count = '4'
-    elif re.search('^M6', module_type):
-        port_count = '6'
-    elif re.search('^M12', module_type):
-        port_count = '12'
-    elif re.search('X9716D-GX', module_type):
-        port_count = '16'
-    elif re.search('X9732C-EX', module_type):
-        port_count = '32'
-    elif re.search('X9736', module_type):
-        port_count = '36'
-    else:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Row {row_num}.  Unknown Module {module_type}')
-        print(f'   Please verify Input Information.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-    return port_count
-
-#======================================================
-# Function to Determine Port count from Switch Model
-#======================================================
-# Function to Determine Port count from Switch Model
-def query_switch_model(row_num, switch_type):
-    modules = ''
-    switch_type = str(switch_type)
-    if re.search('^9396', switch_type):
-        modules = '2'
-        port_count = '48'
-    elif re.search('^93', switch_type):
-        modules = '1'
-
-    if re.search('^9316', switch_type):
-        port_count = '16'
-    elif re.search('^(93120)', switch_type):
-        port_count = '102'
-    elif re.search('^(93108|93120|93216|93360)', switch_type):
-        port_count = '108'
-    elif re.search('^(93180|93240|9348|9396)', switch_type):
-        port_count = '54'
-    elif re.search('^(93240)', switch_type):
-        port_count = '60'
-    elif re.search('^9332', switch_type):
-        port_count = '34'
-    elif re.search('^(9336|93600)', switch_type):
-        port_count = '36'
-    elif re.search('^9364C-GX', switch_type):
-        port_count = '64'
-    elif re.search('^9364', switch_type):
-        port_count = '66'
-    elif re.search('^95', switch_type):
-        port_count = '36'
-        if switch_type == '9504':
-            modules = '4'
-        elif switch_type == '9508':
-            modules = '8'
-        elif switch_type == '9516':
-            modules = '16'
-        else:
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Row {row_num}.  Unknown Switch Model {switch_type}')
-            print(f'   Please verify Input Information.  Exiting....')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            exit()
-    else:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Row {row_num}.  Unknown Switch Model {switch_type}')
-        print(f'   Please verify Input Information.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-    return modules,port_count
-
-#======================================================
 # Function for Processing Loops to auto.tfvars files
 #======================================================
 def read_easy_jsonData(easy_jsonData, **easyDict):
@@ -1018,6 +1150,7 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                                     site_groups[k].append(site)
             for item in easyDict[class_type][func]:
                 loop_count = 1
+                switch_count = 1
                 for k, v in item.items():
                     dummy_count = 1
                     countlength = len(v)
@@ -1076,13 +1209,26 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                             policyType = policyType.replace('Radius', 'RADIUS')
                             policyType = policyType.replace('Snmp', 'SNMP')
                             policyType = policyType.replace('Tacacs', 'TACACS+')
+                            policyType = policyType.replace('Vpc', 'VPC')
                             templateVars['policy_type'] = policyType
                         
                         # Write the Header to the Template File
-                        if re.search('aaep|cdp|layer3|group_access|virtual|vlan_p', func) and loop_count == 1:
+                        if re.search('aaep|cdp|layer3|group_access|snmp|virtual|vlan_p|vpc', func) and loop_count == 1:
                             kwargs["initial_write"] = True
                         elif re.search('bgp_rr|policies|port_group|domains|virtual|vlan_p', func):
                             kwargs["initial_write"] = False
+                        elif re.search('switch_profile', func):
+                            if templateVars['vpc_name'] == None:
+                                kwargs["initial_write"] = True
+                                write_to_site(templateVars, **kwargs)
+                                switch_count = 1
+                            elif not templateVars['vpc_name'] == None and switch_count == 1:
+                                switch_count = 2
+                                kwargs["initial_write"] = True
+                                write_to_site(templateVars, **kwargs)
+                            elif not templateVars['vpc_name'] == None and switch_count == 2:
+                                switch_count = 1
+                                kwargs["initial_write"] = False
                         else:
                             kwargs["initial_write"] = True
                         if re.search('Grp_', k):
@@ -1100,7 +1246,9 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                         kwargs["template_file"] = 'template_close.jinja2'
 
                         
-                        if countlength > 1 and countlength != loop_count:
+                        if re.search('switch_profile', func) and switch_count == 1:
+                            write_to_site(templateVars, **kwargs)
+                        elif countlength > 1 and countlength != loop_count:
                             dummy_count += 1
                         elif re.search('apic|bgp_asn', func):
                             dummy_count += 1
@@ -1125,6 +1273,39 @@ def read_in(excel_workbook):
         print(f"Something went wrong while opening the workbook - {excel_workbook}... ABORT!")
         sys.exit(e)
     return wb
+
+#======================================================
+# Function to Read the Worksheet and Create Templates
+#======================================================
+def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
+    rows = ws.max_row
+    func_list = findKeys(ws, func_regex)
+    stdout_log(ws, None, 'begin')
+    for func in func_list:
+        count = countKeys(ws, func)
+        var_dict = findVars(ws, func, rows, count)
+        for pos in var_dict:
+            row_num = var_dict[pos]['row']
+            del var_dict[pos]['row']
+            for x in list(var_dict[pos].keys()):
+                if var_dict[pos][x] == '':
+                    del var_dict[pos][x]
+            stdout_log(ws, row_num, 'begin')
+            var_dict[pos].update(
+                {
+                    'class_folder':class_folder,
+                    'easyDict':easyDict,
+                    'easy_jsonData':easy_jsonData,
+                    'row_num':row_num,
+                    'wb':wb,
+                    'ws':ws
+                }
+            )
+            easyDict = eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
+    
+    stdout_log(ws, row_num, 'end')
+    # Return the easyDict
+    return easyDict
 
 #======================================================
 # Function to Add Required Arguments
@@ -1299,6 +1480,71 @@ def stdout_log(ws, row_num, spot):
         return
 
 #======================================================
+# Function to Determine Port count from Switch Model
+#======================================================
+# Function to Determine Port count from Switch Model
+def switch_model_ports(row_num, switch_type):
+    modules = ''
+    switch_type = str(switch_type)
+    if re.search('^9396', switch_type):
+        modules = '2'
+        port_count = '48'
+    elif re.search('^93', switch_type):
+        modules = '1'
+
+    if re.search('^9316', switch_type):
+        port_count = '16'
+    elif re.search('^(93120)', switch_type):
+        port_count = '102'
+    elif re.search('^(93108|93120|93216|93360)', switch_type):
+        port_count = '108'
+    elif re.search('^(93180|93240|9348|9396)', switch_type):
+        port_count = '54'
+    elif re.search('^(93240)', switch_type):
+        port_count = '60'
+    elif re.search('^9332', switch_type):
+        port_count = '34'
+    elif re.search('^(9336|93600)', switch_type):
+        port_count = '36'
+    elif re.search('^9364C-GX', switch_type):
+        port_count = '64'
+    elif re.search('^9364', switch_type):
+        port_count = '66'
+    elif re.search('^95', switch_type):
+        port_count = '36'
+        if switch_type == '9504':
+            modules = '4'
+        elif switch_type == '9508':
+            modules = '8'
+        elif switch_type == '9516':
+            modules = '16'
+        else:
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   Error on Row {row_num}.  Unknown Switch Model {switch_type}')
+            print(f'   Please verify Input Information.  Exiting....')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
+    else:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Row {row_num}.  Unknown Switch Model {switch_type}')
+        print(f'   Please verify Input Information.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+    return modules,port_count
+
+#======================================================
+# Function to Determine Port Count on Modules
+#======================================================
+def spine_module_port_count(module_type):
+    if re.search('X9716D-GX', module_type):
+        port_count = '16'
+    elif re.search('X9732C-EX', module_type):
+        port_count = '32'
+    elif re.search('X9736', module_type):
+        port_count = '36'
+    return port_count
+
+#======================================================
 # Function to Validate Worksheet User Input
 #======================================================
 def validate_args(jsonData, **kwargs):
@@ -1320,6 +1566,7 @@ def validate_args(jsonData, **kwargs):
         'monitoring_policy',
         'name',
         'name_alias',
+        'node_id',
         'pod_id',
         'port_channel_policy',
         'qos_class',
@@ -1340,7 +1587,7 @@ def validate_args(jsonData, **kwargs):
                 else:
                     validating.list_values(i, globalData, **kwargs)
             elif globalData[i]['type'] == 'string':
-                if not kwargs[i] == None:
+                if not (kwargs[i] == None or kwargs[i] == ''):
                     validating.string_pattern(i, globalData, **kwargs)
             else:
                 print(f'error validating.  Type not found {i}. 1')
@@ -1348,7 +1595,7 @@ def validate_args(jsonData, **kwargs):
         elif i == 'site_group':
             validating.site_group('site_group', **kwargs)
         elif jsonData[i]['type'] == 'hostname':
-            if not kwargs[i] == None:
+            if not (kwargs[i] == None or kwargs[i] == ''):
                 count = 1
                 for hostname in kwargs[i].split(','):
                     kwargs[f'{i}_{count}'] = hostname
@@ -1361,7 +1608,7 @@ def validate_args(jsonData, **kwargs):
                     kwargs.pop(f'{i}_{count}')
                     count += 1
         elif jsonData[i]['type'] == 'email':
-            if not kwargs[i] == None:
+            if not (kwargs[i] == None or kwargs[i] == ''):
                 validating.email(i, **kwargs)
         elif jsonData[i]['type'] == 'integer':
             if kwargs[i] == None:
@@ -1369,7 +1616,7 @@ def validate_args(jsonData, **kwargs):
             else:
                 validating.number_check(i, jsonData, **kwargs)
         elif jsonData[i]['type'] == 'list_of_domains':
-            if not kwargs[i] == None:
+            if not (kwargs[i] == None or kwargs[i] == ''):
                 count = 1
                 for domain in kwargs[i]:
                     kwargs[f'domain_{count}'] = domain
@@ -1377,7 +1624,7 @@ def validate_args(jsonData, **kwargs):
                     kwargs.pop(f'domain_{count}')
                     count += 1
         elif jsonData[i]['type'] == 'list_of_hosts':
-            if not kwargs[i] == None:
+            if not (kwargs[i] == None or kwargs[i] == ''):
                 count = 1
                 for hostname in kwargs[i].split(','):
                     kwargs[f'{i}_{count}'] = hostname
@@ -1395,7 +1642,7 @@ def validate_args(jsonData, **kwargs):
             else:
                 validating.number_list(i, jsonData, **kwargs)
         elif jsonData[i]['type'] == 'list_of_string':
-            if not kwargs[i] == None:
+            if not (kwargs[i] == None or kwargs[i] == ''):
                 validating.string_list(i, jsonData, **kwargs)
         elif jsonData[i]['type'] == 'list_of_values':
             if kwargs[i] == None:
@@ -1403,32 +1650,37 @@ def validate_args(jsonData, **kwargs):
             else:
                 validating.list_values(i, jsonData, **kwargs)
         elif jsonData[i]['type'] == 'list_of_vlans':
-            if not kwargs[i] == None:
+            if not (kwargs[i] == None or kwargs[i] == ''):
                 validating.vlans(i, **kwargs)
         elif jsonData[i]['type'] == 'string':
-            if not kwargs[i] == None:
+            if not (kwargs[i] == None or kwargs[i] == ''):
                 validating.string_pattern(i, jsonData, **kwargs)
         else:
             print(f'error validating.  Type not found {i}. 2')
             exit()
     for i in jsonData['optional_args']:
-        if not kwargs[i] == None:
+        if not (kwargs[i] == None or kwargs[i] == ''):
             if i in global_args:
                 validating.validator(i, **kwargs)
+            elif re.search(r'^module_[\d]+$', i):
+                validating.list_values_key('modules', i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'domain':
                 validating.domain(i, **kwargs)
             elif jsonData[i]['type'] == 'email':
                 validating.email(i, **kwargs)
             elif jsonData[i]['type'] == 'integer':
                 validating.number_check(i, jsonData, **kwargs)
+            elif jsonData[i]['type'] == 'list_of_integer':
+                if not (kwargs[i] == None or kwargs[i] == ''):
+                    validating.number_list(i, jsonData, **kwargs)
+            elif jsonData[i]['type'] == 'list_of_string':
+                if not (kwargs[i] == None or kwargs[i] == ''):
+                    validating.string_list(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'list_of_values':
                 validating.list_values(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'list_of_vlans':
-                if not kwargs[i] == None:
+                if not (kwargs[i] == None or kwargs[i] == ''):
                     validating.vlans(i, **kwargs)
-            elif jsonData[i]['type'] == 'list_of_string':
-                if not kwargs[i] == None:
-                    validating.string_list(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'phone_number':
                 validating.phone_number(i, **kwargs)
             elif jsonData[i]['type'] == 'string':
@@ -1724,7 +1976,7 @@ def vlan_range(vlan_list, **templateVars):
 #======================================================
 def write_to_site(templateVars, **kwargs):
     class_type = templateVars['class_type']
-    if re.search('(access|admin|fabric|site_policies|system_settings)', class_type):
+    if re.search('(access|admin|fabric|site_policies|switches|system_settings)', class_type):
         aci_template_path = pkg_resources.resource_filename(f'classes', 'templates/')
     else:
         aci_template_path = pkg_resources.resource_filename(f'class_{class_type}', 'templates/')
@@ -1742,6 +1994,14 @@ def write_to_site(templateVars, **kwargs):
     # Process the template
     if 'tenants' in class_type:
         kwargs["dest_dir"] = 'tenant_%s' % (templateVars['tenant'])
+    elif 'switches' in class_type:
+        if templateVars['template_type'] == 'switch_profiles':
+            if not templateVars['vpc_name'] == None:
+                kwargs["dest_dir"] = 'switch_%s' % (templateVars['vpc_name'])
+            else:
+                kwargs["dest_dir"] = 'switch_%s' % (templateVars['switch_name'])
+        elif templateVars['template_type'] == 'vpc_domains':
+            kwargs["dest_dir"] = 'switch_%s' % (templateVars['name'])
     else:
         kwargs["dest_dir"] = '%s' % (class_type)
     kwargs["dest_file"] = '%s.auto.tfvars' % (kwargs["tfvars_file"])

@@ -10,7 +10,7 @@ It uses argparse to take in the following CLI arguments:
 # Source Modules
 #======================================================
 from class_tenants import tenants
-from classes import access, admin, fabric, site_policies, system_settings
+from classes import access, admin, fabric, site_policies, switches, system_settings
 from easy_functions import apply_aci_terraform, check_git_status
 from easy_functions import countKeys, findKeys, findVars, get_user_pass
 from easy_functions import get_latest_versions, merge_easy_aci_repository
@@ -25,7 +25,7 @@ import re
 #=====================================================================
 # Note: This is simply to make it so the classes don't appear Unused.
 #=====================================================================
-class_list = [access, admin, fabric, site_policies, system_settings, tenants]
+class_list = [access, admin, fabric, site_policies, switches, system_settings, tenants]
 
 #======================================================
 # Global Variables
@@ -38,25 +38,25 @@ workspace_dict = {}
 # Regular Expressions to Control wich rows in the
 # Worksheet should be processed.
 #======================================================
-part1 = 'aep_profile|cdp|(fibre|port)_(channel|security)|interface_policy|l2_interface|(phys|l3)_domain|'
-part2 = '(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|stp|vlan_pool'
-access_regex = f'^({part1}{part2})$'
+a1 = 'aep_profile|cdp|(fibre|port)_(channel|security)|interface_policy|l2_interface|(phys|l3)_domain|'
+a2 = '(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|stp|vlan_pool'
+access_regex = f'^({a1}{a2})$'
 admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
-system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
-bridge_domains_regex = re.compile('^add_bd$')
-contracts_regex = re.compile('(^(contract|filter|subject)_(add|entry|to_epg)$)')
-epgs_regex = re.compile('^((app|epg)_add)$')
+bridge_domains_regex = '^add_bd$'
+contracts_regex = '(^(contract|filter|subject)_(add|entry|to_epg)$)'
+epgs_regex = '^((app|epg)_add)$'
 
-part1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)|'
-part2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'
-fabric_regex = f'^({part1}{part2})$'
-inventory_regex = re.compile('^(apic_inb|switch|vpc_pair)$')
-l3out_regex = re.compile('^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$')
-mgmt_tenant_regex = re.compile('^(add_bd|mgmt_epg|oob_ext_epg)$')
-sites_regex = re.compile('^(site_id|group_id)$')
-tenants_regex = re.compile('^((tenant|vrf)_add|vrf_community)$')
-tenants_regex = re.compile('^((tenant)_block)$')
-virtual_regex = re.compile('^(vmm_(controllers|creds|domain|elagp|vswitch))$')
+f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)|'
+f2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'
+fabric_regex = f'^({f1}{f2})$'
+l3out_regex = '^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$'
+mgmt_tenant_regex = '^(add_bd|mgmt_epg|oob_ext_epg)$'
+sites_regex = '^(site_id|group_id)$'
+switch_regex = '^(sw_modules|switch)$'
+system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
+tenants_regex = '^((tenant|vrf)_add|vrf_community)$'
+tenants_regex = '^((tenant)_block)$'
+virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
 #======================================================
 # Function to Read the Access Worksheet
@@ -131,18 +131,6 @@ def process_fabric(easyDict, easy_jsonData, wb):
     return easyDict
 
 #======================================================
-# Function to Read the Fabric Worksheet
-#======================================================
-def process_inventory(easyDict, easy_jsonData, wb):
-    # Evaluate Inventory Worksheet
-    class_init = 'access'
-    class_folder = 'access'
-    func_regex = inventory_regex
-    ws = wb['Inventory']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-    return easyDict
-
-#======================================================
 # Function to Read the L3Out Worksheet
 #======================================================
 def process_l3out(easyDict, easy_jsonData, wb):
@@ -163,6 +151,18 @@ def process_sites(easyDict, easy_jsonData, wb):
     class_folder = 'sites'
     func_regex = sites_regex
     ws = wb['Sites']
+    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    return easyDict
+
+#======================================================
+# Function to Read the Fabric Worksheet
+#======================================================
+def process_switches(easyDict, easy_jsonData, wb):
+    # Evaluate Inventory Worksheet
+    class_init = 'switches'
+    class_folder = 'switches'
+    func_regex = switch_regex
+    ws = wb['Switch Profiles']
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
@@ -253,14 +253,14 @@ def main():
         help = 'Only evaluate this single worksheet. Worksheet values are:\
             1. access - for Access\
             2. admin: for Admin\
-            3. bridge_domains: for Bridge_Domains\
+            3. bridge_domains: for Bridge Domains\
             4. contracts: for Contracts\
             5. epgs: for EPGs\
             6. fabric: for Fabric\
-            7. inventory: for Inventory\
-            8. l3out: for L3Out\
-            9. sites: for Sites\
-            10. system_settings: for System_Settings\
+            7. l3out: for L3Out\
+            8. sites: for Sites\
+            9. switches: for Switch Profiles\
+            10. system_settings: for System Settings\
             11. tenants: for Tenants\
             12. virtual_networking: for Virtual Networking'
     )
@@ -312,7 +312,16 @@ def main():
     easyDict = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['easyDict']
 
     # Obtain the Latest Provider Releases
-    easyDict = get_latest_versions(easyDict)
+    # easyDict = get_latest_versions(easyDict)
+    ndoVersions = [
+        "3.7.1g","3.7.1d","3.5.2f","3.5.1e","3.4.1i","3.4.1a","3.3.1e","3.2.1f","3.1.1l",
+        "3.1.1i","3.1.1h","3.1.1g","3.0.3m","3.0.3l","3.0.3i","3.0.2k","3.0.2j"
+    ]
+    easyDict['latest_versions']['aci_provider_version'] = "2.1.0"
+    easyDict['latest_versions']['ndo_provider_version'] = "0.6.0"
+    easyDict['latest_versions']['ndo_versions']['enum'] = ndoVersions
+    easyDict['latest_versions']['ndo_versions']['default'] = ndoVersions[0]
+    easyDict['latest_versions']['terraform_version'] = "1.1.9"
     # print(json.dumps(easyDict, indent=4))
     # exit()
 
@@ -322,7 +331,7 @@ def main():
 
     # Either Run All Remaining Proceedures or Just Specific based on sys.argv[2:]
     if not args.worksheet == None:
-        ws_regex = '^(access|admin|bridge_domains|contracts|epgs|fabric|inventory|l3out|sites|system_settings|tenants)$'
+        ws_regex = '^(access|admin|bridge_domains|contracts|epgs|fabric|inventory|l3out|sites|switch|system_settings|tenants)$'
         if re.search(ws_regex, str(args.worksheet)):
             process_type = f'process_{args.worksheet}'
             eval(f"{process_type}(easyDict, easy_jsonData, wb)")

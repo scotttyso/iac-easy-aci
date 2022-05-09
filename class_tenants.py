@@ -41,6 +41,44 @@ class tenants(object):
         self.type = type
 
     #======================================================
+    # Function - APIC Inband Configuration
+    #======================================================
+    def apic_inb(self, **kwargs):
+        # Dicts for required and optional args
+        required_args = {
+            'site_group': '',
+            'name': '',
+            'node_id': '',
+            'pod_id': '',
+            'Inband_EPG': ''
+        }
+        optional_args = {
+            'Inband_IPv4': '',
+            'Inband_GWv4': '',
+            'Inband_IPv6': '',
+            'Inband_GWv6': '',
+        }
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+
+        # Configure the Generic Template Variables
+        templateVars['Device_Type'] = 'apic'
+        templateVars['Type'] = 'in_band'
+        templateVars['EPG'] = templateVars['Inband_EPG']
+        templateVars['IPv4'] = templateVars['Inband_IPv4']
+        templateVars['GWv4'] = templateVars['Inband_GWv4']
+        templateVars['IPv6'] = templateVars['Inband_IPv6']
+        templateVars['GWv6'] = templateVars['Inband_GWv6']
+
+        # Initialize the Class
+        lib_aci_ref = 'Access_Policies'
+        class_init = '%s(ws)' % (lib_aci_ref)
+
+        # Assign the APIC Inband Management IP's
+        eval("%s.%s(wb, ws, row_num, **templateVars)" % (class_init, 'mgmt_static'))
+
+    #======================================================
     # Function - Application Profiles
     #======================================================
     def app_add(self, **kwargs):
