@@ -10,7 +10,6 @@ from easy_functions import interface_selector_workbook, post, process_kwargs
 from easy_functions import required_args_add, required_args_remove
 from easy_functions import sensitive_var_site_group, stdout_log, validate_args
 from easy_functions import variablesFromAPI, vlan_list_full
-from class_terraform import FabLogin
 from openpyxl import load_workbook
 import ast
 import jinja2
@@ -18,11 +17,17 @@ import json
 import os
 import pkg_resources
 import re
-import time
+import requests
+import sys
 import validating
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Global path to main Template directory
 json_path = pkg_resources.resource_filename('classes', 'templates/')
+
+class LoginFailed(Exception):
+    pass
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
@@ -834,6 +839,65 @@ class admin(object):
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
 # for detailed information on the Arguments used by this Function.
 #=====================================================================================
+class apicLogin(object):
+    def __init__(self, apic, user, pword):
+        self.apic = apic
+        self.user = user
+        self.pword = pword
+
+    def login(self):
+        # Load login json payload
+        payload = '''
+        {{
+            "aaaUser": {{
+                "attributes": {{
+                    "name": "{user}",
+                    "pwd": "{pword}"
+                }}
+            }}
+        }}
+        '''.format(user=self.user, pword=self.pword)
+        payload = json.loads(payload,
+                             object_pairs_hook=OrderedDict)
+        s = requests.Session()
+        # Try the request, if exception, exit program w/ error
+        try:
+            # Verify is disabled as there are issues if it is enabled
+            r = s.post('https://{}/api/aaaLogin.json'.format(self.apic),
+                       data=json.dumps(payload), verify=False)
+            # Capture HTTP status code from the request
+            status = r.status_code
+            # Capture the APIC cookie for all other future calls
+            cookies = r.cookies
+            # Log login status/time(?) somewhere
+            if status == 400:
+                print("Error 400 - Bad Request - ABORT!")
+                print("Probably have a bad URL")
+                sys.exit()
+            if status == 401:
+                print("Error 401 - Unauthorized - ABORT!")
+                print("Probably have incorrect credentials")
+                sys.exit()
+            if status == 403:
+                print("Error 403 - Forbidden - ABORT!")
+                print("Server refuses to handle your request")
+                sys.exit()
+            if status == 404:
+                print("Error 404 - Not Found - ABORT!")
+                print("Seems like you're trying to POST to a page that doesn't"
+                      " exist.")
+                sys.exit()
+        except Exception as e:
+            print("Something went wrong logging into the APIC - ABORT!")
+            # Log exit reason somewhere
+            raise LoginFailed(e)
+        self.cookies = cookies
+        return cookies
+
+#=====================================================================================
+# Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
+# for detailed information on the Arguments used by this Function.
+#=====================================================================================
 class fabric(object):
     def __init__(self, type):
         self.type = type
@@ -1318,7 +1382,7 @@ class switches(object):
                 port_list = vlan_list_full(templateVars['port_list'])
 
                 controller = site_dict['controller']
-                fablogin = FabLogin(controller, apic_user, apic_pass)
+                fablogin = apicLogin(controller, apic_user, apic_pass)
                 cookies = fablogin.login()
 
                 for node in node_list:

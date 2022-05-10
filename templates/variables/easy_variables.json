@@ -86,9 +86,34 @@
                                     "global_aes_encryption_settings"
                                 ]
                             },
+                            "class.tenant_holder":{
+                                "enum": [
+                                    "application_epgs",
+                                    "application_profiles",
+                                    "bfd_interface_policies",
+                                    "bgp_policies",
+                                    "bgp_route_control",
+                                    "bridge_domains",
+                                    "contracts",
+                                    "dhcp_option_policies",
+                                    "dhcp_relay_policies",
+                                    "endpoint_retention_policies",
+                                    "l3outs",
+                                    "l3out_bgp_neighbors",
+                                    "l3out_floating_svi",
+                                    "l3out_hsrp",
+                                    "lsout_static_route",
+                                    "ospf_policies",
+                                    "route_map_match_rules",
+                                    "route_maps_for_route_control",
+                                    "schemas",
+                                    "sites"
+                                ]
+                            },
                             "class.tenants":{
                                 "enum": [
-                                    "tenants"
+                                    "tenants",
+                                    "vrfs"
                                 ]
                             },
                             "processes":{
@@ -98,6 +123,7 @@
                                     "fabric",
                                     "switches",
                                     "system_settings",
+                                    "tenants",
                                     "virtual_networking"
                                 ]
                             },
@@ -4611,12 +4637,36 @@
                                 "default": "enabled",
                                 "x-omitempty": true
                             },
+                            "alias":{
+                                "description": "Name alias field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 63,
+                                "pattern":"^[a-zA-Z0-9_.-]+$",
+                                "x-omitempty": true
+                            },
                             "annotation":{
                                 "description": "Annotation field.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 128,
                                 "pattern":"^[a-zA-Z0-9\\\\!#$%()*,-./:;@ _{|}~?&+]+$",
+                                "x-omitempty": true
+                            },
+                            "annotations_key":{
+                                "description": "Annotations key field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 128,
+                                "pattern":"^[^<>]+$",
+                                "x-omitempty": true
+                            },
+                            "annotations_value":{
+                                "description": "Annotations value field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 2048,
+                                "pattern":"^[^<>]+$",
                                 "x-omitempty": true
                             },
                             "audit_logs":{
@@ -4731,14 +4781,6 @@
                                 "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "name_alias":{
-                                "description": "Name alias field.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 63,
-                                "pattern":"^[a-zA-Z0-9_.-]+$",
-                                "x-omitempty": true
-                            },
                             "node_id":{
                                 "description": "Node Identifier.",
                                 "type": "integer",
@@ -4788,6 +4830,14 @@
                                 "default": "unspecified",
                                 "x-omitempty": true
                             },
+                            "schema":{
+                                "description": "Name of the Schema to Assign.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "session_logs":{
                                 "description": "Session Log Values.",
                                 "type": "list_of_values",
@@ -4801,6 +4851,14 @@
                             "site_name":{
                                 "description": "Site name.",
                                 "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "sites":{
+                                "description": "List of Site names.",
+                                "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern":"^[a-zA-Z0-9_.:-]+$",
@@ -5117,7 +5175,7 @@
                             "optional_args":{
                                 "description": "",
                                 "global_alias": "",
-                                "name_alias": "",
+                                "alias": "",
                                 "qos_class": "",
                                 "schema": "",
                                 "sites": "",
@@ -5199,7 +5257,7 @@
                                 "global_alias": "",
                                 "fhs_trust_control_policy": "",
                                 "fibre_channel_domain_association": "",
-                                "name_alias": "",
+                                "alias": "",
                                 "physical_domains": "",
                                 "PVLAN": "",
                                 "vmm_domains": "",
@@ -5300,7 +5358,7 @@
                                 "global_alias": "",
                                 "fhs_trust_control_policy": "",
                                 "fibre_channel_domain_association": "",
-                                "name_alias": "",
+                                "alias": "",
                                 "physical_domains": "",
                                 "PVLAN": "",
                                 "vmm_domains": "",
@@ -5376,7 +5434,7 @@
                             "optional_args":{
                                 "description": "",
                                 "global_alias": "",
-                                "name_alias": "",
+                                "alias": "",
                                 "schema": "",
                                 "sites": "",
                                 "template": ""
@@ -5619,7 +5677,7 @@
                             "optional_args":{
                                 "description": "",
                                 "global_alias": "",
-                                "name_alias": "",
+                                "alias": "",
                                 "schema": "",
                                 "sites": "",
                                 "template": ""
@@ -5792,13 +5850,145 @@
                     {
                         "properties":{
                             "optional_args":{
+                                "alias": "",
+                                "annotations": "",
                                 "description": "",
-                                "global_alias": "",
-                                "name_alias": ""
+                                "global_alias": ""
+                            },
+                            "required_args":{
+                                "name": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.TenantSites":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "aws_access_key_id":{
+                                "description": "AWS Access Key Idenitifier.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "aws_account_id":{
+                                "description": "AWS Account Id.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "azure_access_type":{
+                                "description": "Type of Azure Account Configuration.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "credentials",
+                                    "managed",
+                                    "shared"
+                                ],
+                                "default": "managed",
+                                "x-omitempty": true
+                            },
+                            "azure_active_directory_id":{
+                                "description": "Azure Active Directory Idenitifier.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "azure_application_id":{
+                                "description": "Azure Application Idenitifier.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "azure_shared_account_id":{
+                                "description": "Azure Shared Account Idenitifier.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "azure_subscription_id":{
+                                "description": "Azure Subscriptin Idenitifier.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "is_aws_account_trusted":{
+                                "description": "",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "aws_access_key_id": "",
+                                "aws_account_id": "",
+                                "azure_access_type": "",
+                                "azure_active_directory_id": "",
+                                "azure_application_id": "",
+                                "azure_shared_account_id": "",
+                                "azure_subscription_id": "",
+                                "is_aws_account_trusted": ""
                             },
                             "required_args":{
                                 "tenant": "",
-                                "site_group": ""
+                                "site": "",
+                                "site_group": "",
+                                "users": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.Vrfs":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args":{
+                                "alias": "",
+                                "annotations": "",
+                                "description": "",
+                                "global_alias": "",
+                                "schema": "",
+                                "sites": "",
+                                "template": ""
+                            },
+                            "preferred_group":{
+                                "description": "Enable the Preferred Group feature to allow preferred group members in the VRF to communicate with each other without requiring a contract between them.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "disabled",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "name": "",
+                                "preferred_group": "",
+                                "site_group": "",
+                                "tenant": "",
+                                "vrf_policy": ""
+                            },
+                            "vrf_policy":{
+                                "description": "Name of the VRF Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             }
                         }
                     }

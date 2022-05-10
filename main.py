@@ -56,7 +56,6 @@ sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
 tenants_regex = '^((tenant|vrf)_add|vrf_community)$'
-tenants_regex = '^((tenant)_block)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
 #======================================================
