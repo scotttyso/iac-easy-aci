@@ -23,6 +23,11 @@ import stdiomask
 import time
 import validating
 
+# Global options for debugging
+print_payload = False
+print_response_always = False
+print_response_on_fail = True
+
 #======================================================
 # Log Level - 0 = None, 1 = Class only, 2 = Line
 #======================================================
@@ -439,6 +444,55 @@ def findVars(ws, func, rows, count):
         vcount += 1
     return var_dict
 
+def get(apic, payload, cookies, uri, section=''):
+    if print_payload:
+        print(payload)
+    s = requests.Session()
+    r = ''
+    while r == '':
+        try:
+            r = s.get('https://{}/{}.json'.format(apic, uri),
+                    data=payload, cookies=cookies, verify=False)
+            status = r.status_code
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error, pausing before retrying. Error: {}"
+                .format(e))
+            time.sleep(5)
+        except Exception as e:
+            print("Method {} failed. Exception: {}".format(section[:-5], e))
+            status = 666
+            return(status)
+    if print_response_always:
+        print(r.text)
+    if status != 200 and print_response_on_fail:
+        print(r.text)
+    return r.json()
+
+def post(apic, payload, cookies, uri, section=''):
+    if print_payload:
+        print(payload)
+    s = requests.Session()
+    r = ''
+    while r == '':
+        try:
+            r = s.post('https://{}/{}.json'.format(apic, uri),
+                    data=payload, cookies=cookies, verify=False)
+            status = r.status_code
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error, pausing before retrying. Error: {}"
+                .format(e))
+            time.sleep(5)
+        except Exception as e:
+            print("Method {} failed. Exception: {}".format(section[:-5], e))
+            status = 666
+            return(status)
+    if print_response_always:
+        print(r.text)
+    if status != 200 and print_response_on_fail:
+        print(r.text)
+    return status
+
+
 #======================================================
 # Function to Merge Easy ACI Repository to Dest Folder
 #======================================================
@@ -783,6 +837,8 @@ def merge_easy_aci_repository(easy_jsonData):
                 folder_type = folder.split('/')[folder_length -1]
             if re.search('^tenant_', folder_type):
                 folder_type = 'tenant'
+            elif re.search('^switch_', folder_type):
+                folder_type = 'switch'
             
             # Get List of Files to download from jsonData
             files = jsonData['files'][folder_type]
@@ -1561,6 +1617,7 @@ def validate_args(jsonData, **kwargs):
         'faults',
         'global_alias',
         'lldp_interface_policy',
+        'login_domain',
         'management_epg',
         'management_epg_type',
         'monitoring_policy',

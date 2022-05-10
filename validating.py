@@ -354,7 +354,15 @@ def number_list(var, jsonData, **kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']
     varValue = kwargs[var]
-    for x in varValue.split(','):
+    if '-' in varValue:
+        varValue = varValue.split('-')
+        if ',' in varValue:
+            varValue = varValue.split(',')
+    elif ',' in varValue:
+        varValue = varValue.split(',')
+    else:
+        varValue = [varValue]
+    for x in varValue:
         if not (validators.between(int(x), min=int(minimum), max=int(maximum))):
             print(f'\n-----------------------------------------------------------------------------\n')
             print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, {x}. Valid Values ')

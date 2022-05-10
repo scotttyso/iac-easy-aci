@@ -5,18 +5,24 @@
 #======================================================
 from collections import OrderedDict
 from easy_functions import countKeys, findKeys, findVars
-from easy_functions import easyDict_append, easyDict_append_subtype
-from easy_functions import interface_selector_workbook, process_kwargs
+from easy_functions import easyDict_append, easyDict_append_subtype, get
+from easy_functions import interface_selector_workbook, post, process_kwargs
 from easy_functions import required_args_add, required_args_remove
 from easy_functions import sensitive_var_site_group, stdout_log, validate_args
 from easy_functions import variablesFromAPI, vlan_list_full
+from class_terraform import FabLogin
 from openpyxl import load_workbook
 import ast
+import jinja2
 import json
 import os
+import pkg_resources
 import re
 import time
 import validating
+
+# Global path to main Template directory
+json_path = pkg_resources.resource_filename('classes', 'templates/')
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
@@ -1243,7 +1249,9 @@ class fabric(object):
 class switches(object):
     def __init__(self, type):
         self.type = type
-
+        self.templateLoader = jinja2.FileSystemLoader(
+            searchpath=(json_path + 'switches/'))
+        self.templateEnv = jinja2.Environment(loader=self.templateLoader)
     #======================================================
     # Function - Interface Selectors
     #======================================================
@@ -1277,6 +1285,78 @@ class switches(object):
         templateVars['data_subtype'] = 'interfaces'
         templateVars['policy_name'] = kwargs['interface_profile']
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Interface Selectors
+    #======================================================
+    def port_cnvt(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.switches.portConvert']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        def process_site(site_dict, tempalteVars, **kwargs):
+            if site_dict['auth_type'] == 'username':
+                if not site_dict['login_domain'] == None:
+                    apic_user = f"apic#{site_dict['login_domain']}\\{site_dict['username']}"
+                else:
+                    apic_user = site_dict['username']
+                
+                # Add Dictionary to Policy
+                templateVars['jsonData'] = jsonData
+                templateVars["Variable"] = 'apicPass'
+                sensitive_var_site_group(**templateVars)
+                templateVars.pop('jsonData')
+                templateVars.pop('Variable')
+                apic_pass = os.environ.get('TF_VAR_apicPass')
+                node_list = vlan_list_full(templateVars['node_list'])
+                port_list = vlan_list_full(templateVars['port_list'])
+
+                controller = site_dict['controller']
+                fablogin = FabLogin(controller, apic_user, apic_pass)
+                cookies = fablogin.login()
+
+                for node in node_list:
+                    templateVars['node_id'] = node
+                    for port in port_list:
+                        # Locate template for method
+                        template_file = "check_ports.json"
+                        template = self.templateEnv.get_template(template_file)
+                        # Render template w/ values from dicts
+                        payload = template.render(templateVars)
+                        uri = 'ncapi/config'
+                        # port_modes = get(controller, payload, cookies, uri, template_file)
+
+                        # Locate template for method
+                        templateVars['port'] = f"1/{port}"
+                        template_file = "port_convert.json"
+                        template = self.templateEnv.get_template(template_file)
+                        # Render template w/ values from dicts
+                        payload = template.render(templateVars)
+                        uri = 'ncapi/config'
+                        post(controller, payload, cookies, uri, template_file)
+        if re.search('Grp_', templateVars['site_group']):
+            group_id = '%s' % (templateVars['site_group'])
+            site_group = ast.literal_eval(os.environ[group_id])
+            for x in range(1, 16):
+                if not site_group[f'site_{x}'] == None:
+                    site_id = 'site_id_%s' % (site_group[f'site_{x}'])
+                    site_dict = ast.literal_eval(os.environ[site_id])
+
+                    # Process the Site Port Conversions
+                    process_site(site_dict, templateVars, **kwargs)
+        else:
+            site_id = 'site_id_%s' % (templateVars['site_group'])
+            site_dict = ast.literal_eval(os.environ[site_id])
+
+            # Process the Site Port Conversions
+            process_site(site_dict, templateVars, **kwargs)
+
         return kwargs['easyDict']
 
     #======================================================

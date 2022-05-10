@@ -1,0 +1,87 @@
+<html>
+<head><!-- production -->
+<title>APIC</title>
+<meta content="text/html">
+<meta charset="utf-8">
+<script>
+var startTime = new Date();
+var lastOperation = new Date();
+
+function logTime(msg) {
+    var ts = new Date();
+
+    console.debug(ts + ":" + msg + "[Delta:" + (ts - lastOperation) + ", Total: " + (ts - startTime) + "]");
+    lastOperation = ts;
+}
+</script>
+<!-- version 5.1.1 -->
+<link rel="stylesheet" href="insieme/stromboli/resources/css/foundation-icons.css?v=3.0">
+<link rel="stylesheet" href="insieme/stromboli/resources/css/diff.css?v=2.2">
+<link rel="stylesheet" href="datatable/jquery.dataTables.css?v=1.10.21">
+<link rel="stylesheet" href="insieme/stromboli/resources/css/cui-standard.min.css?v=1.3.4">
+<link rel="stylesheet" href="insieme/stromboli/resources/css/insieme-ext-theme-custom.css?v=5.1.1">
+
+
+<script src="extjs/ext-all.js?v=4.1"></script>
+
+<script>
+Ext.syncRequire('insieme.stromboli.session.Session');
+Ext.syncRequire('insieme.stromboli.session.UserPreferences');
+</script>
+<script>
+localStorage['APIC-Mode'] = "EXPERT";
+</script>
+
+<script src="log4j/log4javascript.js?v=2012"></script>
+
+
+<script src="bootstrap/js/jquery.min.js?v=3.5.1"></script>
+<script src="jqueryqrcode0140/jquery-qrcode-0.14.0.min.js"></script>
+<script src="highstock/js/highstock.js?v=1.3.1"></script>
+<script src="d3/js/d3.js?v=2.3"></script>
+<script src="d3/js/d3.layout.js?v=2.3"></script>
+<script src="netmask/netmask.js?v=2.1"></script>
+<script src="datatable/jquery.dataTables.js?v=1.10.21"></script>
+<script src="ipv6/ipv6.js?v=2.1"></script>
+<script src="diff/diff.js?v=2.2"></script>
+<script src="biginteger/biginteger.js?v=0.9"></script>
+<script src="sprintf/sprintf.min.js?v=2.2"></script>
+<script src="jwtdecode/jwt-decode.js"></script>
+<script src="common-init.js?v=5.1.1"></script>
+<script src="app.js?v=5.1.1"></script>
+<script src="common-after.js?v=5.1.1"></script>
+</head>
+<body class="cui">
+<div id="preLoginSplash" class="i-login-panel">
+    <div class="i-login-bg">
+        <div class="i-loading-content">
+            <div class="i-login-box panel--raised-large">
+                <div class="i-login-brand">
+                    <div class="i-login-title">
+                        <div class="i-login-title-body">
+                            <h2>APIC</h2>
+                        </div>
+                    </div>
+                    <div class="i-login-version x-box-item"></div>
+                    <div class="i-login-logo x-box-item">
+                        <div class="i-login-logo-body">
+                            <span class="icon-cisco icon-medium"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="i-login-form x-box-item">
+                    <div class="i-login-form-body">
+                        <div class="subheader text-center">Loading</div>
+                        <div class="loading-spinner flex-center" aria-label="Loading, please wait...">
+                            <div class="wrapper">
+                                <div class="wheel"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

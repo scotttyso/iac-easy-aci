@@ -1,3 +1,4 @@
+import collections
 import jinja2
 import json
 import os
@@ -6,6 +7,7 @@ import pkg_resources
 import re
 import requests
 import stdiomask
+import sys
 import time
 import validating
 import urllib3
@@ -42,6 +44,61 @@ class InvalidArg(Exception):
 
 class LoginFailed(Exception):
     pass
+
+class FabLogin(object):
+    def __init__(self, apic, user, pword):
+        self.apic = apic
+        self.user = user
+        self.pword = pword
+
+    def login(self):
+        # Load login json payload
+        payload = '''
+        {{
+            "aaaUser": {{
+                "attributes": {{
+                    "name": "{user}",
+                    "pwd": "{pword}"
+                }}
+            }}
+        }}
+        '''.format(user=self.user, pword=self.pword)
+        payload = json.loads(payload,
+                             object_pairs_hook=collections.OrderedDict)
+        s = requests.Session()
+        # Try the request, if exception, exit program w/ error
+        try:
+            # Verify is disabled as there are issues if it is enabled
+            r = s.post('https://{}/api/aaaLogin.json'.format(self.apic),
+                       data=json.dumps(payload), verify=False)
+            # Capture HTTP status code from the request
+            status = r.status_code
+            # Capture the APIC cookie for all other future calls
+            cookies = r.cookies
+            # Log login status/time(?) somewhere
+            if status == 400:
+                print("Error 400 - Bad Request - ABORT!")
+                print("Probably have a bad URL")
+                sys.exit()
+            if status == 401:
+                print("Error 401 - Unauthorized - ABORT!")
+                print("Probably have incorrect credentials")
+                sys.exit()
+            if status == 403:
+                print("Error 403 - Forbidden - ABORT!")
+                print("Server refuses to handle your request")
+                sys.exit()
+            if status == 404:
+                print("Error 404 - Not Found - ABORT!")
+                print("Seems like you're trying to POST to a page that doesn't"
+                      " exist.")
+                sys.exit()
+        except Exception as e:
+            print("Something went wrong logging into the APIC - ABORT!")
+            # Log exit reason somewhere
+            raise LoginFailed(e)
+        self.cookies = cookies
+        return cookies
 
 # Terraform Cloud For Business - Policies
 # Class must be instantiated with Variables

@@ -11,7 +11,7 @@ It uses argparse to take in the following CLI arguments:
 #======================================================
 from class_tenants import tenants
 from classes import access, admin, fabric, site_policies, switches, system_settings
-from easy_functions import apply_aci_terraform, check_git_status
+from easy_functions import apply_aci_terraform, check_git_status, sensitive_var_site_group
 from easy_functions import countKeys, findKeys, findVars, get_user_pass
 from easy_functions import get_latest_versions, merge_easy_aci_repository
 from easy_functions import read_easy_jsonData, read_in
@@ -51,6 +51,7 @@ f2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'
 fabric_regex = f'^({f1}{f2})$'
 l3out_regex = '^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$'
 mgmt_tenant_regex = '^(add_bd|mgmt_epg|oob_ext_epg)$'
+port_convert_regex = '^port_cnvt$'
 sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
@@ -139,6 +140,18 @@ def process_l3out(easyDict, easy_jsonData, wb):
     class_folder = 'tenants'
     func_regex = l3out_regex
     ws = wb['L3Out']
+    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    return easyDict
+
+#======================================================
+# Function to Read the Fabric Worksheet
+#======================================================
+def process_port_convert(easyDict, easy_jsonData, wb):
+    # Evaluate Inventory Worksheet
+    class_init = 'switches'
+    class_folder = 'switches'
+    func_regex = port_convert_regex
+    ws = wb['Switch Profiles']
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
@@ -258,6 +271,7 @@ def main():
             5. epgs: for EPGs\
             6. fabric: for Fabric\
             7. l3out: for L3Out\
+            8. port_convert: for Uplink to Download Conversion\
             8. sites: for Sites\
             9. switches: for Switch Profiles\
             10. system_settings: for System Settings\
@@ -331,7 +345,9 @@ def main():
 
     # Either Run All Remaining Proceedures or Just Specific based on sys.argv[2:]
     if not args.worksheet == None:
-        ws_regex = '^(access|admin|bridge_domains|contracts|epgs|fabric|inventory|l3out|sites|switch|system_settings|tenants)$'
+        r1 = 'access|admin|bridge_domains|contracts|epgs|fabric|inventory'
+        r2 = 'l3out|port_convert|sites|switch|system_settings|tenants'
+        ws_regex = f'^({r1}|{r2})$'
         if re.search(ws_regex, str(args.worksheet)):
             process_type = f'process_{args.worksheet}'
             eval(f"{process_type}(easyDict, easy_jsonData, wb)")

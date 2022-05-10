@@ -1884,6 +1884,51 @@
                     }
                 ]
             },
+            "access.switches.portConvert":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "convert_to":{
+                                "description": "Port Conversion To Type.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "downlink",
+                                    "uplink"
+                                ],
+                                "default": "downlink",
+                                "x-omitempty": true
+                            },
+                            "node_list":{
+                                "description": "List of Switches to perform the conversion on.",
+                                "type": "list_of_integer",
+                                "format": "int64",
+                                "minimum": 101,
+                                "maximum": 4000,
+                                "default": 101,
+                                "x-omitempty": true
+                            },
+                            "port_list":{
+                                "description": "List of Ports to perform the conversion on.",
+                                "type": "list_of_integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 108,
+                                "default": 53,
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                            },
+                            "required_args": {
+                                "convert_to": "",
+                                "node_list": "",
+                                "port_list": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
             "access.switches.spinePolicyGroup":{
                 "allOf":[
                     {},
@@ -4644,6 +4689,14 @@
                                 "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
+                            "login_domain":{
+                                "description": "Login Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 10,
+                                "pattern":"^([a-zA-Z0-9][a-zA-Z0-9\\_]+)$",
+                                "x-omitempty": true
+                            },
                             "management_epg":{
                                 "description": "Management EPG.",
                                 "type": "string",
@@ -4891,7 +4944,10 @@
                                 "default": "apic",
                                 "x-omitempty": true
                             },
-                            "optional_args":{},
+                            "optional_args":{
+                                "login_domain": "",
+                                "username": ""
+                            },
                             "required_args":{
                                 "auth_type": "",
                                 "configure_terraform_cloud": "",
