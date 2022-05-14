@@ -38,17 +38,17 @@ workspace_dict = {}
 # Regular Expressions to Control wich rows in the
 # Worksheet should be processed.
 #======================================================
-a1 = 'aep_profile|cdp|(fibre|port)_(channel|security)|interface_policy|l2_interface|(phys|l3)_domain|'
+a1 = 'aep_profile|cdp|(fibre|port)_(channel|security)|interface_policy|l2_interface|(phys|l3)_domain'
 a2 = '(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|stp|vlan_pool'
-access_regex = f'^({a1}{a2})$'
+access_regex = f'^({a1}|{a2})$'
 admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
 bridge_domains_regex = '^add_bd$'
 contracts_regex = '(^(contract|filter|subject)_(add|entry|to_epg)$)'
 epgs_regex = '^((app|epg)_add)$'
 
-f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)|'
+f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)'
 f2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'
-fabric_regex = f'^({f1}{f2})$'
+fabric_regex = f'^({f1}|{f2})$'
 l3out_regex = '^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$'
 mgmt_tenant_regex = '^(add_bd|mgmt_epg|oob_ext_epg)$'
 port_convert_regex = '^port_cnvt$'
