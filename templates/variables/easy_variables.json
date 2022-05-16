@@ -116,7 +116,7 @@
                                     "vrfs"
                                 ]
                             },
-                            "processes":{
+                            "processes_temp":{
                                 "enum": [
                                     "access",
                                     "admin",
@@ -127,46 +127,51 @@
                                     "virtual_networking"
                                 ]
                             },
+                            "processes":{
+                                "enum": [
+                                    "tenants"
+                                ]
+                            },
                             "easyDict":{
                                 "access":{
-                                    "aaep_policies":[],
-                                    "cdp_interface_policies":[],
-                                    "fibre_channel_interface_policies":[],
-                                    "firmware":[],
-                                    "interface_policies":[],
-                                    "l2_interface_policies":[],
-                                    "layer3_domains":[],
-                                    "link_level_policies":[],
-                                    "leaf_policy_groups":[],
-                                    "leaf_port_group_access":[],
-                                    "leaf_port_group_breakout":[],
-                                    "leaf_port_group_bundle":[],
-                                    "lldp_interface_policies":[],
-                                    "mcp_interface_policies":[],
-                                    "physical_domains":[],
-                                    "port_channel_policies":[],
-                                    "port_security_policies":[],
-                                    "spanning_tree_interface_policies":[],
-                                    "spine_modules":[],
-                                    "spine_policy_groups":[],
-                                    "spine_port_group_access":[],
-                                    "virtual_networking":[],
-                                    "vlan_pools":[]
+                                    "aaep_policies":{},
+                                    "cdp_interface_policies":{},
+                                    "fibre_channel_interface_policies":{},
+                                    "firmware":{},
+                                    "interface_policies":{},
+                                    "l2_interface_policies":{},
+                                    "layer3_domains":{},
+                                    "link_level_policies":{},
+                                    "leaf_policy_groups":{},
+                                    "leaf_port_group_access":{},
+                                    "leaf_port_group_breakout":{},
+                                    "leaf_port_group_bundle":{},
+                                    "lldp_interface_policies":{},
+                                    "mcp_interface_policies":{},
+                                    "physical_domains":{},
+                                    "port_channel_policies":{},
+                                    "port_security_policies":{},
+                                    "spanning_tree_interface_policies":{},
+                                    "spine_modules":{},
+                                    "spine_policy_groups":{},
+                                    "spine_port_group_access":{},
+                                    "virtual_networking":{},
+                                    "vlan_pools":{}
                                 },
                                 "admin":{
-                                    "authentication":[],
-                                    "configuration_backups":[],
-                                    "firmware":[],
-                                    "security":[],
-                                    "radius":[],
-                                    "tacacs":[]
+                                    "authentication":{},
+                                    "configuration_backups":{},
+                                    "firmware":{},
+                                    "security":{},
+                                    "radius":{},
+                                    "tacacs":{}
                                 },
                                 "fabric":{
-                                    "date_and_time":[],
-                                    "dns_profiles":[],
-                                    "smart_callhome":[],
-                                    "snmp_policies":[],
-                                    "syslog":[]
+                                    "date_and_time":{},
+                                    "dns_profiles":{},
+                                    "smart_callhome":{},
+                                    "snmp_policies":{},
+                                    "syslog":{}
                                 },
                                 "inventory":{},
                                 "latest_versions":{
@@ -182,37 +187,43 @@
                                 },
                                 "sites":{},
                                 "switches":{
-                                    "switch_profiles":[],
-                                    "vpc_domains":[]
+                                    "switch_profiles":{},
+                                    "vpc_domains":{}
                                 },
                                 "system_settings":{
-                                    "apic_connectivity_preference":[],
-                                    "bgp_asn":[],
-                                    "bgp_rr":[],
-                                    "global_aes_encryption_settings":[]
+                                    "apic_connectivity_preference":{},
+                                    "bgp_asn":{},
+                                    "bgp_rr":{},
+                                    "global_aes_encryption_settings":{}
                                 },
                                 "tenants":{
-                                    "application_epgs":[],
-                                    "application_profiles":[],
-                                    "bfd_interface_policies":[],
-                                    "bgp_policies":[],
-                                    "bridge_domains":[],
-                                    "dhcp_option_policies":[],
-                                    "dhcp_relay_policies":[],
-                                    "endpoint_retention_policies":[],
-                                    "filters":[],
-                                    "hsrp_policies":[],
-                                    "l3out_floating_svi":[],
-                                    "l3out_hsrp":[],
-                                    "l3out_static_route":[],
-                                    "l3outs":[],
-                                    "ospf_policies":[],
-                                    "route_map_match_rules":[],
-                                    "route_map_set_rules":[],
-                                    "route_maps_for_route_control":[],
-                                    "schemas":[],
-                                    "tenants":[],
-                                    "vrfs":[]
+                                    "application_epgs":{},
+                                    "application_profiles":{},
+                                    "bfd_interface_policies":{},
+                                    "bgp_peer_prefix_policies":{},
+                                    "bridge_domains":{},
+                                    "bridge_domains_general":{},
+                                    "bridge_domains_l3":{},
+                                    "dhcp_option_policies":{},
+                                    "dhcp_relay_policies":{},
+                                    "eigrp_interface_policies":{},
+                                    "endpoint_retention_policies":{},
+                                    "filters":{},
+                                    "hsrp_policies":{},
+                                    "l3out_floating_svi":{},
+                                    "l3out_hsrp":{},
+                                    "l3out_static_route":{},
+                                    "l3outs":{},
+                                    "ospf_interface_policies":{},
+                                    "ospf_policies":{},
+                                    "route_map_match_rules":{},
+                                    "route_map_set_rules":{},
+                                    "route_maps_for_route_control":{},
+                                    "schemas":{},
+                                    "sites":{},
+                                    "tenants":{},
+                                    "vrf_policies":{},
+                                    "vrfs":{}
                                 }
                             },
                             "files":{
@@ -1077,8 +1088,7 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "interface_policy": "",
-                                "site_group": ""
+                                "interface_policy": ""
                             },
                             "slow_drain_policy":{
                                 "description": "Name of the Slow Drain Interface Policy.",
@@ -4653,20 +4663,15 @@
                                 "pattern":"^[a-zA-Z0-9\\\\!#$%()*,-./:;@ _{|}~?&+]+$",
                                 "x-omitempty": true
                             },
-                            "annotations_key":{
-                                "description": "Annotations key field.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 128,
-                                "pattern":"^[^<>]+$",
-                                "x-omitempty": true
-                            },
-                            "annotations_value":{
-                                "description": "Annotations value field.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 2048,
-                                "pattern":"^[^<>]+$",
+                            "annotations":{
+                                "description": "Annotations Key Value Pair.",
+                                "type": "key_value",
+                                "key_minimum": 1,
+                                "key_maximum": 128,
+                                "key_pattern":"^[^<>]+$",
+                                "value_minimum": 1,
+                                "value_maximum": 128,
+                                "value_pattern":"^[^<>]+$",
                                 "x-omitempty": true
                             },
                             "audit_logs":{
@@ -4677,6 +4682,14 @@
                                     "true"
                                 ],
                                 "default": "true",
+                                "x-omitempty": true
+                            },
+                            "bridge_domain":{
+                                "description": "Name of th Bridge Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "cdp_interface_policy":{
@@ -4725,6 +4738,14 @@
                             },
                             "global_alias":{
                                 "description": "Alias field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "l3out":{
+                                "description": "L3Out name.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -4921,6 +4942,14 @@
                             },
                             "vmm_domain":{
                                 "description": "VMM domain name field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "vrf":{
+                                "description": "VRF Name Field.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -5305,19 +5334,464 @@
                     }
                 ]
             },
+            "tenants.bd.General":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "advertise_host_routes":{
+                                "description": "Enabling Host Based Routing on the bridge domain, individual host-routes (/32 prefixes) are advertised from the border leaf switches.  Border leaf switches along with the subnet advertise the individual endpoint (EP) prefixes. The route information is advertised only if the host is connected to the local POD. If the EP is moved away from the local POD or once the EP is removed from EP database, the route advertise is then withdrawn.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "arp_flooding":{
+                                "description": "Enables ARP flooding, so that the Layer 2 broadcast domain maps IP addresses to the MAC addresses. If flooding is disabled, unicast routing will be performed on the target IP address.  If the BD extends outside of ACI, always set to true.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "endpoint_retention_policy":{
+                                "description": "Name of the Endpoint Retention Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "igmp_interface_policy":{
+                                "description": "Name of the IGMP Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "igmp_snooping_policy":{
+                                "description": "Name of the IGMP Snooping Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "ipv6_l3_unknown_multicast":{
+                                "description": "The node forwarding parameter for Layer 3 unknown Multicast destinations.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "flood",
+                                    "opt-flood"
+                                ],
+                                "default": "flood",
+                                "x-omitempty": true
+                            },
+                            "l2_unknown_unicast":{
+                                "description": "By default, unicast traffic is flooded to all Layer 2 ports. If enabled, unicast traffic flooding is blocked at a specific port, only permitting egress traffic with MAC addresses that are known to exist on the port. When the BD has L2 Unknown Unicast set to Flood, if an endpoint is deleted the system deletes it from both the local leaf switches as well as the remote leaf switches where the BD is deployed, by selecting Clear Remote MAC Entries. Without this feature, the remote leaf continues to have this endpoint learned until the timer expires.  CAUTION:  Modifying the L2 Unknown Unicast setting causes traffic to bounce (go down and up) on interfaces to devices attached to EPGs associated with this bridge domain.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "flood",
+                                    "proxy"
+                                ],
+                                "default": "proxy",
+                                "x-omitempty": true
+                            },
+                            "l3_unknown_multicast_flooding":{
+                                "description": "The node forwarding parameter for Layer 3 unknown Multicast destinations. The value can be:  * flood — Send the data to the front panel ports if a router port exists on any bridge domain or send the data to the fabric if the data is in transit.  * opt-flood — Send the data only to router ports in the fabric.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "flood",
+                                    "opt-flood"
+                                ],
+                                "default": "flood",
+                                "x-omitempty": true
+                            },
+                            "limit_ip_learn_to_subnets":{
+                                "description": "Limits IP address learning to the bridge domain subnets only. Every bridge domain can have multiple subnets associated with it. By default, all IP addresses are learned.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "mld_snoop_policy":{
+                                "description": "Name of the MLD Snooping Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "multi_destionation_flooding":{
+                                "description": "The multiple destination forwarding method for L2 Multicast, Broadcast, and Link Layer traffic types. The method can be:  bd-flood — Sends the data to all ports on the same bridge domain, drop — Drops Packet. Never sends the data to any other ports., encap-flood — Sends the data to the ports on the same VLAN within the bridge domain regardless of the EPG, with the exception that data for the following protocols is flooded to the entire bridge domain: ARP/GARP, BGP, EIGRP, IGMP, IS-IS, OSPF/OSPFv6, ND, and PIM",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "bd-flood",
+                                    "drop",
+                                    "encap-flood"
+                                ],
+                                "default": "bd-flood",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "endpoint_retention_policy": "",
+                                "igmp_interface_policy": "",
+                                "igmp_snooping_policy": "",
+                                "mld_snoop_policy": ""
+                            },
+                            "pim":{
+                                "description": "Enables the Protocol Independent Multicast (PIM) protocol.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "pimv6":{
+                                "description": "Enables the Protocol Independent Multicast (PIM) IPv6 protocol.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "policy_name":{
+                                "description": "Name for this Shared Bridge Domain - General Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "advertise_host_routes": "",
+                                "arp_flooding": "",
+                                "ipv6_l3_unknown_multicast": "",
+                                "l2_unknown_unicast": "",
+                                "l3_unknown_multicast_flooding": "",
+                                "limit_ip_learn_to_subnets": "",
+                                "multi_destionation_flooding": "",
+                                "pim": "",
+                                "pimv6": "",
+                                "policy_name": "",
+                                "type": ""
+                            },
+                            "type":{
+                                "description": "Specifies whether this bridge domain supports Fibre Channel Over Ethernet (FCoE) communication traffic or regular Ethernet communication traffic. The options are:  * fc — Supports FCoE communication over the ACI fabric.  * regular — Supports normal Ethernet communications over the ACI fabric.  * Note:  The FCoE protocol is typically used to support communication between SAN storage devices running on a Fibre Channel (FC) network and host applications running on a non-FC network.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "fc",
+                                    "regular"
+                                ],
+                                "default": "regular",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.bd.L3Configurations":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "disable_ip_data_plane_learning_for_pbr":{
+                                "description": "Change this setting to true, only if the bridge domain is to be associated with policy-based redirect (PBR) enabled endpoint groups.  Note: Use caution when changing the default setting for this field. Setting this option to no can cause suboptimal traffic forwarding for non-PBR scenarios.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "ep_move_detection_mode":{
+                                "description": "When the GARP based detection option is enabled, Cisco ACI will trigger an endpoint move based on GARP packets if the move occurs on the same interface and same EPG.  Note: This can only be used when ARP Flooding is enabled.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "first_hop_security_policy":{
+                                "description": "Assign a First Hop Security BD Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "intersite_bum_traffic_allow":{
+                                "description": "When extending the bridge domain between sites this option is to permit broadcast unknown multicast (BUM) traffic between the sites.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "intersite_l2_stretch":{
+                                "description": "Extend the Bridge Domain between ACI Fabrics.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "optimize_wan_bandwidth":{
+                                "description": "Optimize WAN Bandwidth when stretching a BD over Multi-Site",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "first_hop_security_policy": "",
+                                "nd_policy": "",
+                                "netflow_monitor_policies": "",
+                                "rogue_coop_exception_list": "",
+                                "route_profile": ""
+                            },
+                            "nd_policy":{
+                                "description": "Assign a Neighbor discovery (ND) Interface policy, that supports IPv6 services for the bridge domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "netflow_monitor_policies":{
+                                "description": "A NetFlow Monitor Policies identifies packet flows for ingress IP packets and provides statistics based on these packet flows.  This should be configured as a list of strings with each string having a colon to seperate the policy name and the filter type.  There are three IP Filter types: * ce * ipv4 * ipv6. So to do a list of these you would do: 'default:ce,default:ipv4,my_policy:ipv6'",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "policy_name":{
+                                "description": "Name for this Shared Bridge Domain - General Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "disable_ip_data_plane_learning_for_pbr": "",
+                                "ep_move_detection_mode": "",
+                                "intersite_bum_traffic_allow": "",
+                                "intersite_l2_stretch": "",
+                                "optimize_wan_bandwidth": "",
+                                "policy_name": "",
+                                "unicast_routing": ""
+                            },
+                            "rogue_coop_exception_list":{
+                                "description": "A list of MAC addresses for which you want to have a higher tolerance for endpoint movement with rogue endpoint control before the endpoints get marked as rogue. Endpoints in the rogue/COOP exception list get marked as rogue only if they move 3000 or more times within 10 minutes. After an endpoint is marked as rogue, the endpoint is kept static so that learning is prevented and the traffic to and from the endpoint is dropped. The rogue endpoint is deleted after 30 seconds.",
+                                "type": "list_of_macs",
+                                "x-omitempty": true
+                            },
+                            "route_profile":{
+                                "description": "Name of the Route Maps for Route Control Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "unicast_routing":{
+                                "description": "enable or disable unicast routing on the Bridge Domain. We recommend disabling, false,  if you have not configured a subnet on the BD.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.bd.Subnets":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "advertise_externally":{
+                                "description": "The subnet can be exported to a routed connection.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "gateway_ip":{
+                                "description": "IPv4 or IPv6 Subnet to Assign to the Bridge Domain.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "ip_data_plane_learning":{
+                                "description": "Choose whether to enable or disable IP address learning for this subnet.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "no_default_svi_gateway":{
+                                "description": "When using Cisco ACI Multi-Site with this APIC fabric domain (site), indicates that the VRF, EPG, or BD using this subnet are mirrored from another site, which has a relationship to this site through a contract. Do not modify or delete the mirrored objects.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "neighbor_discovery":{
+                                "description": "Enables Neighbor Discovery on the subnet.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "nd_ra_prefix_policy":{
+                                "description": "Assign a Neighbor discovery (ND) Prefix policy, that supports IPv6 services for the Subnet.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "make_this_ip_address_primary":{
+                                "description": "Indicates if the subnet is the primary IP address for the bridge domain (preferred over the available alternatives). ",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "description": "",
+                                "nd_ra_prefix_policy": "",
+                                "policy_tags": "",
+                                "route_profile": ""
+                            },
+                            "policy_tags":{
+                                "description": "Policy Tags Key Value Pair.",
+                                "type": "key_value",
+                                "key_minimum": 1,
+                                "key_maximum": 128,
+                                "key_pattern":"^[^<>]+$",
+                                "value_minimum": 1,
+                                "value_maximum": 128,
+                                "value_pattern":"^[^<>]+$",
+                                "x-omitempty": true
+                            },
+                            "querier_ip":{
+                                "description": "Enables IGMP Snooping on the subnet.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "advertise_externally": "",
+                                "bridge_domain": "",
+                                "gateway_ip": "",
+                                "ip_data_plane_learning": "",
+                                "make_this_ip_address_primary": "",
+                                "neighbor_discovery": "",
+                                "no_default_svi_gateway": "",
+                                "querier_ip": "",
+                                "shared_between_vrfs": "",
+                                "site_group": "",
+                                "tenant": "",
+                                "treat_as_virtual_ip_address": ""
+                            },
+                            "route_profile":{
+                                "description": "Name of the Route Maps for Route Control Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "shared_between_vrfs":{
+                                "description": "The subnet can be shared with and exported to multiple contexts (VRFs) in the same tenant or across tenants as part of a shared service. An example of a shared service is a routed connection to an EPG present in another context (VRF) in a different tenant. This enables traffic to pass in both directions across contexts (VRFs). An EPG that provides a shared service must have its subnet configured under that EPG (not under a bridge domain), and its scope must be set to advertised externally, and shared between VRFs.  Note: Shared subnets must be unique across the contexts (VRF) involved in the communication. When a subnet under an EPG provides a Layer 3 external network shared service, such a subnet must be globally unique within the entire ACI fabric.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "treat_as_virtual_ip_address":{
+                                "description": "An IP address that doesn't correspond to an actual physical network interface, that is shared by multiple devices.  This is typically used for the Common Pervasive Gateway use case. For more information, see Common Pervasive Gateway in Cisco APIC Layer 3 Configuration Guide.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "tenants.bridgeDomains":{
                 "allOf":[
                     {},
                     {
                         "properties":{
-                            "epg_admin_state":{
-                                "description": "EPG Admin State.",
+                            "custom_mac_address":{
+                                "description": "The MAC address of the bridge domain (BD) or switched virtual interface (SVI). By default, a BD takes the fabric wide default MAC address of 00:22:BD:F8:19:FF. Configure this property to override the default address.",
+                                "type": "mac_address",
+                                "x-omitempty": true
+                            },
+                            "endpoint_clear":{
+                                "description": "Set this to Clear the Endpoint Table on the Bridge Domain.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "admin_up",
-                                    "admin_shut"
+                                    "false",
+                                    "true"
                                 ],
-                                "default": "admin_up",
+                                "default": "false",
                                 "x-omitempty": true
                             },
                             "flood_in_encapsulation":{
@@ -5352,18 +5826,49 @@
                                 "default": "AtleastOne",
                                 "x-omitempty": true
                             },
+                            "general_policy":{
+                                "description": "Name of the General Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "l3out":{
+                                "description": "Name of the L3Out.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "l3_policy":{
+                                "description": "Name of the L3 Conifgurations Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_local_ipv6_address":{
+                                "description": "Link Local IPv6 Address.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
                             "optional_args":{
-                                "description": "",
-                                "first_hop_security_policy": "",
-                                "global_alias": "",
-                                "fhs_trust_control_policy": "",
-                                "fibre_channel_domain_association": "",
                                 "alias": "",
-                                "physical_domains": "",
-                                "PVLAN": "",
-                                "vmm_domains": "",
-                                "VLAN": "",
-                                "vzGraphCont": ""
+                                "annotations": "",
+                                "custom_mac_address": "",
+                                "description": "",
+                                "global_alias": "",
+                                "l3_policy": "",
+                                "l3out": "",
+                                "link_local_ipv6_address": "",
+                                "schema": "",
+                                "sites": "",
+                                "template": "",
+                                "vrf": "",
+                                "vrf_tenant": ""
                             },
                             "preferred_group_member":{
                                 "description": "Preferred Group Member.",
@@ -5376,50 +5881,18 @@
                                 "x-omitempty": true
                             },
                             "required_args":{
-                                "arp_flooding": "",
-                                "bd_policy": "",
-                                "disable_ip_data_plane_learning_for_pbr": "",
                                 "endpoint_clear": "",
-                                "endpoint_retention_policy": "",
-                                "ep_move_detection_mode": "",
-                                "igmp_interface_policy": "",
-                                "igmp_snooping_policy": "",
-                                "intersite_bum_traffic_allow": "",
-                                "intersite_l2_stretch": "",
-                                "ipv6_l3_unknown_multicast": "",
-                                "l2_unknown_unicast": "",
-                                "l3_unknown_multicast_flooding": "",
-                                "l3out": "",
-                                "l3out_for_route_profile": "",
-                                "limit_ip_learn_to_subnets": "",
-                                "link_local_ipv6": "",
-                                "mac_address": "",
-                                "mld_snoop_policy": "",
-                                "multi_destionation_flooding": "",
+                                "general_policy": "",
                                 "name": "",
-                                "ndIfPol": "",
-                                "netflow_monitor_policies": "",
-                                "optimize_wan_bandwidth": "",
-                                "pim": "",
-                                "pimv6": "",
-                                "policy_name": "",
-                                "schema": "",
                                 "site_group": "",
-                                "sites": "",
-                                "template": "",
-                                "tenant": "",
-                                "type": "",
-                                "unicast_routing": "",
-                                "vrf": ""
+                                "tenant": ""
                             },
-                            "useg_epg":{
-                                "description": "Microseg EPG.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                            "vrf_tenant":{
+                                "description": "Name of the VRF Tenant.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             }
                         }
@@ -5844,26 +6317,196 @@
                     }
                 ]
             },
-            "tenants.Tenants":{
+            "tenants.policies.bgpPrefix":{
                 "allOf":[
                     {},
                     {
                         "properties":{
+                            "action":{
+                                "description": "The action to be performed when the maximum prefix limit is reached.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "log", 
+                                    "restart", 
+                                    "shut"
+                                ],
+                                "default": "log",
+                                "x-omitempty": true
+                            },
+                            "maximum_number_of_prefixes":{
+                                "description": "Maximum number of prefixes allowed from the peer.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 300000,
+                                "default": 20000,
+                                "x-omitempty": true
+                            },
                             "optional_args":{
-                                "alias": "",
-                                "annotations": "",
-                                "description": "",
-                                "global_alias": ""
+                                "description": ""
                             },
                             "required_args":{
-                                "name": "",
-                                "site_group": ""
+                                "action": "",
+                                "maximum_number_of_prefixes": "",
+                                "restart_time": "",
+                                "site_group": "",
+                                "tenant": "",
+                                "threshold": ""
+                            },
+                            "restart_time":{
+                                "description": "The period of time in minutes before restarting the peer when the prefix limit is reached.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 65535,
+                                "x-omitempty": true
+                            },
+                            "threshold":{
+                                "description": "The threshold percentage of the maximum number of prefixes before a warning is issued. For example, if the maximum number of prefixes is 10 and the threshold is 70%, a warning is issued when the number of prefixes exceeds 7 (70%). The value is a percentage, from 1 to 100%.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": 75,
+                                "x-omitempty": true
                             }
                         }
                     }
                 ]
             },
-            "tenants.TenantSites":{
+            "tenants.policies.ospfInterface":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "advertise_subnet":{
+                                "description": "Flag to Advertise the Interface Subnet into OSPF.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "bfd":{
+                                "description": "Flag to enable BFD on the Interface for OSPF.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "cost_of_interface":{
+                                "description": "The OSPF cost for the interface. The cost (also called metric) of an interface in OSPF is an indication of the overhead required to send packets across a certain interface. The cost of an interface is inversely proportional to the bandwidth of that interface. A higher bandwidth indicates a lower cost. There is more overhead (higher cost) and time delays involved in crossing a 56k serial line than crossing a 10M ethernet line. The formula used to calculate the cost is: cost= 10000 0000/bandwidth in bps For example, it will cost 10 EXP8/10 EXP7 = 10 to cross a 10M Ethernet line and will cost 10 EXP8/1544000 = 64 to cross a T1 line. By default, the cost of an interface is calculated based on the bandwidth; you can force the cost of an interface with the ip ospf cost value interface sub-configuration mode command. Allowed value range is 0-65535.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 65535,
+                                "default": 0,
+                                "x-omitempty": true
+                            },
+                            "dead_interval":{
+                                "description": "The interval between hello packets from a neighbor before the router declares the neighbor as down. This value must be the same for all networking devices on a specific network. Specifying a smaller dead interval (seconds) will give faster detection of a neighbor being down and improve convergence, but might cause more routing instability.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 40,
+                                "x-omitempty": true
+                            },
+                            "hello_interval":{
+                                "description": "The interval between hello packets that OSPF sends on the interface. Note that the smaller the hello interval, the faster topological changes will be detected, but more routing traffic will ensue. This value must be the same for all routers and access servers on a specific network.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 10,
+                                "x-omitempty": true
+                            },
+                            "mtu_ignore":{
+                                "description": "Flag to ignore the MTU for the Neighbor Establishment.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "network_type":{
+                                "description": "The OSPF interface policy network type. OSPF supports point-to-point and broadcast.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "bcast", 
+                                    "p2p"
+                                ],
+                                "default": "bcast",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "description": ""
+                            },
+                            "passive_interface":{
+                                "description": "Add the Interface to OSPF but not build neighbor relationships on the Interface.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "priority":{
+                                "description": "The OSPF interface priority used to determine the designated router (DR) on a specific network. The router with the highest OSPF priority on a segment will become the DR for that segment. The same process is repeated for the backup designated router (BDR). In the case of a tie, the router with the highest RID will win.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 255,
+                                "default": 1,
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "advertise_subnet": "",
+                                "bfd": "",
+                                "cost_of_interface": "",
+                                "dead_interval": "",
+                                "hello_interval": "",
+                                "mtu_ignore": "",
+                                "network_type": "",
+                                "passive_interface": "",
+                                "priority": "",
+                                "retransmit_interval": "",
+                                "site_group": "",
+                                "tenant": "",
+                                "transmit_delay": ""
+                            },
+                            "retransmit_interval":{
+                                "description": "The interval between LSA retransmissions. The retransmit interval occurs while the router is waiting for an acknowledgement from the neighbor router that it received the LSA. If no acknowlegment is received at the end of the interval, then the LSA is resent",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 5,
+                                "x-omitempty": true
+                            },
+                            "transmit_delay":{
+                                "description": "The delay time needed to send an LSA update packet. OSPF increments the LSA age time by the transmit delay amount before transmitting the LSA update. You should take into account the transmission and propagation delays for the interface when you set this value.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 450,
+                                "default": 1,
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.Sites":{
                 "allOf":[
                     {},
                     {
@@ -5946,6 +6589,215 @@
                                 "site": "",
                                 "site_group": "",
                                 "users": ""
+                            },
+                            "site":{
+                                "description": "Name of the Site.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "users":{
+                                "description": "Names of a Layer3 Domains.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.Tenants":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "optional_args":{
+                                "alias": "",
+                                "annotations": "",
+                                "description": "",
+                                "global_alias": ""
+                            },
+                            "required_args":{
+                                "name": "",
+                                "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.vrfCommunity":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "community_variable":{
+                                "description": "Communtiy Variable Check.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "description": ""
+                            },
+                            "required_args":{
+                                "community_variable": "",
+                                "site_group": "",
+                                "tenant": "",
+                                "vrf": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.vrfPolicy":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "bd_enforcement_status":{
+                                "description": "Only allow endpoints to ping their bridge domain gateways.  Ping from hosts on different bridge domains cannot ping other gateways.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "bgp_timers":{
+                                "description": "Name of the BGP Timer Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "bgp_context_per_address_family_timers":{
+                                "description": "Group of BGP per Address Family Timers Policies.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "eigrp_context_per_address_family_timers":{
+                                "description": "Group of the EIGRP per Address Family Timers Policies.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "endpoint_retention_policy":{
+                                "description": "Name of the Endpoint Retention Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "ip_data_plane_learning":{
+                                "description": "Defines if IP addresses are learned through dataplane packets for the VRF.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "known_multicast_allow":{
+                                "description": "",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "monitoring_policy":{
+                                "description": "Name of the Monitoring Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "bgp_timers": "",
+                                "bgp_context_per_address_family_timers": "",
+                                "eigrp_context_per_address_family_timers": "",
+                                "endpoint_retention_policy": "",
+                                "monitoring_policy": "",
+                                "ospf_context_per_address_family": "",
+                                "ospf_timers": "",
+                                "transit_route_tag_policy": ""
+                            },
+                            "ospf_context_per_address_family":{
+                                "description": "Group of the OSPF per Address Family Timers Policies.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "ospf_timers":{
+                                "description": "Name of the OSPF Timer Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "policy_control_enforcement_direction":{
+                                "description": "Defines the policy enforcement direction coming to or from a Layer 3 Outside connection (L3Out)",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "egress",
+                                    "ingress"
+                                ],
+                                "default": "ingress",
+                                "x-omitempty": true
+                            },
+                            "policy_control_enforcement_preference":{
+                                "description": "The preferred security policy control. ",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "enforced",
+                                    "unenforced"
+                                ],
+                                "default": "enforced",
+                                "x-omitempty": true
+                            },
+                            "policy_name":{
+                                "description": "Name of the VRF Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args":{
+                                "bd_enforcement_status": "",
+                                "ip_data_plane_learning": "",
+                                "known_multicast_allow": "",
+                                "policy_control_enforcement_direction": "",
+                                "policy_control_enforcement_preference": "",
+                                "policy_name": ""
+                            },
+                            "transit_route_tag_policy":{
+                                "description": "Name of the Transit Route Tag Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             }
                         }
                     }
@@ -5995,6 +6847,5 @@
                 ]
             }
         }
-    },
-    "version":"0.9.5"
+    }
 }

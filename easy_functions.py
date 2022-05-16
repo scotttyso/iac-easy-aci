@@ -350,15 +350,22 @@ def easyDict_append(templateVars, **kwargs):
     class_type = templateVars['class_type']
     data_type = templateVars['data_type']
     templateVars.pop('data_type')
-    if not any(kwargs['site_group'] in d for d in kwargs['easyDict'][class_type][data_type]):
-        kwargs['easyDict'][class_type][data_type].append({kwargs['site_group']:[]})
+    if not kwargs['easyDict'][class_type][data_type].get(kwargs['site_group']):
+        kwargs['easyDict'][class_type][data_type].update({kwargs['site_group']:[]})
         
-    count = 0
-    for i in kwargs['easyDict'][class_type][data_type]:
-        for k, v in i.items():
-            if kwargs['site_group'] == k:
-                i[kwargs['site_group']].append(templateVars)
-        count += 1
+    kwargs['easyDict'][class_type][data_type][kwargs['site_group']].append(templateVars)
+    return kwargs['easyDict']
+
+#======================================================
+# Function to Append the easyDict Dictionary
+#======================================================
+def easyDict_append_policy(templateVars, **kwargs):
+    templateVars = OrderedDict(sorted(templateVars.items()))
+    class_type = templateVars['class_type']
+    data_type = templateVars['data_type']
+    templateVars.pop('class_type')
+    templateVars.pop('data_type')
+    kwargs['easyDict'][class_type][data_type].update(templateVars)
     return kwargs['easyDict']
 
 #======================================================
@@ -366,24 +373,25 @@ def easyDict_append(templateVars, **kwargs):
 #======================================================
 def easyDict_append_subtype(templateVars, **kwargs):
     templateVars = OrderedDict(sorted(templateVars.items()))
-    class_type = templateVars['class_type']
-    data_type = templateVars['data_type']
+    class_type   = templateVars['class_type']
+    data_type    = templateVars['data_type']
     data_subtype = templateVars['data_subtype']
-    policy_name = templateVars['policy_name']
+    policy_name  = templateVars['policy_name']
     templateVars.pop('class_type')
     templateVars.pop('data_type')
     templateVars.pop('data_subtype')
     templateVars.pop('policy_name')
-    count = 0
     templateVars.pop('site_group')
-    for item in kwargs['easyDict'][class_type][data_type]:
-        for k, v in item.items():
-            if k == kwargs['site_group']:
-                for i in v:
-                    if i['name'] == policy_name:
-                        i[data_subtype].append(templateVars)
-                        count += 1
-    if count == 0 and 'Grp_' in kwargs['site_group']:
+    if kwargs['easyDict'][class_type][data_type].get(kwargs['site_group']):
+        for i in kwargs['easyDict'][class_type][data_type][kwargs['site_group']]:
+            if class_type == 'tenants':
+                if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
+                    templateVars.pop('tenant')
+                    i[data_subtype].append(templateVars)
+            else:
+                if i['name'] == policy_name:
+                    i[data_subtype].append(templateVars)
+    elif 'Grp_' in kwargs['site_group']:
         group_id = '%s' % (kwargs['site_group'])
         site_group = ast.literal_eval(os.environ[group_id])
         sites = []
@@ -391,15 +399,15 @@ def easyDict_append_subtype(templateVars, **kwargs):
             sitex = 'site_%s' % (x)
             if not site_group[sitex] == None:
                 sites.append(x)
-        count = 0
         for x in sites:
-            for item in kwargs['easyDict'][class_type][data_type]:
-                for key, value in item.items():
-                    if int(key) == int(x):
-                        for i in value:
-                            if i['name'] == policy_name:
-                                i[data_subtype].append(templateVars)
-                count += 1
+            for i in kwargs['easyDict'][class_type][data_type][str(x)]:
+                if class_type == 'tenants':
+                    if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
+                        templateVars.pop['tenant']
+                        i[data_subtype].append(templateVars)
+                else:
+                    if i['name'] == policy_name:
+                        i[data_subtype].append(templateVars)
 
     # Return Dictionary
     return kwargs['easyDict']
@@ -444,30 +452,9 @@ def findVars(ws, func, rows, count):
         vcount += 1
     return var_dict
 
-def get(apic, payload, cookies, uri, section=''):
-    if print_payload:
-        print(payload)
-    s = requests.Session()
-    r = ''
-    while r == '':
-        try:
-            r = s.get('https://{}/{}.json'.format(apic, uri),
-                    data=payload, cookies=cookies, verify=False)
-            status = r.status_code
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: {}"
-                .format(e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method {} failed. Exception: {}".format(section[:-5], e))
-            status = 666
-            return(status)
-    if print_response_always:
-        print(r.text)
-    if status != 200 and print_response_on_fail:
-        print(r.text)
-    return r.json()
-
+#======================================================
+# Function to POST to the APIC Config API
+#======================================================
 def post(apic, payload, cookies, uri, section=''):
     if print_payload:
         print(payload)
@@ -614,20 +601,19 @@ def interface_selector_workbook(templateVars, **kwargs):
     switch_pgs = {}
     for pgroup in pg_list:
         switch_pgs[pgroup] = []
-        for item in kwargs['easyDict']['access'][pgroup]:
-            for key, value in item.items():
-                if re.search('Grp_', key):
-                    site_group = ast.literal_eval(os.environ[key])
-                    for x in range(1, 16):
-                        sitex = 'site_%s' % (x)
-                        if not site_group[sitex] == None:
-                            if int(templateVars['site_group']) == int(x):
-                                for i in value:
-                                    switch_pgs[pgroup].append(i['name'])
-                else:
-                    if int(key) == int(templateVars['site_group']):
-                        for i in value:
-                            switch_pgs[pgroup].append(i['name'])
+        for k, v in kwargs['easyDict']['access'][pgroup].items():
+            if re.search('Grp_', k):
+                site_group = ast.literal_eval(os.environ[k])
+                for x in range(1, 16):
+                    sitex = 'site_%s' % (x)
+                    if not site_group[sitex] == None:
+                        if int(templateVars['site_group']) == int(x):
+                            for i in v:
+                                switch_pgs[pgroup].append(i['name'])
+            else:
+                if int(k) == int(templateVars['site_group']):
+                    for i in v:
+                        switch_pgs[pgroup].append(i['name'])
 
     # Sort the Policy Group List and Convert to a string
     for pgroup in pg_list:
@@ -1188,136 +1174,133 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
         for func in funcList:
             sites = []
             site_groups = {}
-            for item in easyDict[class_type][func]:
-                for k, v in item.items():
-                    if re.search('[0-9]+', k):
-                        sites.append(k)
-                for k, v in item.items():
-                    if re.search('Grp_', k):
-                        site_groups.update({k:[]})
-                        site_group = ast.literal_eval(os.environ[k])
-                        gsites = []
-                        for kk, vv in site_group.items():
-                            if not vv == None and re.search('site_[0-9]+', kk):
-                                gsites.append(vv)
-                        for site in sites:
-                            for gsite in gsites:
-                                if int(site) == int(gsite):
-                                    site_groups[k].append(site)
-            for item in easyDict[class_type][func]:
-                loop_count = 1
-                switch_count = 1
-                for k, v in item.items():
-                    dummy_count = 1
-                    countlength = len(v)
-                    for i in v:
-                        # print(i)
-                        templateVars = i
-                        # print(json.dumps(templateVars, indent=4))
-                        # exit()
-                        kwargs = {}
-                        kwargs['row_num'] = f'{func}_section'
-                        kwargs['site_group'] = k
-                        kwargs['site_group'] = k
-                        kwargs['ws'] = easyDict['wb']['System Settings']
+            for k, v in easyDict[class_type][func].items():
+                if re.search('[0-9]+', k):
+                    sites.append(k)
+            for k, v in easyDict[class_type][func].items():
+                if re.search('Grp_', k):
+                    site_groups.update({k:[]})
+                    site_group = ast.literal_eval(os.environ[k])
+                    gsites = []
+                    for kk, vv in site_group.items():
+                        if not vv == None and re.search('site_[0-9]+', kk):
+                            gsites.append(vv)
+                    for site in sites:
+                        for gsite in gsites:
+                            if int(site) == int(gsite):
+                                site_groups[k].append(site)
+            loop_count = 1
+            switch_count = 1
+            for k, v in easyDict[class_type][func].items():
+                dummy_count = 1
+                countlength = len(v)
+                for i in v:
+                    # print(i)
+                    templateVars = i
+                    # print(json.dumps(templateVars, indent=4))
+                    # exit()
+                    kwargs = {}
+                    kwargs['row_num'] = f'{func}_section'
+                    kwargs['site_group'] = k
+                    kwargs['site_group'] = k
+                    kwargs['ws'] = easyDict['wb']['System Settings']
+                    
+                    # Add Variables for Template Functions
+                    templateVars['template_type'] = func
                         
-                        # Add Variables for Template Functions
-                        templateVars['template_type'] = func
-                            
-                        if re.search('(apic|bgp_asn)', func):
-                            kwargs["template_file"] = 'template_open2.jinja2'
+                    if re.search('(apic|bgp_asn)', func):
+                        kwargs["template_file"] = 'template_open2.jinja2'
+                    else:
+                        kwargs["template_file"] = 'template_open.jinja2'
+                    if 'bgp' in func:
+                        templateVars['policy_type'] = func.replace('_', ' ').upper()
+                        kwargs['tfvars_file'] = 'bgp'
+                    else:
+                        if re.search('aaep_policies', func):
+                            kwargs['tfvars_file'] = 'global_policies'
+                        elif re.search('(layer3|physical)_domains', func):
+                            kwargs['tfvars_file'] = 'domains'
+                        elif 'access' in class_type and re.search('policies', func):
+                            kwargs['tfvars_file'] = 'interface_policies'
+                        elif re.search('leaf_port_group', func):
+                            kwargs['tfvars_file'] = 'leaf_interface_policy_groups'
+                        elif re.search('spine_port_group', func):
+                            kwargs['tfvars_file'] = 'spine_interface_policy_groups'
+                        elif 'access' in class_type and re.search('pools', func):
+                            kwargs['tfvars_file'] = 'pools'
                         else:
-                            kwargs["template_file"] = 'template_open.jinja2'
-                        if 'bgp' in func:
-                            templateVars['policy_type'] = func.replace('_', ' ').upper()
-                            kwargs['tfvars_file'] = 'bgp'
-                        else:
-                            if re.search('aaep_policies', func):
-                                kwargs['tfvars_file'] = 'global_policies'
-                            elif re.search('(layer3|physical)_domains', func):
-                                kwargs['tfvars_file'] = 'domains'
-                            elif 'access' in class_type and re.search('policies', func):
-                                kwargs['tfvars_file'] = 'interface_policies'
-                            elif re.search('leaf_port_group', func):
-                                kwargs['tfvars_file'] = 'leaf_interface_policy_groups'
-                            elif re.search('spine_port_group', func):
-                                kwargs['tfvars_file'] = 'spine_interface_policy_groups'
-                            elif 'access' in class_type and re.search('pools', func):
-                                kwargs['tfvars_file'] = 'pools'
+                            kwargs['tfvars_file'] = func
+                        x = func.split('_')
+                        policyType = ''
+                        xcount = 0
+                        for i in x:
+                            if not i == 'and' and xcount == 0:
+                                policyType = policyType + i.capitalize()
+                            elif 'and' in i:
+                                policyType = policyType + ' ' + i
                             else:
-                                kwargs['tfvars_file'] = func
-                            x = func.split('_')
-                            policyType = ''
-                            xcount = 0
-                            for i in x:
-                                if not i == 'and' and xcount == 0:
-                                    policyType = policyType + i.capitalize()
-                                elif 'and' in i:
-                                    policyType = policyType + ' ' + i
-                                else:
-                                    policyType = policyType + ' ' + i.capitalize()
-                                xcount += 1
-                            policyType = policyType.replace('Aaep', 'AAEP')
-                            policyType = policyType.replace('Aes', 'AES')
-                            policyType = policyType.replace('Apic', 'APIC')
-                            policyType = policyType.replace('Cdp', 'CDP')
-                            policyType = policyType.replace('Lldp', 'LLDP')
-                            policyType = policyType.replace('Radius', 'RADIUS')
-                            policyType = policyType.replace('Snmp', 'SNMP')
-                            policyType = policyType.replace('Tacacs', 'TACACS+')
-                            policyType = policyType.replace('Vpc', 'VPC')
-                            templateVars['policy_type'] = policyType
-                        
-                        # Write the Header to the Template File
-                        if re.search('aaep|cdp|layer3|group_access|snmp|virtual|vlan_p|vpc', func) and loop_count == 1:
-                            kwargs["initial_write"] = True
-                        elif re.search('bgp_rr|policies|port_group|domains|virtual|vlan_p', func):
-                            kwargs["initial_write"] = False
-                        elif re.search('switch_profile', func):
-                            if templateVars['vpc_name'] == None:
-                                kwargs["initial_write"] = True
-                                write_to_site(templateVars, **kwargs)
-                                switch_count = 1
-                            elif not templateVars['vpc_name'] == None and switch_count == 1:
-                                switch_count = 2
-                                kwargs["initial_write"] = True
-                                write_to_site(templateVars, **kwargs)
-                            elif not templateVars['vpc_name'] == None and switch_count == 2:
-                                switch_count = 1
-                                kwargs["initial_write"] = False
-                        else:
-                            kwargs["initial_write"] = True
-                        if re.search('Grp_', k):
-                            if not len(site_groups[k]) > 0 and loop_count == 1:
-                                write_to_site(templateVars, **kwargs)
-                        elif loop_count == 1:
-                            write_to_site(templateVars, **kwargs)
-
-                        # Write the template to the Template File
+                                policyType = policyType + ' ' + i.capitalize()
+                            xcount += 1
+                        policyType = policyType.replace('Aaep', 'AAEP')
+                        policyType = policyType.replace('Aes', 'AES')
+                        policyType = policyType.replace('Apic', 'APIC')
+                        policyType = policyType.replace('Cdp', 'CDP')
+                        policyType = policyType.replace('Lldp', 'LLDP')
+                        policyType = policyType.replace('Radius', 'RADIUS')
+                        policyType = policyType.replace('Snmp', 'SNMP')
+                        policyType = policyType.replace('Tacacs', 'TACACS+')
+                        policyType = policyType.replace('Vpc', 'VPC')
+                        templateVars['policy_type'] = policyType
+                    
+                    # Write the Header to the Template File
+                    if re.search('aaep|cdp|layer3|group_access|snmp|virtual|vlan_p|vpc', func) and loop_count == 1:
+                        kwargs["initial_write"] = True
+                    elif re.search('bgp_rr|policies|port_group|domains|virtual|vlan_p', func):
                         kwargs["initial_write"] = False
-                        kwargs["template_file"] = f'{func}.jinja2'
+                    elif re.search('switch_profile', func):
+                        if templateVars['vpc_name'] == None:
+                            kwargs["initial_write"] = True
+                            write_to_site(templateVars, **kwargs)
+                            switch_count = 1
+                        elif not templateVars['vpc_name'] == None and switch_count == 1:
+                            switch_count = 2
+                            kwargs["initial_write"] = True
+                            write_to_site(templateVars, **kwargs)
+                        elif not templateVars['vpc_name'] == None and switch_count == 2:
+                            switch_count = 1
+                            kwargs["initial_write"] = False
+                    else:
+                        kwargs["initial_write"] = True
+                    if re.search('Grp_', k):
+                        if not len(site_groups[k]) > 0 and loop_count == 1:
+                            write_to_site(templateVars, **kwargs)
+                    elif loop_count == 1:
                         write_to_site(templateVars, **kwargs)
 
-                        kwargs["initial_write"] = False
-                        kwargs["template_file"] = 'template_close.jinja2'
+                    # Write the template to the Template File
+                    kwargs["initial_write"] = False
+                    kwargs["template_file"] = f'{func}.jinja2'
+                    write_to_site(templateVars, **kwargs)
 
-                        
-                        if re.search('switch_profile', func) and switch_count == 1:
+                    kwargs["initial_write"] = False
+                    kwargs["template_file"] = 'template_close.jinja2'
+                    
+                    if re.search('switch_profile', func) and switch_count == 1:
+                        write_to_site(templateVars, **kwargs)
+                    elif countlength > 1 and countlength != loop_count:
+                        dummy_count += 1
+                    elif re.search('apic|bgp_asn', func):
+                        dummy_count += 1
+                    elif re.search('[0-9]+', k):
+                        scount = 0
+                        for kk, vv in site_groups.items():
+                            if k in vv:
+                                scount += 1
+                        if scount == 0:
                             write_to_site(templateVars, **kwargs)
-                        elif countlength > 1 and countlength != loop_count:
-                            dummy_count += 1
-                        elif re.search('apic|bgp_asn', func):
-                            dummy_count += 1
-                        elif re.search('[0-9]+', k):
-                            scount = 0
-                            for kk, vv in site_groups.items():
-                                if k in vv:
-                                    scount += 1
-                            if scount == 0:
-                                write_to_site(templateVars, **kwargs)
-                        else:
-                            write_to_site(templateVars, **kwargs)
-                        loop_count += 1
+                    else:
+                        write_to_site(templateVars, **kwargs)
+                    loop_count += 1
 
 #======================================================
 # Function to Read Excel Workbook Data
@@ -1460,17 +1443,17 @@ def sensitive_var_value(**kwargs):
                 elif 'ntp_key' in sensitive_var:
                     sKey = 'key'
                     varTitle = 'NTP Key'
-                elif re.search('snmp_(authorization|privacy)_key', sensitive_var):
-                    sKey = 'snmp_key'
-                    x = sensitive_var.split('_')
-                    varType = '%s %s' % (x[0].capitalize(), x[1].capitalize())
-                    varTitle = f'{varType}'
                 elif 'radius_key' in sensitive_var:
                     sKey = 'radius_key'
                     varTitle = 'The RADIUS shared secret cannot contain backslashes, space, or hashtag "#".'
                 elif 'radius_monitoring_password' in sensitive_var:
                     sKey = 'radius_monitoring_password'
                     varTitle = 'RADIUS Monitoring Password.'
+                elif re.search('snmp_(authorization|privacy)_key', sensitive_var):
+                    sKey = 'snmp_key'
+                    x = sensitive_var.split('_')
+                    varType = '%s %s' % (x[0].capitalize(), x[1].capitalize())
+                    varTitle = f'{varType}'
                 elif 'snmp_community' in sensitive_var:
                     sKey = 'snmp_community'
                     varTitle = 'The Community may only contain letters, numbers and the special characters of \
@@ -1610,7 +1593,9 @@ def validate_args(jsonData, **kwargs):
         'application_epg',
         'application_profile',
         'annotation',
+        'annotations',
         'audit_logs',
+        'bridge_domain',
         'cdp_interface_policy',
         'description',
         'events',
@@ -1630,6 +1615,7 @@ def validate_args(jsonData, **kwargs):
         'session_logs',
         'tenant',
         'username',
+        'vrf'
     ]
     for i in jsonData['required_args']:
         if i in global_args:
@@ -1638,6 +1624,9 @@ def validate_args(jsonData, **kwargs):
                     kwargs[i] = globalData[i]['default']
                 else:
                     validating.number_check(i, globalData, **kwargs)
+            elif globalData[i]['type'] == 'key_value':
+                if not (kwargs[i] == None or kwargs[i] == ''):
+                    validating.key_value(i, globalData, **kwargs)
             elif globalData[i]['type'] == 'list_of_values':
                 if kwargs[i] == None:
                     kwargs[i] = globalData[i]['default']
@@ -1728,16 +1717,22 @@ def validate_args(jsonData, **kwargs):
             elif jsonData[i]['type'] == 'integer':
                 validating.number_check(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'list_of_integer':
-                if not (kwargs[i] == None or kwargs[i] == ''):
-                    validating.number_list(i, jsonData, **kwargs)
+                validating.number_list(i, jsonData, **kwargs)
+            elif jsonData[i]['type'] == 'list_of_macs':
+                count = 1
+                for mac in kwargs[i].split(','):
+                    kwargs[f'{i}_{count}'] = mac
+                    validating.mac_address(f'{i}_{count}', **kwargs)
+                    kwargs.pop(f'{i}_{count}')
+                    count += 1
             elif jsonData[i]['type'] == 'list_of_string':
-                if not (kwargs[i] == None or kwargs[i] == ''):
-                    validating.string_list(i, jsonData, **kwargs)
+                validating.string_list(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'list_of_values':
                 validating.list_values(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'list_of_vlans':
-                if not (kwargs[i] == None or kwargs[i] == ''):
-                    validating.vlans(i, **kwargs)
+                validating.vlans(i, **kwargs)
+            elif jsonData[i]['type'] == 'mac_address':
+                    validating.mac_address(i, **kwargs)
             elif jsonData[i]['type'] == 'phone_number':
                 validating.phone_number(i, **kwargs)
             elif jsonData[i]['type'] == 'string':

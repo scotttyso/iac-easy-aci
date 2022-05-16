@@ -11,7 +11,7 @@ It uses argparse to take in the following CLI arguments:
 #======================================================
 from class_tenants import tenants
 from classes import access, admin, fabric, site_policies, switches, system_settings
-from easy_functions import apply_aci_terraform, check_git_status, sensitive_var_site_group
+from easy_functions import apply_aci_terraform, check_git_status
 from easy_functions import countKeys, findKeys, findVars, get_user_pass
 from easy_functions import get_latest_versions, merge_easy_aci_repository
 from easy_functions import read_easy_jsonData, read_in
@@ -41,21 +41,26 @@ workspace_dict = {}
 a1 = 'aep_profile|cdp|(fibre|port)_(channel|security)|interface_policy|l2_interface|(phys|l3)_domain'
 a2 = '(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|stp|vlan_pool'
 access_regex = f'^({a1}|{a2})$'
+
 admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
-bridge_domains_regex = '^add_bd$'
-contracts_regex = '(^(contract|filter|subject)_(add|entry|to_epg)$)'
-epgs_regex = '^((app|epg)_add)$'
+apps_epgs_regex = '^(apic_inb|(app|epg|vmm)_(add|policy)|mgmt_epg)$'
+bds_regex = '^((bd|subnet)_(add|general|l3))$'
+contracts_regex = '(^(assign_contract|(contract|filter|subject)_(add|entry))$)'
 
 f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)'
 f2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'
 fabric_regex = f'^({f1}|{f2})$'
-l3out_regex = '^(add_l3out|ext_epg|node_(prof|intf|path)|bgp_peer)$'
-mgmt_tenant_regex = '^(add_bd|mgmt_epg|oob_ext_epg)$'
+
+l3out1 = '(bgp|eigrp|ospf)_(peer|profile|routing)'
+l3out2 = 'ext_epg(_oob|_policy|_subnets)?|l3out_(add|path)|node_(prof|intf|path)?'
+l3out_regex = f'^({l3out1}|{l3out2})$'
+
 port_convert_regex = '^port_cnvt$'
 sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
-tenants_regex = '^((tenant|vrf)_add|vrf_community)$'
+tenants_regex = '^(tenant_(add|site)|vrf_(add|community|policy))$'
+tenant_pol_regex = '^(bgp_pfx|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
 #======================================================
@@ -83,42 +88,6 @@ def process_admin(easyDict, easy_jsonData, wb):
     return easyDict
 
 #======================================================
-# Function to Read the Bridge Domains Worksheet
-#======================================================
-def process_bridge_domains(easyDict, easy_jsonData, wb):
-    # Evaluate Bridge_Domains Worksheet
-    class_init = 'tenants'
-    class_folder = 'tenants'
-    func_regex = bridge_domains_regex
-    ws = wb['Bridge_Domains']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-    return easyDict
-
-#======================================================
-# Function to Read the Contracts Worksheet
-#======================================================
-def process_contracts(easyDict, easy_jsonData, wb):
-    # Evaluate Contracts Worksheet
-    class_init = 'tenants'
-    class_folder = 'tenants'
-    func_regex = contracts_regex
-    ws = wb['Contracts']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-    return easyDict
-
-#======================================================
-# Function to Read the EPGs Worksheet
-#======================================================
-def process_epgs(easyDict, easy_jsonData, wb):
-    # Evaluate EPGs Worksheet
-    class_init = 'tenants'
-    class_folder = 'tenants'
-    func_regex = epgs_regex
-    ws = wb['EPGs']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-    return easyDict
-
-#======================================================
 # Function to Read the Fabric Worksheet
 #======================================================
 def process_fabric(easyDict, easy_jsonData, wb):
@@ -127,18 +96,6 @@ def process_fabric(easyDict, easy_jsonData, wb):
     class_folder = 'fabric'
     func_regex = fabric_regex
     ws = wb['Fabric']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-    return easyDict
-
-#======================================================
-# Function to Read the L3Out Worksheet
-#======================================================
-def process_l3out(easyDict, easy_jsonData, wb):
-    # Evaluate L3Out Worksheet
-    class_init = 'tenants'
-    class_folder = 'tenants'
-    func_regex = l3out_regex
-    ws = wb['L3Out']
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
@@ -170,7 +127,7 @@ def process_sites(easyDict, easy_jsonData, wb):
 # Function to Read the Fabric Worksheet
 #======================================================
 def process_switches(easyDict, easy_jsonData, wb):
-    # Evaluate Inventory Worksheet
+    # Evaluate Switches Worksheet
     class_init = 'switches'
     class_folder = 'switches'
     func_regex = switch_regex
@@ -194,12 +151,39 @@ def process_system_settings(easyDict, easy_jsonData, wb):
 # Function to Read the Tenants Worksheet
 #======================================================
 def process_tenants(easyDict, easy_jsonData, wb):
-    # Evaluate Tenants Worksheet
     class_init = 'tenants'
     class_folder = 'tenants'
+
+    # Evaluate the Tenants Worksheet
     func_regex = tenants_regex
     ws = wb['Tenants']
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+
+    # Evaluate the Tenant Policies Worksheet
+    func_regex = tenant_pol_regex
+    ws = wb['Tenant Policies']
+    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+
+    # Evaluate the Bridge Domains Worksheet
+    func_regex = bds_regex
+    ws = wb['Bridge Domains']
+    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+
+    # # Evaluate the Apps and EPGs Worksheet
+    # func_regex = apps_epgs_regex
+    # ws = wb['Apps and EPGs']
+    # easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+
+    # # Evaluate the L3Out Worksheet
+    # func_regex = l3out_regex
+    # ws = wb['L3Out']
+    # easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+
+    # # Evaluate the Contracts Worksheet
+    # func_regex = contracts_regex
+    # ws = wb['Contracts']
+    # easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+
     return easyDict
 
 #======================================================

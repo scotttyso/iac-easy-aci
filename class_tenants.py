@@ -3,11 +3,12 @@
 #======================================================
 # Source Modules
 #======================================================
-from easy_functions import countKeys, findVars
+from easy_functions import countKeys, easyDict_append_policy, findVars
 from easy_functions import easyDict_append, easyDict_append_subtype
 from easy_functions import process_kwargs, process_workbook
-from easy_functions import sensitive_var_site_group
+from easy_functions import sensitive_var_site_group, validate_args
 import jinja2
+import json
 import pkg_resources
 import re
 import validating
@@ -85,35 +86,16 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
 
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('tenant', **kwargs)
-            validating.validator('name', **kwargs)
-            if not kwargs['alias'] == None:
-                validating.validator('alias', **kwargs)
-            if not kwargs['description'] == None:
-                validating.validator('description', **kwargs)
-            if not kwargs['annotations'] == None:
-                validating.validator_array('annotations', **kwargs)
-            if not templateVars['qos_class'] == None:
-                validating.values('qos_class', jsonData, **kwargs)
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-        Additions = {
-            'monitoring_policy':'default'
-        }
-        templateVars.update(Additions)
+        templateVars['monitoring_policy'] = 'default'
 
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'date_and_time'
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'application_profiles'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -121,215 +103,116 @@ class tenants(object):
     # Function - Bridge Domains
     #======================================================
     def bd_add(self, **kwargs):
-        # Assign the kwargs to a initial var for each process
-        initial_kwargs = kwargs
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bridgeDomains']['allOf'][1]['properties']
 
-        # Open the Network Policies Worksheet
-        ws_net = kwargs['wb']['Network Policies']
-        rows = ws_net.max_row
-
-        # Dicts for Bridge Domain required and optional args
-        required_args = {'site_group': '',
-                         'tenant': '',
-                         'Bridge_Domain': '',
-                         'BD_Policy': '',
-                         'Policy_Name': '',
-                         # BD Policy Required Args
-                         'bd_type': '',
-                         'host_routing': '',
-                         'ep_clear': '',
-                         'unk_mac': '',
-                         'unk_mcast': '',
-                         'v6unk_mcast': '',
-                         'multi_dst': '',
-                         'mcast_allow': '',
-                         'ipv6_mcast': '',
-                         'arp_flood': '',
-                         'limit_learn': '',
-                         'fvEpRetPol': '',
-                         'unicast_route': '',
-                         'intersight_l2': '',
-                         'intersight_bum': '',
-                         'optimize_wan': '',
-                         'monEPGPol': '',
-                         'ip_dp_learning': ''}
-        optional_args = {'alias': '',
-                         'description': '',
-                         'annotation': '',
-                         'Custom_MAC': '',
-                         'Link_Local_IPv6': '',
-                         'VRF_tenant': '',
-                         'VRF': '',
-                         'Subnet': '',
-                         'Subnet_description': '',
-                         'Subnet_Policy': '',
-                         'L3Out_tenant': '',
-                         'L3Out': '',
-                         # BD Policy Optional Args
-                         'dhcpRelayP': '',
-                         'igmpIfPol': '',
-                         'igmpSnoopPol': '',
-                         'mldSnoopPol': '',
-                         'ep_move': '',
-                         'rtctrlProfile': '',
-                         'ndIfPol': '',
-                         'fhsBDPol': '',
-                         'netflowMonitorPol': ''}
-
-        # Get the BD Policies from the Network Policies Tab
-        func = 'bd'
-        count = countKeys(ws_net, func)
-        row_bd = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_Name') == kwargs.get('BD_Policy'):
-                row_bd = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-                break
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('tenant', templateVars['tenant'])
-            validating.validator('Bridge_Domain', templateVars['Bridge_Domain'])
-            if not templateVars['alias'] == None:
-                validating.validator('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.validator('description', templateVars['description'])
-            if not templateVars['annotation'] == None:
-                if re.match(',', templateVars['annotation']):
-                    for tag in templateVars['annotation'].split(','):
-                        validating.validator('annotation', tag)
-                else:
-                    validating.validator('annotation', templateVars['annotation'])
-            if not templateVars['Custom_MAC'] == None:
-                validating.mac_address('Custom_MAC', templateVars['Custom_MAC'])
-            if not templateVars['Link_Local_IPv6'] == None:
-                validating.ip_address('Link_Local_IPv6', templateVars['Link_Local_IPv6'])
-            if not templateVars['BD_Policy'] == templateVars['Policy_Name']:
-                validating.error_policy_names(templateVars['BD_Policy'], templateVars['Policy_Name'])
-            if not templateVars['VRF'] == None:
-                validating.validator('VRF_tenant', templateVars['VRF_tenant'])
-                validating.validator('VRF', templateVars['VRF'])
-            if not templateVars['Subnet'] == None:
-                validating.ip_address('Subnet', templateVars['Subnet'])
-            if not templateVars['description'] == None:
-                validating.validator('description', templateVars['description'])
-            if not templateVars['L3Out'] == None:
-                validating.validator('L3Out_tenant', templateVars['L3Out_tenant'])
-                validating.validator('L3Out', templateVars['L3Out'])
-            validating.values(row_bd, ws_net, 'bd_type', templateVars['bd_type'], ['fc', 'regular'])
-            validating.values(row_bd, ws_net, 'ep_clear', templateVars['ep_clear'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'host_routing', templateVars['host_routing'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'mcast_allow', templateVars['mcast_allow'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'ipv6_mcast', templateVars['ipv6_mcast'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'arp_flood', templateVars['arp_flood'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'limit_learn', templateVars['limit_learn'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'unicast_route', templateVars['unicast_route'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'limit_learn', templateVars['limit_learn'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'intersight_l2', templateVars['intersight_l2'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'intersight_bum', templateVars['intersight_bum'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'optimize_wan', templateVars['optimize_wan'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'ip_dp_learning', templateVars['ip_dp_learning'], ['no', 'yes'])
-            validating.values(row_bd, ws_net, 'unk_mac', templateVars['unk_mac'], ['flood', 'proxy'])
-            validating.values(row_bd, ws_net, 'unk_mcast', templateVars['unk_mcast'], ['flood', 'opt-flood'])
-            validating.values(row_bd, ws_net, 'v6unk_mcast', templateVars['v6unk_mcast'], ['flood', 'opt-flood'])
-            validating.values(row_bd, ws_net, 'multi_dst', templateVars['multi_dst'], ['bd-flood', 'drop', 'encap-flood'])
-            if not templateVars['ep_move'] == None:
-                validating.values(row_bd, ws_net, 'ep_move', templateVars['ep_move'], ['garp'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
+        # Attach the Bridge Domain General Policy Additional Attributes
+        if kwargs['easyDict']['tenants']['bridge_domains_general'].get(templateVars['general_policy']):
+            templateVars['general'] = kwargs['easyDict']['tenants']['bridge_domains_general'][templateVars['general_policy']]
+        else:
+            validating.error_policy_not_found('general_policy', **kwargs)
 
-        if templateVars['dhcpRelayP'] == 'default':
-            templateVars['dhcpRelayP'] = 'uni/tn-common/relayp-default'
-        if templateVars['fhsBDPol'] == 'default':
-            templateVars['fhsBDPol'] = 'uni/tn-common/bdpol-default'
-        if templateVars['fvEpRetPol'] == 'default':
-            templateVars['fvEpRetPol'] = 'uni/tn-common/epRPol-default'
-        if templateVars['igmpIfPol'] == 'default':
-            templateVars['igmpIfPol'] = 'uni/tn-common/igmpIfPol-default'
-        if templateVars['igmpSnoopPol'] == 'default':
-            templateVars['igmpSnoopPol'] = 'uni/tn-common/snPol-default'
-        if templateVars['mldSnoopPol'] == 'default':
-            templateVars['mldSnoopPol'] = 'uni/tn-common/mldsnoopPol-default'
-        if templateVars['monEPGPol'] == 'default':
-            templateVars['monEPGPol'] = 'uni/tn-common/monepg-default'
-        if templateVars['ndIfPol'] == 'default':
-            templateVars['ndIfPol'] = 'uni/tn-common/ndifpol-default'
-        if templateVars['netflowMonitorPol'] == 'default':
-            templateVars['netflowMonitorPol'] = 'uni/tn-common/monitorpol-default'
-
-        # Define the Template Source
-        template_file = "bd.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Bridge_Domain_%s.tf' % (templateVars['Bridge_Domain'])
-        dest_dir = 'tenant_%s' % (templateVars['tenant'])
+        # Attach the Bridge Domain L3 Configuration Policy Additional Attributes
+        if kwargs['easyDict']['tenants']['bridge_domains_l3'].get(templateVars['l3_policy']):
+            templateVars['l3_configurations'] = kwargs['easyDict']['tenants']['bridge_domains_l3'][templateVars['l3_policy']]
+        else:
+            validating.error_policy_not_found('l3_policy', **kwargs)
         
+        # Move Variables to the Advanced/Troubleshooting Map
+        atr = templateVars['l3_configurations']
+        templateVars['advanced_troubleshooting'] = {
+            'disable_ip_data_plane_learning_for_pbr':atr['disable_ip_data_plane_learning_for_pbr'],
+            'endpoint_clear':templateVars['endpoint_clear'],
+            'first_hop_security_policy':atr['first_hop_security_policy'],
+            'intersite_bum_traffic_allow':atr['intersite_bum_traffic_allow'],
+            'intersite_l2_stretch':atr['intersite_l2_stretch'],
+            'monitoring_policy':'default',
+            'netflow_monitor_policies':atr['netflow_monitor_policies'],
+            'optimize_wan_bandwidth':atr['optimize_wan_bandwidth'],
+            'netflow_monitor_policies':atr['netflow_monitor_policies'],
+            'rogue_coop_exception_list':atr['rogue_coop_exception_list'],
+        }
+        
+        # Move Variables to the General Map
+        templateVars['general'].update({
+            'alias':templateVars['alias'],
+            'annotations':templateVars['annotations'],
+            'description':templateVars['description'],
+            'global_alias':templateVars['global_alias'],
+            'vrf':templateVars['vrf'],
+            'vrf_tenant':templateVars['vrf_tenant']
+        })
 
-       # Reset kwargs back to initial kwargs
-        kwargs = initial_kwargs
+        # Move Variables to the L3 Configurations Map
+        templateVars['l3_configurations'].update({
+            'associated_l3outs':{
+                'l3out':templateVars['l3out'],
+                'l3out_tenant':templateVars['vrf_tenant'],
+                'route_profile':templateVars['l3_configurations']['route_profile']
+            },
+            'custom_mac_address':templateVars['custom_mac_address'],
+            'description':templateVars['description'],
+            'global_alias':templateVars['global_alias'],
+            'subnets':[],
+            'vrf':templateVars['vrf'],
+            'vrf_tenant':templateVars['vrf_tenant']
+        })
 
-        # Initialize the Class
-        lib_aci_ref = 'tenant_Policies'
-        class_init = '%s(ws)' % (lib_aci_ref)
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'bridge_domains'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
-        # Create the Subnet if it Exists
-        if not kwargs.get('Subnet') == None:
-            eval("%s.%s(**kwargs)" % (class_init, 'add_subnet'))
+    #======================================================
+    # Function - Bridge Domains - General Policies
+    #======================================================
+    def bd_general(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.General']['allOf'][1]['properties']
 
-        if not templateVars['tenant'] == templateVars['VRF_tenant']:
-            templateVars['bd_tenant'] = templateVars['tenant']
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
-            # Process the template through the Sites
-            templateVars['tenant'] = templateVars['VRF_tenant']
-            template_file = "data_tenant.jinja2"
-            template = self.templateEnv.get_template(template_file)
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-            # Process the template through the Sites
-            dest_file = 'data_tenant_%s.tf' % (templateVars['VRF_tenant'])
-            dest_dir = 'tenant_%s' % (templateVars['bd_tenant'])
-            
+        templateVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:templateVars}
 
-            # Define the Template Source
-            template_file = "data_vrf.jinja2"
-            template = self.templateEnv.get_template(template_file)
+        # Add Dictionary to easyDict
+        policy_dict['class_type'] = 'tenants'
+        policy_dict['data_type'] = 'bridge_domains_general'
+        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        return kwargs['easyDict']
 
-            # Process the template through the Sites
-            dest_file = 'data_tenant_%s_VRF_%s.tf' % (templateVars['VRF_tenant'], templateVars['VRF'])
-            dest_dir = 'tenant_%s' % (templateVars['bd_tenant'])
-            
+    #======================================================
+    # Function - Bridge Domains - General Policies
+    #======================================================
+    def bd_l3(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.L3Configurations']['allOf'][1]['properties']
 
-            templateVars['tenant'] = templateVars['bd_tenant']
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
-        if not templateVars['L3Out'] == None:
-            if not templateVars['tenant'] == templateVars['L3Out_tenant']:
-                templateVars['bd_tenant'] = templateVars['tenant']
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-                # Process the template through the Sites
-                templateVars['tenant'] = templateVars['L3Out_tenant']
-                template_file = "data_tenant.jinja2"
-                template = self.templateEnv.get_template(template_file)
+        templateVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:templateVars}
 
-                # Process the template through the Sites
-                dest_file = 'data_tenant_%s.tf' % (templateVars['L3Out_tenant'])
-                dest_dir = 'tenant_%s' % (templateVars['bd_tenant'])
-                
-
-                # Process the template through the Sites
-                template_file = "data_l3out.jinja2"
-                template = self.templateEnv.get_template(template_file)
-
-                # Process the template through the Sites
-                dest_file = 'data_tenant_%s_L3Out_%s.tf' % (templateVars['L3Out_tenant'], templateVars['L3Out'])
-                dest_dir = 'tenant_%s' % (templateVars['bd_tenant'])
+        # Add Dictionary to easyDict
+        policy_dict['class_type'] = 'tenants'
+        policy_dict['data_type'] = 'bridge_domains_l3'
+        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - BGP Peers
@@ -651,6 +534,25 @@ class tenants(object):
                 dest_dir = 'tenant_%s' % (templateVars['tenant'])
 
     #======================================================
+    # Function - Application Profiles
+    #======================================================
+    def bgp_pfx(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.policies.bgpPrefix']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'bgp_peer_prefix_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
     # Function - Contracts
     #======================================================
     def contract_add(self, **kwargs):
@@ -725,6 +627,25 @@ class tenants(object):
 
         # Process the template through the Sites
         dest_dir = 'tenant_%s' % (templateVars['tenant'])
+
+    #======================================================
+    # Function - Application Profiles
+    #======================================================
+    def eigrp_interface(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.policies.eigrpInterface']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'eigrp_interface_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Application EPG
@@ -1084,7 +1005,7 @@ class tenants(object):
     #======================================================
     # Function - L3Out - Out-of-Band External EPG
     #======================================================
-    def extepg_oob(self, **kwargs):
+    def ext_epg_oob(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
 
@@ -2171,6 +2092,25 @@ class tenants(object):
             dest_dir = 'tenant_%s' % (templateVars['tenant'])
 
     #======================================================
+    # Function - Application Profiles
+    #======================================================
+    def ospf_interface(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.policies.ospfInterface']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'ospf_interface_policies'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
     # Function - Contracts - Add Subject
     #======================================================
     def subject_add(self, **kwargs):
@@ -2245,103 +2185,47 @@ class tenants(object):
     # Function - Bridge Domain - Subnets
     #======================================================
     def subnet_add(self, **kwargs):
-        # Open the Network Policies Worksheet
-        ws_net = kwargs['wb']['Network Policies']
-        rows = ws_net.max_row
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.Subnets']['allOf'][1]['properties']
 
-        # Dicts for Subnet required and optional args
-        required_args = {'site_group': '',
-                         'tenant': '',
-                         'Bridge_Domain': '',
-                         'Subnet': '',
-                         'Subnet_Policy': '',
-                         'Policy_Name': '',
-                         'virtual': '',
-                         'preferred': '',
-                         'scope': '',
-                         'nd': '',
-                         'no-default-gateway': '',
-                         'querier': ''}
-        optional_args = {'Subnet_description': '',
-                         'l3extOut': '',
-                         'rtctrlProfile': '',
-                         'ndPfxPol': ''}
-
-        # Get the Subnet Policies from the Network Policies Tab
-        func = 'subnet'
-        count = countKeys(ws_net, func)
-        row_subnet = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_Name') == kwargs.get('Subnet_Policy'):
-                row_subnet = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-                break
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.ip_address('Subnet', templateVars['Subnet'])
-            if not templateVars['Subnet_description'] == None:
-                validating.validator('Subnet_description', templateVars['Subnet_description'])
-            validating.values(row_subnet, ws_net, 'virtual', templateVars['virtual'], ['no', 'yes'])
-            validating.values(row_subnet, ws_net, 'preferred', templateVars['preferred'], ['no', 'yes'])
-            validating.values(row_subnet, ws_net, 'scope', templateVars['scope'], ['private', 'public', 'shared', 'private-shared', 'public-shared'])
-            validating.values(row_subnet, ws_net, 'nd', templateVars['nd'], ['no', 'yes'])
-            validating.values(row_subnet, ws_net, 'no-default-gateway', templateVars['no-default-gateway'], ['no', 'yes'])
-            validating.values(row_subnet, ws_net, 'querier', templateVars['querier'], ['no', 'yes'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
+        # Modify the templateVars scope and subnet_control
+        templateVars['scope'] = {
+            'advertise_externally':templateVars['advertise_externally'],
+            'shared_between_vrfs':templateVars['shared_between_vrfs']
+        }
+        templateVars['subnet_control'] = {
+            'neighbor_discovery':templateVars['neighbor_discovery'],
+            'no_default_svi_gateway':templateVars['no_default_svi_gateway'],
+            'querier_ip':templateVars['querier_ip']
+        }
+        pop_list = [
+            'advertise_externally',
+            'shared_between_vrfs',
+            'neighbor_discovery',
+            'no_default_svi_gateway',
+            'querier_ip'
+        ]
+        for i in pop_list:
+            templateVars.pop(i)
 
-        if templateVars['l3extOut'] == 'default':
-            templateVars['l3extOut'] = 'uni/tn-common/out-default'
-        if templateVars['ndPfxPol'] == 'default':
-            templateVars['ndPfxPol'] = 'uni/tn-common/ndpfxpol-default'
+        # Attach the Subnet to the Bridge Domain
+        if templateVars['site_group'] in kwargs['easyDict']['tenants']['bridge_domains'].keys():
+            for i in kwargs['easyDict']['tenants']['bridge_domains'][templateVars['site_group']]:
+                if i['name'] == templateVars['bridge_domain'] and i['tenant'] == templateVars['tenant']:
+                    templateVars.pop('bridge_domain')
+                    templateVars.pop('site_group')
+                    templateVars.pop('tenant')
+                    i['l3_configurations']['subnets'].append(templateVars)
+                    break
 
-        # Create ctrl templateVars
-        ctrl_count = 0
-        Ctrl = ''
-        if templateVars['nd'] == 'yes':
-            Ctrl = '"nd"'
-            ctrl_count =+ 1
-        if templateVars['no-default-gateway'] == 'yes' and ctrl_count > 0:
-            Ctrl = Ctrl + ', ' + '"no-default-gateway"'
-            ctrl_count =+ 1
-        elif templateVars['no-default-gateway'] == 'yes':
-            Ctrl = '"no-default-gateway"'
-            ctrl_count =+ 1
-        if templateVars['querier'] == 'yes' and ctrl_count > 0:
-            Ctrl = Ctrl + ', ' + '"querier"'
-            ctrl_count =+ 1
-        elif templateVars['querier'] == 'yes':
-            Ctrl = '"querier"'
-            ctrl_count =+ 1
-
-        if ctrl_count > 0:
-            templateVars['Ctrl'] = '[%s]' % (Ctrl)
-        else:
-            templateVars['Ctrl'] = '["unspecified"]'
-
-        # Modify scope templateVars
-        if re.search('^(private|public|shared)$', templateVars['scope']):
-            templateVars['scope'] = '"%s"' % (templateVars['scope'])
-        elif re.search('^(private|public)\\-shared$', templateVars['scope']):
-            x = templateVars['scope'].split('-')
-            templateVars['scope'] = '"%s", "%s"' % (x[0], x[1])
-
-        # Define the Template Source
-        template_file = "subnet.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'Bridge_Domain_%s.tf' % (templateVars['Bridge_Domain'],)
-        dest_dir = 'tenant_%s' % (templateVars['tenant'])
+        # Return easyDict
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Tenants
@@ -2350,29 +2234,27 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.Tenants']['allOf'][1]['properties']
 
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['monitoring_policy'] = 'default'
 
-        try:
-            # Validate Variables
-            validating.site_group('site_group', **kwargs)
-            validating.validator('tenant', **kwargs)
-            if not templateVars['alias'] == None:
-                validating.validator('alias', **kwargs)
-            if not kwargs['annotations'] == None:
-                validating.validator_array('annotations', **kwargs)
-            if not templateVars['description'] == None:
-                validating.validator('description', **kwargs)
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-        Additions = {
-            'monitoring_policy':'default',
-            'sites':[],
-        }
-        templateVars.update(Additions)
+        if re.search(r'\d{1,16}', kwargs['site_group']):
+            if kwargs['easyDict']['tenants']['sites'].get(kwargs['site_group']):
+                templateVars['sites'] = []
+                templateVars['users'] = []
+                for i in kwargs['easyDict']['tenants']['sites'][kwargs['site_group']]:
+                    if i['tenant'] == templateVars['name']:
+                        i.pop('class_type')
+                        i.pop('site_group')
+                        i.pop('tenant')
+                        for x in i['users'].split(','):
+                            if not x in templateVars['users']:
+                                templateVars['users'].append(x)
+                        i.pop('users')
+                        templateVars['sites'].append(i)
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
@@ -2381,171 +2263,97 @@ class tenants(object):
         return kwargs['easyDict']
 
     #======================================================
+    # Function - Tenants
+    #======================================================
+    def tenant_site(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.Sites']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'sites'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
     # Function - VRFs
     #======================================================
     def vrf_add(self, **kwargs):
-        # Open the Network Policies Worksheet
-        ws_net = kwargs['wb']['Network Policies']
-        rows = ws_net.max_row
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.Vrfs']['allOf'][1]['properties']
 
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'tenant': '',
-                         'VRF': '',
-                         'VRF_Policy': '',
-                         'Policy_Name': '',
-                         'pc_enf_pref': '',
-                         'pc_enf_dir': '',
-                         'bd_enforce': '',
-                         'enf_type': '',
-                         'fvEpRetPol': '',
-                         'monEPGPol': '',
-                         'ip_dp_learning': '',
-                         'knw_mcast_act': ''}
-        optional_args = {'alias': '',
-                         'description': '',
-                         'annotation': '',
-                         'cons_vzBrCP': '',
-                         'vzCPIf': '',
-                         'prov_vzBrCP': '',
-                         'bgpCtxPol': '',
-                         'bgpCtxAfPol': '',
-                         'ospfCtxPol': '',
-                         'ospfCtxAfPol': '',
-                         'eigrpCtxAfPol': '',
-                         'l3extRouteTagPol': '',
-                         'l3extVrfValidationPol': ''}
-
-
-        # Get the VRF Policies from the Network Policies Tab
-        func = 'VRF'
-        count = countKeys(ws_net, func)
-        row_vrf = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('Policy_Name') == kwargs.get('VRF_Policy'):
-                row_vrf = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['communities'] = []
 
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('tenant', templateVars['tenant'])
-            validating.validator('VRF', templateVars['VRF'])
-            if not templateVars['alias'] == None:
-                validating.validator('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.validator('description', templateVars['description'])
-            if not templateVars['annotation'] == None:
-                if re.match(',', templateVars['annotation']):
-                    for tag in templateVars['annotation'].split(','):
-                        validating.validator('annotation', tag)
-                else:
-                    validating.validator('annotation', templateVars['annotation'])
-            validating.values(row_vrf, ws_net, 'bd_enforce', templateVars['bd_enforce'], ['no', 'yes'])
-            validating.values(row_vrf, ws_net, 'ip_dp_learning', templateVars['ip_dp_learning'], ['disabled', 'enabled'])
-            validating.values(row_vrf, ws_net, 'knw_mcast_act', templateVars['knw_mcast_act'], ['deny', 'permit'])
-            validating.values(row_vrf, ws_net, 'pc_enf_dir', templateVars['pc_enf_dir'], ['egress', 'ingress'])
-            validating.values(row_vrf, ws_net, 'pc_enf_pref', templateVars['pc_enf_pref'], ['enforced', 'unenforced'])
-            validating.values(row_vrf, ws_net, 'enf_type', templateVars['enf_type'], ['contract', 'pref_grp', 'vzAny'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
+        # Attach the VRF Policy Additional Attributes
+        if kwargs['easyDict']['tenants']['vrf_policies'].get(templateVars['vrf_policy']):
+            templateVars.update(kwargs['easyDict']['tenants']['vrf_policies'][templateVars['vrf_policy']])
+        else:
+            validating.error_policy_not_found('vrf_policy', **kwargs)
 
-        if templateVars['cons_vzBrCP'] == 'default':
-            templateVars['cons_vzBrCP'] = 'uni/tn-common/brc-default'
-        if templateVars['prov_vzBrCP'] == 'default':
-            templateVars['prov_vzBrCP'] = 'uni/tn-common/brc-default'
-        if templateVars['vzCPIf'] == 'default':
-            templateVars['vzCPIf'] = 'uni/tn-common/cif-default'
-        if templateVars['bgpCtxPol'] == 'default':
-            templateVars['bgpCtxPol'] = 'uni/tn-common/bgpCtxP-default'
-        if templateVars['bgpCtxAfPol'] == 'default':
-            templateVars['bgpCtxAfPol'] = 'uni/tn-common/bgpCtxAfP-default'
-        if templateVars['eigrpCtxAfPol'] == 'default':
-            templateVars['eigrpCtxAfPol'] = 'uni/tn-common/eigrpCtxAfP-default'
-        if templateVars['ospfCtxPol'] == 'default':
-            templateVars['ospfCtxPol'] = 'uni/tn-common/ospfCtxP-default'
-        if templateVars['ospfCtxAfPol'] == 'default':
-            templateVars['ospfCtxAfPol'] = 'uni/tn-common/ospfCtxP-default'
-        if templateVars['fvEpRetPol'] == 'default':
-            templateVars['fvEpRetPol'] = 'uni/tn-common/epRPol-default'
-        if templateVars['monEPGPol'] == 'default':
-            templateVars['monEPGPol'] = 'uni/tn-common/monepg-default'
-        if templateVars['l3extVrfValidationPol'] == 'default':
-            templateVars['l3extVrfValidationPol'] = 'uni/tn-common/vrfvalidationpol-default'
-
-        # Define the Template Source
-        template_file = "vrf.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-        dest_dir = 'tenant_%s' % (templateVars['tenant'])
-        
-
-        if templateVars['enf_type'] == 'pref_grp':
-            # Define the Template Source
-            template_file = "pref_grp.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            # Process the template through the Sites
-            dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-            dest_dir = 'tenant_%s' % (templateVars['tenant'])
-            
-
-        elif templateVars['enf_type'] == 'vzAny':
-            # Define the Template Source
-            template_file = "vzAny.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            # Process the template through the Sites
-            dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-            dest_dir = 'tenant_%s' % (templateVars['tenant'])
-            
-
-        # Define the Template Source
-        template_file = "snmp_ctx.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-        dest_dir = 'tenant_%s' % (templateVars['tenant'])
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'vrfs'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
         
     #======================================================
     # Function - VRF - Communities
     #======================================================
     def vrf_community(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'tenant': '',
-                         'VRF': '',
-                         'Ctx_Community': ''}
-        optional_args = {'description': ''}
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.vrfCommunity']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('tenant', templateVars['tenant'])
-            validating.validator('VRF', templateVars['VRF'])
-            validating.snmp_string('Ctx_Community', templateVars['Ctx_Community'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
+        # Check if the SNMP Community is in the Environment.  If not Add it.
+        templateVars['jsonData'] = jsonData
+        templateVars["Variable"] = f'vrf_snmp_community_{kwargs["community_variable"]}'
+        sensitive_var_site_group(**templateVars)
+        templateVars.pop('jsonData')
+        templateVars.pop('Variable')
 
-        # Define the Template Source
-        template_file = "snmp_ctx_community.jinja2"
-        template = self.templateEnv.get_template(template_file)
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'vrfs'
+        templateVars['data_subtype'] = 'communities'
+        templateVars['policy_name'] = templateVars['vrf']
+        templateVars.pop('vrf')
+        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        return kwargs['easyDict']
 
-        # Process the template through the Sites
-        dest_file = 'VRF_%s.tf' % (templateVars['VRF'])
-        dest_dir = 'tenant_%s' % (templateVars['tenant'])
+    #======================================================
+    # Function - VRF - Policy
+    #======================================================
+    def vrf_policy(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.vrfPolicy']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        templateVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:templateVars}
+
+        # Add Dictionary to easyDict
+        policy_dict['class_type'] = 'tenants'
+        policy_dict['data_type'] = 'vrf_policies'
+        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        return kwargs['easyDict']

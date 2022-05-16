@@ -5,7 +5,7 @@
 #======================================================
 from collections import OrderedDict
 from easy_functions import countKeys, findKeys, findVars
-from easy_functions import easyDict_append, easyDict_append_subtype, get
+from easy_functions import easyDict_append, easyDict_append_policy, easyDict_append_subtype
 from easy_functions import interface_selector_workbook, post, process_kwargs
 from easy_functions import required_args_add, required_args_remove
 from easy_functions import sensitive_var_site_group, stdout_log, validate_args
@@ -114,10 +114,13 @@ class access(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
+        templateVars.pop('interface_policy')
+        policy_dict = {kwargs['interface_policy']:templateVars}
+
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'interface_policies'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        policy_dict['class_type'] = 'access'
+        policy_dict['data_type'] = 'interface_policies'
+        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -247,12 +250,14 @@ class access(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        for item in kwargs['easyDict']['access']['interface_policies']:
-            for key, value in item.items():
-                if key == kwargs['site_group']:
-                    for i in value:
-                        if i['interface_policy'] == templateVars['interface_policy']:
-                            templateVars.update(i)
+        if ',' in templateVars['netflow_monitor_policies']:
+            templateVars['netflow_monitor_policies'] = templateVars['netflow_monitor_policies'].split(',')
+
+        # Attach the Interface Policy Additional Attributes
+        if kwargs['easyDict']['access']['interface_policies'].get(templateVars['interface_policy']):
+            templateVars.update(kwargs['easyDict']['access']['interface_policies'][templateVars['interface_policy']])
+        else:
+            validating.error_policy_not_found('interface_policy', **kwargs)
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
@@ -273,12 +278,14 @@ class access(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        for item in kwargs['easyDict']['access']['interface_policies']:
-            for key, value in item.items():
-                if key == kwargs['site_group']:
-                    for i in value:
-                        if i['interface_policy'] == templateVars['interface_policy']:
-                            templateVars.update(i)
+        if ',' in templateVars['netflow_monitor_policies']:
+            templateVars['netflow_monitor_policies'] = templateVars['netflow_monitor_policies'].split(',')
+
+        # Attach the Interface Policy Additional Attributes
+        if kwargs['easyDict']['access']['interface_policies'].get(templateVars['interface_policy']):
+            templateVars.update(kwargs['easyDict']['access']['interface_policies'][templateVars['interface_policy']])
+        else:
+            validating.error_policy_not_found('interface_policy', **kwargs)
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
@@ -1547,15 +1554,12 @@ class switches(object):
         if not templateVars['node_type'] == 'spine':
             if not templateVars['vpc_name'] == None:
                 if len(kwargs['easyDict']['switches']['vpc_domains']) > 0:
-                    for item in kwargs['easyDict']['switches']['vpc_domains']:
-                        vpc_count = 0
-                        if templateVars['site_group'] in item.keys():
-                            indx = kwargs['easyDict']['switches']['vpc_domains'].index(item)
-                            vdict = kwargs['easyDict']['switches']['vpc_domains'][indx][templateVars['site_group']]
-                            for i in vdict:
-                                if i['name'] == templateVars['vpc_name']:
-                                    i['switches'].append(templateVars['node_id'])
-                                    vpc_count =+ 1
+                    vpc_count = 0
+                    if templateVars['site_group'] in kwargs['easyDict']['switches']['vpc_domains'].keys():
+                        for i in kwargs['easyDict']['switches']['vpc_domains'][templateVars['site_group']]:
+                            if i['name'] == templateVars['vpc_name']:
+                                i['switches'].append(templateVars['node_id'])
+                                vpc_count =+ 1
                     if vpc_count == 0:
                         # Add Dictionary to easyDict
                         vpcArgs = {

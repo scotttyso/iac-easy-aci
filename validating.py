@@ -27,6 +27,17 @@ def error_policy_names(row_num, ws, policy_1, policy_2):
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
+def error_policy_not_found(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. The {var} "{varValue}"')
+    print(f'   was not found. Please be sure this policy is already defined.')
+    print(f'   Exiting....')
+    print(f'\n-----------------------------------------------------------------------------\n')
+    exit()
+
 def error_int_selector(row_num, ws, int_select):
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'   Error on Row {row_num} of Worksheet {ws.title}. Interface Selector {int_select}')
@@ -210,6 +221,44 @@ def ip_address(var, **kwargs):
         print(f'   a valid IPv4 or IPv6 Address.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
+
+def key_value(var, jsonData, **kwargs):
+    # Get Variables from Library
+    key_min       = jsonData[var]['key_minimum']
+    key_max       = jsonData[var]['key_maximum']
+    key_pattern   = jsonData[var]['key_pattern']
+    value_min     = jsonData[var]['value_minimum']
+    value_max     = jsonData[var]['value_maximum']
+    value_pattern = jsonData[var]['value_pattern']
+    row_num = kwargs['row_num']
+    varList = kwargs[var]
+    ws = kwargs['ws']
+    for val in varList.split(','):
+        for key_val in val.split(':'):
+            if not (re.fullmatch(key_pattern,  key_val[0]) and validators.length(
+                str(key_val[0]), min=int(key_min), max=int(key_max))):
+                print(f'\n-----------------------------------------------------------------------------\n')
+                print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. ')
+                print(f'   "{key_val[0]}" is an invalid Value...')
+                print(f'   It failed one of the complexity tests:')
+                print(f'    - Min Length {key_min}')
+                print(f'    - Max Length {key_max}')
+                print(f'    - Regex {key_pattern}')
+                print(f'    Exiting....')
+                print(f'\n-----------------------------------------------------------------------------\n')
+                exit()
+            if not (re.fullmatch(re.fullmatch(value_pattern,  key_val[1])) and \
+                validators.length(str(key_val[1]), min=int(value_min), max=int(value_max))):
+                print(f'\n-----------------------------------------------------------------------------\n')
+                print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}. ')
+                print(f'   "{key_val[1]}" is an invalid Value...')
+                print(f'   It failed one of the complexity tests:')
+                print(f'    - Min Length {value_min}')
+                print(f'    - Max Length {value_max}')
+                print(f'    - Regex {value_pattern}')
+                print(f'    Exiting....')
+                print(f'\n-----------------------------------------------------------------------------\n')
+                exit()
 
 def length_and_regex(pattern, varName, varValue, minimum, maximum):
     invalid_count = 0
