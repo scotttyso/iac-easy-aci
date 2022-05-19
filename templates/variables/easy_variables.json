@@ -197,13 +197,17 @@
                                     "global_aes_encryption_settings":{}
                                 },
                                 "tenants":{
+                                    "apics_inband":{},
+                                    "application_epg_policies":{},
                                     "application_epgs":{},
+                                    "application_epg_vmm_policies":{},
                                     "application_profiles":{},
                                     "bfd_interface_policies":{},
                                     "bgp_peer_prefix_policies":{},
                                     "bridge_domains":{},
                                     "bridge_domains_general":{},
                                     "bridge_domains_l3":{},
+                                    "contracts":{},
                                     "dhcp_option_policies":{},
                                     "dhcp_relay_policies":{},
                                     "eigrp_interface_policies":{},
@@ -6411,7 +6415,435 @@
                     }
                 ]
             },
-            "tenants.Contracts":{
+            "tenants.contract.Filters":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "acknowledgement":{
+                                "description": "TCP Session Rules - Option Acknowledgement.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "arp_flag":{
+                                "description": "ARP Flag Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "req",
+                                    "reply",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "established":{
+                                "description": "TCP Session Rules - Option Established.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "ethertype":{
+                                "description": "Ether Type Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "arp",
+                                    "fcoe",
+                                    "ip",
+                                    "ipv4",
+                                    "ipv6",
+                                    "trill",
+                                    "mac_security",
+                                    "mpls_ucast",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "finish":{
+                                "description": "TCP Session Rules - Option Finish.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "icmpv4_type":{
+                                "description": "ICMPv4 Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "dst-unreach",
+                                    "echo",
+                                    "echo-rep",
+                                    "src-quench",
+                                    "time-exceeded",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "icmpv6_type":{
+                                "description": "ICMPv6 Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "dst-unreach",
+                                    "echo-req",
+                                    "echo-rep",
+                                    "nbr-solicit",
+                                    "nbr-advert",
+                                    "redirect", 
+                                    "time-exceeded",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "ip_protocol":{
+                                "description": "ICMPv6 Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "egp",
+                                    "eigrp",
+                                    "igp",
+                                    "icmp",
+                                    "icmpv6",
+                                    "igmp",
+                                    "l2tp",
+                                    "ospfigp",
+                                    "pim",
+                                    "tcp",
+                                    "udp", 
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "match_dscp":{
+                                "description": "Target DSCP Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "match_only_fragments":{
+                                "description": "Match Only Fragements Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "description": "",
+                                "global_alias": ""
+                            },
+                            "required_args" : {
+                                "alias": "",
+                                "annotations": "",
+                                "description": "",
+                                "global_alias": "",
+                                "name": "",
+                                "schema": "",
+                                "site_group": "",
+                                "sites": "",
+                                "template": "",
+                                "tenant": ""
+                            },
+                            "reset":{
+                                "description": "TCP Session Rules - Option Reset.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "stateful":{
+                                "description": "Stateful Flag Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "synchronize":{
+                                "description": "TCP Session Rules - Option Synchronize.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.contract.filterEntry":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "acknowledgement":{
+                                "description": "TCP Session Rules - Option Acknowledgement.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "arp_flag":{
+                                "description": "ARP Flag Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "req",
+                                    "reply",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "destination_port_from":{
+                                "description": "The start of the destination port range. The start of the port range is determined by the server type. You can define a single port by specifying the same value in the From and To fields, or you can define a range of ports from 0 to 65535 by specifying different values in the From and To fields.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 512,
+                                "pattern":"^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified|[\\d]{1,4}|[1-6][0-5][0-5][0-3][0-5])$",
+                                "x-omitempty": true
+                            },
+                            "established":{
+                                "description": "TCP Session Rules - Option Established.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "ethertype":{
+                                "description": "Ether Type Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "arp",
+                                    "fcoe",
+                                    "ip",
+                                    "ipv4",
+                                    "ipv6",
+                                    "trill",
+                                    "mac_security",
+                                    "mpls_ucast",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "finish":{
+                                "description": "TCP Session Rules - Option Finish.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "icmpv4_type":{
+                                "description": "ICMPv4 Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "dst-unreach",
+                                    "echo",
+                                    "echo-rep",
+                                    "src-quench",
+                                    "time-exceeded",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "icmpv6_type":{
+                                "description": "ICMPv6 Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "dst-unreach",
+                                    "echo-req",
+                                    "echo-rep",
+                                    "nbr-solicit",
+                                    "nbr-advert",
+                                    "redirect", 
+                                    "time-exceeded",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "ip_protocol":{
+                                "description": "ICMPv6 Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "egp",
+                                    "eigrp",
+                                    "igp",
+                                    "icmp",
+                                    "icmpv6",
+                                    "igmp",
+                                    "l2tp",
+                                    "ospfigp",
+                                    "pim",
+                                    "tcp",
+                                    "udp", 
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "match_dscp":{
+                                "description": "Target DSCP Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "match_only_fragments":{
+                                "description": "Match Only Fragements Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "alias": "",
+                                "description": "",
+                                "global_alias": ""
+                            },
+                            "required_args" : {
+                                "acknowledgement": "",
+                                "arp_flag": "",
+                                "destination_port_from": "",
+                                "destination_port_to": "",
+                                "established": "",
+                                "ethertype": "",
+                                "filter_name": "",
+                                "finish": "",
+                                "icmpv4_type": "",
+                                "icmpv6_type": "",
+                                "ip_protocol": "",
+                                "name": "",
+                                "match_dscp": "",
+                                "match_only_Frags": "",
+                                "reset": "",
+                                "site_group": "",
+                                "source_port_from": "",
+                                "source_port_to": "",
+                                "stateful": "",
+                                "synchronize": "",
+                                "tenant": ""
+                            },
+                            "reset":{
+                                "description": "TCP Session Rules - Option Reset.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "stateful":{
+                                "description": "Stateful Flag Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "synchronize":{
+                                "description": "TCP Session Rules - Option Synchronize.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.contract.ContractFilters":{
                 "allOf":[
                     {},
                     {
@@ -6438,433 +6870,28 @@
                     }
                 ]
             },
-            "tenants.Filter":{
+            "tenants.contract.Contracts":{
                 "allOf":[
                     {},
                     {
                         "properties":{
-                            "acknowledgement":{
-                                "description": "TCP Session Rules - Option Acknowledgement.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "arp_flag":{
-                                "description": "ARP Flag Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "req",
-                                    "reply",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "established":{
-                                "description": "TCP Session Rules - Option Established.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "ethertype":{
-                                "description": "Ether Type Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "arp",
-                                    "fcoe",
-                                    "ip",
-                                    "ipv4",
-                                    "ipv6",
-                                    "trill",
-                                    "mac_security",
-                                    "mpls_ucast",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "finish":{
-                                "description": "TCP Session Rules - Option Finish.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "icmpv4_type":{
-                                "description": "ICMPv4 Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "dst-unreach",
-                                    "echo",
-                                    "echo-rep",
-                                    "src-quench",
-                                    "time-exceeded",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "icmpv6_type":{
-                                "description": "ICMPv6 Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "dst-unreach",
-                                    "echo-req",
-                                    "echo-rep",
-                                    "nbr-solicit",
-                                    "nbr-advert",
-                                    "redirect", 
-                                    "time-exceeded",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "ip_protocol":{
-                                "description": "ICMPv6 Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "egp",
-                                    "eigrp",
-                                    "igp",
-                                    "icmp",
-                                    "icmpv6",
-                                    "igmp",
-                                    "l2tp",
-                                    "ospfigp",
-                                    "pim",
-                                    "tcp",
-                                    "udp", 
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "match_dscp":{
-                                "description": "Target DSCP Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "AF11",
-                                    "AF12",
-                                    "AF13",
-                                    "AF21",
-                                    "AF22",
-                                    "AF23",
-                                    "AF31",
-                                    "AF32",
-                                    "AF33",
-                                    "AF41",
-                                    "AF42",
-                                    "AF43",
-                                    "CS0",
-                                    "CS1",
-                                    "CS2",
-                                    "CS3",
-                                    "CS4",
-                                    "CS5",
-                                    "CS6",
-                                    "CS7",
-                                    "EF",
-                                    "VA",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "match_only_fragments":{
-                                "description": "Match Only Fragements Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
                             "optional_args":{
                                 "description": "",
-                                "global_alias": ""
+                                "global_alias": "",
+                                "alias": "",
+                                "schema": "",
+                                "sites": "",
+                                "template": ""
                             },
-                            "required_args" : {
-                                "acknowledgement": "",
-                                "arp_flag": "",
-                                "destination_from": "",
-                                "destination_to": "",
-                                "established": "",
-                                "ethertype": "",
-                                "filter_name": "",
-                                "finish": "",
-                                "icmpv4_type": "",
-                                "icmpv6_type": "",
-                                "ip_protocol": "",
+                            "required_args":{
+                                "enable_policy_compression": "",
                                 "name": "",
-                                "match_dscp": "",
-                                "match_only_Frags": "",
-                                "reset": "",
+                                "qos_class": "",
+                                "contract_type": "",
+                                "scope": "",
                                 "site_group": "",
-                                "source_from": "",
-                                "source_to": "",
-                                "stateful": "",
-                                "synchronize": "",
-                                "tenant": "",
-                                "tcp_session_rules": ""
-                            },
-                            "reset":{
-                                "description": "TCP Session Rules - Option Reset.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "stateful":{
-                                "description": "Stateful Flag Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "synchronize":{
-                                "description": "TCP Session Rules - Option Synchronize.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "tenants.filterEntry":{
-                "allOf":[
-                    {},
-                    {
-                        "properties":{
-                            "acknowledgement":{
-                                "description": "TCP Session Rules - Option Acknowledgement.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "arp_flag":{
-                                "description": "ARP Flag Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "req",
-                                    "reply",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "established":{
-                                "description": "TCP Session Rules - Option Established.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "ethertype":{
-                                "description": "Ether Type Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "arp",
-                                    "fcoe",
-                                    "ip",
-                                    "ipv4",
-                                    "ipv6",
-                                    "trill",
-                                    "mac_security",
-                                    "mpls_ucast",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "finish":{
-                                "description": "TCP Session Rules - Option Finish.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "icmpv4_type":{
-                                "description": "ICMPv4 Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "dst-unreach",
-                                    "echo",
-                                    "echo-rep",
-                                    "src-quench",
-                                    "time-exceeded",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "icmpv6_type":{
-                                "description": "ICMPv6 Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "dst-unreach",
-                                    "echo-req",
-                                    "echo-rep",
-                                    "nbr-solicit",
-                                    "nbr-advert",
-                                    "redirect", 
-                                    "time-exceeded",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "ip_protocol":{
-                                "description": "ICMPv6 Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "egp",
-                                    "eigrp",
-                                    "igp",
-                                    "icmp",
-                                    "icmpv6",
-                                    "igmp",
-                                    "l2tp",
-                                    "ospfigp",
-                                    "pim",
-                                    "tcp",
-                                    "udp", 
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "match_dscp":{
-                                "description": "Target DSCP Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "AF11",
-                                    "AF12",
-                                    "AF13",
-                                    "AF21",
-                                    "AF22",
-                                    "AF23",
-                                    "AF31",
-                                    "AF32",
-                                    "AF33",
-                                    "AF41",
-                                    "AF42",
-                                    "AF43",
-                                    "CS0",
-                                    "CS1",
-                                    "CS2",
-                                    "CS3",
-                                    "CS4",
-                                    "CS5",
-                                    "CS6",
-                                    "CS7",
-                                    "EF",
-                                    "VA",
-                                    "unspecified"
-                                ],
-                                "default": "unspecified",
-                                "x-omitempty": true
-                            },
-                            "match_only_fragments":{
-                                "description": "Match Only Fragements Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "optional_args":{
-                                "description": "",
-                                "global_alias": ""
-                            },
-                            "required_args" : {
-                                "acknowledgement": "",
-                                "arp_flag": "",
-                                "destination_from": "",
-                                "destination_to": "",
-                                "established": "",
-                                "ethertype": "",
-                                "filter_name": "",
-                                "finish": "",
-                                "icmpv4_type": "",
-                                "icmpv6_type": "",
-                                "ip_protocol": "",
-                                "name": "",
-                                "match_dscp": "",
-                                "match_only_Frags": "",
-                                "reset": "",
-                                "site_group": "",
-                                "source_from": "",
-                                "source_to": "",
-                                "stateful": "",
-                                "synchronize": "",
-                                "tenant": "",
-                                "tcp_session_rules": ""
-                            },
-                            "reset":{
-                                "description": "TCP Session Rules - Option Reset.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "stateful":{
-                                "description": "Stateful Flag Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "synchronize":{
-                                "description": "TCP Session Rules - Option Synchronize.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
+                                "target_dscp": "",
+                                "tenant": ""
                             }
                         }
                     }

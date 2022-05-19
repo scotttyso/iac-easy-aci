@@ -6,6 +6,7 @@
 from easy_functions import countKeys, easyDict_append_policy, findVars
 from easy_functions import easyDict_append, easyDict_append_subtype
 from easy_functions import process_kwargs, process_workbook
+from easy_functions import required_args_add, required_args_remove
 from easy_functions import sensitive_var_site_group, validate_args
 import jinja2
 import json
@@ -18,16 +19,7 @@ aci_template_path = pkg_resources.resource_filename('class_tenants', 'templates/
 #======================================================
 # Exception Classes
 #======================================================
-class InsufficientArgs(Exception):
-    pass
-
 class ErrException(Exception):
-    pass
-
-class InvalidArg(Exception):
-    pass
-
-class LoginFailed(Exception):
     pass
 
 #=====================================================================================
@@ -45,39 +37,20 @@ class tenants(object):
     # Function - APIC Inband Configuration
     #======================================================
     def apic_inb(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {
-            'site_group': '',
-            'name': '',
-            'node_id': '',
-            'pod_id': '',
-            'Inband_EPG': ''
-        }
-        optional_args = {
-            'Inband_IPv4': '',
-            'Inband_GWv4': '',
-            'Inband_IPv6': '',
-            'Inband_GWv6': '',
-        }
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.apic.InbandMgmt']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Configure the Generic Template Variables
-        templateVars['Device_Type'] = 'apic'
-        templateVars['Type'] = 'in_band'
-        templateVars['EPG'] = templateVars['Inband_EPG']
-        templateVars['IPv4'] = templateVars['Inband_IPv4']
-        templateVars['GWv4'] = templateVars['Inband_GWv4']
-        templateVars['IPv6'] = templateVars['Inband_IPv6']
-        templateVars['GWv6'] = templateVars['Inband_GWv6']
-
-        # Initialize the Class
-        lib_aci_ref = 'Access_Policies'
-        class_init = '%s(ws)' % (lib_aci_ref)
-
-        # Assign the APIC Inband Management IP's
-        eval("%s.%s(wb, ws, row_num, **templateVars)" % (class_init, 'mgmt_static'))
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'apics_inband'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Application Profiles
@@ -557,37 +530,61 @@ class tenants(object):
     #======================================================
     def contract_add(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contracts']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.Contracts']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('tenant', templateVars['tenant'])
-            validating.validator('contract', templateVars['contract'])
-            validating.values('target_dscp', jsonData, **kwargs)
-            validating.values('qos_class', jsonData, **kwargs)
-            validating.values('contract_type', templateVars['contract_type'], ['OOB', 'Standard', 'Taboo'])
-            validating.values('scope', templateVars['scope'], ['application-profile', 'context', 'global', 'tenant'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'contracts'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
-        # Define the Template Source
-        if templateVars['contract_type'] == 'OOB':
-            template_file = "contract_oob.jinja2"
-        elif templateVars['contract_type'] == 'Standard':
-            template_file = "contract.jinja2"
-        elif templateVars['contract_type'] == 'Taboo':
-            template_file = "contract_taboo.jinja2"
-        dest_file = 'contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['contract'])
-        template = self.templateEnv.get_template(template_file)
+    #======================================================
+    # Function - Application Profiles
+    #======================================================
+    def contract_assign(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
 
-        # Process the template through the Sites
-        dest_dir = 'tenant_%s' % (templateVars['tenant'])
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['monitoring_policy'] = 'default'
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'application_profiles'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Contracts - Add Subject
+    #======================================================
+    def contract_filters(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.ContractFilters']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'contracts'
+        templateVars['data_subtype'] = 'filters'
+        templateVars['policy_name'] = templateVars['contract']
+        templateVars.pop('contract')
+        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Add Contract to EPG
@@ -651,149 +648,100 @@ class tenants(object):
     # Function - Application EPG
     #======================================================
     def epg_add(self, **kwargs):
-        # Open the Network Policies Worksheet
-        ws_net = kwargs['wb']['Network Policies']
-        rows = ws_net.max_row
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
 
-        # Get the EPG Policies from the Network Policies Tab
-        func = 'epg'
-        count = countKeys(ws_net, func)
-        row_net = ''
-        var_dict = findVars(ws_net, func, rows, count)
-        for pos in var_dict:
-            if var_dict[pos].get('policy_name') == kwargs.get('epg_policy'):
-                row_net = var_dict[pos]['row']
-                del var_dict[pos]['row']
-                kwargs = {**kwargs, **var_dict[pos]}
-
-        if kwargs['custom_qos'] == 'default':
-            kwargs['custom_qos'] = 'uni/tn-common/qoscustom-default'
-        if kwargs['data_plane_policer'] == 'default':
-            kwargs['data_plane_policer'] = 'uni/tn-common/qosdpppol-default'
-        if kwargs['fhs_trust_control_policy'] == 'default':
-            kwargs['fhs_trust_control_policy'] = 'uni/tn-common/trustctrlpol-default'
+        # Attach the EPG Policy Additional Attributes
+        if kwargs['easyDict']['tenants']['application_epg_policies'].get(templateVars['epg_policy']):
+            epgpolicy = kwargs['easyDict']['tenants']['application_epg_policies'][templateVars['epg_policy']]
+        else:
+            validating.error_policy_not_found('epg_policy', **kwargs)
 
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationEpgs']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
+
+        pop_list = []
+        if re.search('^(inb|oob)$', epgpolicy['epg_type']):
+            pop_list.append('application_profile')
+            if epgpolicy['epg_type'] == 'oob': pop_list.append('bridge_domain')
+            jsonData = required_args_remove(pop_list, jsonData)
+        
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('application_profile', **kwargs)
-            validating.validator('bridge_domain', **kwargs)
-            validating.validator('name', **kwargs)
-            validating.validator('tenant', **kwargs)
-            if not kwargs['alias'] == None:
-                validating.validator('alias', **kwargs)
-            if not kwargs['description'] == None:
-                validating.validator('description', **kwargs)
-            if not kwargs['annotations'] == None:
-                validating.validator_array('annotations', **kwargs)
-            if not kwargs['physical_domains'] == None:
-                if re.match(',', kwargs['physical_domains']):
-                    validating.validator_list('physical_domains', **kwargs)
-                else:
-                    validating.validator('physical_domains', **kwargs)
-            if not templateVars['vmm_domains'] == None:
-                if re.match(',', templateVars['vmm_domains']):
-                    validating.validator_list('vmm_domains', **kwargs)
-                else:
-                    validating.validator('vmm_domains', **kwargs)
-            if not templateVars['epg_to_aaeps'] == None:
-                validating.validator('epg_to_aaeps', templateVars['epg_to_aep'])
-            if not templateVars['vlans'] == None:
-                validating.vlans('vlans', templateVars['vlans'])
-            row_num = kwargs['row_num']
-            ws = kwargs['ws']
-            kwargs['row_num'] = row_net
-            kwargs['ws'] = ws_net
-            validating.values('qos_class', jsonData, **kwargs)
-            validating.values('epg_admin_state', jsonData, **kwargs)
-            validating.values('flood_in_encapsulation', jsonData, **kwargs)
-            validating.values('intra_epg_isolation', jsonData, **kwargs)
-            validating.values('label_match_criteria', jsonData, **kwargs)
-            validating.values('preferred_group_member', jsonData, **kwargs)
-            validating.values('useg_epg', jsonData, **kwargs)
-            kwargs['row_num'] = row_num
-            kwargs['ws'] = ws
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
+        if re.search('^(inb|oob)$', epgpolicy['epg_type']):
+            jsonData = required_args_add(pop_list, jsonData)
 
-        wb = kwargs['wb']
-        if not templateVars['VLAN'] == None:
-            # Define the Template Source
-            template_file = "static_path.jinja2"
-            template = self.templateEnv.get_template(template_file)
-
-            dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-            dest_dir = 'tenant_%s' % (templateVars['tenant'])
-            process_workbook('a+', dest_dir, dest_file, template, **templateVars)
-
-        if not templateVars['epg_to_aep'] == None:
-            if re.search(',', templateVars['epg_to_aep']):
-                # Define the Template Source
-                aep_list = templateVars['epg_to_aep'].split(',')
-                for aep in aep_list:
-                    templateVars['AAEP'] = aep
-
-                    # Define the Template Source
-                    template_file = "policies_global_aep_generic.jinja2"
-                    template = self.templateEnv.get_template(template_file)
-
-                    # Process the template through the Sites
-                    dest_file = 'Policies_Global_AEP_%s_generic.tf' % (templateVars['AAEP'])
-                    dest_dir = 'Access'
-                    
-
-                    # Define the Template Source
-                    template_file = "data_access_generic.jinja2"
-                    template = self.templateEnv.get_template(template_file)
-
-                    # Process the template through the Sites
-                    dest_file = 'data_AEP_%s.tf' % (templateVars['AAEP'])
-                    dest_dir = 'tenant_%s' % (templateVars['tenant'])
-                    
-
-                    # Define the Template Source
-                    template_file = "epgs_using_function.jinja2"
-                    template = self.templateEnv.get_template(template_file)
-
-                    # Process the template through the Sites
-                    dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                    dest_dir = 'tenant_%s' % (templateVars['tenant'])
-                    
+        dlist = ['physical_domains', 'vmm_domains']
+        for i in dlist:
+            if ',' in templateVars[i]:
+                templateVars[i] = templateVars[i].split(',')
             else:
-                templateVars['AAEP'] = templateVars['EPG_to_AAEP']
-                # Define the Template Source
-                template_file = "policies_global_aep_generic.jinja2"
-                template = self.templateEnv.get_template(template_file)
+                templateVars[i] = templateVars[i]
 
-                # Process the template through the Sites
-                dest_file = 'Policies_Global_AEP_%s_generic.tf' % (templateVars['AAEP'])
-                dest_dir = 'Access'
-                
+        vmmpolicy = {}
+        if len(templateVars['vmm_domains']) > 0:
+            # Attach the EPG VMM Policy Additional Attributes
+            if kwargs['easyDict']['tenants']['application_epg_vmm_policies'].get(templateVars['epg_vmm_policy']):
+                vmmpolicy.update(kwargs['easyDict']['tenants']['application_epg_vmm_policies'][templateVars['epg_vmm_policy']])
+            else:
+                validating.error_policy_not_found('epg_vmm_policy', **kwargs)
 
-                # Define the Template Source
-                template_file = "data_access_generic.jinja2"
-                template = self.templateEnv.get_template(template_file)
+        templateVars = templateVars + epgpolicy + vmmpolicy
+        templateVars['contracts'] = []
 
-                # Process the template through the Sites
-                dest_file = 'data_AEP_%s.tf' % (templateVars['AAEP'])
-                dest_dir = 'tenant_%s' % (templateVars['tenant'])
-                
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'application_epgs'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
-                # Define the Template Source
-                template_file = "epgs_using_function.jinja2"
-                template = self.templateEnv.get_template(template_file)
+    #======================================================
+    # Function - VRF - Policy
+    #======================================================
+    def epg_policy(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationEpgPolicies']['allOf'][1]['properties']
 
-                # Process the template through the Sites
-                dest_file = 'App_Profile_%s_EPG_%s.tf' % (templateVars['App_Profile'], templateVars['EPG'])
-                dest_dir = 'tenant_%s' % (templateVars['tenant'])
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        templateVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:templateVars}
+
+        # Add Dictionary to easyDict
+        policy_dict['class_type'] = 'tenants'
+        policy_dict['data_type'] = 'application_epg_policies'
+        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - VRF - Policy
+    #======================================================
+    def epg_vmm_policy(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationEpgVMMPolicies']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        templateVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:templateVars}
+
+        # Add Dictionary to easyDict
+        policy_dict['class_type'] = 'tenants'
+        policy_dict['data_type'] = 'application_epg_vmm_policies'
+        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - L3Out - External EPG
@@ -1106,89 +1054,42 @@ class tenants(object):
     # Function - Contract Filter
     #======================================================
     def filter_add(self, **kwargs):
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'tenant': '',
-                         'Filter': ''}
-        optional_args = {'description': '',
-                         'alias': '',
-                         'annotation': ''}
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.Filter']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['filter_entries'] = []
 
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('Filter', templateVars['Filter'])
-            validating.validator('tenant', templateVars['tenant'])
-            if not templateVars['alias'] == None:
-                validating.validator('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.validator('description', templateVars['description'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-        # Define the Template Source
-        template_file = "contract_filter.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'contract_Filter_%s.tf' % (templateVars['Filter'])
-        dest_dir = 'tenant_%s' % (templateVars['tenant'])
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'filters'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
 
     #======================================================
     # Function - Contract Filter - Filter Entry
     #======================================================
     def filter_entry(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.filterEntry']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.filterEntry']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        try:
-            # Validate Required Arguments
-            validating.filter_ports('destination_from', **kwargs)
-            validating.filter_ports('destination_to', **kwargs)
-            validating.filter_ports('source_from', **kwargs)
-            validating.filter_ports('source_to', **kwargs)
-            validating.site_group('site_group', **kwargs)
-            validating.validator('filter_name', **kwargs)
-            validating.validator('name', **kwargs)
-            validating.validator('tenant', **kwargs)
-            validating.values('acknowledgement', jsonData, **kwargs)
-            validating.values('arp_flag', jsonData, **kwargs)
-            validating.values('established', jsonData, **kwargs)
-            validating.values('ethertype', jsonData, **kwargs)
-            validating.values('finish', jsonData, **kwargs)
-            validating.values('icmpv4_type', jsonData, **kwargs)
-            validating.values('icmpv6_type', jsonData, **kwargs)
-            validating.values('ip_protocol', jsonData, **kwargs)
-            validating.values('match_dscp', jsonData, **kwargs)
-            validating.values('match_only_frags', jsonData, **kwargs)
-            validating.values('reset', jsonData, **kwargs)
-            validating.values('stateful', jsonData, **kwargs)
-            validating.values('synchronize', jsonData, **kwargs)
-            if not templateVars['alias'] == None:
-                validating.validator('alias', **kwargs)
-            if not templateVars['description'] == None:
-                validating.validator('description', **kwargs)
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-        # Add Dictionary to easyDict
-        for items in kwargs['easyDict']['tenants']['filters']:
-            for k, v in items.items():
-                if k == kwargs['site_group']:
-                    for i in v:
-                        i['filter_entries'].append(templateVars)
-
-        # Return Dictionary
+        # Add Dictionary to Policy
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'filters'
+        templateVars['data_subtype'] = 'filter_entries'
+        templateVars['policy_name'] = templateVars['filter_name']
+        templateVars.pop('filter_name')
+        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
@@ -1410,182 +1311,6 @@ class tenants(object):
             # Process the template through the Sites
             dest_file = 'L3Out_%s.tf' % (templateVars['L3Out'])
             dest_dir = 'tenant_%s' % (templateVars['tenant'])
-
-    #======================================================
-    # Function - Management EPG
-    #======================================================
-    def mgmt_epg(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Dicts for Bridge Domain required and optional args
-        required_args = {'site_group': '',
-                         'Type': '',
-                         'EPG': '',
-                         'qos_class': ''}
-        optional_args = {'annotation': '',
-                         'VLAN': '',
-                         'Bridge_Domain': '',
-                         'tenant': '',
-                         'consumed_contracts': '',
-                         'provided_contracts': '',
-                         'match_t': '',
-                         'contract_Interfaces': '',
-                         'Taboo_contracts': '',
-                         'Subnets': '',
-                         'Static_Routes': '',}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        templateVars['consume_count'] = 1
-        templateVars['provide_count'] = 1
-        templateVars['interface_count'] = 1
-        templateVars['taboo_count'] = 1
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.validator('EPG', templateVars['EPG'])
-            validating.values('qos_class', jsonData, **kwargs)
-            validating.values('Type', templateVars['Type'], ['in_band', 'out_of_band'])
-            if templateVars['Type'] == 'in_band':
-                validating.vlans('VLAN', templateVars['VLAN'])
-                validating.validator('Bridge_Domain', templateVars['Bridge_Domain'])
-            if not templateVars['tenant'] == None:
-                validating.validator('tenant', templateVars['tenant'])
-                if re.search(',', templateVars['provided_contracts']):
-                    templateVars['provide_count'] =+ 1
-                    for x in templateVars['provided_contracts'].split(','):
-                        validating.validator('provided_contracts', x)
-                else:
-                    validating.validator('provided_contracts', templateVars['provided_contracts'])
-                if templateVars['Type'] == 'in_band':
-                    if not templateVars['consumed_contracts'] == None:
-                        if re.search(',', templateVars['consumed_contracts']):
-                            templateVars['provide_count'] =+ 1
-                            for x in templateVars['consumed_contracts'].split(','):
-                                validating.validator('consumed_contracts', x)
-                        else:
-                            validating.validator('consumed_contracts', templateVars['consumed_contracts'])
-                    if not templateVars['contract_Interfaces'] == None:
-                        if re.search(',', templateVars['contract_Interfaces']):
-                            for x in templateVars['contract_Interfaces'].split(','):
-                                templateVars['interface_count'] =+ 1
-                                validating.not_empty('contract_Interfaces', x)
-                        else:
-                            validating.not_empty('contract_Interfaces', templateVars['contract_Interfaces'])
-                    if not templateVars['Taboo_contracts'] == None:
-                        if re.search(',', templateVars['Taboo_contracts']):
-                            templateVars['taboo_count'] =+ 1
-                            for x in templateVars['Taboo_contracts'].split(','):
-                                validating.not_empty('Taboo_contracts', x)
-                        else:
-                            validating.not_empty('Taboo_contracts', templateVars['Taboo_contracts'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-        if not templateVars['tenant'] == 'mgmt':
-            dest_dir = 'tenant_mgmt'
-
-            template_file = 'data_tenant.jinja2'
-            template = self.templateEnv.get_template(template_file)
-            dest_file = 'data_tenant_%s.tf' % (templateVars['tenant'])
-            
-
-            templateVars['contract_type'] = 'Standard'
-            if not templateVars['consumed_contracts'] == None:
-                if re.search(',', templateVars['consumed_contracts']):
-                    for x in templateVars['consumed_contracts'].split(','):
-                        templateVars['contract'] = x
-                        template_file = 'data_contract.jinja2'
-                        template = self.templateEnv.get_template(template_file)
-                        dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], x)
-                        
-                else:
-                    templateVars['contract'] = templateVars['consumed_contracts']
-                    template_file = 'data_contract.jinja2'
-                    template = self.templateEnv.get_template(template_file)
-                    dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['consumed_contracts'])
-                    
-
-            if not templateVars['contract_Interfaces'] == None:
-                if re.search(',', templateVars['contract_Interfaces']):
-                    for x in templateVars['contract_Interfaces'].split(','):
-                        templateVars['contract'] = x
-                        template_file = 'data_contract.jinja2'
-                        template = self.templateEnv.get_template(template_file)
-                        dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], x)
-                        
-                else:
-                    templateVars['contract'] = templateVars['contract_Interfaces']
-                    template_file = 'data_contract.jinja2'
-                    template = self.templateEnv.get_template(template_file)
-                    dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['contract_Interfaces'])
-                    
-
-            if not templateVars['provided_contracts'] == None:
-                if templateVars['Type'] == 'in_band':
-                    if re.search(',', templateVars['provided_contracts']):
-                        for x in templateVars['provided_contracts'].split(','):
-                            templateVars['contract'] = x
-                            template_file = 'data_contract.jinja2'
-                            template = self.templateEnv.get_template(template_file)
-                            dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], x)
-                            
-                    else:
-                        templateVars['contract'] = templateVars['provided_contracts']
-                        template_file = 'data_contract.jinja2'
-                        template = self.templateEnv.get_template(template_file)
-                        dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['provided_contracts'])
-                        
-
-            templateVars['contract_type'] = 'Taboo'
-            if not templateVars['Taboo_contracts'] == None:
-                if re.search(',', templateVars['Taboo_contracts']):
-                    for x in templateVars['Taboo_contracts'].split(','):
-                        templateVars['contract'] == x
-                        template_file = 'data_contract_taboo.jinja2'
-                        template = self.templateEnv.get_template(template_file)
-                        dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], x)
-                        
-                else:
-                    templateVars['contract'] = templateVars['Taboo_contracts']
-                    template_file = 'data_contract_taboo.jinja2'
-                    template = self.templateEnv.get_template(template_file)
-                    dest_file = 'data_contract_type_%s_%s.tf' % (templateVars['contract_type'], templateVars['contract_type'])
-                    
-
-        # Define the Template Source and Destination File
-        template_file = "epg_mgmt.jinja2"
-        template = self.templateEnv.get_template(template_file)
-        dest_file = 'EPG_Mgmt_Type_%s_EPG_%s.tf' % (templateVars['Type'], templateVars['EPG'])
-
-        # Process the template through the Sites
-        dest_dir = 'tenant_mgmt'
-        
-
-        # Define the Template Source and Destination File
-        template_file = "var_mgmt.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        if templateVars['Type'] == 'in_band':
-            templateVars['var_name'] = 'in_band'
-            dest_file = 'var_Mgmt_EPG_%s.tf' % ('inb')
-        else:
-            templateVars['var_name'] = 'out_of_band'
-            dest_file = 'var_Mgmt_EPG_%s.tf' % ('oob')
-
-        # Process the template through the Sites
-        dest_dir = 'Access'
-        
-        dest_dir = 'Admin'
-        
-        dest_dir = 'Fabric'
 
     #======================================================
     # Function - L3Out - Node Interface
@@ -2109,77 +1834,6 @@ class tenants(object):
         templateVars['data_type'] = 'ospf_interface_policies'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
-
-    #======================================================
-    # Function - Contracts - Add Subject
-    #======================================================
-    def subject_add(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Dicts for required and optional args
-        required_args = {'site_group': '',
-                         'tenant': '',
-                         'Subject': '',
-                         'contract_type': '',
-                         'contract': '',
-                         'Reverse_Filter_Ports': '',
-                         'qos_class': '',
-                         'target_dscp': '',
-                         'Filters_to_Assign': ''}
-        optional_args = {'description': '',
-                         'alias': '',
-                         'annotation': ''}
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(required_args, optional_args, **kwargs)
-
-        templateVars['filters_count'] = 1
-        try:
-            # Validate Required Arguments
-            validating.site_group('site_group', **kwargs)
-            validating.dscp('target_dscp', templateVars['target_dscp'])
-            validating.validator('contract', templateVars['contract'])
-            validating.validator('Subject', templateVars['Subject'])
-            validating.validator('tenant', templateVars['tenant'])
-            validating.values('qos_class', jsonData, **kwargs)
-            validating.values('contract_type', templateVars['contract_type'], ['OOB', 'Standard', 'Taboo'])
-            validating.values('Reverse_Filter_Ports', templateVars['Reverse_Filter_Ports'], ['no', 'yes'])
-            if not templateVars['alias'] == None:
-                validating.validator('alias', templateVars['alias'])
-            if not templateVars['description'] == None:
-                validating.validator('description', templateVars['description'])
-            if not templateVars['Filters_to_Assign'] == None:
-                if re.search(',', templateVars['Filters_to_Assign']):
-                    templateVars['filters_count'] =+ 1
-                    for x in templateVars['Filters_to_Assign'].split(','):
-                        validating.validator('Filters_to_Assign', x)
-                else:
-                    validating.validator('Filters_to_Assign', templateVars['Filters_to_Assign'])
-        except Exception as err:
-            errorReturn = '%s\nError on Worksheet %s Row %s.  Please verify Input Information.' % (
-                SystemExit(err), kwargs['ws'], kwargs['row_num'])
-            raise ErrException(errorReturn)
-
-        # Define the Template Source
-        template_file = "contract_subject.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Define the Template Source
-        if templateVars['contract_type'] == 'OOB':
-            template_file = "contract_subject.jinja2"
-        elif templateVars['contract_type'] == 'Standard':
-            template_file = "contract_subject.jinja2"
-        elif templateVars['contract_type'] == 'Taboo':
-            template_file = "contract_subject.jinja2"
-        template = self.templateEnv.get_template(template_file)
-
-        # Process the template through the Sites
-        dest_file = 'contract_type_%s_%s_Subj_%s.tf' % (templateVars['contract_type'], templateVars['contract'], templateVars['Subject'])
-        dest_dir = 'tenant_%s' % (templateVars['tenant'])
 
     #======================================================
     # Function - Bridge Domain - Subnets
