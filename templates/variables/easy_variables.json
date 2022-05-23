@@ -5624,53 +5624,11 @@
                                 "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "contract_exception_tag":{
-                                "description": "The contract exception tag name.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 512,
-                                "pattern":"^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "custom_qos":{
-                                "description": "Name of an Existing custom QoS Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern":"^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
                             "custom_epg_name":{
                                 "description": "Enables you to enter a custom name for an EPG when associating the EPG with a Virtual Machine Manager (VMM) domain. The feature is supported for VMware Virtual Distributed Switch (VDS) and Microsoft VM network.  If you enter a custom name for the EPG, the same name is applied to the VMware vCenter port group or the Microsoft VM network. However, if you do not enter a custom name, the EPG-VMM domain association creates a VMware vCenter port group with a name in the format tenant|app_profile|epg_name or a Microsoft VM network with a name in the format tenant|application|epg|domain.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 80,
-                                "pattern":"^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "data_plane_policer":{
-                                "description": "Name of an Existing Data Plane Policer Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern":"^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "epg_admin_state":{
-                                "description": "EPG Admin State.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "admin_up",
-                                    "admin_shut"
-                                ],
-                                "default": "admin_up",
-                                "x-omitempty": true
-                            },
-                            "epg_contract_master":{
-                                "description": "The Name of an Existing EPG that will serve as contract master for this EPG, from which this EPG will inherit contracts (you must have previously created the contract master EPG.)",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
                                 "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
@@ -5688,75 +5646,6 @@
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern":"^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "epg_type":{
-                                "description": "The Type of EPG to apply this to.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "inb",
-                                    "oob",
-                                    "standard"
-                                ],
-                                "default": "standard",
-                                "x-omitempty": true
-                            },
-                            "fhs_trust_control_policy":{
-                                "description": "The Name of an Existing First Hop Security Trust Contol Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern":"^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "fibre_channel_domain_association":{
-                                "description": "The Name of an Existing Fibre Channel Domain.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern":"^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "flood_in_encapsulation":{
-                                "description": "Flood in Encapsulation.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "disabled",
-                                    "enabled"
-                                ],
-                                "default": "disabled",
-                                "x-omitempty": true
-                            },
-                            "has_multicast_source":{
-                                "description": "EPG with Multisite Multicast Source.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "intra_epg_isolation":{
-                                "description": "Intra EPG Isolation.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "enforced",
-                                    "unenforced"
-                                ],
-                                "default": "unenforced",
-                                "x-omitempty": true
-                            },
-                            "label_match_criteria":{
-                                "description": "Label Match Criteria.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "All",
-                                    "AtleastOne",
-                                    "AtmostOne",
-                                    "None"
-                                ],
-                                "default": "AtleastOne",
                                 "x-omitempty": true
                             },
                             "optional_args":{
@@ -5789,16 +5678,6 @@
                                 "pattern":"^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "preferred_group_member":{
-                                "description": "Preferred Group Member.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "exclude",
-                                    "include"
-                                ],
-                                "default": "exclude",
-                                "x-omitempty": true
-                            },
                             "required_args":{
                                 "application_profile": "",
                                 "bridge_domain": "",
@@ -5814,16 +5693,6 @@
                                 "site_group": "",
                                 "tenant": "",
                                 "useg_epg": ""
-                            },
-                            "useg_epg":{
-                                "description": "Micro-Segmentation EPG.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
                             },
                             "vmm_domains":{
                                 "description": "Name(s) of the VMM Domains to associate to this EPG.",
@@ -6653,6 +6522,14 @@
                                 "pattern":"^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified|[\\d]{1,4}|[1-6][0-5][0-5][0-3][0-5])$",
                                 "x-omitempty": true
                             },
+                            "destination_port_to":{
+                                "description": "The end of the destination port range. The end of the port range is determined by the server type. You can define a single port by specifying the same value in the From and To fields, or you can define a range of ports from 0 to 65535 by specifying different values in the From and To fields.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 512,
+                                "pattern":"^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified|[\\d]{1,4}|[1-6][0-5][0-5][0-3][0-5])$",
+                                "x-omitempty": true
+                            },
                             "established":{
                                 "description": "TCP Session Rules - Option Established.",
                                 "type": "list_of_values",
@@ -6819,6 +6696,22 @@
                                 "default": "false",
                                 "x-omitempty": true
                             },
+                            "source_port_from":{
+                                "description": "The start of the source port range. The start of the port range is determined by the server type. You can define a single port by specifying the same value in the From and To fields, or you can define a range of ports from 0 to 65535 by specifying different values in the From and To fields.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 512,
+                                "pattern":"^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified|[\\d]{1,4}|[1-6][0-5][0-5][0-3][0-5])$",
+                                "x-omitempty": true
+                            },
+                            "source_port_to":{
+                                "description": "The end of the source port range. The end of the port range is determined by the server type. You can define a single port by specifying the same value in the From and To fields, or you can define a range of ports from 0 to 65535 by specifying different values in the From and To fields.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 512,
+                                "pattern":"^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified|[\\d]{1,4}|[1-6][0-5][0-5][0-3][0-5])$",
+                                "x-omitempty": true
+                            },
                             "stateful":{
                                 "description": "Stateful Flag Values.",
                                 "type": "list_of_values",
@@ -6843,25 +6736,205 @@
                     }
                 ]
             },
+            "tenants.contract.ContractAssignments":{
+                "allOf":[
+                    {},
+                    {
+                        "properties":{
+                            "application_epgs":{
+                                "description": "List of EPGs to assign the Contract to.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "application_profile":{
+                                "description": "Name of the Application Profile containing the EPGs.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "apply_both_directions":{
+                                "description": "Flag to apply the contract in both directions.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "contract_name":{
+                                "description": "Name of the Contract.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "apply_type":{
+                                "description": "Based on the type of contract, how it should be applied.  A standard contract can be applied as a consumer, provider, interface or intra EPG apply type.  Taboo is just taboo.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "consumed",
+                                    "contract_interface",
+                                    "intra_epg",
+                                    "provided",
+                                    "taboo"
+                                ],
+                                "default": "provided",
+                                "x-omitempty": true
+                            },
+                            "external_epgs":{
+                                "description": "List of External EPGs to assign the Contract to.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "l3out":{
+                                "description": "Name of the L3Out containing the External EPGs.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args":{
+                                "application_epgs": "",
+                                "application_profile": "",
+                                "external_epgs": "",
+                                "l3out": "",
+                                "schema": "",
+                                "sites": "",
+                                "target_tenant": "",
+                                "template": "",
+                                "vrfs": ""
+                            },
+                            "required_args":{
+                                "apply_type": "",
+                                "contract": "",
+                                "site_group": "",
+                                "target_type": "",
+                                "tenant": ""
+                            },
+                            "target_tenant":{
+                                "description": "Name of the Tenant to apply the contract to.  If left blank the source tenant name will be used.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "target_type":{
+                                "description": "What is the target object for the Contract.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "epg",
+                                    "external_epg",
+                                    "vrf"
+                                ],
+                                "default": "epg",
+                                "x-omitempty": true
+                            },
+                            "vrfs":{
+                                "description": "List of VRFs to assign the Contract to.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "tenants.contract.ContractFilters":{
                 "allOf":[
                     {},
                     {
                         "properties":{
+                            "action":{
+                                "description": "Action to be taken when traffic matches filter criteria.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "deny",
+                                    "permit"
+                                ],
+                                "default": "permit",
+                                "x-omitempty": true
+                            },
+                            "apply_both_directions":{
+                                "description": "Flag to apply the contract in both directions.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "contract_name":{
+                                "description": "Name of the Contract.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "contract_type":{
+                                "description": "Type of Contract.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "OOB",
+                                    "Standard",
+                                    "Taboo"
+                                ],
+                                "default": "Standard",
+                                "x-omitempty": true
+                            },
+                            "enable_policy_compression":{
+                                "description": "Flag to enable contract data storage optimization.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "filters_to_assign":{
+                                "description": "List of Filters to assign to the Contract.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern":"^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "log":{
+                                "description": "Enables contract permit and deny logging.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
                             "optional_args":{
-                                "description": "",
-                                "global_alias": "",
-                                "alias": "",
-                                "schema": "",
-                                "sites": "",
-                                "template": ""
                             },
                             "required_args":{
-                                "enable_policy_compression": "",
-                                "name": "",
-                                "qos_class": "",
+                                "action": "",
+                                "apply_both_directions": "",
+                                "contract_name": "",
                                 "contract_type": "",
-                                "scope": "",
+                                "enable_policy_compression": "",
+                                "filters_to_assign": "",
+                                "log": "",
                                 "site_group": "",
                                 "target_dscp": "",
                                 "tenant": ""
@@ -6875,23 +6948,45 @@
                     {},
                     {
                         "properties":{
+                            "contract_type":{
+                                "description": "Type of Contract.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "OOB",
+                                    "Standard",
+                                    "Taboo"
+                                ],
+                                "default": "Standard",
+                                "x-omitempty": true
+                            },
                             "optional_args":{
+                                "alias": "",
                                 "description": "",
                                 "global_alias": "",
-                                "alias": "",
                                 "schema": "",
                                 "sites": "",
                                 "template": ""
                             },
                             "required_args":{
-                                "enable_policy_compression": "",
+                                "contract_type": "",
                                 "name": "",
                                 "qos_class": "",
-                                "contract_type": "",
                                 "scope": "",
                                 "site_group": "",
                                 "target_dscp": "",
                                 "tenant": ""
+                            },
+                            "scope":{
+                                "description": "The scope of a service contract between two or more EPGs. The states are:  * context — This contract will be applied for endpoint groups associated with the same VRF.  * application-profile — This contract will be applied for endpoint groups in the same application profile.  * tenant — This contract will be applied for endpoint groups within the same tenant.  * global — This contract will be applied for endpoint groups throughout the fabric.  The default is context.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "application-profile",
+                                    "context",
+                                    "global",
+                                    "tenant"
+                                ],
+                                "default": "context",
+                                "x-omitempty": true
                             }
                         }
                     }
