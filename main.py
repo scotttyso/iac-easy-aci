@@ -38,21 +38,21 @@ workspace_dict = {}
 # Regular Expressions to Control wich rows in the
 # Worksheet should be processed.
 #======================================================
-a1 = 'aep_profile|cdp|(fibre|port)_(channel|security)|interface_policy|l2_interface|(phys|l3)_domain'
-a2 = '(leaf|spine)_pg|link_level|lldp|mcp|pg_(access|breakout|bundle|spine)|stp|vlan_pool'
+a1 = '(domains_(l3|phys)|global_aaep|interface_policy|pg_(access|breakout|bundle|spine)'
+a2 = '(leaf|spine)_pg|pol_(cdp|fc|l2|link_level|lldp|mcp|port_(ch|sec)|stp)|pools_vlan)'
 access_regex = f'^({a1}|{a2})$'
 
 admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
-apps_epgs_regex = '^(apic_inb|(app|epg|vmm)_(add|policy)|mgmt_epg)$'
-bds_regex = '^((bd|subnet)_(add|general|l3))$'
+apps_epgs_regex = '^(apic_inb|(app|epg|vmm)_(add|(vmm_)?policy)|mgmt_epg)$'
+bds_regex = '^((bd)_(add|general|l3|subnet))$'
 contracts_regex = '(^(assign_contract|(contract|filter|subject)_(add|entry))$)'
 
 f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)'
 f2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'
 fabric_regex = f'^({f1}|{f2})$'
 
-l3out1 = '(bgp|eigrp|ospf)_(peer|profile|routing)'
-l3out2 = 'ext_epg(_oob|_policy|_subnets)?|l3out_(add|path)|node_(prof|intf|path)?'
+l3out1 = '((bgp|eigrp|ospf)_(peer|policy|profile|routing)|ext_epg(_policy|_sub)?)'
+l3out2 = 'l3out_(add|policy)|node_(interface|intf_(cfg|policy)|profile)?'
 l3out_regex = f'^({l3out1}|{l3out2})$'
 
 port_convert_regex = '^port_cnvt$'
@@ -169,20 +169,20 @@ def process_tenants(easyDict, easy_jsonData, wb):
     ws = wb['Bridge Domains']
     easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # # Evaluate the Apps and EPGs Worksheet
-    # func_regex = apps_epgs_regex
-    # ws = wb['Apps and EPGs']
-    # easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    # Evaluate the Apps and EPGs Worksheet
+    func_regex = apps_epgs_regex
+    ws = wb['Apps and EPGs']
+    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # # Evaluate the L3Out Worksheet
-    # func_regex = l3out_regex
-    # ws = wb['L3Out']
-    # easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    func_regex = l3out_regex
+    ws = wb['L3Out']
+    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # # Evaluate the Contracts Worksheet
-    # func_regex = contracts_regex
-    # ws = wb['Contracts']
-    # easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    func_regex = contracts_regex
+    ws = wb['Contracts']
+    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     return easyDict
 
@@ -348,12 +348,11 @@ def main():
             eval(f"{process_type}(easyDict, easy_jsonData, wb)")
 
     easyDict.pop('wb')
-    # print(json.dumps(easyDict['access']['virtual_networking'], indent = 4))
-    # exit()
 
     # Begin Proceedures to Create files
     easyDict['wb'] = wb
     read_easy_jsonData(easy_jsonData, **easyDict)
+    exit()
     merge_easy_aci_repository(easy_jsonData)
 
     folders = check_git_status()

@@ -40,7 +40,7 @@ class access(object):
     #======================================================
     # Function - Global Policies - AAEP Profiles
     #======================================================
-    def aep_profile(self, **kwargs):
+    def global_aaep(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['access.global.attachableAccessEntityProfile']['allOf'][1]['properties']
 
@@ -58,16 +58,16 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'aaep_policies'
+        templateVars['data_type'] = 'global_attachable_access_entity_profiles'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
-    # Function - Interface Policies - CDP
+    # Function - Domain - Layer 3
     #======================================================
-    def cdp(self, **kwargs):
+    def domains_l3(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.cdpInterface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.domains.Layer3']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -77,16 +77,16 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'cdp_interface_policies'
+        templateVars['data_type'] = 'domains_layer3'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
-    # Function - Interface Policies - Fibre Channel
+    # Function - Domains - Physical
     #======================================================
-    def fibre_channel(self, **kwargs):
+    def domains_phys(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.fibreChannelInterface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.domains.Physical']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -96,7 +96,7 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'fibre_channel_interface_policies'
+        templateVars['data_type'] = 'domains_physical'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -124,44 +124,6 @@ class access(object):
         return kwargs['easyDict']
 
     #======================================================
-    # Function - Interface Policies - L2 Interfaces
-    #======================================================
-    def l2_interface(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.L2Interface']['allOf'][1]['properties']
-
-        # Validate User Input
-        validate_args(jsonData, **kwargs)
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Add Dictionary to easyDict
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'l2_interface_policies'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-        return kwargs['easyDict']
-
-    #======================================================
-    # Function - Domain - Layer 3
-    #======================================================
-    def l3_domain(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.domains.Layer3']['allOf'][1]['properties']
-
-        # Validate User Input
-        validate_args(jsonData, **kwargs)
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Add Dictionary to easyDict
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'layer3_domains'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-        return kwargs['easyDict']
-
-    #======================================================
     # Function - Leaf Policy Group
     #======================================================
     def leaf_pg(self, **kwargs):
@@ -176,64 +138,7 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'leaf_policy_groups'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-        return kwargs['easyDict']
-
-    #======================================================
-    # Function - Interface Policies - Link Level (Speed)
-    #======================================================
-    def link_level(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.linkLevel']['allOf'][1]['properties']
-
-        # Validate User Input
-        validate_args(jsonData, **kwargs)
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Add Dictionary to easyDict
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'link_level_policies'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-        return kwargs['easyDict']
-
-    #======================================================
-    # Function - Interface Policies - LLDP
-    #======================================================
-    def lldp(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.lldpInterface']['allOf'][1]['properties']
-
-        # Validate User Input
-        validate_args(jsonData, **kwargs)
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Add Dictionary to easyDict
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'lldp_interface_policies'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-        return kwargs['easyDict']
-
-    #======================================================
-    # Function - Interface Policies - Mis-Cabling Protocol
-    #======================================================
-    def mcp(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.mcpInterface']['allOf'][1]['properties']
-
-        # Validate User Input
-        validate_args(jsonData, **kwargs)
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Add Dictionary to easyDict
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'mcp_interface_policies'
+        templateVars['data_type'] = 'switches_leaf_policy_groups'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -250,8 +155,9 @@ class access(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        if ',' in templateVars['netflow_monitor_policies']:
-            templateVars['netflow_monitor_policies'] = templateVars['netflow_monitor_policies'].split(',')
+        if not templateVars['netflow_monitor_policies'] == None:
+            if ',' in templateVars['netflow_monitor_policies']:
+                templateVars['netflow_monitor_policies'] = templateVars['netflow_monitor_policies'].split(',')
 
         # Attach the Interface Policy Additional Attributes
         if kwargs['easyDict']['access']['interface_policies'].get(templateVars['interface_policy']):
@@ -261,35 +167,7 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'leaf_port_group_access'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-        return kwargs['easyDict']
-
-    #======================================================
-    # Function - Policy Group - VPC/Port-Channel
-    #======================================================
-    def pg_bundle(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.leafBundle']['allOf'][1]['properties']
-
-        # Validate User Input
-        validate_args(jsonData, **kwargs)
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        if ',' in templateVars['netflow_monitor_policies']:
-            templateVars['netflow_monitor_policies'] = templateVars['netflow_monitor_policies'].split(',')
-
-        # Attach the Interface Policy Additional Attributes
-        if kwargs['easyDict']['access']['interface_policies'].get(templateVars['interface_policy']):
-            templateVars.update(kwargs['easyDict']['access']['interface_policies'][templateVars['interface_policy']])
-        else:
-            validating.error_policy_not_found('interface_policy', **kwargs)
-
-        # Add Dictionary to easyDict
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'leaf_port_group_bundle'
+        templateVars['data_type'] = 'leaf_interface_policy_groups_access'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -308,7 +186,36 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'leaf_port_group_breakout'
+        templateVars['data_type'] = 'leaf_interface_policy_groups_breakout'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Policy Group - VPC/Port-Channel
+    #======================================================
+    def pg_bundle(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.leafBundle']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        if not templateVars['netflow_monitor_policies'] == None:
+            if ',' in templateVars['netflow_monitor_policies']:
+                templateVars['netflow_monitor_policies'] = templateVars['netflow_monitor_policies'].split(',')
+
+        # Attach the Interface Policy Additional Attributes
+        if kwargs['easyDict']['access']['interface_policies'].get(templateVars['interface_policy']):
+            templateVars.update(kwargs['easyDict']['access']['interface_policies'][templateVars['interface_policy']])
+        else:
+            validating.error_policy_not_found('interface_policy', **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'leaf_interface_policy_groups_bundle'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -327,16 +234,16 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'spine_port_group_access'
+        templateVars['data_type'] = 'spine_interface_policy_groups'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
-    # Function - Domains - Physical
+    # Function - Interface Policies - CDP
     #======================================================
-    def phys_domain(self, **kwargs):
+    def pol_cdp(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.domains.Physical']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.cdpInterface']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -346,14 +253,109 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'physical_domains'
+        templateVars['data_type'] = 'policies_cdp_interface'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Interface Policies - Fibre Channel
+    #======================================================
+    def pol_fc(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.fibreChannelInterface']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'policies_fibre_channel_interface'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Interface Policies - L2 Interfaces
+    #======================================================
+    def pol_l2(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.L2Interface']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'policies_l2_interface'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Interface Policies - Link Level (Speed)
+    #======================================================
+    def pol_link_level(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.linkLevel']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'policies_link_level'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Interface Policies - LLDP
+    #======================================================
+    def pol_lldp(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.lldpInterface']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'policies_lldp_interface'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Interface Policies - Mis-Cabling Protocol
+    #======================================================
+    def pol_mcp(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.mcpInterface']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'policies_mcp_interface'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
     # Function - Interface Policies - Port Channel
     #======================================================
-    def port_channel(self, **kwargs):
+    def pol_port_ch(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.PortChannel']['allOf'][1]['properties']
 
@@ -365,20 +367,14 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'port_channel_policies'
+        templateVars['data_type'] = 'policies_port_channel'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #======================================================
-    # Function - Port Conversion
-    #======================================================
-    def port_cnvt(self, **kwargs):
-        print('hello')
-        
-    #======================================================
     # Function - Interface Policies - Port Security
     #======================================================
-    def port_security(self, **kwargs):
+    def pol_port_sec(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.portSecurity']['allOf'][1]['properties']
 
@@ -390,10 +386,54 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'port_security_policies'
+        templateVars['data_type'] = 'policies_port_security'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
+    #======================================================
+    # Function - Interface Policies - Spanning Tree
+    #======================================================
+    def pol_stp(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.spanningTreeInterface']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'policies_spanning_tree_interface'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - VLAN Pools
+    #======================================================
+    def pools_vlan(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.pools.Vlan']['allOf'][1]['properties']
+
+        # Validate User Input
+        validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'pools_vlan'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #======================================================
+    # Function - Port Conversion
+    #======================================================
+    def port_cnvt(self, **kwargs):
+        print('hello')
+        
     #======================================================
     # Function - Spine Policy Group
     #======================================================
@@ -409,45 +449,7 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'spine_policy_groups'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-        return kwargs['easyDict']
-
-    #======================================================
-    # Function - Interface Policies - Spanning Tree
-    #======================================================
-    def stp(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.spanningTreeInterface']['allOf'][1]['properties']
-
-        # Validate User Input
-        validate_args(jsonData, **kwargs)
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Add Dictionary to easyDict
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'spanning_tree_interface_policies'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-        return kwargs['easyDict']
-
-    #======================================================
-    # Function - VLAN Pools
-    #======================================================
-    def vlan_pool(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.pools.Vlan']['allOf'][1]['properties']
-
-        # Validate User Input
-        validate_args(jsonData, **kwargs)
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Add Dictionary to easyDict
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'vlan_pools'
+        templateVars['data_type'] = 'switches_spine_policy_groups'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -1359,7 +1361,7 @@ class switches(object):
         return kwargs['easyDict']
 
     #======================================================
-    # Function - Interface Selectors
+    # Function - Port Conversion
     #======================================================
     def port_cnvt(self, **kwargs):
         # Get Variables from Library
@@ -1589,7 +1591,7 @@ class switches(object):
         return easyDict
 
     #======================================================
-    # Function - Interface Policies - Spanning Tree
+    # Function - Switch Modules
     #======================================================
     def sw_modules(self, **kwargs):
         # Get Variables from Library
@@ -1659,7 +1661,7 @@ class system_settings(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
-        templateVars['data_type'] = 'bgp_asn'
+        templateVars['data_type'] = 'bgp_autonous_system_number'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -1681,7 +1683,7 @@ class system_settings(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
-        templateVars['data_type'] = 'bgp_rr'
+        templateVars['data_type'] = 'bgp_route_reflector'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 

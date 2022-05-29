@@ -403,11 +403,11 @@ def number_list(var, jsonData, **kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']
     varValue = kwargs[var]
-    if '-' in varValue:
+    if '-' in str(varValue):
         varValue = varValue.split('-')
-        if ',' in varValue:
+        if ',' in str(varValue):
             varValue = varValue.split(',')
-    elif ',' in varValue:
+    elif ',' in str(varValue):
         varValue = varValue.split(',')
     else:
         varValue = [varValue]

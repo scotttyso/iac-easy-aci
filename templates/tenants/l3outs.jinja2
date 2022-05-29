@@ -1,0 +1,172 @@
+
+  "{{ keys['name'] }}" = {
+{%- for k, v in keys.items() %}
+ {%- if k == 'controller_type' or k == 'class_type' or k == 'name' %}
+ {%- elif k == 'policy_type' or k == 'site_group' or k == 'template_type' %}
+ {%- elif v == None %}
+ {%- elif v | int(-1) != -1 %}
+    {{ k }} = {{ v }}
+ {%- elif v == 'false' or v == 'true' %}
+    {{ k }} = {{ v }}
+ {%- elif v is iterable and (v is not string and v is not mapping) %}
+    {{ k }} = [
+  {%- for item in v %}
+   {%- if item is mapping %}
+      {
+    {%- for key, value in item.items() %}
+     {%- if value == None %}
+     {%- elif value | int(-1) != -1 %}
+        {{ key }} = {{ value }}
+     {%- elif value == 'false' or value == 'true' %}
+        {{ key }} = {{ value }}
+     {%- elif value is mapping %}
+        {{ key }} = [
+          {
+      {%- for keys, values in value.items() %}
+       {%- if values == None %}
+       {%- elif values | int(-1) != -1 %}
+            {{ keys }} = {{ values }}
+       {%- elif values == 'false' or values == 'true' %}
+            {{ keys }} = {{ values }}
+       {%- else %}
+            {{ keys }} = "{{ values }}"
+       {%- endif %}
+      {%- endfor %}
+          }
+     {%- elif value is iterable and (value is not string and value is not mapping) %}
+        {{ key }} = [
+      {%- for i in value %}
+          {
+       {%- for keys, values in i.items() %}
+        {%- if values == None %}
+        {%- elif values | int(-1) != -1 %}
+            {{ keys }} = {{ values }}
+        {%- elif values == 'false' or values == 'true' %}
+            {{ keys }} = {{ values }}
+        {%- elif values == 'false' or values == 'true' %}
+            {{ keys }} = {{ values }}
+        {%- elif values is mapping %}
+            {{ keys }} = [
+              {
+          {%- for keyed, valued in values.items() %}
+           {%- if valued == None %}
+           {%- elif valued | int(-1) != -1 %}
+                {{ keyed }} = {{ valued }}
+           {%- elif valued == 'false' or valued == 'true' %}
+                {{ keyed }} = {{ valued }}
+           {%- else %}
+                {{ keyed }} = "{{ valued }}"
+           {%- endif %}
+          {%- endfor %}
+              }
+            ]
+        {%- elif values is iterable and (values is not string and values is not mapping) %}
+            {{ keys }} = [
+         {%- for s in values %}
+          {%- if not loop.last and s | int(-1) != -1 %}
+              {{ s }},
+          {%- elif s | int(-1) != -1 %}
+              {{ s }},
+          {%- elif not loop.last %}
+              "{{ s }}",
+          {%- else %}
+              "{{ s }}"
+          {%- endif %}
+         {%- endfor %}
+            ]
+        {%- else %}
+            {{ keys }} = "{{ values }}"
+        {%- endif %}
+       {%- endfor %}
+       {%- if not loop.last %}
+          },
+       {%- else %}
+          }
+       {%- endif %}
+      {%- endfor %}
+        ]
+      {%- elif value is mapping %}
+        {{ key }} = [
+          {
+      {%- for keys, values in value.items() %}
+       {%- if values == None %}
+       {%- elif values | int(-1) != -1 %}
+            {{ keys }} = {{ values }}
+       {%- elif values == 'false' or values == 'true' %}
+            {{ keys }} = {{ values }}
+       {%- else %}
+            {{ keys }} = "{{ values }}"
+       {%- endif %}
+      {%- endfor %}
+          }
+        ]
+     {%- else %}
+        {{ key }} = "{{ value }}"
+     {%- endif %}
+    {%- endfor %}
+    {%- if not loop.last %}
+      },
+    {%- else %}
+      }
+    {%- endif %}
+   {%- elif item | int(-1) != -1 %}
+      {{ item }}
+   {%- elif item == 'false' or item == 'true' %}
+      {{ item }}
+   {%- else %}
+      "{{ item }}"
+   {%- endif %}
+  {%- endfor %}
+    ]
+ {%- elif v is mapping %}
+    {{ k }} = [
+      {
+  {%- for key, value in v.items() %}
+   {%- if value == None %}
+   {%- elif value | int(-1) != -1 %}
+        {{ key }} = {{ value }}
+   {%- elif value == 'false' or value == 'true' %}
+        {{ key }} = {{ value }}
+   {%- elif value is mapping %}
+        {{ key }} = [
+          {
+     {%- for keys, values in value.items() %}
+      {%- if values == None %}
+      {%- elif values | int(-1) != -1 %}
+            {{ keys }} = {{ values }}
+      {%- elif values == 'false' or values == 'true' %}
+            {{ keys }} = {{ values }}
+      {%- else %}
+            {{ keys }} = "{{ values }}"
+      {%- endif %}
+     {%- endfor %}
+          }
+        ]
+   {%- elif value is iterable and (value is not string and value is not mapping) %}
+        {{ key }} = [
+          {
+    {%- for item in value %}
+     {%- for keys, values in item.items() %}
+      {%- if values == None %}
+      {%- elif values | int(-1) != -1 %}
+            {{ keys }} = {{ values }}
+      {%- elif values == 'false' or values == 'true' %}
+            {{ keys }} = {{ values }}
+      {%- else %}
+            {{ keys }} = "{{ values }}"
+      {%- endif %}
+     {%- endfor %}
+    {%- endfor %}
+          }
+        ]
+   {%- else %}
+        {{ key }} = "{{ value }}"
+   {%- endif %}
+  {%- endfor %}
+      }
+    ]
+ {%- else %}
+    {{ k }} = "{{ v }}"
+ {%- endif %}
+{%- endfor %}
+  }

@@ -39,15 +39,6 @@ log_level = 2
 class InsufficientArgs(Exception):
     pass
 
-class ErrException(Exception):
-    pass
-
-class InvalidArg(Exception):
-    pass
-
-class LoginFailed(Exception):
-    pass
-
 #======================================================
 # Function to run 'terraform plan' and
 # 'terraform apply' in the each folder of the
@@ -384,10 +375,12 @@ def easyDict_append_subtype(templateVars, **kwargs):
     templateVars.pop('site_group')
     if kwargs['easyDict'][class_type][data_type].get(kwargs['site_group']):
         for i in kwargs['easyDict'][class_type][data_type][kwargs['site_group']]:
+            # print(json.dumps(i, indent=4))
             if class_type == 'tenants':
                 if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
-                    templateVars.pop('tenant')
+                    # templateVars.pop('tenant')
                     i[data_subtype].append(templateVars)
+                    break
             else:
                 if i['name'] == policy_name:
                     i[data_subtype].append(templateVars)
@@ -478,7 +471,6 @@ def post(apic, payload, cookies, uri, section=''):
     if status != 200 and print_response_on_fail:
         print(r.text)
     return status
-
 
 #======================================================
 # Function to Merge Easy ACI Repository to Dest Folder
@@ -595,9 +587,13 @@ def interface_selector_workbook(templateVars, **kwargs):
 
     # Get the Interface Policy Groups from EasyDict
     if templateVars['node_type'] == 'spine':
-        pg_list = ['spine_port_group_access']
+        pg_list = ['spine_interface_policy_groups']
     else:
-        pg_list = ['leaf_port_group_access', 'leaf_port_group_breakout', 'leaf_port_group_bundle']
+        pg_list = [
+            'leaf_interface_policy_groups_access',
+            'leaf_interface_policy_groups_breakout',
+            'leaf_interface_policy_groups_bundle'
+        ]
     switch_pgs = {}
     for pgroup in pg_list:
         switch_pgs[pgroup] = []
@@ -1169,138 +1165,158 @@ def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, 
 def read_easy_jsonData(easy_jsonData, **easyDict):
     jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
     classes = jsonData['classes']['enum']
+
+    #==================
+    # Shared Functions
+    #==================
+
+    # Site_Group Dictionary
+    def site_group_dict(class_type, func, easyDict):
+        sites = []
+        site_groups = {}
+
+        # Get the List of Sites in the Function
+        for k, v in easyDict[class_type][func].items():
+            if re.search('[0-9]+', k):
+                sites.append(k)
+        # Get the List of Site Groups in the Function with their associated Sites.
+        for k, v in easyDict[class_type][func].items():
+            if re.search('Grp_', k):
+                site_groups.update({k:[]})
+                site_group = ast.literal_eval(os.environ[k])
+                gsites = []
+                for kk, vv in site_group.items():
+                    if not vv == None and re.search('site_[0-9]+', kk):
+                        gsites.append(vv)
+                for site in sites:
+                    for gsite in gsites:
+                        if int(site) == int(gsite):
+                            site_groups[k].append(site)
+        return site_groups
+
+    # Loop to write the Header and content to the files
     for class_type in classes:
         funcList = jsonData[f'class.{class_type}']['enum']
         for func in funcList:
-            sites = []
-            site_groups = {}
-            for k, v in easyDict[class_type][func].items():
-                if re.search('[0-9]+', k):
-                    sites.append(k)
-            for k, v in easyDict[class_type][func].items():
-                if re.search('Grp_', k):
-                    site_groups.update({k:[]})
-                    site_group = ast.literal_eval(os.environ[k])
-                    gsites = []
-                    for kk, vv in site_group.items():
-                        if not vv == None and re.search('site_[0-9]+', kk):
-                            gsites.append(vv)
-                    for site in sites:
-                        for gsite in gsites:
-                            if int(site) == int(gsite):
-                                site_groups[k].append(site)
+            site_groups = site_group_dict(class_type, func, easyDict)
             loop_count = 1
             switch_count = 1
             for k, v in easyDict[class_type][func].items():
-                dummy_count = 1
-                countlength = len(v)
                 for i in v:
-                    # print(i)
                     templateVars = i
-                    # print(json.dumps(templateVars, indent=4))
-                    # exit()
-                    kwargs = {}
-                    kwargs['row_num'] = f'{func}_section'
-                    kwargs['site_group'] = k
-                    kwargs['site_group'] = k
-                    kwargs['ws'] = easyDict['wb']['System Settings']
-                    
+                    kwargs = {
+                        'row_num': f'{func}_section',
+                        'site_group': k,
+                        'ws': easyDict['wb']['System Settings']
+                    }
+
                     # Add Variables for Template Functions
                     templateVars['template_type'] = func
                         
-                    if re.search('(apic|bgp_asn)', func):
+                    if re.search('^(apic_connectivity_preference|bgp_autonous_system_number)$', func):
                         kwargs["template_file"] = 'template_open2.jinja2'
                     else:
                         kwargs["template_file"] = 'template_open.jinja2'
-                    if 'bgp' in func:
-                        templateVars['policy_type'] = func.replace('_', ' ').upper()
-                        kwargs['tfvars_file'] = 'bgp'
-                    else:
-                        if re.search('aaep_policies', func):
-                            kwargs['tfvars_file'] = 'global_policies'
-                        elif re.search('(layer3|physical)_domains', func):
-                            kwargs['tfvars_file'] = 'domains'
-                        elif 'access' in class_type and re.search('policies', func):
-                            kwargs['tfvars_file'] = 'interface_policies'
-                        elif re.search('leaf_port_group', func):
-                            kwargs['tfvars_file'] = 'leaf_interface_policy_groups'
-                        elif re.search('spine_port_group', func):
-                            kwargs['tfvars_file'] = 'spine_interface_policy_groups'
-                        elif 'access' in class_type and re.search('pools', func):
-                            kwargs['tfvars_file'] = 'pools'
+
+                    kwargs['tfvars_file'] = func
+                    x = func.split('_')
+                    policyType = ''
+                    xcount = 0
+                    for i in x:
+                        if not i == 'and' and xcount == 0:
+                            policyType = policyType + i.capitalize()
+                        elif 'and' in i:
+                            policyType = policyType + ' ' + i
                         else:
-                            kwargs['tfvars_file'] = func
-                        x = func.split('_')
-                        policyType = ''
-                        xcount = 0
-                        for i in x:
-                            if not i == 'and' and xcount == 0:
-                                policyType = policyType + i.capitalize()
-                            elif 'and' in i:
-                                policyType = policyType + ' ' + i
-                            else:
-                                policyType = policyType + ' ' + i.capitalize()
-                            xcount += 1
-                        policyType = policyType.replace('Aaep', 'AAEP')
-                        policyType = policyType.replace('Aes', 'AES')
-                        policyType = policyType.replace('Apic', 'APIC')
-                        policyType = policyType.replace('Cdp', 'CDP')
-                        policyType = policyType.replace('Lldp', 'LLDP')
-                        policyType = policyType.replace('Radius', 'RADIUS')
-                        policyType = policyType.replace('Snmp', 'SNMP')
-                        policyType = policyType.replace('Tacacs', 'TACACS+')
-                        policyType = policyType.replace('Vpc', 'VPC')
-                        templateVars['policy_type'] = policyType
+                            policyType = policyType + ' ' + i.capitalize()
+                        xcount += 1
+                    policyType = policyType.replace('Aaep', 'AAEP')
+                    policyType = policyType.replace('Aes', 'AES')
+                    policyType = policyType.replace('Apic', 'APIC')
+                    policyType = policyType.replace('Cdp', 'CDP')
+                    policyType = policyType.replace('Lldp', 'LLDP')
+                    policyType = policyType.replace('Radius', 'RADIUS')
+                    policyType = policyType.replace('Snmp', 'SNMP')
+                    policyType = policyType.replace('Tacacs', 'TACACS+')
+                    policyType = policyType.replace('Vpc', 'VPC')
+                    templateVars['policy_type'] = policyType
                     
-                    # Write the Header to the Template File
-                    if re.search('aaep|cdp|layer3|group_access|snmp|virtual|vlan_p|vpc', func) and loop_count == 1:
-                        kwargs["initial_write"] = True
-                    elif re.search('bgp_rr|policies|port_group|domains|virtual|vlan_p', func):
-                        kwargs["initial_write"] = False
-                    elif re.search('switch_profile', func):
-                        if templateVars['vpc_name'] == None:
-                            kwargs["initial_write"] = True
-                            write_to_site(templateVars, **kwargs)
-                            switch_count = 1
-                        elif not templateVars['vpc_name'] == None and switch_count == 1:
-                            switch_count = 2
-                            kwargs["initial_write"] = True
-                            write_to_site(templateVars, **kwargs)
-                        elif not templateVars['vpc_name'] == None and switch_count == 2:
-                            switch_count = 1
-                            kwargs["initial_write"] = False
-                    else:
-                        kwargs["initial_write"] = True
-                    if re.search('Grp_', k):
-                        if not len(site_groups[k]) > 0 and loop_count == 1:
-                            write_to_site(templateVars, **kwargs)
-                    elif loop_count == 1:
-                        write_to_site(templateVars, **kwargs)
+                    kwargs["initial_write"] = True
+                    # if re.search('switch_profile', func):
+                    #     if templateVars['vpc_name'] == None:
+                    #         kwargs["initial_write"] = True
+                    #         write_to_site(templateVars, **kwargs)
+                    #         switch_count = 1
+                    #     elif not templateVars['vpc_name'] == None and switch_count == 1:
+                    #         switch_count = 2
+                    #         kwargs["initial_write"] = True
+                    #         write_to_site(templateVars, **kwargs)
+                    #     elif not templateVars['vpc_name'] == None and switch_count == 2:
+                    #         switch_count = 1
+                    #         kwargs["initial_write"] = False
+                    # else:
+                    #     kwargs["initial_write"] = True
+                    # if re.search('Grp_', k):
+                    #     if not len(site_groups[k]) > 0 and loop_count == 1:
+                    #         write_to_site(templateVars, **kwargs)
+                    # elif loop_count == 1:
+                    #     write_to_site(templateVars, **kwargs)
+                    write_to_site(templateVars, **kwargs)
+
+        for func in funcList:
+            for k, v in easyDict[class_type][func].items():
+                for i in v:
+                    templateVars = i
+                    kwargs = {
+                        'row_num': f'{func}_section',
+                        'site_group': k,
+                        'ws': easyDict['wb']['System Settings']
+                    }
 
                     # Write the template to the Template File
+                    kwargs['tfvars_file'] = func
                     kwargs["initial_write"] = False
                     kwargs["template_file"] = f'{func}.jinja2'
                     write_to_site(templateVars, **kwargs)
 
-                    kwargs["initial_write"] = False
-                    kwargs["template_file"] = 'template_close.jinja2'
-                    
-                    if re.search('switch_profile', func) and switch_count == 1:
-                        write_to_site(templateVars, **kwargs)
-                    elif countlength > 1 and countlength != loop_count:
-                        dummy_count += 1
-                    elif re.search('apic|bgp_asn', func):
-                        dummy_count += 1
-                    elif re.search('[0-9]+', k):
-                        scount = 0
-                        for kk, vv in site_groups.items():
-                            if k in vv:
-                                scount += 1
-                        if scount == 0:
-                            write_to_site(templateVars, **kwargs)
-                    else:
-                        write_to_site(templateVars, **kwargs)
-                    loop_count += 1
+    # Obtain Operating System and Get TF_DEST_DIR variable from Environment
+    if os.environ.get('TF_DEST_DIR') is None:
+        tfDir = 'ACI'
+    else:
+        tfDir = os.environ.get('TF_DEST_DIR')
+
+    # Get All sub-folders from the TF_DEST_DIR
+    folders = []
+    for root, dirs, files in os.walk(tfDir):
+        for name in dirs:
+            # print(os.path.join(root, name))
+            folders.append(os.path.join(root, name))
+    folders.sort()
+
+    # Remove the First Level Folders from the List
+    for folder in folders:
+        if '/' in folder:
+            x = folder.split('/')
+            if len(x) == 2:
+                folders.remove(folder)
+
+    for folder in folders:
+        files = os.listdir(folder)
+        for x in files:
+            if 'auto.tfvars' in x:
+                if not re.search('(connectivity|bgp_auto)', x):
+                    file = open(os.path.join(folder,x), 'r')
+                    end_count = 0
+                    for line in file:
+                        if re.search(r'^}', line):
+                            end_count += 1
+                    file.close
+                    if end_count == 0:
+                            file = open(os.path.join(folder,x), 'a+')
+                            file.write('\n}\n')
+                            file.close()
+
+
 
 #======================================================
 # Function to Read Excel Workbook Data
@@ -1422,7 +1438,15 @@ def sensitive_var_value(**kwargs):
                 else:
                     secure_value = '\n'.join(lines)
             else:
-                secure_value = stdiomask.getpass(prompt=f'Enter the value for {kwargs["Variable"]}: ')
+                valid_pass = False
+                while valid_pass == False:
+                    password1 = stdiomask.getpass(prompt=f'Enter the value for {kwargs["Variable"]}: ')
+                    password2 = stdiomask.getpass(prompt=f'Re-Enter the value for {kwargs["Variable"]}: ')
+                    if password1 == password2:
+                        secure_value = password1
+                        valid_pass = True
+                    else:
+                        print('!!!Error!!! Sensitive Values did not match.  Please re-enter...')
 
             # Validate Sensitive Passwords
             cert_regex = re.compile(r'^\-{5}BEGIN (CERTIFICATE|PRIVATE KEY)\-{5}.*\-{5}END (CERTIFICATE|PRIVATE KEY)\-{5}$')
@@ -1440,9 +1464,18 @@ def sensitive_var_value(**kwargs):
                 if 'aes_passphrase' in sensitive_var:
                     sKey = 'aes_passphrase'
                     varTitle = 'Global AES Phassphrase'
+                elif 'bgp_password' in sensitive_var:
+                    sKey = 'password'
+                    varTitle = 'BGP Password'
+                elif 'eigrp_key' in sensitive_var:
+                    sKey = 'eigrp_key'
+                    varTitle = 'EIGRP Key.'
                 elif 'ntp_key' in sensitive_var:
                     sKey = 'key'
                     varTitle = 'NTP Key'
+                elif 'ospf_key' in sensitive_var:
+                    sKey = 'ospf_key'
+                    varTitle = 'OSPF Authentication Password.'
                 elif 'radius_key' in sensitive_var:
                     sKey = 'radius_key'
                     varTitle = 'The RADIUS shared secret cannot contain backslashes, space, or hashtag "#".'
@@ -1601,6 +1634,7 @@ def validate_args(jsonData, **kwargs):
         'events',
         'faults',
         'global_alias',
+        'l3out',
         'lldp_interface_policy',
         'login_domain',
         'management_epg',
@@ -1610,9 +1644,13 @@ def validate_args(jsonData, **kwargs):
         'name_alias',
         'node_id',
         'pod_id',
+        'policies_tenant',
+        'policy_name',
+        'profile_name',
         'port_channel_policy',
         'qos_class',
         'session_logs',
+        'target_dscp',
         'tenant',
         'username',
         'vrf'
@@ -1718,6 +1756,18 @@ def validate_args(jsonData, **kwargs):
                 validating.number_check(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'list_of_integer':
                 validating.number_list(i, jsonData, **kwargs)
+            elif jsonData[i]['type'] == 'list_of_hosts':
+                count = 1
+                for hostname in kwargs[i].split(','):
+                    kwargs[f'{i}_{count}'] = hostname
+                    if ':' in hostname:
+                        validating.ip_address(f'{i}_{count}', **kwargs)
+                    elif re.search('[a-z]', hostname, re.IGNORECASE):
+                        validating.dns_name(f'{i}_{count}', **kwargs)
+                    else:
+                        validating.ip_address(f'{i}_{count}', **kwargs)
+                    kwargs.pop(f'{i}_{count}')
+                    count += 1
             elif jsonData[i]['type'] == 'list_of_macs':
                 count = 1
                 for mac in kwargs[i].split(','):
@@ -1732,7 +1782,7 @@ def validate_args(jsonData, **kwargs):
             elif jsonData[i]['type'] == 'list_of_vlans':
                 validating.vlans(i, **kwargs)
             elif jsonData[i]['type'] == 'mac_address':
-                    validating.mac_address(i, **kwargs)
+                validating.mac_address(i, **kwargs)
             elif jsonData[i]['type'] == 'phone_number':
                 validating.phone_number(i, **kwargs)
             elif jsonData[i]['type'] == 'string':
@@ -1740,6 +1790,7 @@ def validate_args(jsonData, **kwargs):
             else:
                 print(f'error validating.  Type not found {i}. 3.')
                 exit()
+    return kwargs
 
 #======================================================
 # Function to pull variables from easy_jsonData
@@ -2075,7 +2126,7 @@ def write_to_site(templateVars, **kwargs):
             if templateVars['users'] == None:
                 validating.error_tenant_users(**kwargs)
             else:
-                for user in templateVars['users'].split(','):
+                for user in templateVars['users']:
                     regexp = '^[a-zA-Z0-9\_\-]+$'
                     validating.length_and_regex(regexp, 'users', user, 1, 64)
         # Create Terraform file from Template
