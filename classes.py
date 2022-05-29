@@ -167,7 +167,7 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'leaf_interface_policy_groups_access'
+        templateVars['data_type'] = 'leaf_interfaces_policy_groups_access'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -186,7 +186,7 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'leaf_interface_policy_groups_breakout'
+        templateVars['data_type'] = 'leaf_interfaces_policy_groups_breakout'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -215,7 +215,7 @@ class access(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'leaf_interface_policy_groups_bundle'
+        templateVars['data_type'] = 'leaf_interfaces_policy_groups_bundle'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 

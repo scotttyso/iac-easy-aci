@@ -268,10 +268,10 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
+        
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
-        templateVars['data_type'] = 'bgp_peer_prefix_policies'
+        templateVars['data_type'] = 'policies_bgp_peer_prefix'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -415,7 +415,7 @@ class tenants(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
-        templateVars['data_type'] = 'eigrp_interface_policies'
+        templateVars['data_type'] = 'policies_eigrp_interface'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -932,15 +932,15 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        # split_list = [
-        #     'primary_preferred_addresses',
-        #     'link_locals',
-        #     'mac_addresses',
-        #     'secondary_addresses',
-        # ]
-        # for i in split_list:
-        #     if not templateVars[i] == None:
-        #         templateVars[i] = templateVars[i].split(',')
+        split_list = [
+            'primary_preferred_addresses',
+            'link_locals',
+            'mac_addresses',
+            'secondary_addresses',
+        ]
+        for i in split_list:
+            if not templateVars[i] == None:
+                templateVars[i] = templateVars[i].split(',')
 
         templateVars.pop('policy_name')
         policy_dict = {kwargs['policy_name']:templateVars}
@@ -1013,7 +1013,7 @@ class tenants(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
-        templateVars['data_type'] = 'ospf_interface_policies'
+        templateVars['data_type'] = 'policies_ospf_interface'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 

@@ -347,12 +347,9 @@ def main():
             process_type = f'process_{x}'
             eval(f"{process_type}(easyDict, easy_jsonData, wb)")
 
-    easyDict.pop('wb')
-
     # Begin Proceedures to Create files
     easyDict['wb'] = wb
     read_easy_jsonData(easy_jsonData, **easyDict)
-    exit()
     merge_easy_aci_repository(easy_jsonData)
 
     folders = check_git_status()

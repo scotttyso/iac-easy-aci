@@ -7,6 +7,7 @@ from collections import OrderedDict
 from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 from ordered_set import OrderedSet
+from pathlib import Path
 from textwrap import fill
 import ast
 import jinja2
@@ -17,6 +18,7 @@ import pkg_resources
 import platform
 import re
 import requests
+import shutil
 import subprocess
 import sys
 import stdiomask
@@ -376,7 +378,12 @@ def easyDict_append_subtype(templateVars, **kwargs):
     if kwargs['easyDict'][class_type][data_type].get(kwargs['site_group']):
         for i in kwargs['easyDict'][class_type][data_type][kwargs['site_group']]:
             # print(json.dumps(i, indent=4))
-            if class_type == 'tenants':
+            if class_type == 'tenants' and data_type == 'l3out_logical_node_profiles':
+                if i['name'] == policy_name and i['tenant'] == templateVars['tenant'] and i['l3out'] == templateVars['l3out']:
+                    templateVars.pop('l3out')
+                    i[data_subtype].append(templateVars)
+                    break
+            elif class_type == 'tenants':
                 if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
                     # templateVars.pop('tenant')
                     i[data_subtype].append(templateVars)
@@ -590,9 +597,9 @@ def interface_selector_workbook(templateVars, **kwargs):
         pg_list = ['spine_interface_policy_groups']
     else:
         pg_list = [
-            'leaf_interface_policy_groups_access',
-            'leaf_interface_policy_groups_breakout',
-            'leaf_interface_policy_groups_bundle'
+            'leaf_interfaces_policy_groups_access',
+            'leaf_interfaces_policy_groups_breakout',
+            'leaf_interfaces_policy_groups_bundle'
         ]
     switch_pgs = {}
     for pgroup in pg_list:
@@ -761,8 +768,87 @@ def interface_selector_workbook(templateVars, **kwargs):
 def merge_easy_aci_repository(easy_jsonData):
     jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
     
+    # Get the Latest Release Tag for the terraform-easy-aci repository
+    url = f'https://github.com/terraform-cisco-modules/terraform-easy-aci/tags/'
+    r = requests.get(url, stream=True)
+    repoVer = 'BLANK'
+    stringMatch = False
+    while stringMatch == False:
+        for line in r.iter_lines():
+            toString = line.decode("utf-8")
+            if re.search('/releases/tag/(v\d+\.\d+\.\d+)', toString):
+                repoVer = re.search('/releases/tag/(v\d+\.\d+\.\d+)', toString).group(1)
+                break
+        stringMatch = True
+
     # Obtain Operating System and Get TF_DEST_DIR variable from Environment
     opSystem = platform.system()
+    tfe_dir = 'tfe_modules'
+    folder_source_list = ['access', 'admin', 'fabric', 'switch', 'system_settings', 'tenant', ]
+    if opSystem == 'Windows': path_sep = '\\'
+    else: path_sep = '/'
+    if not os.path.isdir(tfe_dir):
+        os.mkdir(tfe_dir)
+        for folder in folder_source_list:
+            if not os.path.isdir(os.path.join(tfe_dir, folder)):
+                path = os.path.join(tfe_dir, folder)
+                os.mkdir(path)
+
+    for folder in folder_source_list:
+        # Get the version.txt file if it exist to compare to the latest Git Release of the repository
+        folderVer = "0.0.0"
+        if os.path.isfile(os.path.join(tfe_dir, folder, 'version.txt')):
+            with open(os.path.join(tfe_dir, folder, 'version.txt'), 'r') as f:
+                folderVer = f.readline().rstrip()
+        else:
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+            print(f'\n  Did not find the version.txt locally.  Proceed to downloads')
+            print(f'\n-------------------------------------------------------------------------------------------\n')
+        
+        folder_type = folder
+        folder = os.path.join(tfe_dir, folder)
+        # Get List of Files to download from jsonData
+        files = jsonData['files'][folder_type]
+        print(f'\n-------------------------------------------------------------------------------------------\n')
+        print(f'\n  Beginning Easy ACI Module Downloads for "{folder}"\n')
+
+        # Run the process to check for the files in the folder and if it doesn't exist download from Github
+        for file in files:
+            git_url = 'https://raw.github.com/terraform-cisco-modules/terraform-easy-aci/master/modules'
+            dest_file = f'{folder}{path_sep}{file}'
+            if not os.path.isfile(dest_file):
+                print(f'  Downloading "{file}"')
+                url = f'{git_url}/{folder_type}/{file}'
+                r = requests.get(url)
+                open(dest_file, 'wb').write(r.content)
+                print(f'  "{file}" Download Complete!\n')
+            else:
+                if not os.path.isfile(f'{folder}{path_sep}version.txt'):
+                    print(f'  Downloading "{file}"')
+                    url = f'{git_url}/{folder_type}/{file}'
+                    r = requests.get(url)
+                    open(dest_file, 'wb').write(r.content)
+                    print(f'  "{file}" Download Complete!\n')
+                elif os.path.isfile(f'{folder}{path_sep}version.txt'):
+                    if not folderVer == repoVer:
+                        print(f'  Downloading "{file}"')
+                        url = f'{git_url}/{folder_type}/{file}'
+                        r = requests.get(url)
+                        open(dest_file, 'wb').write(r.content)
+                        print(f'  "{file}" Download Complete!\n')
+
+        # Create the version.txt file to prevent redundant downloads for the same Github release
+        if not os.path.isfile(f'{folder}{path_sep}version.txt'):
+            print(f'* Creating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
+            open(f'{folder}{path_sep}version.txt', 'w').write('%s\n' % (repoVer))
+        elif not folderVer == repoVer:
+            print(f'* Updating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
+            open(f'{folder}{path_sep}version.txt', 'w').write('%s\n' % (repoVer))
+
+        print(f'\n  Completed Easy IMM Module Downloads for "{folder}"')
+        print(f'\n-------------------------------------------------------------------------------------------\n')
+
+    # Get the tfDir from the Environment for the Repository Directory
     if os.environ.get('TF_DEST_DIR') is None:
         tfDir = 'ACI'
     else:
@@ -784,124 +870,24 @@ def merge_easy_aci_repository(easy_jsonData):
             if len(x) == 2:
                 folders.remove(folder)
 
-    # Get the Latest Release Tag for the terraform-easy-aci repository
-    url = f'https://github.com/terraform-cisco-modules/terraform-easy-aci/tags/'
-    r = requests.get(url, stream=True)
-    repoVer = 'BLANK'
-    stringMatch = False
-    while stringMatch == False:
-        for line in r.iter_lines():
-            toString = line.decode("utf-8")
-            if re.search('/releases/tag/(\d+\.\d+\.\d+)', toString):
-                repoVer = re.search('/releases/tag/(\d+\.\d+\.\d+)', toString).group(1)
-                break
-        stringMatch = True
-
     for folder in folders:
-        folderVer = "0.0.0"
-        # Get the version.txt file if exist to compare to the latest Git Release of the repository
-        if opSystem == 'Windows':
-            if os.path.isfile(f'{folder}\\version.txt'):
-                with open(f'{folder}\\version.txt') as f:
-                    folderVer = f.readline().rstrip()
-        else:
-            if os.path.isfile(f'{folder}/version.txt'):
-                with open(f'{folder}/version.txt') as f:
-                    folderVer = f.readline().rstrip()
-        
         # Determine the Type of Folder. i.e. Is this for Access Policies
         if os.path.isdir(folder):
-            if opSystem == 'Windows':
-                folder_length = len(folder.split('\\'))
-                folder_type = folder.split('\\')[folder_length -1]
-            else:
-                folder_length = len(folder.split('/'))
-                folder_type = folder.split('/')[folder_length -1]
-            if re.search('^tenant_', folder_type):
-                folder_type = 'tenant'
-            elif re.search('^switch_', folder_type):
-                folder_type = 'switch'
+            folder_length = len(folder.split(path_sep))
+            folder_type = folder.split(path_sep)[folder_length -1]
+            if re.search('^tenant_', folder_type): folder_type = 'tenant'
+            elif re.search('^switch_', folder_type): folder_type = 'switch'
             
-            # Get List of Files to download from jsonData
-            files = jsonData['files'][folder_type]
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'\n  Beginning Easy ACI Module Downloads for "{folder}"\n')
-
-            # Run the process to check for the files in the folder and if it doesn't exist download from Github
-            for file in files:
-                git_url = 'https://raw.github.com/terraform-cisco-modules/terraform-easy-aci/master/modules'
-                if opSystem == 'Windows':
-                    dest_file = f'{folder}\\{file}'
-                else:
-                    dest_file = f'{folder}/{file}'
-                if not os.path.isfile(dest_file):
-                    print(f'  Downloading "{file}"')
-                    url = f'{git_url}/{folder_type}/{file}'
-                    r = requests.get(url)
-                    open(dest_file, 'wb').write(r.content)
-                    print(f'  "{file}" Download Complete!\n')
-                else:
-                    if opSystem == 'Windows':
-                        if not os.path.isfile(f'{folder}\\version.txt'):
-                            print(f'  Downloading "{file}"')
-                            url = f'{git_url}/{folder_type}/{file}'
-                            r = requests.get(url)
-                            open(dest_file, 'wb').write(r.content)
-                            print(f'  "{file}" Download Complete!\n')
-                        elif not os.path.isfile(f'{folder}\\version.txt'):
-                            print(f'  Downloading "{file}"')
-                            url = f'{git_url}/{folder_type}/{file}'
-                            r = requests.get(url)
-                            open(dest_file, 'wb').write(r.content)
-                            print(f'  "{file}" Download Complete!\n')
-                        elif os.path.isfile(f'{folder}\\version.txt'):
-                            if not folderVer == repoVer:
-                                print(f'  Downloading "{file}"')
-                                url = f'{git_url}/{folder_type}/{file}'
-                                r = requests.get(url)
-                                open(dest_file, 'wb').write(r.content)
-                                print(f'  "{file}" Download Complete!\n')
-                    else:
-                        if not os.path.isfile(f'{folder}/version.txt'):
-                            print(f'  Downloading "{file}"')
-                            url = f'{git_url}/{folder_type}/{file}'
-                            r = requests.get(url)
-                            open(dest_file, 'wb').write(r.content)
-                            print(f'  "{file}" Download Complete!\n')
-                        elif not os.path.isfile(f'{folder}/version.txt'):
-                            print(f'  Downloading "{file}"')
-                            url = f'{git_url}/{folder_type}/{file}'
-                            r = requests.get(url)
-                            open(dest_file, 'wb').write(r.content)
-                            print(f'  "{file}" Download Complete!\n')
-                        elif os.path.isfile(f'{folder}/version.txt'):
-                            if not folderVer == repoVer:
-                                print(f'  Downloading "{file}"')
-                                url = f'{git_url}/{folder_type}/{file}'
-                                r = requests.get(url)
-                                open(dest_file, 'wb').write(r.content)
-                                print(f'  "{file}" Download Complete!\n')
-
-            # Create the version.txt file to prevent redundant downloads for the same Github release
-            if not os.path.isfile(f'{folder}/version.txt'):
-                print(f'* Creating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
-                open(f'{folder}/version.txt', 'w').write('%s\n' % (repoVer))
-            elif not folderVer == repoVer:
-                print(f'* Updating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
-                open(f'{folder}/version.txt', 'w').write('%s\n' % (repoVer))
-
-            print(f'\n  Completed Easy IMM Module Downloads for "{folder}"')
-            print(f'\n-------------------------------------------------------------------------------------------\n')
+            src_dir = os.path.join(tfe_dir, folder_type)
+            copy_files = os.listdir(src_dir)
+            for fname in copy_files:
+                shutil.copy2(os.path.join(src_dir, fname), folder)
 
     # Loop over the folder list again and create blank auto.tfvars files for anything that doesn't already exist
     for folder in folders:
         if os.path.isdir(folder):
-            if opSystem == 'Windows':
-                folder_length = len(folder.split('\\'))
-                folder_type = folder.split('\\')[folder_length -1]
-            else:
-                folder_length = len(folder.split('/'))
-                folder_type = folder.split('/')[folder_length -1]
+            folder_length = len(folder.split(path_sep))
+            folder_type = folder.split(path_sep)[folder_length -1]
             if re.search('^tenant_', folder_type):
                 folder_type = 'tenant'
             elif re.search('^switch_', folder_type):
@@ -913,10 +899,7 @@ def merge_easy_aci_repository(easy_jsonData):
                     files.remove(xRemove)
             for file in files:
                 varFiles = f"{file.split('.')[0]}.auto.tfvars"
-                if opSystem == 'Windows':
-                    dest_file = f'{folder}\\{varFiles}'
-                else:    
-                    dest_file = f'{folder}/{varFiles}'
+                dest_file = f'{folder}{path_sep}{varFiles}'
                 if not os.path.isfile(dest_file):
                     wr_file = open(dest_file, 'w')
                     x = file.split('.')

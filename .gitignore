@@ -1,5 +1,7 @@
 # Remove when Finished
 ACI/
+# Directories to Ignore
+**/tfe_modules/*
 # Local .terraform directories
 **/.terraform/*
 **/.secret
