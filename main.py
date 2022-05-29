@@ -9,14 +9,12 @@ It uses argparse to take in the following CLI arguments:
 #======================================================
 # Source Modules
 #======================================================
-from class_tenants import tenants
-from classes import access, admin, fabric, site_policies, switches, system_settings
+from classes import access, admin, fabric, site_policies, switches, system_settings, tenants
 from easy_functions import apply_aci_terraform, check_git_status
 from easy_functions import countKeys, findKeys, findVars, get_user_pass
 from easy_functions import get_latest_versions, merge_easy_aci_repository
 from easy_functions import read_easy_jsonData, read_in
 from easy_functions import stdout_log
-from pathlib import Path
 import argparse
 import json
 import os
@@ -31,7 +29,6 @@ class_list = [access, admin, fabric, site_policies, switches, system_settings, t
 # Global Variables
 #======================================================
 excel_workbook = None
-home = Path.home()
 workspace_dict = {}
 
 #======================================================

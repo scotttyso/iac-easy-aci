@@ -936,66 +936,6 @@ def merge_easy_aci_repository(easy_jsonData):
 #======================================================
 # Function to Create Terraform auto.tfvars files
 #======================================================
-def naming_rule(name_prefix, name_suffix, org):
-    if not name_prefix == '':
-        name = '%s_%s' % (name_prefix, name_suffix)
-    else:
-        name = '%s_%s' % (org, name_suffix)
-    return name
-
-#======================================================
-# Function to Create Terraform auto.tfvars files
-#======================================================
-def policies_list(policies_list, **templateVars):
-    valid = False
-    while valid == False:
-        print(f'\n-------------------------------------------------------------------------------------------\n')
-        if templateVars.get('optional_message'):
-            print(templateVars["optional_message"])
-        print(f'  {templateVars["policy"]} Options:')
-        for i, v in enumerate(policies_list):
-            i += 1
-            if i < 10:
-                print(f'     {i}. {v}')
-            else:
-                print(f'    {i}. {v}')
-        if templateVars["allow_opt_out"] == True:
-            print(f'     99. Do not assign a(n) {templateVars["policy"]}.')
-        print(f'     100. Create a New {templateVars["policy"]}.')
-        print(f'\n-------------------------------------------------------------------------------------------\n')
-        policyOption = input(f'Select the Option Number for the {templateVars["policy"]} to Assign to {templateVars["name"]}: ')
-        if re.search(r'^[0-9]{1,3}$', policyOption):
-            for i, v in enumerate(policies_list):
-                i += 1
-                if int(policyOption) == i:
-                    policy = v
-                    valid = True
-                    return policy
-                elif int(policyOption) == 99:
-                    policy = ''
-                    valid = True
-                    return policy
-                elif int(policyOption) == 100:
-                    policy = 'create_policy'
-                    valid = True
-                    return policy
-
-            if int(policyOption) == 99:
-                policy = ''
-                valid = True
-                return policy
-            elif int(policyOption) == 100:
-                policy = 'create_policy'
-                valid = True
-                return policy
-        else:
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'  Error!! Invalid Selection.  Please Select a valid Index from the List.')
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-
-#======================================================
-# Function to Create Terraform auto.tfvars files
-#======================================================
 def policies_parse(org, policy_type, policy):
     if os.environ.get('TF_DEST_DIR') is None:
         tfDir = 'Intersight'
@@ -1298,8 +1238,6 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                             file = open(os.path.join(folder,x), 'a+')
                             file.write('\n}\n')
                             file.close()
-
-
 
 #======================================================
 # Function to Read Excel Workbook Data
@@ -2062,10 +2000,7 @@ def vlan_range(vlan_list, **templateVars):
 #======================================================
 def write_to_site(templateVars, **kwargs):
     class_type = templateVars['class_type']
-    if re.search('(access|admin|fabric|site_policies|switches|system_settings)', class_type):
-        aci_template_path = pkg_resources.resource_filename(f'classes', 'templates/')
-    else:
-        aci_template_path = pkg_resources.resource_filename(f'class_{class_type}', 'templates/')
+    aci_template_path = pkg_resources.resource_filename(f'classes', 'templates/')
 
     templateLoader = jinja2.FileSystemLoader(
         searchpath=(aci_template_path + '%s/') % (class_type))
