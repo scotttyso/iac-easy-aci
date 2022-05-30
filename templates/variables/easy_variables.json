@@ -140,7 +140,8 @@
                                     "switches",
                                     "system_settings",
                                     "tenants",
-                                    "virtual_networking"
+                                    "virtual_networking",
+                                    "site_location"
                                 ]
                             },
                             "easyDict": {
@@ -196,7 +197,9 @@
                                     },
                                     "terraform_version": ""
                                 },
-                                "sites": {},
+                                "sites": {
+                                    "site_settings": {}
+                                },
                                 "switches": {
                                     "switch_profiles": {},
                                     "vpc_domains": {}
@@ -5118,6 +5121,12 @@
                                 ],
                                 "default": "apic",
                                 "x-omitempty": true
+                            },
+                            "password": {
+                                "description": "APIC or Nexus Dashboard User Password.",
+                                "minimum": 2,
+                                "maximum": 255,
+                                "pattern": "^[\\S+]{2,255}$"
                             },
                             "optional_args": {
                                 "login_domain": "",

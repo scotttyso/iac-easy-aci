@@ -4,6 +4,8 @@
 # Source Modules
 #======================================================
 from collections import OrderedDict
+from random import random
+from git import cmd, Repo
 from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 from ordered_set import OrderedSet
@@ -46,36 +48,61 @@ class InsufficientArgs(Exception):
 # 'terraform apply' in the each folder of the
 # Destination Directory.
 #======================================================
-def apply_aci_terraform(folders):
-
+def apply_terraform(args, folders):
+    base_dir = args.dir
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Found the Followng Folders with uncommitted changes:\n')
     for folder in folders:
-        print(f'  - {folder}')
+        print(f'  - {base_dir}{folder}')
     print(f'\n  Beginning Terraform Plan and Apply in each folder.')
     print(f'\n-----------------------------------------------------------------------------\n')
-
     time.sleep(7)
 
+    running_directory = os.getcwd()
+    # tf_path = '.terraform/providers/registry.terraform.io/'
+    opSystem = platform.system()
+    if opSystem == 'Windows': path_sep = '\\'
+    else: path_sep = '/'
+    tfe_dir = f'.terraform{path_sep}providers{path_sep}'
+    tfe_cmd = subprocess.Popen(['terraform', 'init', '-upgrade'],
+        cwd=running_directory,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT
+    )
+    output, err = tfe_cmd.communicate()
+    tfe_cmd.wait()
+
+    print(output.decode('utf-8'))
     response_p = ''
     response_a = ''
+    print(f'-plugin-dir={running_directory}/{tfe_dir}')
     for folder in folders:
-        path = './%s' % (folder)
+        path = f'{base_dir}{folder}' 
         lock_count = 0
-        p = subprocess.Popen(['terraform', 'init', '-plugin-dir=../../../terraform-plugins/providers/'],
-                             cwd=path,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        for line in iter(p.stdout.readline, b''):
-            print(line)
-            if re.search('does not match configured version', line.decode("utf-8")):
-                lock_count =+ 1
+        tfe_cmd = subprocess.Popen(
+            ['terraform', 'init', f'-plugin-dir={running_directory}/{tfe_dir}'],
+            cwd=path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
+        output, err = tfe_cmd.communicate()
+        tfe_cmd.wait()
+        print(output.decode('utf-8'))
+        if 'does not match configured version' in output.decode('utf-8'):
+            lock_count =+ 1
 
         if lock_count > 0:
-            p = subprocess.Popen(['terraform', 'init', '-upgrade', '-plugin-dir=../../../terraform-plugins/providers/'], cwd=path)
-            p.wait()
-        p = subprocess.Popen(['terraform', 'plan', '-out=main.plan'], cwd=path)
-        p.wait()
+            tfe_cmd = subprocess.Popen(
+                ['terraform', 'init', '-upgrade', f'-plugin-dir={running_directory}/{tfe_dir}']
+                , cwd=path
+            )
+            tfe_cmd.wait()
+            print(output.decode('utf-8'))
+        tfe_cmd = subprocess.Popen(['terraform', 'plan', '-out=main.plan'], cwd=path)
+        output, err = tfe_cmd.communicate()
+        tfe_cmd.wait()
+        if not output == None:
+            print(output.decode('utf-8'))
         while True:
             print(f'\n-----------------------------------------------------------------------------\n')
             print(f'  Terraform Plan Complete.  Please Review the Plan and confirm if you want')
@@ -93,8 +120,12 @@ def apply_aci_terraform(folders):
                 print(f'\n-----------------------------------------------------------------------------\n')
 
         if response_p == 'A':
-            p = subprocess.Popen(['terraform', 'apply', '-parallelism=1', 'main.plan'], cwd=path)
-            p.wait()
+            tfe_cmd = subprocess.Popen(['terraform', 'apply', '-parallelism=1', 'main.plan'], cwd=path)
+            tfe_cmd.wait()
+            output, err = tfe_cmd.communicate()
+            tfe_cmd.wait()
+            if not output == None:
+                print(output.decode('utf-8'))
 
         while True:
             if response_p == 'A':
@@ -114,64 +145,6 @@ def apply_aci_terraform(folders):
                 print(f'\n-----------------------------------------------------------------------------\n')
                 print(f'  A Valid Response is either "M" or "Q"...')
                 print(f'\n-----------------------------------------------------------------------------\n')
-
-#======================================================
-# Function to Check the Git Status of the Folders
-#======================================================
-def check_git_status():
-    random_folders = []
-    git_path = './'
-    result = subprocess.Popen(['python3', '-m', 'git_status_checker'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    while(True):
-        # returns None while subprocess is running
-        retcode = result.poll()
-        line = result.stdout.readline()
-        line = line.decode('utf-8')
-        if re.search(r'M (.*/).*.tf\n', line):
-            folder = re.search(r'M (.*/).*.tf\n', line).group(1)
-            if not re.search(r'ACI.templates', folder):
-                if not folder in random_folders:
-                    random_folders.append(folder)
-        elif re.search(r'\?\? (.*/).*.tf\n', line):
-            folder = re.search(r'\?\? (.*/).*.tf\n', line).group(1)
-            if not re.search(r'ACI.templates', folder):
-                if not folder in random_folders:
-                    random_folders.append(folder)
-        elif re.search(r'\?\? (ACI/.*/)\n', line):
-            folder = re.search(r'\?\? (ACI/.*/)\n', line).group(1)
-            if not (re.search(r'ACI.templates', folder) or re.search(r'\.terraform', folder)):
-                if os.path.isdir(folder):
-                    folder = [folder]
-                    random_folders = random_folders + folder
-                else:
-                    group_x = [os.path.join(folder, o) for o in os.listdir(folder) if os.path.isdir(os.path.join(folder,o))]
-                    random_folders = random_folders + group_x
-        if retcode is not None:
-            break
-
-    if not random_folders:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   There were no uncommitted changes in the environment.')
-        print(f'   Proceedures Complete!!! Closing Environment and Exiting Script.')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-    strict_folders = []
-    folder_order = ['Access', 'System', 'Tenant_common', 'Tenant_infra', 'Tenant_mgmt', 'Fabric', 'Admin', 'VLANs', 'Tenant_infra',]
-    for folder in folder_order:
-        for fx in random_folders:
-            if folder in fx:
-                if 'ACI' in folder:
-                    strict_folders.append(fx)
-    for folder in strict_folders:
-        if folder in random_folders:
-            random_folders.remove(folder)
-    for folder in random_folders:
-        if 'ACI' in folder:
-            strict_folders.append(folder)
-
-    # print(strict_folders)
-    return strict_folders
 
 #======================================================
 # Function to Count the Number of Keys/Columns
@@ -564,6 +537,125 @@ def get_latest_versions(easyDict):
     return easyDict
 
 #======================================================
+# Function to Check the Git Status of the Folders
+#======================================================
+def git_base_repo(args, wb):
+    repoName = args.dir
+    if not os.path.isdir(repoName):
+        baseRepo = Repo.init(repoName, bare=True, mkdir=True)
+        assert baseRepo.bare
+    else:
+        try: 
+            baseRepo = Repo.init(repoName)
+        except:
+            baseRepo = Repo.init(repoName, bare=True, mkdir=True)
+    base_dir = args.dir
+    with baseRepo.config_reader() as git_config:
+        try:
+            git_config.get_value('user', 'email')
+            git_config.get_value('user', 'name')
+        except:
+            valid = False
+            while valid == False:
+                templateVars = {}
+                templateVars["Description"] = f'Git Email Configuration. i.e. user@example.com'
+                templateVars["varInput"] = f'What is your Git email?'
+                templateVars["minimum"] = 5
+                templateVars["maximum"] = 128
+                templateVars["pattern"] = '[\\S]+'
+                templateVars["varName"] = 'Git Email'
+                repoName = varStringLoop(**templateVars)
+                valid = True
+
+            valid = False
+            while valid == False:
+                templateVars = {}
+                templateVars["Description"] = f'Git Username Configuration. i.e. user'
+                templateVars["varInput"] = f'What is your Git Username?'
+                templateVars["minimum"] = 5
+                templateVars["maximum"] = 64
+                templateVars["pattern"] = '[\\S]+'
+                templateVars["varName"] = 'Git Email'
+                repoName = varStringLoop(**templateVars)
+                valid = True
+    result = subprocess.Popen(['python3', '-m', 'git_status_checker', base_dir], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while(True):
+        # returns None while subprocess is running
+        retcode = result.poll()
+        line = result.stdout.readline()
+        line = line.decode('utf-8')
+        if 'this operation must be run in a work tree' in line:
+            arg_folder = os.path.basename(os.path.normpath(args.dir))
+            git_user = git_config.get_value('user', 'name')
+            defaultUrl = f"github.com/{git_user}/{arg_folder}.git"
+            valid = False
+            while valid == False:
+                templateVars = {}
+                templateVars["varDefault"] = defaultUrl
+                templateVars["Description"] = f'The Destination Directory is not currently a Git Repository.'
+                templateVars["varInput"] = f'What is the Git URL (without https://) for "{args.dir}"? [{defaultUrl}]'
+                templateVars["minimum"] = 5
+                templateVars["maximum"] = 64
+                templateVars["pattern"] = '[\\S]+'
+                templateVars["varName"] = 'Git URL'
+                gitUrl = varStringLoop(**templateVars)
+                valid = True
+            ws = wb['Sites']
+            kwargs = {'ws':ws, 'row_num':0, 'url':gitUrl}
+            validating.url('url', **kwargs)
+            gitUrl = f'https://{gitUrl}'
+            baseRepo.create_remote('origin', gitUrl)
+            baseRepo.remotes.origin.push('master:master')
+            break
+        elif 'has outstanding commits' in line:
+            break
+        elif 'has outstanding pushes' in line:
+            break
+        
+        print(baseRepo.is_dirty(untracked_files=True))
+        try:
+            baseRepo.remotes.origin.push('master:master')
+        except Exception as e:
+            print(f'Script Errored {e}')
+            exit()
+        break
+
+#======================================================
+# Function to Check the Git Status of the Folders
+#======================================================
+def git_check_status(args):
+    baseRepo = Repo(args.dir)
+    untracked_files = baseRepo.untracked_files
+    random_folders = []
+    for file in untracked_files:
+        dirname, filename = os.path.split(file)
+        if not dirname in random_folders:
+            random_folders.append(dirname)
+
+    random_folders = list(set(random_folders))
+    random_folders.sort()
+    if not len(random_folders) > 0:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   There were no uncommitted changes in the environment.')
+        print(f'   Proceedures Complete!!! Closing Environment and Exiting Script.')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+    strict_folders = []
+    folder_order = ['access', 'common', 'mgmt']
+    for folder in folder_order:
+        for fx in random_folders:
+            if folder in fx:
+                strict_folders.append(fx)
+    for folder in strict_folders:
+        if folder in random_folders:
+            random_folders.remove(folder)
+    for folder in random_folders:
+        strict_folders.append(folder)
+
+    return strict_folders
+
+#======================================================
 # Function to Get User Password
 #======================================================
 def get_user_pass():
@@ -765,173 +857,54 @@ def interface_selector_workbook(templateVars, **kwargs):
 #======================================================
 # Function to Merge Easy ACI Repository to Dest Folder
 #======================================================
-def merge_easy_aci_repository(easy_jsonData):
+def merge_easy_aci_repository(args, easy_jsonData):
     jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
+    baseRepo = args.dir
     
-    # Get the Latest Release Tag for the terraform-easy-aci repository
-    url = f'https://github.com/terraform-cisco-modules/terraform-easy-aci/tags/'
-    r = requests.get(url, stream=True)
-    repoVer = 'BLANK'
-    stringMatch = False
-    while stringMatch == False:
-        for line in r.iter_lines():
-            toString = line.decode("utf-8")
-            if re.search('/releases/tag/(v\d+\.\d+\.\d+)', toString):
-                repoVer = re.search('/releases/tag/(v\d+\.\d+\.\d+)', toString).group(1)
-                break
-        stringMatch = True
-
-    # Obtain Operating System and Get TF_DEST_DIR variable from Environment
+    # Setup Operating Environment
     opSystem = platform.system()
     tfe_dir = 'tfe_modules'
-    folder_source_list = ['access', 'admin', 'fabric', 'switch', 'system_settings', 'tenant', ]
     if opSystem == 'Windows': path_sep = '\\'
     else: path_sep = '/'
+    git_url = "https://github.com/terraform-cisco-modules/terraform-easy-aci"
     if not os.path.isdir(tfe_dir):
         os.mkdir(tfe_dir)
-        for folder in folder_source_list:
-            if not os.path.isdir(os.path.join(tfe_dir, folder)):
-                path = os.path.join(tfe_dir, folder)
-                os.mkdir(path)
-
-    for folder in folder_source_list:
-        # Get the version.txt file if it exist to compare to the latest Git Release of the repository
-        folderVer = "0.0.0"
-        if os.path.isfile(os.path.join(tfe_dir, folder, 'version.txt')):
-            with open(os.path.join(tfe_dir, folder, 'version.txt'), 'r') as f:
-                folderVer = f.readline().rstrip()
-        else:
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'\n  Did not find the version.txt locally.  Proceed to downloads')
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-        
-        folder_type = folder
-        folder = os.path.join(tfe_dir, folder)
-        # Get List of Files to download from jsonData
-        files = jsonData['files'][folder_type]
-        print(f'\n-------------------------------------------------------------------------------------------\n')
-        print(f'\n  Beginning Easy ACI Module Downloads for "{folder}"\n')
-
-        # Run the process to check for the files in the folder and if it doesn't exist download from Github
-        for file in files:
-            git_url = 'https://raw.github.com/terraform-cisco-modules/terraform-easy-aci/master/modules'
-            dest_file = f'{folder}{path_sep}{file}'
-            if not os.path.isfile(dest_file):
-                print(f'  Downloading "{file}"')
-                url = f'{git_url}/{folder_type}/{file}'
-                r = requests.get(url)
-                open(dest_file, 'wb').write(r.content)
-                print(f'  "{file}" Download Complete!\n')
-            else:
-                if not os.path.isfile(f'{folder}{path_sep}version.txt'):
-                    print(f'  Downloading "{file}"')
-                    url = f'{git_url}/{folder_type}/{file}'
-                    r = requests.get(url)
-                    open(dest_file, 'wb').write(r.content)
-                    print(f'  "{file}" Download Complete!\n')
-                elif os.path.isfile(f'{folder}{path_sep}version.txt'):
-                    if not folderVer == repoVer:
-                        print(f'  Downloading "{file}"')
-                        url = f'{git_url}/{folder_type}/{file}'
-                        r = requests.get(url)
-                        open(dest_file, 'wb').write(r.content)
-                        print(f'  "{file}" Download Complete!\n')
-
-        # Create the version.txt file to prevent redundant downloads for the same Github release
-        if not os.path.isfile(f'{folder}{path_sep}version.txt'):
-            print(f'* Creating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
-            open(f'{folder}{path_sep}version.txt', 'w').write('%s\n' % (repoVer))
-        elif not folderVer == repoVer:
-            print(f'* Updating the repo "terraform-easy-aci" version check file\n "{folder}/version.txt"')
-            open(f'{folder}{path_sep}version.txt', 'w').write('%s\n' % (repoVer))
-
-        print(f'\n  Completed Easy IMM Module Downloads for "{folder}"')
-        print(f'\n-------------------------------------------------------------------------------------------\n')
-
-    # Get the tfDir from the Environment for the Repository Directory
-    if os.environ.get('TF_DEST_DIR') is None:
-        tfDir = 'ACI'
+        Repo.clone_from(git_url, tfe_dir)
     else:
-        tfDir = os.environ.get('TF_DEST_DIR')
+        g = cmd.Git(tfe_dir)
+        g.pull()
 
-    # Get All sub-folders from the TF_DEST_DIR
+    # Get All sub-folders from tfDir
     folders = []
-    for root, dirs, files in os.walk(tfDir):
+    for root, dirs, files in os.walk(baseRepo):
         for name in dirs:
             # print(os.path.join(root, name))
             folders.append(os.path.join(root, name))
     folders.sort()
 
-    # Remove the First Level Folders from the List
-    for folder in folders:
-        print(f'folder is {folder}')
-        if '/' in folder:
-            x = folder.split('/')
-            if len(x) == 2:
-                folders.remove(folder)
-
+    module_folders = ['access', 'admin', 'fabric', 'switch', 'system_settings', 'tenant']
     for folder in folders:
         # Determine the Type of Folder. i.e. Is this for Access Policies
         if os.path.isdir(folder):
-            folder_length = len(folder.split(path_sep))
-            folder_type = folder.split(path_sep)[folder_length -1]
-            if re.search('^tenant_', folder_type): folder_type = 'tenant'
-            elif re.search('^switch_', folder_type): folder_type = 'switch'
-            
-            src_dir = os.path.join(tfe_dir, folder_type)
-            copy_files = os.listdir(src_dir)
-            for fname in copy_files:
-                shutil.copy2(os.path.join(src_dir, fname), folder)
+            for mod in module_folders:
+                if mod in folder:
+                    src_dir = os.path.join(tfe_dir, 'modules', mod)
+                    copy_files = os.listdir(src_dir)
+                    for fname in copy_files:
+                        if not os.path.isdir(os.path.join(src_dir, fname)):
+                            shutil.copy2(os.path.join(src_dir, fname), folder)
 
     # Loop over the folder list again and create blank auto.tfvars files for anything that doesn't already exist
     for folder in folders:
         if os.path.isdir(folder):
-            folder_length = len(folder.split(path_sep))
-            folder_type = folder.split(path_sep)[folder_length -1]
-            if re.search('^tenant_', folder_type):
-                folder_type = 'tenant'
-            elif re.search('^switch_', folder_type):
-                folder_type = 'switch'
-            files = jsonData['files'][folder_type]
-            removeList = jsonData['remove_files']
-            for xRemove in removeList:
-                if xRemove in files:
-                    files.remove(xRemove)
-            for file in files:
-                varFiles = f"{file.split('.')[0]}.auto.tfvars"
-                dest_file = f'{folder}{path_sep}{varFiles}'
-                if not os.path.isfile(dest_file):
-                    wr_file = open(dest_file, 'w')
-                    x = file.split('.')
-                    x2 = x[0].split('_')
-                    varList = []
-                    for var in x2:
-                        var = var.capitalize()
-                        varList.append(var)
-                    varDescr = ' '.join(varList)
-                    varDescr = varDescr + '- Variables'
-
-                    wrString = f'#______________________________________________\n#\n# {varDescr}\n'\
-                        '#______________________________________________\n'\
-                        '\n%s = {\n}\n' % (file.split('.')[0])
-                    wr_file.write(wrString)
-                    wr_file.close()
-
-            # Run terraform fmt to cleanup the formating for all of the auto.tfvar files and tf files if needed
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'  Running "terraform fmt" in folder "{folder}",')
-            print(f'  to correct variable formatting!')
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            p = subprocess.Popen(
-                ['terraform', 'fmt', folder],
-                stdout = subprocess.PIPE,
-                stderr = subprocess.PIPE
-            )
-            print('Format updated for the following Files:')
-            for line in iter(p.stdout.readline, b''):
-                line = line.decode("utf-8")
-                line = line.strip()
-                print(f'- {line}')
+            for mod in module_folders:
+                if mod in folder:
+                    files = jsonData['files'][mod]
+                    removeList = jsonData['remove_files']
+                    for xRemove in removeList:
+                        if xRemove in files:
+                            files.remove(xRemove)
+                    terraform_fmt(files, folder, path_sep)
 
 #======================================================
 # Function to Create Terraform auto.tfvars files
@@ -1165,25 +1138,6 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                     templateVars['policy_type'] = policyType
                     
                     kwargs["initial_write"] = True
-                    # if re.search('switch_profile', func):
-                    #     if templateVars['vpc_name'] == None:
-                    #         kwargs["initial_write"] = True
-                    #         write_to_site(templateVars, **kwargs)
-                    #         switch_count = 1
-                    #     elif not templateVars['vpc_name'] == None and switch_count == 1:
-                    #         switch_count = 2
-                    #         kwargs["initial_write"] = True
-                    #         write_to_site(templateVars, **kwargs)
-                    #     elif not templateVars['vpc_name'] == None and switch_count == 2:
-                    #         switch_count = 1
-                    #         kwargs["initial_write"] = False
-                    # else:
-                    #     kwargs["initial_write"] = True
-                    # if re.search('Grp_', k):
-                    #     if not len(site_groups[k]) > 0 and loop_count == 1:
-                    #         write_to_site(templateVars, **kwargs)
-                    # elif loop_count == 1:
-                    #     write_to_site(templateVars, **kwargs)
                     write_to_site(templateVars, **kwargs)
 
         for func in funcList:
@@ -1371,7 +1325,7 @@ def sensitive_var_value(**kwargs):
 
             # Validate Sensitive Passwords
             cert_regex = re.compile(r'^\-{5}BEGIN (CERTIFICATE|PRIVATE KEY)\-{5}.*\-{5}END (CERTIFICATE|PRIVATE KEY)\-{5}$')
-            if re.search('(certificate|private_key)', sensitive_var):
+            if re.search('(certificate|certName|private_key|privateKey)', sensitive_var):
                 if not re.search(cert_regex, secure_value):
                     valid = True
                 else:
@@ -1388,9 +1342,15 @@ def sensitive_var_value(**kwargs):
                 elif 'bgp_password' in sensitive_var:
                     sKey = 'password'
                     varTitle = 'BGP Password'
+                elif 'apicPass' in sensitive_var:
+                    sKey = 'password'
+                    varTitle = 'APIC User Password.'
                 elif 'eigrp_key' in sensitive_var:
                     sKey = 'eigrp_key'
                     varTitle = 'EIGRP Key.'
+                elif 'ndoPass' in sensitive_var:
+                    sKey = 'password'
+                    varTitle = 'Nexus Dashboard Orchestrator User Password.'
                 elif 'ntp_key' in sensitive_var:
                     sKey = 'key'
                     varTitle = 'NTP Key'
@@ -1475,7 +1435,6 @@ def stdout_log(ws, row_num, spot):
 #======================================================
 # Function to Determine Port count from Switch Model
 #======================================================
-# Function to Determine Port count from Switch Model
 def switch_model_ports(row_num, switch_type):
     modules = ''
     switch_type = str(switch_type)
@@ -1536,6 +1495,46 @@ def spine_module_port_count(module_type):
     elif re.search('X9736', module_type):
         port_count = '36'
     return port_count
+
+#======================================================
+# Function to Format Terraform Files
+#======================================================
+def terraform_fmt(files, folder, path_sep):
+    for file in files:
+        varFiles = f"{file.split('.')[0]}.auto.tfvars"
+        dest_file = f'{folder}{path_sep}{varFiles}'
+        if not os.path.isfile(dest_file):
+            wr_file = open(dest_file, 'w')
+            x = file.split('.')
+            x2 = x[0].split('_')
+            varList = []
+            for var in x2:
+                var = var.capitalize()
+                varList.append(var)
+            varDescr = ' '.join(varList)
+            varDescr = varDescr + '- Variables'
+
+            wrString = f'#______________________________________________\n#\n# {varDescr}\n'\
+                '#______________________________________________\n'\
+                '\n%s = {\n}\n' % (file.split('.')[0])
+            wr_file.write(wrString)
+            wr_file.close()
+
+    # Run terraform fmt to cleanup the formating for all of the auto.tfvar files and tf files if needed
+    print(f'\n-------------------------------------------------------------------------------------------\n')
+    print(f'  Running "terraform fmt" in folder "{folder}",')
+    print(f'  to correct variable formatting!')
+    print(f'\n-------------------------------------------------------------------------------------------\n')
+    p = subprocess.Popen(
+        ['terraform', 'fmt', folder],
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE
+    )
+    print('Format updated for the following Files:')
+    for line in iter(p.stdout.readline, b''):
+        line = line.decode("utf-8")
+        line = line.strip()
+        print(f'- {line}')
 
 #======================================================
 # Function to Validate Worksheet User Input
@@ -1869,7 +1868,7 @@ def varSensitiveStringLoop(**templateVars):
     maximum = templateVars["maximum"]
     minimum = templateVars["minimum"]
     varName = templateVars["varName"]
-    varRegex = templateVars["varRegex"]
+    pattern = templateVars["pattern"]
 
     print(f'\n-------------------------------------------------------------------------------------------\n')
     newDescr = templateVars["Description"]
@@ -1887,7 +1886,7 @@ def varSensitiveStringLoop(**templateVars):
     while valid == False:
         varValue = stdiomask.getpass(f'{templateVars["varInput"]} ')
         if not varValue == '':
-            valid = validating.length_and_regex_sensitive(varRegex, varName, varValue, minimum, maximum)
+            valid = validating.length_and_regex_sensitive(pattern, varName, varValue, minimum, maximum)
         else:
             print(f'\n-------------------------------------------------------------------------------------------\n')
             print(f'   {varName} value is Invalid!!! ')
@@ -1901,7 +1900,7 @@ def varStringLoop(**templateVars):
     maximum = templateVars["maximum"]
     minimum = templateVars["minimum"]
     varName = templateVars["varName"]
-    varRegex = templateVars["varRegex"]
+    pattern = templateVars["pattern"]
 
     print(f'\n-------------------------------------------------------------------------------------------\n')
     newDescr = templateVars["Description"]
@@ -1924,7 +1923,7 @@ def varStringLoop(**templateVars):
             varValue = templateVars["varDefault"]
             valid = True
         elif not varValue == '':
-            valid = validating.length_and_regex(varRegex, varName, varValue, minimum, maximum)
+            valid = validating.length_and_regex(pattern, varName, varValue, minimum, maximum)
         else:
             print(f'\n-------------------------------------------------------------------------------------------\n')
             print(f'   {varName} value of "{varValue}" is Invalid!!! ')
@@ -2023,6 +2022,8 @@ def write_to_site(templateVars, **kwargs):
                 kwargs["dest_dir"] = 'switch_%s' % (templateVars['switch_name'])
         elif templateVars['template_type'] == 'vpc_domains':
             kwargs["dest_dir"] = 'switch_%s' % (templateVars['name'])
+    elif 'sites' in class_type:
+        kwargs["dest_dir"] = kwargs["dest_dir"]
     else:
         kwargs["dest_dir"] = '%s' % (class_type)
     kwargs["dest_file"] = '%s.auto.tfvars' % (kwargs["tfvars_file"])

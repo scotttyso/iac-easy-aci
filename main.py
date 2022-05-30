@@ -10,7 +10,8 @@ It uses argparse to take in the following CLI arguments:
 # Source Modules
 #======================================================
 from classes import access, admin, fabric, site_policies, switches, system_settings, tenants
-from easy_functions import apply_aci_terraform, check_git_status
+from easy_functions import apply_terraform
+from easy_functions import git_base_repo, git_check_status
 from easy_functions import countKeys, findKeys, findVars, get_user_pass
 from easy_functions import get_latest_versions, merge_easy_aci_repository
 from easy_functions import read_easy_jsonData, read_in
@@ -18,6 +19,7 @@ from easy_functions import stdout_log
 import argparse
 import json
 import os
+import platform
 import re
 
 #=====================================================================
@@ -63,142 +65,157 @@ virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 #======================================================
 # Function to Read the Access Worksheet
 #======================================================
-def process_access(easyDict, easy_jsonData, wb):
+def process_access(args, easyDict, easy_jsonData, wb):
     # Evaluate Access Worksheet
     class_init = 'access'
     class_folder = 'access'
     func_regex = access_regex
     ws = wb['Access']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
 #======================================================
 # Function to Read the Admin Worksheet
 #======================================================
-def process_admin(easyDict, easy_jsonData, wb):
+def process_admin(args, easyDict, easy_jsonData, wb):
     # Evaluate Admin Worksheet
     class_init = 'admin'
     class_folder = 'admin'
     func_regex = admin_regex
     ws = wb['Admin']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
 #======================================================
 # Function to Read the Fabric Worksheet
 #======================================================
-def process_fabric(easyDict, easy_jsonData, wb):
+def process_fabric(args, easyDict, easy_jsonData, wb):
     # Evaluate Fabric Worksheet
     class_init = 'fabric'
     class_folder = 'fabric'
     func_regex = fabric_regex
     ws = wb['Fabric']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
 #======================================================
 # Function to Read the Fabric Worksheet
 #======================================================
-def process_port_convert(easyDict, easy_jsonData, wb):
+def process_port_convert(args, easyDict, easy_jsonData, wb):
     # Evaluate Inventory Worksheet
     class_init = 'switches'
     class_folder = 'switches'
     func_regex = port_convert_regex
     ws = wb['Switch Profiles']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    return easyDict
+
+#======================================================
+# Function to Setup Run Location
+#======================================================
+def process_site_settings(args, easyDict, easy_jsonData, wb):
+    kwargs = {
+        'args':args,
+        'easyDict':easyDict,
+        'easy_jsonData':easy_jsonData,
+        'row_num':0,
+        'wb':wb,
+        'ws': wb['Sites']
+    }
+    easyDict = site_policies('site_settings').site_settings(**kwargs)
     return easyDict
 
 #======================================================
 # Function to Read the Sites Worksheet
 #======================================================
-def process_sites(easyDict, easy_jsonData, wb):
+def process_sites(args, easyDict, easy_jsonData, wb):
     # Evaluate Sites Worksheet
     class_init = 'site_policies'
     class_folder = 'sites'
     func_regex = sites_regex
     ws = wb['Sites']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
 #======================================================
 # Function to Read the Fabric Worksheet
 #======================================================
-def process_switches(easyDict, easy_jsonData, wb):
+def process_switches(args, easyDict, easy_jsonData, wb):
     # Evaluate Switches Worksheet
     class_init = 'switches'
     class_folder = 'switches'
     func_regex = switch_regex
     ws = wb['Switch Profiles']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
 #======================================================
 # Function to Read the System Settings Worksheet
 #======================================================
-def process_system_settings(easyDict, easy_jsonData, wb):
+def process_system_settings(args, easyDict, easy_jsonData, wb):
     # Evaluate System_Settings Worksheet
     class_init = 'system_settings'
     class_folder = 'system_settings'
     func_regex = system_settings_regex
     ws = wb['System Settings']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
 #======================================================
 # Function to Read the Tenants Worksheet
 #======================================================
-def process_tenants(easyDict, easy_jsonData, wb):
+def process_tenants(args, easyDict, easy_jsonData, wb):
     class_init = 'tenants'
     class_folder = 'tenants'
 
     # Evaluate the Tenants Worksheet
     func_regex = tenants_regex
     ws = wb['Tenants']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the Tenant Policies Worksheet
     func_regex = tenant_pol_regex
     ws = wb['Tenant Policies']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the Bridge Domains Worksheet
     func_regex = bds_regex
     ws = wb['Bridge Domains']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the Apps and EPGs Worksheet
     func_regex = apps_epgs_regex
     ws = wb['Apps and EPGs']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # # Evaluate the L3Out Worksheet
     func_regex = l3out_regex
     ws = wb['L3Out']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # # Evaluate the Contracts Worksheet
     func_regex = contracts_regex
     ws = wb['Contracts']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     return easyDict
 
 #======================================================
 # Function to Read the Virtual Networking Worksheet
 #======================================================
-def process_virtual_networking(easyDict, easy_jsonData, wb):
+def process_virtual_networking(args, easyDict, easy_jsonData, wb):
     # Evaluate Tenants Worksheet
     class_init = 'access'
     class_folder = 'access'
     func_regex = virtual_regex
     ws = wb['Virtual Networking']
-    easyDict = read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
 #======================================================
 # Function to Read the Worksheet and Create Templates
 #======================================================
-def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
+def read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
     rows = ws.max_row
     func_list = findKeys(ws, func_regex)
     stdout_log(ws, None, 'begin')
@@ -214,6 +231,7 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
             stdout_log(ws, row_num, 'begin')
             var_dict[pos].update(
                 {
+                    'args':args,
                     'class_folder':class_folder,
                     'easyDict':easyDict,
                     'easy_jsonData':easy_jsonData,
@@ -265,9 +283,12 @@ def main():
     easy_jsonData = json.load(jsonOpen)
     jsonOpen.close()
 
+    opSystem = platform.system()
+    if opSystem == 'Windows': path_sep = '\\'
+    else: path_sep = '/'
     destdirCheck = False
     while destdirCheck == False:
-        splitDir = args.dir.split("/")
+        splitDir = args.dir.split(path_sep)
         for folder in splitDir:
             if folder == '':
                 folderCount = 0
@@ -316,12 +337,17 @@ def main():
     easyDict['latest_versions']['ndo_versions']['enum'] = ndoVersions
     easyDict['latest_versions']['ndo_versions']['default'] = ndoVersions[0]
     easyDict['latest_versions']['terraform_version'] = "1.1.9"
-    # print(json.dumps(easyDict, indent=4))
-    # exit()
 
     # Run Proceedures for Worksheets in the Workbook
     easyDict['wb'] = wb
-    easyDict = process_sites(easyDict, easy_jsonData, wb)
+    easyDict = process_sites(args, easyDict, easy_jsonData, wb)
+    easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
+    easyDict.pop('wb')
+    print(json.dumps(easyDict, indent=4))
+    exit()
+
+    # Initialize the Base Repo/Terraform Working Directory
+    baseRepo = git_base_repo(args, wb)
 
     # Either Run All Remaining Proceedures or Just Specific based on sys.argv[2:]
     if not args.worksheet == None:
@@ -330,7 +356,7 @@ def main():
         ws_regex = f'^({r1}|{r2})$'
         if re.search(ws_regex, str(args.worksheet)):
             process_type = f'process_{args.worksheet}'
-            eval(f"{process_type}(easyDict, easy_jsonData, wb)")
+            eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
         else:
             print(f'\n-----------------------------------------------------------------------------\n')
             print(f'   ERROR: "{args.worksheet}" is not a valid worksheet.  If you are trying ')
@@ -340,26 +366,17 @@ def main():
             exit()
     else:
         process_list = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['processes']['enum']
-        for x in process_list:
-            process_type = f'process_{x}'
-            eval(f"{process_type}(easyDict, easy_jsonData, wb)")
+        # for x in process_list:
+        #     process_type = f'process_{x}'
+        #     easyDict = eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
 
     # Begin Proceedures to Create files
     easyDict['wb'] = wb
-    read_easy_jsonData(easy_jsonData, **easyDict)
-    merge_easy_aci_repository(easy_jsonData)
+    # read_easy_jsonData(easy_jsonData, **easyDict)
+    # merge_easy_aci_repository(args, easy_jsonData)
 
-    folders = check_git_status()
-    get_user_pass()
-    apply_aci_terraform(folders)
-    # else:
-    #     print('hello')
-    #     path = './'
-    #     repo = Repo.init(path)
-
-    #     index = Repo.init(path.index)
-
-    #     index.commit('Testing Commit')
+    uncommitted_folders = git_check_status(args)
+    apply_terraform(args, uncommitted_folders)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')
