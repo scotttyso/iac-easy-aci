@@ -362,12 +362,10 @@ def main():
             process_type = f'process_{x}'
             easyDict = eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
 
-    easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
-    exit()
 
     # Begin Proceedures to Create files
-    easyDict['wb'] = wb
     read_easy_jsonData(args, easy_jsonData, **easyDict)
+    easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     merge_easy_aci_repository(args, easy_jsonData)
 
     uncommitted_folders = git_check_status(args)

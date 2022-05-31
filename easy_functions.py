@@ -801,9 +801,9 @@ def interface_selector_workbook(templateVars, **kwargs):
                     modDict = spine_modules
             else:
                 print(f"Error, Could not find the Module list for spine {templateVars['node_id']}")
+                exit()
             
-            print(modDict)
-            for x in range(1, 17):
+            for x in range(1, int(modules) + 1):
                 module_type = modDict[f'module_{x}']
                 if not module_type == None:
                     if re.search('^X97', module_type):
@@ -974,6 +974,8 @@ def read_easy_jsonData(args, easy_jsonData, **easyDict):
                 for i in v:
                     templateVars = i
                     kwargs = {
+                        'args': args,
+                        'easyDict': easyDict,
                         'row_num': f'{func}_section',
                         'site_group': k,
                         'ws': easyDict['wb']['System Settings']
@@ -1018,6 +1020,8 @@ def read_easy_jsonData(args, easy_jsonData, **easyDict):
                 for i in v:
                     templateVars = i
                     kwargs = {
+                        'args': args,
+                        'easyDict': easyDict,
                         'row_num': f'{func}_section',
                         'site_group': k,
                         'ws': easyDict['wb']['System Settings']
@@ -1972,13 +1976,16 @@ def write_to_template(templateVars, **kwargs):
 
     # Make sure the Destination Path and Folder Exist
     if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
-        os.mkdir(os.path.join(baseRepo, site_name, dest_dir))
+        opSystem = platform.system()
+        if opSystem == 'Windows': path_sep = '\\'
+        else: path_sep = '/'
+        dest_path = f'{os.path.join(baseRepo, site_name)}{path_sep}{dest_dir}'
+        os.makedirs(dest_path)
     dest_dir = os.path.join(baseRepo, site_name, dest_dir)
     if not os.path.exists(os.path.join(dest_dir, dest_file)):
         create_file = f'type nul >> {os.path.join(dest_dir, dest_file)}'
         os.system(create_file)
     tf_file = os.path.join(dest_dir, dest_file)
-    print(tf_file)
     wr_file = open(tf_file, wr_method)
 
     # Render Payload and Write to File

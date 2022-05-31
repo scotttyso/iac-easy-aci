@@ -8,6 +8,16 @@
     {{ k }} = {{ v }}
   {%- elif v == 'false' or v == 'true' %}
     {{ k }} = {{ v }}
+  {%- elif v is iterable and (v is not string and v is not mapping) %}
+    {{ k }} = [
+    {%- for item in v %}
+      {%- if not loop.last %}
+      "{{ item }}",
+      {%- else %}
+      "{{ item }}"
+      {%- endif %}
+    {%- endfor %}
+    ]
   {%- else %}
     {{ k }} = "{{ v }}"
   {%- endif %}
