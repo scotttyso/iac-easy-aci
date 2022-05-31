@@ -512,6 +512,30 @@ def site_group(var, **kwargs):
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
+def site_groups(**kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    var_list = ['site_group']
+    for x in range (1,16):
+        var_list.append(f'site_{x}')
+    for var in var_list:
+        varValue = kwargs[var]
+        if not varValue == None:
+            if 'Grp_' in varValue:
+                if not re.search('^Grp_[A-F]$', varValue):
+                    print(f'\n-----------------------------------------------------------------------------\n')
+                    print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
+                    print(f'   is invalid.  A valid Group Name is Grp_A thru Grp_F.  Exiting....')
+                    print(f'\n-----------------------------------------------------------------------------\n')
+                    exit()
+            elif re.search(r'\d+', varValue):
+                if not validators.between(int(varValue), min=1, max=15):
+                    print(f'\n-----------------------------------------------------------------------------\n')
+                    print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site "{varValue}"')
+                    print(f'   is invalid.  A valid Site ID is between 1 and 15.  Exiting....')
+                    print(f'\n-----------------------------------------------------------------------------\n')
+                    exit()
+
 def timeout(var, **kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']

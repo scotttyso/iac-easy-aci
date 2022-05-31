@@ -4,19 +4,15 @@
 # Source Modules
 #=============================================================================
 from collections import OrderedDict
-from easy_functions import countKeys, findKeys, findVars
+from easy_functions import apic_post, countKeys, findKeys, findVars
 from easy_functions import easyDict_append, easyDict_append_policy, easyDict_append_subtype
-from easy_functions import interface_selector_workbook, post, policies_parse, process_kwargs
+from easy_functions import interface_selector_workbook, process_kwargs
 from easy_functions import required_args_add, required_args_remove
-from easy_functions import sensitive_var_site_group, sensitive_var_value
-from easy_functions import sensitive_var_site_group, stdout_log, validate_args
-from easy_functions import varBoolLoop, variablesFromAPI, varStringLoop, vlan_list_full
-from easy_functions import write_to_site
-from io import StringIO
-from lxml import etree
+from easy_functions import sensitive_var_site_group, stdout_log, tfc_get, tfc_patch, tfc_post
+from easy_functions import validate_args, varBoolLoop, variablesFromAPI, varStringLoop
+from easy_functions import vlan_list_full, write_to_site
 from openpyxl import load_workbook
 from requests.api import delete
-import ast
 import jinja2
 import json
 import os
@@ -26,7 +22,6 @@ import re
 import requests
 import stdiomask
 import sys
-import time
 import validating
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -47,7 +42,7 @@ class LoginFailed(Exception):
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
-# for detailed information on the Arguments used by this Function.
+# for detailed information on the Arguments used by this Class.
 #=====================================================================================
 class access(object):
     def __init__(self, type):
@@ -445,12 +440,6 @@ class access(object):
         return kwargs['easyDict']
 
     #=============================================================================
-    # Function - Port Conversion
-    #=============================================================================
-    def port_cnvt(self, **kwargs):
-        print('hello')
-        
-    #=============================================================================
     # Function - Spine Policy Group
     #=============================================================================
     def spine_pg(self, **kwargs):
@@ -502,17 +491,20 @@ class access(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['class_type'] = 'access'
+        templateVars['data_type'] = 'virtual_networking'
+        templateVars['data_subtype'] = 'credentials'
 
+        # Check Environment for VMM Credentials Password
+        templateVars['easyDict'] = kwargs['easyDict']
         templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'vmm_password_{kwargs["password"]}'
-        sensitive_var_site_group(**templateVars)
+        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+        templateVars.pop('easyDict')
         templateVars.pop('jsonData')
         templateVars.pop('Variable')
 
         # Add Dictionary to Policy
-        templateVars['class_type'] = 'access'
-        templateVars['data_type'] = 'virtual_networking'
-        templateVars['data_subtype'] = 'credentials'
         templateVars['policy_name'] = kwargs['domain_name']
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
         return kwargs['easyDict']
@@ -596,7 +588,7 @@ class access(object):
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
-# for detailed information on the Arguments used by this Function.
+# for detailed information on the Arguments used by this Class.
 #=====================================================================================
 class admin(object):
     def __init__(self, type):
@@ -727,15 +719,19 @@ class admin(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['class_type'] = 'admin'
+        templateVars['data_type'] = 'radius'
 
         # Check if the secert is in the Environment.  If not Add it.
+        templateVars['easyDict'] = kwargs['easyDict']
         templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'radius_key_{kwargs["key"]}'
-        sensitive_var_site_group(**templateVars)
+        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
         if templateVars['server_monitoring'] == 'enabled':
             # Check if the Password is in the Environment.  If not Add it.
             templateVars["Variable"] = f'radius_monitoring_password_{kwargs["monitoring_password"]}'
-            sensitive_var_site_group(**templateVars)
+            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+        templateVars.pop('easyDict')
         templateVars.pop('jsonData')
         templateVars.pop('Variable')
 
@@ -744,8 +740,6 @@ class admin(object):
             jsonData = required_args_remove(['monitoring_password', 'username'], jsonData)
         
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'admin'
-        templateVars['data_type'] = 'radius'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -769,20 +763,27 @@ class admin(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
+        templateVars['class_type'] = 'admin'
+        templateVars['data_type'] = 'configuration_backups'
+        templateVars['data_subtype'] = 'configuration_export'
+        
+        # Check Environment for Sensitive Variables
+        templateVars['easyDict'] = kwargs['easyDict']
         templateVars['jsonData'] = jsonData
         if templateVars['authentication_type'] == 'usePassword':
             # Check if the Password is in the Environment.  If not Add it.
             templateVars["Variable"] = f'remote_password_{kwargs["password"]}'
-            sensitive_var_site_group(**templateVars)
+            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
         else:
             # Check if the SSH Key/Passphrase is in the Environment.  If not Add it.
             templateVars["Variable"] = 'ssh_key_contents'
-            sensitive_var_site_group(**templateVars)
+            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
             templateVars["Variable"] = 'ssh_key_passphrase'
-            sensitive_var_site_group(**templateVars)
+            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+        templateVars.pop('easyDict')
         templateVars.pop('jsonData')
         templateVars.pop('Variable')
+
 
         # Reset jsonData
         if kwargs['authentication_type'] == 'usePassword':
@@ -793,9 +794,6 @@ class admin(object):
             templateVars["remote_hosts"] = templateVars["remote_hosts"].split(',')
 
         # Add Dictionary to Policy
-        templateVars['class_type'] = 'admin'
-        templateVars['data_type'] = 'configuration_backups'
-        templateVars['data_subtype'] = 'configuration_export'
         templateVars['policy_name'] = kwargs['scheduler_name']
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
         return kwargs['easyDict']
@@ -838,15 +836,19 @@ class admin(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['class_type'] = 'admin'
+        templateVars['data_type'] = 'tacacs'
 
         # Check if the secert is in the Environment.  If not Add it.
+        templateVars['easyDict'] = kwargs['easyDict']
         templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'tacacs_key_{kwargs["key"]}'
-        sensitive_var_site_group(**templateVars)
+        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
         if templateVars['server_monitoring'] == 'enabled':
             # Check if the Password is in the Environment.  If not Add it.
             templateVars["Variable"] = f'tacacs_monitoring_password_{kwargs["monitoring_password"]}'
-            sensitive_var_site_group(**templateVars)
+            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+        templateVars.pop('easyDict')
         templateVars.pop('jsonData')
         templateVars.pop('Variable')
 
@@ -855,14 +857,12 @@ class admin(object):
             jsonData = required_args_remove(['monitoring_password', 'username'], jsonData)
         
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'admin'
-        templateVars['data_type'] = 'tacacs'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
-# for detailed information on the Arguments used by this Function.
+# for detailed information on the Arguments used by this Class.
 #=====================================================================================
 class apicLogin(object):
     def __init__(self, apic, user, pword):
@@ -921,7 +921,7 @@ class apicLogin(object):
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
-# for detailed information on the Arguments used by this Function.
+# for detailed information on the Arguments used by this Class.
 #=====================================================================================
 class fabric(object):
     def __init__(self, type):
@@ -1027,18 +1027,20 @@ class fabric(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'date_and_time'
+        templateVars['data_subtype'] = 'authentication_keys'
 
         # Check if the NTP Key is in the Environment.  If not Add it.
+        templateVars['easyDict'] = kwargs['easyDict']
         templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'ntp_key_{kwargs["key_id"]}'
-        sensitive_var_site_group(**templateVars)
+        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+        templateVars.pop('easyDict')
         templateVars.pop('jsonData')
         templateVars.pop('Variable')
 
         # Add Dictionary to Policy
-        templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'date_and_time'
-        templateVars['data_subtype'] = 'authentication_keys'
         templateVars['policy_name'] = 'default'
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
         return kwargs['easyDict']
@@ -1109,19 +1111,21 @@ class fabric(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'smart_callhome'
+        templateVars['data_subtype'] = 'smtp_server'
 
         # Check if the Smart CallHome SMTP Password is in the Environment and if not add it.
         if 'true' in kwargs['secure_smtp']:
+            templateVars['easyDict'] = kwargs['easyDict']
             templateVars['jsonData'] = jsonData
             templateVars["Variable"] = f'smtp_password'
-            sensitive_var_site_group(**templateVars)
+            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+            templateVars.pop('easyDict')
             templateVars.pop('jsonData')
             templateVars.pop('Variable')
 
         # Add Dictionary to Policy
-        templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'smart_callhome'
-        templateVars['data_subtype'] = 'smtp_server'
         templateVars['policy_name'] = 'default'
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
         return kwargs['easyDict']
@@ -1163,18 +1167,20 @@ class fabric(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'snmp_policies'
+        templateVars['data_subtype'] = 'snmp_communities'
 
         # Check if the SNMP Community is in the Environment.  If not Add it.
+        templateVars['easyDict'] = kwargs['easyDict']
         templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'snmp_community_{kwargs["community_variable"]}'
-        sensitive_var_site_group(**templateVars)
+        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+        templateVars.pop('easyDict')
         templateVars.pop('jsonData')
         templateVars.pop('Variable')
 
         # Add Dictionary to Policy
-        templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'snmp_policies'
-        templateVars['data_subtype'] = 'snmp_communities'
         templateVars['policy_name'] = 'default'
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
         return kwargs['easyDict']
@@ -1262,14 +1268,19 @@ class fabric(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['class_type'] = 'fabric'
+        templateVars['data_type'] = 'snmp_policies'
+        templateVars['data_subtype'] = 'users'
 
         # Check if the Authorization and Privacy Keys are in the environment and if not add them.
+        templateVars['easyDict'] = kwargs['easyDict']
         templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'snmp_authorization_key_{kwargs["authorization_key"]}'
-        sensitive_var_site_group(**templateVars)
+        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
         if not kwargs['privacy_type'] == 'none':
             templateVars["Variable"] = f'snmp_privacy_key_{kwargs["privacy_key"]}'
-            sensitive_var_site_group(**templateVars)
+            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+        templateVars.pop('easyDict')
         templateVars.pop('jsonData')
         templateVars.pop('Variable')
 
@@ -1278,9 +1289,6 @@ class fabric(object):
             jsonData = required_args_remove(['privacy_key'], jsonData)
         
         # Add Dictionary to Policy
-        templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'snmp_policies'
-        templateVars['data_subtype'] = 'users'
         templateVars['policy_name'] = 'default'
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
         return kwargs['easyDict']
@@ -1333,7 +1341,7 @@ class fabric(object):
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
-# for detailed information on the Arguments used by this Function.
+# for detailed information on the Arguments used by this Class.
 #=====================================================================================
 class switches(object):
     def __init__(self, type):
@@ -1397,9 +1405,11 @@ class switches(object):
                     apic_user = site_dict['username']
                 
                 # Add Dictionary to Policy
+                templateVars['easyDict'] = kwargs['easyDict']
                 templateVars['jsonData'] = jsonData
                 templateVars["Variable"] = 'apicPass'
-                sensitive_var_site_group(**templateVars)
+                kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+                templateVars.pop('easyDict')
                 templateVars.pop('jsonData')
                 templateVars.pop('Variable')
                 apic_pass = os.environ.get('TF_VAR_apicPass')
@@ -1428,23 +1438,19 @@ class switches(object):
                         # Render template w/ values from dicts
                         payload = template.render(templateVars)
                         uri = 'ncapi/config'
-                        post(controller, payload, cookies, uri, template_file)
+                        apic_post(controller, payload, cookies, uri, template_file)
+
+        # Loop Through the Site Groups
         if re.search('Grp_', templateVars['site_group']):
-            group_id = '%s' % (templateVars['site_group'])
-            site_group = ast.literal_eval(os.environ[group_id])
-            for x in range(1, 16):
-                if not site_group[f'site_{x}'] == None:
-                    site_id = 'site_id_%s' % (site_group[f'site_{x}'])
-                    site_dict = ast.literal_eval(os.environ[site_id])
-
-                    # Process the Site Port Conversions
-                    process_site(site_dict, templateVars, **kwargs)
+            site_group = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
+            for site in site_group['sites']:
+                # Process the Site Port Conversions
+                siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
+                process_site(siteDict, templateVars, **kwargs)
         else:
-            site_id = 'site_id_%s' % (templateVars['site_group'])
-            site_dict = ast.literal_eval(os.environ[site_id])
-
             # Process the Site Port Conversions
-            process_site(site_dict, templateVars, **kwargs)
+            siteDict = kwargs['easyDict']['sites']['site_settings'][kwargs['site_group']][0]
+            process_site(siteDict, templateVars, **kwargs)
 
         return kwargs['easyDict']
 
@@ -1516,9 +1522,8 @@ class switches(object):
         # return kwargs['easyDict']
 
         # Create or Modify the Interface Selector Workbook
-        site_id = 'site_id_%s' % (templateVars['site_group'])
-        site_dict = ast.literal_eval(os.environ[site_id])
-        kwargs['excel_workbook'] = '%s_interface_selectors.xlsx' % (site_dict['site_name'])
+        siteDict = kwargs['easyDict']['sites']['site_settings'][kwargs['site_group']][0]
+        kwargs['excel_workbook'] = '%s_interface_selectors.xlsx' % (siteDict['site_name'])
         kwargs['wb_sw'] = load_workbook(kwargs['excel_workbook'])
         interface_selector_workbook(templateVars, **kwargs)
 
@@ -1533,8 +1538,6 @@ class switches(object):
         # Set the wb and ws before it is over-written
         wb = kwargs['wb']
         ws = kwargs['ws']
-
-        # kwargs['wb_sw'].save(kwargs['excel_workbook'])
 
         # Evaluate The Interface Selectors Worksheet in the Site Workbook
         wb = kwargs['wb_sw']
@@ -1622,22 +1625,19 @@ class switches(object):
         # Split the Node List into Nodes
         node_list = []
         if ',' in templateVars['node_list']:
-            node_list = templateVars['node_list'].split(',')
+            templateVars['node_list'] = templateVars['node_list'].split(',')
         else:
-            node_list = [templateVars['node_list']]
-        templateVars.pop('node_list')
+            templateVars['node_list'] = [templateVars['node_list']]
  
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'access'
         templateVars['data_type'] = 'spine_modules'
-        for node in node_list:
-            templateVars['node_id'] = node
-            kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
-# for detailed information on the Arguments used by this Function.
+# for detailed information on the Arguments used by this Class.
 #=====================================================================================
 class site_policies(object):
     def __init__(self, type):
@@ -1678,10 +1678,6 @@ class site_policies(object):
             # templateVars['version'] = variablesFromAPI(**kwargs)
             templateVars['version'] = '3.7.1g'
 
-        # Save the Site Information into Environment Variables
-        site_id = 'site_id_%s' % (kwargs['site_id'])
-        os.environ[site_id] = '%s' % (templateVars)
-
         if templateVars['controller_type'] == 'apic': 
             site_wb = '%s_interface_selectors.xlsx' % (kwargs['site_name'])
             if not os.path.isfile(site_wb):
@@ -1699,6 +1695,7 @@ class site_policies(object):
         templateVars['class_type'] = 'sites'
         templateVars['data_type'] = 'site_settings'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = OrderedDict(sorted(kwargs['easyDict'].items()))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1759,36 +1756,33 @@ class site_policies(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        for x in range(1, 16):
-            site = 'site_%s' % (x)
-            if not kwargs[site] == None:
-                validating.site_group('site_group', **kwargs)
+        templateVars['row_num'] = kwargs['row_num']
+        templateVars['ws'] = kwargs['ws']
+        validating.site_groups(**templateVars)
+        templateVars.pop('row_num')
+        templateVars.pop('ws')
 
-        grp_count = 0
-        for x in list(map(chr, range(ord('A'), ord('F')+1))):
-            grp = 'Grp_%s' % (x)
-            if kwargs['site_group'] == grp:
-                grp_count += 1
-        if grp_count == 0:
-            ws = kwargs['ws']
-            row_num = kwargs['row_num']
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Worksheet {ws.title}, Row {row_num} group, group_name "{kwargs["group"]}" is invalid.')
-            print(f'   A valid Group Name is Grp_A thru Grp_F.  Exiting....')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            exit()
+        sites = []
+        for x in range(1, 16):
+            if not kwargs[f'site_{x}'] == None:
+                sites.append(kwargs[f'site_{x}'])
 
         # Save the Site Information into Environment Variables
-        group_id = '%s' % (kwargs['site_group'])
-        os.environ[group_id] = '%s' % (templateVars)
+        os.environ[kwargs['site_group']] = '%s' % (templateVars)
 
-        # Return Dictionary
-        kwargs['easyDict'] = OrderedDict(sorted(kwargs['easyDict'].items()))
+        # Add Dictionary to easyDict
+        templateVars = {
+            'site_group':kwargs['site_group'],
+            'sites':sites,
+        }
+        templateVars['class_type'] = 'sites'
+        templateVars['data_type'] = 'site_groups'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
-# for detailed information on the Arguments used by this Function.
+# for detailed information on the Arguments used by this Class.
 #=====================================================================================
 class system_settings(object):
     def __init__(self, type):
@@ -1866,23 +1860,26 @@ class system_settings(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        if kwargs['enable_encryption'] == 'true':
-            templateVars["Variable"] = 'aes_passphrase'
-            templateVars['jsonData'] = jsonData
-            sensitive_var_site_group(**templateVars)
-            templateVars.pop('jsonData')
-            templateVars.pop('Variable')
-        
-        # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
         templateVars['data_type'] = 'global_aes_encryption_settings'
+        
+        # If enable_encryption confirm aes_passphrase is set
+        if kwargs['enable_encryption'] == 'true':
+            templateVars['easyDict'] = kwargs['easyDict']
+            templateVars['jsonData'] = jsonData
+            templateVars["Variable"] = 'aes_passphrase'
+            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+            templateVars.pop('easyDict')
+            templateVars.pop('jsonData')
+            templateVars.pop('Variable')
+
+        # Add Dictionary to easyDict
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
-# for detailed information on the Arguments used by this Function.
+# for detailed information on the Arguments used by this Class.
 #=====================================================================================
 class tenants(object):
     def __init__(self, type):
@@ -2357,7 +2354,6 @@ class tenants(object):
         if not templateVars['physical_domains'] == None:
             for i in templateVars['physical_domains']:
                 templateVars['domains'].append({'domain': i})
-                print(templateVars['domains'])
         if not templateVars['vmm_domains'] == None:
             if not templateVars['vmm_vlans'] == None:
                 if ',' in  templateVars['vmm_vlans']:
@@ -2706,6 +2702,9 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'l3out_logical_node_profiles'
+        templateVars['data_subtype'] = 'interface_profiles'
 
         # Attach the Node Interface Profile Additional Attributes
         if kwargs['easyDict']['tenants']['node_interface_profile_policies'].get(templateVars['interface_profile_shared_policy']):
@@ -2728,9 +2727,11 @@ class tenants(object):
 
                     # If BGP Password is Set, Check Environment for presence.
                     if re.search('^[0-5]$', str(aa['bgp_password'])):
+                        templateVars['easyDict'] = kwargs['easyDict']
                         templateVars['jsonData'] = jsonData
                         templateVars["Variable"] = f'bgp_password_{aa["bgp_password"]}'
-                        sensitive_var_site_group(**templateVars)
+                        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+                        templateVars.pop('easyDict')
                         templateVars.pop('jsonData')
                         templateVars.pop('Variable')
 
@@ -2753,9 +2754,11 @@ class tenants(object):
                 templateVars['ospf_interface_profile'] = aa
                 # If OSPF auth_key is Set, Check Environment for presence.
                 if re.search('[0-9]', str(aa['key_id'])):
+                    templateVars['easyDict'] = kwargs['easyDict']
                     templateVars['jsonData'] = jsonData
                     templateVars["Variable"] = f'ospf_key_{aa["key_id"]}'
-                    sensitive_var_site_group(**templateVars)
+                    kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+                    templateVars.pop('easyDict')
                     templateVars.pop('jsonData')
                     templateVars.pop('Variable')
 
@@ -2771,9 +2774,6 @@ class tenants(object):
             templateVars.pop(i)
         
         # Add Dictionary to Policy
-        templateVars['class_type'] = 'tenants'
-        templateVars['data_type'] = 'l3out_logical_node_profiles'
-        templateVars['data_subtype'] = 'interface_profiles'
         templateVars['policy_name'] = kwargs['node_profile']
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
         return kwargs['easyDict']
@@ -3031,18 +3031,20 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'vrfs'
+        templateVars['data_subtype'] = 'communities'
 
         # Check if the SNMP Community is in the Environment.  If not Add it.
+        templateVars['easyDict'] = kwargs['easyDict']
         templateVars['jsonData'] = jsonData
         templateVars["Variable"] = f'vrf_snmp_community_{kwargs["community_variable"]}'
-        sensitive_var_site_group(**templateVars)
+        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+        templateVars.pop('easyDict')
         templateVars.pop('jsonData')
         templateVars.pop('Variable')
 
         # Add Dictionary to Policy
-        templateVars['class_type'] = 'tenants'
-        templateVars['data_type'] = 'vrfs'
-        templateVars['data_subtype'] = 'communities'
         templateVars['policy_name'] = templateVars['vrf']
         templateVars.pop('vrf')
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
@@ -3078,8 +3080,10 @@ class tenants(object):
         kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
-# Terraform Cloud For Business - Policies
-# Class must be instantiated with Variables
+#=====================================================================================
+# Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
+# for detailed information on the Arguments used by this Class.
+#=====================================================================================
 class terraform_cloud(object):
     def __init__(self):
         self.templateLoader = jinja2.FileSystemLoader(
@@ -3090,8 +3094,9 @@ class terraform_cloud(object):
     # Function - Create Terraform Cloud Workspaces
     #=============================================================================
     def create_terraform_workspaces(self, folders, site, **kwargs):
-        easy_jsonData = kwargs['easy_jsonData']
+        easyDict = kwargs['easyDict']
         jsonData = kwargs['easy_jsonData']['components']['schemas']['site.Identifiers']['allOf'][1]['properties']
+        site_group = kwargs['site_group']
         tfcb_config = []
         valid = False
         while valid == False:
@@ -3103,7 +3108,7 @@ class terraform_cloud(object):
             runTFCB = varBoolLoop(**templateVars)
             valid = True
         if runTFCB == True:
-            templateVars = { 'site_group':kwargs['site_group'] }
+            templateVars = { 'site_group':site_group }
             templateVars["terraform_cloud_token"] = terraform_cloud().terraform_token()
             
             # Obtain Terraform Cloud Organization
@@ -3124,7 +3129,8 @@ class terraform_cloud(object):
             
             # Obtain Version Control Provider
             if os.environ.get('tfc_vcs_provider') is None:
-                tfc_vcs_provider,templateVars["tfc_oath_token"] = terraform_cloud().tfc_vcs_providers(**templateVars)
+                tfc_vcs_provider,templateVars["tfc_oath_token"] = terraform_cloud(
+                ).tfc_vcs_providers(**templateVars)
                 templateVars["tfc_vcs_provider"] = tfc_vcs_provider
                 os.environ['tfc_vcs_provider'] = tfc_vcs_provider
                 os.environ['tfc_oath_token'] = templateVars["tfc_oath_token"]
@@ -3169,127 +3175,45 @@ class terraform_cloud(object):
                 tfcb_config.append({folder:templateVars["workspaceName"]})
                 # templateVars["vcsBranch"] = ''
 
+                # Create Terraform Cloud Workspace
                 templateVars['workspace_id'] = terraform_cloud().tfcWorkspace(**templateVars)
+
+                #==============================================
+                # Add Sensitive Variables to Workspace
+                #==============================================
+                site_list = easyDict['sensitive_vars'].keys()
+                var_list = []
+                for s in site_list:
+                    if re.search('Grp_', s):
+                        if site_group in easyDict['sites']['site_groups'][s][0]['sites']:
+                            if easyDict['sensitive_vars'][s].get(folder):
+                                var_list = var_list + easyDict['sensitive_vars'][s][folder]
+                    elif str(s) == str(site_group):
+                        if easyDict['sensitive_vars'][s].get(folder):
+                            var_list = var_list + easyDict['sensitive_vars'][s][folder]
+
                 if kwargs['controller_type'] == 'apic' and kwargs['auth_type'] == 'username':
-                   var_list = ['apicPass.Password for APIC Authentication']
+                   var_list.append('apicPass')
                 elif kwargs['controller_type'] == 'apic':
-                   var_list = [
-                       'certName.SSH Certificate for Authentication',
-                       'privateKey.Cisco ACI Private Key for SSL Based Authentication'
-                   ]
+                   var_list.append('certName')
+                   var_list.append('privateKey')
                 else:
-                   var_list = [
-                       'ndoPass.Password for Nexus Dashboard Orchestrator Authentication',
-                   ]
+                   var_list.append('ndoPass')
+                var_list.sort()
                 for var in var_list:
                     if 'cert' in var or 'private' in var:
                         templateVars["Multi_Line_Input"] = True
-                    print(f'* Adding {var.split(".")[1]} to {templateVars["workspaceName"]}')
+                    print(f'* Adding {var} to {templateVars["workspaceName"]}')
+                    templateVars['class_type'] = 'tfcVariables'
+                    templateVars["Description"] = ''
+                    templateVars["easyDict"] = easyDict
                     templateVars['jsonData'] = jsonData
-                    templateVars["Description"] = var.split('.')[1]
-                    templateVars["Variable"] = var.split('.')[0]
-                    templateVars["varId"] = var.split('.')[0]
-                    templateVars["varKey"] = var.split('.')[0]
+                    templateVars["Variable"] = var
+                    templateVars["varId"] = var
+                    templateVars["varKey"] = var
                     sensitive_var_site_group(**templateVars)
                     templateVars["Sensitive"] = True
                     terraform_cloud().tfcVariables(**templateVars)
-
-                templateVars["Multi_Line_Input"] = False
-                add_more_vars = False
-                if folder == 'access':
-                    add_more_vars = True
-                    policy_type = 'access'
-                    vars = [ 'virtual_networking.password' ]
-                elif folder == 'admin':
-                    add_more_vars = True
-                    policy_type = 'admin'
-                    vars = [
-                        'configuration_backups.password',
-                        'radius.key',
-                        'tacacs.key',
-                    ]
-                elif folder == 'fabric':
-                    add_more_vars = True
-                    policy_type = 'fabric'
-                    vars = [
-                        'date_and_time.key_id',
-                        'smart_callhome.secure_smtp',
-                        'snmp_policies.community_variable',
-                        'snmp_policies.authorization_key',
-                        'snmp_policies.privacy_key',
-                    ]
-                elif 'tenant' in folder:
-                    add_more_vars = True
-                    policy_type = 'tenant'
-                    vars = [
-                        'l3out_logical_node_profiles.bgp_password',
-                        'l3out_logical_node_profiles.key_id',
-                        'snmp_policies.community_variable',
-                    ]
-                if add_more_vars == 'kazam':
-                    sensitive_vars = []
-                    for var in vars:
-                        policy_type = 'access'
-                        policy = '%s' % (var.split('.')[0])
-                        policies,json_data = policies_parse(site, policy_type, policy)
-                        y = var.split('.')[0]
-                        z = var.split('.')[1]
-                        if y == 'persistent_memory_policies':
-                            if len(policies) > 0:
-                                sensitive_vars.append(z)
-                        else:
-                            for keys, values in json_data.items():
-                                for key, value in values.items():
-                                    for k, v in value.items():
-                                        if k == z:
-                                            if not v == 0:
-                                                if y == 'iscsi_boot_policies':
-                                                    varValue = 'iscsi_boot_password'
-                                                else:
-                                                    varValue = '%s_%s' % (k, v)
-                                                sensitive_vars.append(varValue)
-                                        elif k == 'binding_parameters':
-                                            for ka, va in v.items():
-                                                if ka == 'bind_method':
-                                                    if va == 'ConfiguredCredentials':
-                                                        sensitive_vars.append('binding_parameters_password')
-                                        elif k == 'users' or k == 'vmedia_mappings':
-                                            for ka, va in v.items():
-                                                for kb, vb in va.items():
-                                                    if kb == 'password':
-                                                        varValue = '%s_%s' % (z, vb)
-                                                        sensitive_vars.append(varValue)
-                                        elif k == 'snmp_users' and z == 'password':
-                                            for ka, va in v.items():
-                                                for kb, vb in va.items():
-                                                    if kb == 'auth_password':
-                                                        varValue = 'snmp_auth_%s_%s' % (z, vb)
-                                                        sensitive_vars.append(varValue)
-                                                    elif kb == 'privacy_password':
-                                                        varValue = 'snmp_privacy_%s_%s' % (z, vb)
-                                                        sensitive_vars.append(varValue)
-                    for var in sensitive_vars:
-                        templateVars["Variable"] = var
-                        if 'ipmi_key' in var:
-                            templateVars["Description"] = 'IPMI over LAN Encryption Key'
-                        elif 'iscsi' in var:
-                            templateVars["Description"] = 'iSCSI Boot Password'
-                        elif 'local_user' in var:
-                            templateVars["Description"] = 'Local User Password'
-                        elif 'access_comm' in var:
-                            templateVars["Description"] = 'SNMP Access Community String'
-                        elif 'snmp_auth' in var:
-                            templateVars["Description"] = 'SNMP Authorization Password'
-                        elif 'snmp_priv' in var:
-                            templateVars["Description"] = 'SNMP Privacy Password'
-                        elif 'trap_comm' in var:
-                            templateVars["Description"] = 'SNMP Trap Community String'
-                        templateVars["varValue"] = sensitive_var_value(easy_jsonData, **templateVars)
-                        templateVars["varId"] = var
-                        templateVars["varKey"] = var
-                        templateVars["Sensitive"] = True
-                        print(f'* Adding {templateVars["Description"]} to {templateVars["workspaceName"]}')
-                        terraform_cloud().tfcVariables(**templateVars)
 
         else:
             print(f'\n-------------------------------------------------------------------------------------------\n')
@@ -3348,7 +3272,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = get(url, tf_header, 'Get Agent Pools')
+        status,json_data = tfc_get(url, tf_header, 'Get Agent Pools')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -3392,7 +3316,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = get(url, tf_header, 'Get Terraform Cloud Organizations')
+        status,json_data = tfc_get(url, tf_header, 'Get Terraform Cloud Organizations')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -3435,7 +3359,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = get(url, tf_header, 'Get VCS Repos')
+        status,json_data = tfc_get(url, tf_header, 'Get VCS Repos')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -3478,7 +3402,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = get(url, tf_header, 'Get VCS Repos')
+        status,json_data = tfc_get(url, tf_header, 'Get VCS Repos')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -3538,7 +3462,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Organization to Search for the Workspace
         #----------------------------------------------------------------------------------
-        status,json_data = get(url, tf_header, 'workspace_check')
+        status,json_data = tfc_get(url, tf_header, 'workspace_check')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Workspace Exists or Not.
@@ -3585,7 +3509,7 @@ class terraform_cloud(object):
                 print(payload)
 
             # Post the Contents to Terraform Cloud
-            json_data = post(url, payload, tf_header, template_file)
+            json_data = tfc_post(url, payload, tf_header, template_file)
 
             # Get the Workspace ID from the JSON Dump
             workspace_id = json_data['data']['id']
@@ -3612,7 +3536,7 @@ class terraform_cloud(object):
                 print(payload)
 
             # PATCH the Contents to Terraform Cloud
-            json_data = patch(url, payload, tf_header, template_file)
+            json_data = tfc_patch(url, payload, tf_header, template_file)
             # Get the Workspace ID from the JSON Dump
             workspace_id = json_data['data']['id']
             key_count =+ 1
@@ -3684,7 +3608,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = get(url, tf_header, 'variable_check')
+        status,json_data = tfc_get(url, tf_header, 'variable_check')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -3715,7 +3639,7 @@ class terraform_cloud(object):
                 print(payload)
 
             # Post the Contents to Terraform Cloud
-            json_data = post(url, payload, tf_header, template_file)
+            json_data = tfc_post(url, payload, tf_header, template_file)
 
             # Get the Workspace ID from the JSON Dump
             var_id = json_data['data']['id']
@@ -3743,7 +3667,7 @@ class terraform_cloud(object):
                 print(payload)
 
             # PATCH the Contents to Terraform Cloud
-            json_data = patch(url, payload, tf_header, template_file)
+            json_data = tfc_patch(url, payload, tf_header, template_file)
             # Get the Workspace ID from the JSON Dump
             var_id = json_data['data']['id']
             key_count =+ 1
@@ -3757,79 +3681,3 @@ class terraform_cloud(object):
 
         # print(json.dumps(json_data, indent = 4))
         return var_id
-
-# Function to get contents from URL
-def get(url, site_header, section=''):
-    r = ''
-    while r == '':
-        try:
-            r = requests.get(url, headers=site_header)
-            status = r.status_code
-
-            # Use this for Troubleshooting
-            if print_response_always:
-                print(status)
-                print(r.text)
-
-            if status == 200 or status == 404:
-                json_data = r.json()
-                return status,json_data
-            else:
-                validating.error_request(r.status_code, r.text)
-
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: %s" % (e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method %s Failed. Exception: %s" % (section[:-5], e))
-            exit()
-
-# Function to PATCH Contents to URL
-def patch(url, payload, site_header, section=''):
-    r = ''
-    while r == '':
-        try:
-            r = requests.patch(url, data=payload, headers=site_header)
-
-            # Use this for Troubleshooting
-            if print_response_always:
-                print(r.status_code)
-                # print(r.text)
-
-            if r.status_code != 200:
-                validating.error_request(r.status_code, r.text)
-
-            json_data = r.json()
-            return json_data
-
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: %s" % (e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method %s Failed. Exception: %s" % (section[:-5], e))
-            exit()
-
-# Function to POST Contents to URL
-def post(url, payload, site_header, section=''):
-    r = ''
-    while r == '':
-        try:
-            r = requests.post(url, data=payload, headers=site_header)
-
-            # Use this for Troubleshooting
-            if print_response_always:
-                print(r.status_code)
-                # print(r.text)
-
-            if r.status_code != 201:
-                validating.error_request(r.status_code, r.text)
-
-            json_data = r.json()
-            return json_data
-
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: %s" % (e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method %s Failed. Exception: %s" % (section[:-5], e))
-            exit()

@@ -4,14 +4,11 @@
 # Source Modules
 #======================================================
 from collections import OrderedDict
-from random import random
 from git import cmd, Repo
 from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 from ordered_set import OrderedSet
-from pathlib import Path
 from textwrap import fill
-import ast
 import jinja2
 import json
 import openpyxl
@@ -42,6 +39,33 @@ log_level = 2
 #======================================================
 class InsufficientArgs(Exception):
     pass
+
+#======================================================
+# Function to POST to the APIC Config API
+#======================================================
+def apic_post(apic, payload, cookies, uri, section=''):
+    if print_payload:
+        print(payload)
+    s = requests.Session()
+    r = ''
+    while r == '':
+        try:
+            r = s.post('https://{}/{}.json'.format(apic, uri),
+                    data=payload, cookies=cookies, verify=False)
+            status = r.status_code
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error, pausing before retrying. Error: {}"
+                .format(e))
+            time.sleep(5)
+        except Exception as e:
+            print("Method {} failed. Exception: {}".format(section[:-5], e))
+            status = 666
+            return(status)
+    if print_response_always:
+        print(r.text)
+    if status != 200 and print_response_on_fail:
+        print(r.text)
+    return status
 
 #======================================================
 # Function to run 'terraform plan' and
@@ -263,8 +287,8 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
                                 read_file = open(tf_file, 'r')
                                 read_file.seek(0)
                                 static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (templateVars['App_Profile'], templateVars['EPG'], templateVars['Static_descr'])
-                                if not static_path_descr in read_file.read():
-                                    create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
+                                # if not static_path_descr in read_file.read():
+                                #     create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
 
                     elif templateVars['Port_Type'] == 'port-channel':
                         templateVars['Policy_Group'] = '%s_pc%s' % (row[3].value, templateVars['Bundle_ID'])
@@ -275,8 +299,8 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
                         read_file = open(tf_file, 'r')
                         read_file.seek(0)
                         static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (templateVars['App_Profile'], templateVars['EPG'], templateVars['Static_descr'])
-                        if not static_path_descr in read_file.read():
-                            create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
+                        # if not static_path_descr in read_file.read():
+                        #     create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
 
                     elif templateVars['Port_Type'] == 'individual':
                         port = 'eth%s' % (templateVars['Port'])
@@ -287,26 +311,9 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
                         read_file = open(tf_file, 'r')
                         read_file.seek(0)
                         static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (templateVars['App_Profile'], templateVars['EPG'], templateVars['Static_descr'])
-                        if not static_path_descr in read_file.read():
-                            create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
-
-#======================================================
-# Function to Create Terraform auto.tfvars files
-#======================================================
-def create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars):
-    # Make sure the Destination Directory Exists
-    dest_dir = './ACI/%s/%s' % (templateVars['Site_Name'], dest_dir)
-    if not os.path.isdir(dest_dir):
-        mk_dir = 'mkdir -p %s' % (dest_dir)
-        os.system(mk_dir)
-    # Create File for the Template in the Destination Folder
-    tf_file = '%s/%s' % (dest_dir, dest_file)
-    wr_file = open(tf_file, wr_method)
-
-    # Render Payload and Write to File
-    payload = template.render(templateVars)
-    wr_file.write(payload + '\n\n')
-    wr_file.close()
+                        # if not static_path_descr in read_file.read():
+                        #     create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
+                        print('hello')
 
 #======================================================
 # Function to Append the easyDict Dictionary
@@ -365,15 +372,9 @@ def easyDict_append_subtype(templateVars, **kwargs):
                 if i['name'] == policy_name:
                     i[data_subtype].append(templateVars)
     elif 'Grp_' in kwargs['site_group']:
-        group_id = '%s' % (kwargs['site_group'])
-        site_group = ast.literal_eval(os.environ[group_id])
-        sites = []
-        for x in range(1,16):
-            sitex = 'site_%s' % (x)
-            if not site_group[sitex] == None:
-                sites.append(x)
-        for x in sites:
-            for i in kwargs['easyDict'][class_type][data_type][str(x)]:
+        site_group = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
+        for site in site_group['sites']:
+            for i in kwargs['easyDict'][class_type][data_type][str(site)]:
                 if class_type == 'tenants':
                     if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
                         templateVars.pop['tenant']
@@ -424,33 +425,6 @@ def findVars(ws, func, rows, count):
         var_dict[vcount]['row'] = i + vcount - 1
         vcount += 1
     return var_dict
-
-#======================================================
-# Function to POST to the APIC Config API
-#======================================================
-def post(apic, payload, cookies, uri, section=''):
-    if print_payload:
-        print(payload)
-    s = requests.Session()
-    r = ''
-    while r == '':
-        try:
-            r = s.post('https://{}/{}.json'.format(apic, uri),
-                    data=payload, cookies=cookies, verify=False)
-            status = r.status_code
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: {}"
-                .format(e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method {} failed. Exception: {}".format(section[:-5], e))
-            status = 666
-            return(status)
-    if print_response_always:
-        print(r.text)
-    if status != 200 and print_response_on_fail:
-        print(r.text)
-    return status
 
 #======================================================
 # Function to Merge Easy ACI Repository to Dest Folder
@@ -656,25 +630,6 @@ def git_check_status(args):
     return strict_folders
 
 #======================================================
-# Function to Get User Password
-#======================================================
-def get_user_pass():
-    print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Beginning Proceedures to Apply Terraform Resources to the environment')
-    print(f'\n-----------------------------------------------------------------------------\n')
-
-    user = input('Enter APIC username: ')
-    while True:
-        try:
-            password = stdiomask.getpass(prompt='Enter APIC password: ')
-            break
-        except Exception as e:
-            print('Something went wrong. Error received: {}'.format(e))
-
-    os.environ['TF_VAR_aciUser'] = '%s' % (user)
-    os.environ['TF_VAR_aciPass'] = '%s' % (password)
-
-#======================================================
 # Function to Create Interface Selector Workbooks
 #======================================================
 def interface_selector_workbook(templateVars, **kwargs):
@@ -698,13 +653,11 @@ def interface_selector_workbook(templateVars, **kwargs):
         switch_pgs[pgroup] = []
         for k, v in kwargs['easyDict']['access'][pgroup].items():
             if re.search('Grp_', k):
-                site_group = ast.literal_eval(os.environ[k])
-                for x in range(1, 16):
-                    sitex = 'site_%s' % (x)
-                    if not site_group[sitex] == None:
-                        if int(templateVars['site_group']) == int(x):
-                            for i in v:
-                                switch_pgs[pgroup].append(i['name'])
+                site_group = kwargs['easyDict']['sites']['site_groups'][k][0]
+                for site in site_group['sites']:
+                    if int(templateVars['site_group']) == int(site):
+                        for i in v:
+                            switch_pgs[pgroup].append(i['name'])
             else:
                 if int(k) == int(templateVars['site_group']):
                     for i in v:
@@ -728,14 +681,10 @@ def interface_selector_workbook(templateVars, **kwargs):
 
     ws_sw = wb_sw['formulas']
     for pgroup in pg_list:
-        if pgroup == 'leaf_port_group_access':
-            x = 1
-        elif pgroup == 'leaf_port_group_breakout':
-            x = 2
-        elif pgroup == 'leaf_port_group_bundle':
-            x = 3
-        elif templateVars['node_type'] == 'spine':
-            x = 4
+        if pgroup == 'leaf_interfaces_policy_groups_access': x = 1
+        elif pgroup == 'leaf_interfaces_policy_groups_breakout': x = 2
+        elif pgroup == 'leaf_interfaces_policy_groups_bundle': x = 3
+        elif templateVars['node_type'] == 'spine': x = 4
         if len(switch_pgs[pgroup]) > 0:
             row_start = 2
             row_end = len(switch_pgs[pgroup]) + row_start - 1
@@ -759,19 +708,19 @@ def interface_selector_workbook(templateVars, **kwargs):
         if templateVars['node_type'] == 'spine':
             new_range = openpyxl.workbook.defined_name.DefinedName('spine_policy_groups',attr_text=f"formulas!$D$2:$D{last_row}")
             if 'spine_policy_groups' in wb_sw.defined_names:
-                wb_sw.defined_names.delete('spine_policy_groups')
+                # wb_sw.defined_names.delete('spine_policy_groups')
                 wb_sw.defined_names.append(new_range)
-        elif pgroup == 'leaf_port_group_access':
+        elif pgroup == 'leaf_interfaces_policy_groups_access':
             new_range = openpyxl.workbook.defined_name.DefinedName('access',attr_text=f"formulas!$A$2:$A{last_row}")
             if not 'access' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('access')
                 wb_sw.defined_names.append(new_range)
-        elif pgroup == 'leaf_port_group_breakout':
+        elif pgroup == 'leaf_interfaces_policy_groups_breakout':
             new_range = openpyxl.workbook.defined_name.DefinedName('breakout',attr_text=f"formulas!$B$2:$B{last_row}")
             if not 'breakout' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('breakout')
                 wb_sw.defined_names.append(new_range)
-        elif pgroup == 'leaf_port_group_bundle':
+        elif pgroup == 'leaf_interfaces_policy_groups_bundle':
             new_range = openpyxl.workbook.defined_name.DefinedName('bundle',attr_text=f"formulas!$C$2:$C{last_row}")
             if not 'bundle' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('bundle')
@@ -830,22 +779,37 @@ def interface_selector_workbook(templateVars, **kwargs):
         templateVars['port_count'] = port_count
         sw_type = str(templateVars['switch_model'])
         if re.search('^(95[0-1][4-8])', sw_type):
-            spine_modules = kwargs['easyDict']['access']['spine_modules']
-            for item in spine_modules:
-                for key, value in item.items():
-                    if key == templateVars["site_group"]:
-                        for i in value:
-                            if str(templateVars['node_id']) == str(i['node_id']):
-                                modDict = i
-                                break
+            mod_keys = kwargs['easyDict']['access']['spine_modules'].keys()
+            site_group = templateVars["site_group"]
+            spine_modules = ''
+            if site_group in mod_keys:
+                spine_modules = kwargs['easyDict']['access']['spine_modules'][site_group][0]
+            else:
+                site_groups = kwargs['easyDict']['sites']['site_groups'].keys()
+                x = []
+                for s in site_groups:
+                    if 'Grp_' in s:
+                        x.append(s)
+                site_groups = x
+                for sgroup in site_groups:
+                    if site_group in kwargs['easyDict']['sites']['site_groups'][sgroup][0]['sites']:
+                        spine_modules = kwargs['easyDict']['access']['spine_modules'][sgroup][0]
+            modDict = {}
+            if not spine_modules == '':
+                node_list = spine_modules['node_list']
+                if str(templateVars['node_id']) in node_list:
+                    modDict = spine_modules
+            else:
+                print(f"Error, Could not find the Module list for spine {templateVars['node_id']}")
             
-            start, end = 1, int(modules)
-            for x in range(start, end + 1):
+            print(modDict)
+            for x in range(1, 17):
                 module_type = modDict[f'module_{x}']
-                if re.search('^X97', module_type):
-                    templateVars['module'] = x
-                    templateVars['port_count'] = spine_module_port_count(module_type)
-                    ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
+                if not module_type == None:
+                    if re.search('^X97', module_type):
+                        templateVars['module'] = x
+                        templateVars['port_count'] = spine_module_port_count(module_type)
+                        ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
         else:
             templateVars['module'] = 1
             ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
@@ -907,52 +871,6 @@ def merge_easy_aci_repository(args, easy_jsonData):
                     terraform_fmt(files, folder, path_sep)
 
 #======================================================
-# Function to Create Terraform auto.tfvars files
-#======================================================
-def policies_parse(org, policy_type, policy):
-    if os.environ.get('TF_DEST_DIR') is None:
-        tfDir = 'Intersight'
-    else:
-        tfDir = os.environ.get('TF_DEST_DIR')
-    policies = []
-
-    opSystem = platform.system()
-    if opSystem == 'Windows':
-        policy_file = f'.\{tfDir}\{org}\{policy_type}\{policy}.auto.tfvars'
-    else:
-        policy_file = f'./{tfDir}/{org}/{policy_type}/{policy}.auto.tfvars'
-    if os.path.isfile(policy_file):
-        if len(policy_file) > 0:
-            if opSystem == 'Windows':
-                cmd = 'hcl2json.exe %s' % (policy_file)
-            else:
-                cmd = 'hcl2json %s' % (policy_file)
-                # cmd = 'json2hcl -reverse < %s' % (policy_file)
-            p = subprocess.run(
-                cmd,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT
-            )
-            if 'unable to parse' in p.stdout.decode('utf-8'):
-                print(f'\n-------------------------------------------------------------------------------------------\n')
-                print(f'  !!!! Encountered Error in Attempting to read file !!!!')
-                print(f'  - {policy_file}')
-                print(f'  Error was:')
-                print(f'  - {p.stdout.decode("utf-8")}')
-                print(f'\n-------------------------------------------------------------------------------------------\n')
-                json_data = {}
-                return policies,json_data
-            else:
-                json_data = json.loads(p.stdout.decode('utf-8'))
-                for i in json_data[policy]:
-                    policies.append(i)
-                return policies,json_data
-    else:
-        json_data = {}
-        return policies,json_data
-
-#======================================================
 # Function to validate input for each method
 #======================================================
 def process_kwargs(required_args, optional_args, **kwargs):
@@ -1006,48 +924,34 @@ def process_kwargs(required_args, optional_args, **kwargs):
 #======================================================
 # Function to Add Static Port Bindings to Bridge Domains Terraform Files
 #======================================================
-def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, **templateVars):
-    if re.search('Grp_[A-F]', templateVars['site_group']):
-        group_id = '%s' % (templateVars['site_group'])
-        site_group = ast.literal_eval(os.environ[group_id])
-        for x in range(1, 16):
-            sitex = 'site_%s' % (x)
-            if not site_group[sitex] == None:
-                site_id = 'site_id_%s' % (site_group[sitex])
-                site_dict = ast.literal_eval(os.environ[site_id])
-
-                # Pull in the Site Workbook
-                excel_workbook = '%s_intf_selectors.xlsx' % (templateVars['Site_Name'])
-                try:
-                    wb_sw = load_workbook(excel_workbook)
-                except Exception as e:
-                    print(f"Something went wrong while opening the workbook - {excel_workbook}... ABORT!")
-                    sys.exit(e)
-
-                # Process the Interface Selectors for Static Port Paths
-                create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **templateVars)
-
-    elif re.search(r'\d+', templateVars['Site_Group']):
-        site_id = 'site_id_%s' % (templateVars['Site_Group'])
-        site_dict = ast.literal_eval(os.environ[site_id])
-
+def process_workbook(templateVars, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    def process_site(siteDict, templateVars, **kwargs):
         # Create templateVars for Site_Name and APIC_URL
-        templateVars['Site_Name'] = site_dict.get('Site_Name')
-        templateVars['Site_Group'] = site_dict.get('Site_ID')
-        templateVars['APIC_URL'] = site_dict.get('APIC_URL')
+        templateVars['site_name'] =  siteDict['Site_Name']
+        templateVars['site_group'] = siteDict['site_group']
+        templateVars['controller'] =   siteDict['controller']
 
         # Pull in the Site Workbook
-        excel_workbook = '%s_intf_selectors.xlsx' % (templateVars['Site_Name'])
+        excel_workbook = '%s_intf_selectors.xlsx' % (templateVars['site_name'])
         try:
-            wb_sw = load_workbook(excel_workbook)
+            kwargs['wb_sw'] = load_workbook(excel_workbook)
         except Exception as e:
             print(f"Something went wrong while opening the workbook - {excel_workbook}... ABORT!")
             sys.exit(e)
 
-
         # Process the Interface Selectors for Static Port Paths
-        create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **templateVars)
+        create_static_paths(templateVars, **kwargs)
 
+    if re.search('Grp_[A-F]', templateVars['site_group']):
+        site_group = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
+        for site in site_group['sites']:
+            siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
+            process_site(siteDict, templateVars, **kwargs)
+    elif re.search(r'\d+', templateVars['Site_Group']):
+        siteDict = kwargs['easyDict']['sites']['site_settings'][kwargs['site_group']][0]
+        process_site(siteDict, templateVars, **kwargs)
     else:
         print(f"\n-----------------------------------------------------------------------------\n")
         print(f"   Error on Worksheet {ws.title}, Row {row_num} Site_Group, value {templateVars['Site_Group']}.")
@@ -1058,45 +962,14 @@ def process_workbook(wb, ws, row_num, wr_method, dest_dir, dest_file, template, 
 #======================================================
 # Function for Processing Loops to auto.tfvars files
 #======================================================
-def read_easy_jsonData(easy_jsonData, **easyDict):
+def read_easy_jsonData(args, easy_jsonData, **easyDict):
     jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
     classes = jsonData['classes']['enum']
-
-    #==================
-    # Shared Functions
-    #==================
-
-    # Site_Group Dictionary
-    def site_group_dict(class_type, func, easyDict):
-        sites = []
-        site_groups = {}
-
-        # Get the List of Sites in the Function
-        for k, v in easyDict[class_type][func].items():
-            if re.search('[0-9]+', k):
-                sites.append(k)
-        # Get the List of Site Groups in the Function with their associated Sites.
-        for k, v in easyDict[class_type][func].items():
-            if re.search('Grp_', k):
-                site_groups.update({k:[]})
-                site_group = ast.literal_eval(os.environ[k])
-                gsites = []
-                for kk, vv in site_group.items():
-                    if not vv == None and re.search('site_[0-9]+', kk):
-                        gsites.append(vv)
-                for site in sites:
-                    for gsite in gsites:
-                        if int(site) == int(gsite):
-                            site_groups[k].append(site)
-        return site_groups
 
     # Loop to write the Header and content to the files
     for class_type in classes:
         funcList = jsonData[f'class.{class_type}']['enum']
         for func in funcList:
-            site_groups = site_group_dict(class_type, func, easyDict)
-            loop_count = 1
-            switch_count = 1
             for k, v in easyDict[class_type][func].items():
                 for i in v:
                     templateVars = i
@@ -1156,42 +1029,25 @@ def read_easy_jsonData(easy_jsonData, **easyDict):
                     kwargs["template_file"] = f'{func}.jinja2'
                     write_to_site(templateVars, **kwargs)
 
-    # Obtain Operating System and Get TF_DEST_DIR variable from Environment
-    if os.environ.get('TF_DEST_DIR') is None:
-        tfDir = 'ACI'
-    else:
-        tfDir = os.environ.get('TF_DEST_DIR')
-
-    # Get All sub-folders from the TF_DEST_DIR
-    folders = []
-    for root, dirs, files in os.walk(tfDir):
-        for name in dirs:
-            # print(os.path.join(root, name))
-            folders.append(os.path.join(root, name))
-    folders.sort()
-
-    # Remove the First Level Folders from the List
-    for folder in folders:
-        if '/' in folder:
-            x = folder.split('/')
-            if len(x) == 2:
-                folders.remove(folder)
-
-    for folder in folders:
-        files = os.listdir(folder)
-        for x in files:
-            if 'auto.tfvars' in x:
-                if not re.search('(connectivity|bgp_auto)', x):
-                    file = open(os.path.join(folder,x), 'r')
+    # Add Closing Bracket to auto.tfvars that are dictionaries    
+    for k, v in easyDict['sites']['site_settings'].items():
+        site_name = v[0]['site_name']
+        siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
+        siteDirs.sort()
+        for folder in siteDirs:
+            files = [f for f in os.listdir(os.path.join(args.dir, site_name, folder)) if 'auto.tfvars' in f]
+            for file in files:
+                if not re.search('(bgp_auto|connectivity|variables)', file):
+                    file_name = open(os.path.join(args.dir, site_name, folder, file), 'r')
                     end_count = 0
-                    for line in file:
+                    for line in file_name:
                         if re.search(r'^}', line):
                             end_count += 1
-                    file.close
+                    file_name.close
                     if end_count == 0:
-                            file = open(os.path.join(folder,x), 'a+')
-                            file.write('\n}\n')
-                            file.close()
+                            file_name = open(os.path.join(args.dir, site_name, folder, file), 'a+')
+                            file_name.write('\n}\n')
+                            file_name.close()
 
 #======================================================
 # Function to Read Excel Workbook Data
@@ -1259,19 +1115,33 @@ def required_args_remove(args_list, jsonData):
 # Function to loop through site_groups for sensitve vars
 #======================================================
 def sensitive_var_site_group(**kwargs):
-    if re.search('Grp_[A-F]', kwargs['site_group']):
-        site_group = ast.literal_eval(os.environ[kwargs['site_group']])
-        for x in range(1, 16):
-            if not site_group[f'site_{x}'] == None:
-                site_id = 'site_id_%s' % (site_group[f'site_{x}'])
-                site_dict = ast.literal_eval(os.environ[site_id])
-                if site_dict['run_location'] == 'local':
-                    sensitive_var_value(**kwargs)
+    site_group = kwargs['site_group']
+    sensitive_var = kwargs['Variable']
+
+    # Add the Sensitive Variable to easyDict
+    if 'tenants' in kwargs['class_type']:
+        class_type = f"tenant_{kwargs['tenant']}"
     else:
-        site_id = 'site_id_%s' % (kwargs['site_group'])
-        site_dict = ast.literal_eval(os.environ[site_id])
-        if site_dict['run_location'] == 'local':
+        class_type = kwargs['class_type']
+    if not 'tfcVariables' in class_type:
+        if not kwargs['easyDict']['sensitive_vars'].get(site_group):
+            kwargs['easyDict']['sensitive_vars'].update({site_group:{}})
+        if not kwargs['easyDict']['sensitive_vars'][site_group].get(class_type):
+            kwargs['easyDict']['sensitive_vars'][site_group].update({class_type:[]})
+        kwargs['easyDict']['sensitive_vars'][site_group][class_type].append(sensitive_var)
+
+    # Loop Through Site Groups to confirm Sensitive Variable in the Environment
+    if re.search('Grp_[A-F]', site_group):
+       siteGroup = kwargs['easyDict']['sites']['site_groups'][site_group][0]
+       for site in siteGroup['sites']:
+            siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
+            if siteDict['run_location'] == 'local' or siteDict['configure_terraform_cloud'] == 'true':
+                sensitive_var_value(**kwargs)
+    else:
+        siteDict = kwargs['easyDict']['sites']['site_settings'][site_group][0]
+        if siteDict['run_location'] == 'local' or siteDict['configure_terraform_cloud'] == 'true':
             sensitive_var_value(**kwargs)
+    return kwargs['easyDict']
 
 #======================================================
 # Function to add sensitive_var to Environment
@@ -1495,6 +1365,88 @@ def spine_module_port_count(module_type):
     elif re.search('X9736', module_type):
         port_count = '36'
     return port_count
+
+#======================================================
+# Function to GET from Terraform Cloud
+#======================================================
+def tfc_get(url, site_header, section=''):
+    r = ''
+    while r == '':
+        try:
+            r = requests.get(url, headers=site_header)
+            status = r.status_code
+
+            # Use this for Troubleshooting
+            if print_response_always:
+                print(status)
+                print(r.text)
+
+            if status == 200 or status == 404:
+                json_data = r.json()
+                return status,json_data
+            else:
+                validating.error_request(r.status_code, r.text)
+
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error, pausing before retrying. Error: %s" % (e))
+            time.sleep(5)
+        except Exception as e:
+            print("Method %s Failed. Exception: %s" % (section[:-5], e))
+            exit()
+
+#======================================================
+# Function to PATCH to Terraform Cloud
+#======================================================
+def tfc_patch(url, payload, site_header, section=''):
+    r = ''
+    while r == '':
+        try:
+            r = requests.patch(url, data=payload, headers=site_header)
+
+            # Use this for Troubleshooting
+            if print_response_always:
+                print(r.status_code)
+                # print(r.text)
+
+            if r.status_code != 200:
+                validating.error_request(r.status_code, r.text)
+
+            json_data = r.json()
+            return json_data
+
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error, pausing before retrying. Error: %s" % (e))
+            time.sleep(5)
+        except Exception as e:
+            print("Method %s Failed. Exception: %s" % (section[:-5], e))
+            exit()
+
+#======================================================
+# Function to POST to Terraform Cloud
+#======================================================
+def tfc_post(url, payload, site_header, section=''):
+    r = ''
+    while r == '':
+        try:
+            r = requests.post(url, data=payload, headers=site_header)
+
+            # Use this for Troubleshooting
+            if print_response_always:
+                print(r.status_code)
+                # print(r.text)
+
+            if r.status_code != 201:
+                validating.error_request(r.status_code, r.text)
+
+            json_data = r.json()
+            return json_data
+
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error, pausing before retrying. Error: %s" % (e))
+            time.sleep(5)
+        except Exception as e:
+            print("Method %s Failed. Exception: %s" % (section[:-5], e))
+            exit()
 
 #======================================================
 # Function to Format Terraform Files
@@ -1830,72 +1782,6 @@ def varBoolLoop(**templateVars):
 #======================================================
 # Function to pull variables from easy_jsonData
 #======================================================
-def varNumberLoop(**templateVars):
-    maxNum = templateVars["maxNum"]
-    minNum = templateVars["minNum"]
-    varName = templateVars["varName"]
-
-    print(f'\n-------------------------------------------------------------------------------------------\n')
-    newDescr = templateVars["Description"]
-    if '\n' in newDescr:
-        newDescr = newDescr.split('\n')
-        for line in newDescr:
-            if '*' in line:
-                print(fill(f'{line}',width=88, subsequent_indent='    '))
-            else:
-                print(fill(f'{line}',88))
-    else:
-        print(fill(f'{templateVars["Description"]}',88))
-    print(f'\n-------------------------------------------------------------------------------------------\n')
-    valid = False
-    while valid == False:
-        varValue = input(f'{templateVars["varInput"]}  [{templateVars["varDefault"]}]: ')
-        if varValue == '':
-            varValue = templateVars["varDefault"]
-        if re.fullmatch(r'^[0-9]+$', str(varValue)):
-            valid = validating.number_in_range(varName, varValue, minNum, maxNum)
-        else:
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'   {varName} value of "{varValue}" is Invalid!!! ')
-            print(f'   Valid range is {minNum} to {maxNum}.')
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-    return varValue
-
-#======================================================
-# Function to pull variables from easy_jsonData
-#======================================================
-def varSensitiveStringLoop(**templateVars):
-    maximum = templateVars["maximum"]
-    minimum = templateVars["minimum"]
-    varName = templateVars["varName"]
-    pattern = templateVars["pattern"]
-
-    print(f'\n-------------------------------------------------------------------------------------------\n')
-    newDescr = templateVars["Description"]
-    if '\n' in newDescr:
-        newDescr = newDescr.split('\n')
-        for line in newDescr:
-            if '*' in line:
-                print(fill(f'{line}',width=88, subsequent_indent='    '))
-            else:
-                print(fill(f'{line}',88))
-    else:
-        print(fill(f'{templateVars["Description"]}',88))
-    print(f'\n-------------------------------------------------------------------------------------------\n')
-    valid = False
-    while valid == False:
-        varValue = stdiomask.getpass(f'{templateVars["varInput"]} ')
-        if not varValue == '':
-            valid = validating.length_and_regex_sensitive(pattern, varName, varValue, minimum, maximum)
-        else:
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'   {varName} value is Invalid!!! ')
-            print(f'\n-------------------------------------------------------------------------------------------\n')
-    return varValue
-
-#======================================================
-# Function to pull variables from easy_jsonData
-#======================================================
 def varStringLoop(**templateVars):
     maximum = templateVars["maximum"]
     minimum = templateVars["minimum"]
@@ -2052,22 +1938,17 @@ def write_to_site(templateVars, **kwargs):
         write_to_template(templateVars, **kwargs)
 
     if re.search('Grp_[A-F]', site_group):
-        group_id = '%s' % (site_group)
-        site_group = ast.literal_eval(os.environ[group_id])
-        for x in range(1, 16):
-            if not site_group[f'site_{x}'] == None:
-                site_id = 'site_id_%s' % (site_group[f'site_{x}'])
-                site_dict = ast.literal_eval(os.environ[site_id])
-
-                # Add Site Detials to kwargs and write to template
-                process_siteDetails(site_dict, templateVars, **kwargs)
+        siteGroup = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
+        for site in siteGroup['sites']:
+            siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
+            # Add Site Detials to kwargs and write to template
+            process_siteDetails(siteDict, templateVars, **kwargs)
 
     elif re.search(r'\d+', site_group):
-        site_id = 'site_id_%s' % (site_group)
-        site_dict = ast.literal_eval(os.environ[site_id])
+        siteDict = kwargs['easyDict']['sites']['site_settings'][kwargs['site_group']][0]
 
         # Add Site Detials to kwargs and write to template
-        process_siteDetails(site_dict, templateVars, **kwargs)
+        process_siteDetails(siteDict, templateVars, **kwargs)
 
     else:
         print(f"\n-----------------------------------------------------------------------------\n")
@@ -2080,56 +1961,25 @@ def write_to_site(templateVars, **kwargs):
 # Function to write files from Templates
 #======================================================
 def write_to_template(templateVars, **kwargs):
-    opSystem  = platform.system()
+    # Set Function Variables
+    args = kwargs['args']
+    baseRepo = args.dir
     dest_dir  = kwargs["dest_dir"]
     dest_file = kwargs["dest_file"]
     site_name = kwargs["site_name"]
     template  = kwargs["template"]
     wr_method = kwargs["write_method"]
 
-    if opSystem == 'Windows':
-        if os.environ.get('TF_DEST_DIR') is None:
-            tfDir = 'ACI'
-        else:
-            tfDir = os.environ.get('TF_DEST_DIR')
-        if re.search(r'^\\.*\\$', tfDir):
-            dest_dir = '%s%s\%s' % (tfDir, site_name, dest_dir)
-        elif re.search(r'^\\.*\w', tfDir):
-            dest_dir = '%s\%s\%s' % (tfDir, site_name, dest_dir)
-        else:
-            dest_dir = '.\%s\%s\%s' % (tfDir, site_name, dest_dir)
-        if not os.path.isdir(dest_dir):
-            mk_dir = 'mkdir %s' % (dest_dir)
-            os.system(mk_dir)
-        dest_file_path = '%s\%s' % (dest_dir, dest_file)
-        if not os.path.isfile(dest_file_path):
-            create_file = 'type nul >> %s' % (dest_file_path)
-            os.system(create_file)
-        tf_file = dest_file_path
-        print(tf_file)
-        wr_file = open(tf_file, wr_method)
-    else:
-        if os.environ.get('TF_DEST_DIR') is None:
-            tfDir = 'ACI'
-        else:
-            tfDir = os.environ.get('TF_DEST_DIR')
-        if re.search(r'^\/.*\/$', tfDir):
-            dest_dir = '%s%s/%s' % (tfDir, site_name, dest_dir)
-        elif re.search(r'^\/.*\w', tfDir):
-            dest_dir = '%s/%s/%s' % (tfDir, site_name, dest_dir)
-        else:
-            dest_dir = './%s/%s/%s' % (tfDir, site_name, dest_dir)
-        if not os.path.isdir(dest_dir):
-            mk_dir = 'mkdir -p %s' % (dest_dir)
-            os.system(mk_dir)
-        dest_file_path = '%s/%s' % (dest_dir, dest_file)
-        if not os.path.isfile(dest_file_path):
-            create_file = 'touch %s' % (dest_file_path)
-            os.system(create_file)
-        tf_file = dest_file_path
-        wr_file = open(tf_file, wr_method)
-
-    # Remove Uneccessary Arguments
+    # Make sure the Destination Path and Folder Exist
+    if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
+        os.mkdir(os.path.join(baseRepo, site_name, dest_dir))
+    dest_dir = os.path.join(baseRepo, site_name, dest_dir)
+    if not os.path.exists(os.path.join(dest_dir, dest_file)):
+        create_file = f'type nul >> {os.path.join(dest_dir, dest_file)}'
+        os.system(create_file)
+    tf_file = os.path.join(dest_dir, dest_file)
+    print(tf_file)
+    wr_file = open(tf_file, wr_method)
 
     # Render Payload and Write to File
     templateVars = json.loads(json.dumps(templateVars))

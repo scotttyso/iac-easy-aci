@@ -12,7 +12,7 @@ It uses argparse to take in the following CLI arguments:
 from classes import access, admin, fabric, site_policies, switches, system_settings, tenants
 from easy_functions import apply_terraform
 from easy_functions import git_base_repo, git_check_status
-from easy_functions import countKeys, findKeys, findVars, get_user_pass
+from easy_functions import countKeys, findKeys, findVars
 from easy_functions import get_latest_versions, merge_easy_aci_repository
 from easy_functions import read_easy_jsonData, read_in
 from easy_functions import stdout_log
@@ -26,12 +26,6 @@ import re
 # Note: This is simply to make it so the classes don't appear Unused.
 #=====================================================================
 class_list = [access, admin, fabric, site_policies, switches, system_settings, tenants]
-
-#======================================================
-# Global Variables
-#======================================================
-excel_workbook = None
-workspace_dict = {}
 
 #======================================================
 # Regular Expressions to Control wich rows in the
@@ -62,9 +56,9 @@ tenants_regex = '^(tenant_(add|site)|vrf_(add|community|policy))$'
 tenant_pol_regex = '^(bgp_pfx|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
-#======================================================
+#=================================================================
 # Function to Read the Access Worksheet
-#======================================================
+#=================================================================
 def process_access(args, easyDict, easy_jsonData, wb):
     # Evaluate Access Worksheet
     class_init = 'access'
@@ -74,9 +68,9 @@ def process_access(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-#======================================================
-# Function to Read the Admin Worksheet
-#======================================================
+#=================================================================
+# Function to process the Admin Worksheet
+#=================================================================
 def process_admin(args, easyDict, easy_jsonData, wb):
     # Evaluate Admin Worksheet
     class_init = 'admin'
@@ -86,9 +80,9 @@ def process_admin(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-#======================================================
-# Function to Read the Fabric Worksheet
-#======================================================
+#=================================================================
+# Function to process the Fabric Worksheet
+#=================================================================
 def process_fabric(args, easyDict, easy_jsonData, wb):
     # Evaluate Fabric Worksheet
     class_init = 'fabric'
@@ -98,9 +92,9 @@ def process_fabric(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-#======================================================
-# Function to Read the Fabric Worksheet
-#======================================================
+#=================================================================
+# Process the Port Conversions from the Switch Profiles worksheet.
+#=================================================================
 def process_port_convert(args, easyDict, easy_jsonData, wb):
     # Evaluate Inventory Worksheet
     class_init = 'switches'
@@ -110,9 +104,9 @@ def process_port_convert(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-#======================================================
-# Function to Setup Run Location
-#======================================================
+#=================================================================
+# Function to Setup Terraform Run Location
+#=================================================================
 def process_site_settings(args, easyDict, easy_jsonData, wb):
     kwargs = {
         'args':args,
@@ -125,9 +119,9 @@ def process_site_settings(args, easyDict, easy_jsonData, wb):
     easyDict = site_policies('site_settings').site_settings(**kwargs)
     return easyDict
 
-#======================================================
-# Function to Read the Sites Worksheet
-#======================================================
+#=================================================================
+# Function to process the Sites Worksheet
+#=================================================================
 def process_sites(args, easyDict, easy_jsonData, wb):
     # Evaluate Sites Worksheet
     class_init = 'site_policies'
@@ -137,9 +131,9 @@ def process_sites(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-#======================================================
-# Function to Read the Fabric Worksheet
-#======================================================
+#=================================================================
+# Function to process the Fabric Worksheet
+#=================================================================
 def process_switches(args, easyDict, easy_jsonData, wb):
     # Evaluate Switches Worksheet
     class_init = 'switches'
@@ -149,9 +143,9 @@ def process_switches(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-#======================================================
-# Function to Read the System Settings Worksheet
-#======================================================
+#=================================================================
+# Function to process the System Settings Worksheet
+#=================================================================
 def process_system_settings(args, easyDict, easy_jsonData, wb):
     # Evaluate System_Settings Worksheet
     class_init = 'system_settings'
@@ -161,9 +155,9 @@ def process_system_settings(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-#======================================================
-# Function to Read the Tenants Worksheet
-#======================================================
+#=================================================================
+# Function to process the Tenants Worksheet
+#=================================================================
 def process_tenants(args, easyDict, easy_jsonData, wb):
     class_init = 'tenants'
     class_folder = 'tenants'
@@ -200,9 +194,9 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
 
     return easyDict
 
-#======================================================
-# Function to Read the Virtual Networking Worksheet
-#======================================================
+#=================================================================
+# Function to process the Virtual Networking Worksheet
+#=================================================================
 def process_virtual_networking(args, easyDict, easy_jsonData, wb):
     # Evaluate Tenants Worksheet
     class_init = 'access'
@@ -212,9 +206,9 @@ def process_virtual_networking(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
-#======================================================
-# Function to Read the Worksheet and Create Templates
-#======================================================
+#=================================================================
+# Function to process the Worksheets and Create Terraform Files
+#=================================================================
 def read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
     rows = ws.max_row
     func_list = findKeys(ws, func_regex)
@@ -246,9 +240,9 @@ def read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func
     # Return the easyDict
     return easyDict
 
-#======================================================
+#=================================================================
 # The Main Module
-#======================================================
+#=================================================================
 def main():
     Parser = argparse.ArgumentParser(description='IaC Easy ACI Deployment Module')
     Parser.add_argument('-d', '--dir',
@@ -289,32 +283,32 @@ def main():
     destdirCheck = False
     while destdirCheck == False:
         splitDir = args.dir.split(path_sep)
+        splitDir = [i for i in splitDir if i]
         for folder in splitDir:
-            if folder == '':
-                folderCount = 0
-            elif not re.search(r'^[\w\-\.\:\/\\]+$', folder):
+            if not re.search(r'^[\w\-\.\:\/\\]+$', folder):
                 print(folder)
                 print(f'\n-------------------------------------------------------------------------------------------\n')
                 print(f'  !!ERROR!!')
                 print(f'  The Directory structure can only contain the following characters:')
-                print(f'  letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or and underscore(-).')
-                print(f'  It can be a short path or a fully qualified path.')
+                print(f'  letters(a-z, A-Z), numbers(0-9), hyphen(-), period(.), colon(:), or and underscore(_).')
+                print(f'  It can be a short path or a fully qualified path. {folder} failed this check.')
                 print(f'\n-------------------------------------------------------------------------------------------\n')
                 exit()
-        os.environ['TF_DEST_DIR'] = '%s' % (args.dir)
         destdirCheck = True
 
-    # Ask user for required Information: ACI_DEPLOY_FILE
+    # Set the Source Workbook
     if os.path.isfile(args.workbook):
         excel_workbook = args.workbook
     else:
-        print('\nWorkbook not Found.  Please enter a valid /path/filename for the source workbook you will be using.')
+        print(f'\n-------------------------------------------------------------------------------------------\n')
+        print( '\nWorkbook not Found.  Please enter a valid /path/filename for the source workbook.')
+        print(f'\n-------------------------------------------------------------------------------------------\n')
         while True:
             print('Please enter a valid /path/filename for the source you will be using.')
             excel_workbook = input('/Path/Filename: ')
             if os.path.isfile(excel_workbook):
                 print(f'\n-----------------------------------------------------------------------------\n')
-                print(f'   {excel_workbook} exists.  Will Now Check for API Variables...')
+                print(f'   {excel_workbook} exists.  Will Now begin collecting variables...')
                 print(f'\n-----------------------------------------------------------------------------\n')
                 break
             else:
@@ -338,18 +332,16 @@ def main():
     easyDict['latest_versions']['ndo_versions']['default'] = ndoVersions[0]
     easyDict['latest_versions']['terraform_version'] = "1.1.9"
 
-    # Run Proceedures for Worksheets in the Workbook
+    # Initialize the Base Repo/Terraform Working Directory
+    if not os.path.isdir(args.dir):
+        os.mkdir(args.dir)
+    # baseRepo = git_base_repo(args, wb)
+
+    # Process the Sites Worksheet
     easyDict['wb'] = wb
     easyDict = process_sites(args, easyDict, easy_jsonData, wb)
-    easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
-    easyDict.pop('wb')
-    print(json.dumps(easyDict, indent=4))
-    exit()
 
-    # Initialize the Base Repo/Terraform Working Directory
-    baseRepo = git_base_repo(args, wb)
-
-    # Either Run All Remaining Proceedures or Just Specific based on sys.argv[2:]
+    # Process Individual Worksheets if specified in args or Process All by Default
     if not args.worksheet == None:
         r1 = 'access|admin|bridge_domains|contracts|epgs|fabric|inventory'
         r2 = 'l3out|port_convert|sites|switch|system_settings|tenants'
@@ -366,14 +358,17 @@ def main():
             exit()
     else:
         process_list = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['processes']['enum']
-        # for x in process_list:
-        #     process_type = f'process_{x}'
-        #     easyDict = eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
+        for x in process_list:
+            process_type = f'process_{x}'
+            easyDict = eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
+
+    easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
+    exit()
 
     # Begin Proceedures to Create files
     easyDict['wb'] = wb
-    # read_easy_jsonData(easy_jsonData, **easyDict)
-    # merge_easy_aci_repository(args, easy_jsonData)
+    read_easy_jsonData(args, easy_jsonData, **easyDict)
+    merge_easy_aci_repository(args, easy_jsonData)
 
     uncommitted_folders = git_check_status(args)
     apply_terraform(args, uncommitted_folders)
