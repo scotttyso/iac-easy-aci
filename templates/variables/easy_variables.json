@@ -121,17 +121,6 @@
                                     "vrfs"
                                 ]
                             },
-                            "processes_temp": {
-                                "enum": [
-                                    "access",
-                                    "admin",
-                                    "fabric",
-                                    "switches",
-                                    "system_settings",
-                                    "tenants",
-                                    "virtual_networking"
-                                ]
-                            },
                             "processes": {
                                 "enum": [
                                     "access",
@@ -230,7 +219,7 @@
                                     "filters": {},
                                     "hsrp_policies": {},
                                     "l3out_floating_svi": {},
-                                    "l3out_hsrp": {},
+                                    "l3out_interface_profiles_hsrp": {},
                                     "l3out_static_route": {},
                                     "l3out_policies": {},
                                     "l3out_logical_node_profiles": {},
@@ -348,6 +337,7 @@
                                 ],
                                 "tenant": [
                                     "README.md",
+                                    "apics_inband.tf",
                                     "application_epgs.tf",
                                     "application_profiles.tf",
                                     "bridge_domains.tf",
@@ -355,7 +345,7 @@
                                     "data_sources.tf",
                                     "filters.tf",
                                     "l3out_floating_svi.tf",
-                                    "l3out_hsrp.tf",
+                                    "l3out_interface_profiles_hsrp.tf",
                                     "l3out_logical_node_profiles.tf",
                                     "l3out_static_routes.tf",
                                     "l3outs.tf",
@@ -371,7 +361,8 @@
                                     "policies_dhcp_relay.tf",
                                     "policies_eigrp_interface.tf",
                                     "policies_endpoint_retention.tf",
-                                    "policies_hsrp.tf",
+                                    "policies_hsrp_interface.tf",
+                                    "policies_hsrp_group.tf",
                                     "policies_ospf_interface.tf",
                                     "policies_ospf_route_summarization.tf",
                                     "policies_ospf_timers.tf",
@@ -1519,11 +1510,11 @@
                                 "x-omitempty": true
                             },
                             "port": {
-                                "description": "Switchport.",
+                                "description": "Switchport Identifier.",
                                 "type": "string",
                                 "minimum": 3,
                                 "maximum": 5,
-                                "pattern": "^[\\d]/[\\d]+$",
+                                "pattern": "^[\\d]/[\\d]+(/[\\d]+)?$",
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -4134,7 +4125,7 @@
                                     "false",
                                     "true"
                                 ],
-                                "default": "false",
+                                "default": "true",
                                 "x-omitempty": true
                             }
                         }
@@ -7102,14 +7093,6 @@
                                 "maximum": 5,
                                 "x-omitempty": true
                             },
-                            "bgp_peer_policy_tenant": {
-                                "description": "Name for the tenant in which the BGP Peer Policy was created.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
                             "bgp_peer_shared_policy": {
                                 "description": "Name for the BGP Shared Policy.",
                                 "type": "string",
@@ -7158,10 +7141,10 @@
                             },
                             "optional_args": {
                                 "bgp_password": "",
-                                "bgp_peer_policy_tenant": "",
                                 "bgp_peer_prefix_policy": "",
                                 "description": "",
-                                "local_asn": ""
+                                "local_asn": "",
+                                "policy_source_tenant": ""
                             },
                             "peer_address": {
                                 "description": "The peer IP address.",
@@ -7176,6 +7159,14 @@
                                     "loopback"
                                 ],
                                 "default": "loopback",
+                                "x-omitempty": true
+                            },
+                            "policy_source_tenant": {
+                                "description": "Name for the tenant in which the BGP Peer Policy was created.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "remote_asn": {
@@ -7409,20 +7400,20 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "eigrp_policy_tenant": {
+                            "optional_args": {
+                                "description": "",
+                                "eigrp_interface_policy": "",
+                                "eigrp_keychain_policy": "",
+                                "key_id": "",
+                                "policy_source_tenant": ""
+                            },
+                            "policy_source_tenant": {
                                 "description": "Name for the tenant in which the EIGRP Policies were created.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
-                            },
-                            "optional_args": {
-                                "description": "",
-                                "eigrp_interface_policy": "",
-                                "eigrp_keychain_policy": "",
-                                "eigrp_policy_tenant": "",
-                                "key_id": ""
                             },
                             "required_args": {
                                 "profile_name": ""
@@ -7523,10 +7514,10 @@
                                 "description": "If an external EPG is marked as a Preferred Group Member, it is put into an internally created contract group where all members of the group are allowed to communicate with each other without requiring a contract between them.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "exclude",
-                                    "include"
+                                    "false",
+                                    "true"
                                 ],
-                                "default": "exclude",
+                                "default": "false",
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -7692,7 +7683,7 @@
                                 "description": "",
                                 "key_id": "",
                                 "ospf_interface_policy": "",
-                                "ospf_interface_policy_tenant": ""
+                                "policy_source_tenant": ""
                             },
                             "ospf_interface_policy": {
                                 "description": "Name for an existing OSPF Interface Policy.",
@@ -7702,7 +7693,7 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "ospf_interface_policy_tenant": {
+                            "policy_source_tenant": {
                                 "description": "Name for the tenant in which the OSPF Interface Policy was created.",
                                 "type": "string",
                                 "minimum": 1,
@@ -7932,7 +7923,7 @@
                                 "default": "enabled",
                                 "x-omitempty": true
                             },
-                            "link_locals": {
+                            "link_local_addresses": {
                                 "description": "A List of IPv6 link local addresses.  Only need two if this is an SVI Interface.",
                                 "type": "list_of_hosts",
                                 "x-omitempty": true
@@ -7962,7 +7953,7 @@
                             },
                             "optional_args": {
                                 "description": "",
-                                "link_locals": "",
+                                "link_local_addresses": "",
                                 "mac_addresses": "",
                                 "secondary_addresses": ""
                             },
@@ -8243,16 +8234,6 @@
                                 "default": "yellow-green",
                                 "x-omitempty": true
                             },
-                            "loopback": {
-                                "description": "Flag to add the Router ID as a Loopback.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "true",
-                                "x-omitempty": true
-                            },
                             "node_list": {
                                 "description": "List of Node Identifiers to add to the Node Profile.  The distinguished name for the node attached to the layer 3 outside profile. The maximum supported string length is 255 ASCII characters.",
                                 "type": "list_of_integer",
@@ -8274,14 +8255,24 @@
                             "required_args": {
                                 "color_tag": "",
                                 "l3out": "",
-                                "loopback": "",
                                 "name": "",
                                 "node_list": "",
                                 "node_router_ids": "",
                                 "pod_id": "",
                                 "site_group": "",
                                 "target_dscp": "",
-                                "tenant": ""
+                                "tenant": "",
+                                "use_router_id_as_loopback": ""
+                            },
+                            "use_router_id_as_loopback": {
+                                "description": "Flag to add the Router ID as a Loopback.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
                             }
                         }
                     }

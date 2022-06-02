@@ -1144,8 +1144,12 @@ class fabric(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Convert to Lists
-        if ',' in templateVars["clients"]:
+        if not templateVars["clients"] == None:
+            clientDict = {}
             templateVars["clients"] = templateVars["clients"].split(',')
+            for i in templateVars["clients"]:
+                clientDict.update({'address':i})
+            templateVars["clients"] = clientDict
 
         # Add Dictionary to Policy
         templateVars['class_type'] = 'fabric'
@@ -1666,8 +1670,8 @@ class site_policies(object):
             kwargs["jsonVars"] = jsonVars['apic_versions']['enum']
             kwargs["defaultVar"] = jsonVars['apic_versions']['default']
             kwargs["varType"] = 'APIC Version'
-            # templateVars['version'] = variablesFromAPI(**kwargs)
-            templateVars['version'] = '5.2(4e)'
+            templateVars['version'] = variablesFromAPI(**kwargs)
+            #templateVars['version'] = '5.2(4e)'
         else:
             # NDO Version
             kwargs["var_description"] = f'Select the Version that Most Closely matches '\
@@ -1675,8 +1679,8 @@ class site_policies(object):
             kwargs["jsonVars"] = jsonVars['easyDict']['latest_versions']['ndo_versions']['enum']
             kwargs["defaultVar"] = jsonVars['easyDict']['latest_versions']['ndo_versions']['default']
             kwargs["varType"] = 'NDO Version'
-            # templateVars['version'] = variablesFromAPI(**kwargs)
-            templateVars['version'] = '3.7.1g'
+            templateVars['version'] = variablesFromAPI(**kwargs)
+            #templateVars['version'] = '3.7.1g'
 
         if templateVars['controller_type'] == 'apic': 
             site_wb = '%s_interface_selectors.xlsx' % (kwargs['site_name'])
@@ -1981,13 +1985,13 @@ class tenants(object):
         templateVars['l3_configurations'].update({
             'associated_l3outs':{
                 'l3out':templateVars['l3out'],
-                'l3out_tenant':templateVars['vrf_tenant'],
+                'tenant':templateVars['vrf_tenant'],
                 'route_profile':templateVars['l3_configurations']['route_profile']
             },
             'custom_mac_address':templateVars['custom_mac_address'],
         })
         aa = templateVars['l3_configurations']['associated_l3outs']
-        if aa['l3out'] == None and aa['l3out_tenant'] == None and aa['route_profile'] == None:
+        if aa['l3out'] == None and aa['tenant'] == None and aa['route_profile'] == None:
             templateVars['l3_configurations'].pop('associated_l3outs')
         templateVars['l3_configurations'] = OrderedDict(sorted(templateVars['l3_configurations'].items()))
 
@@ -2858,6 +2862,15 @@ class tenants(object):
         templateVars['interface_profiles'] = []
         templateVars['node_router_ids'] = templateVars['node_router_ids'].split(',')
         templateVars['node_list'] = [int(s) for s in str(templateVars['node_list']).split(',')]
+        templateVars['nodes'] = []
+        if len(templateVars['node_router_ids']) == len(templateVars['node_list']):
+            for x in range(1, len(templateVars['node_router_ids']) + 1):
+                node = {
+                    'node_id':templateVars['node_list'][x],
+                    'router_id':templateVars['node_router_ids'][x],
+                    'use_router_id_as_loopback':templateVars['use_router_id_as_loopback']
+                }
+                templateVars['nodes'].append(node)
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'

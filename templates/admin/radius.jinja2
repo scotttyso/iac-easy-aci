@@ -29,6 +29,14 @@
           username    = "{{ keys['username'] }}"
       }
     ]
+  {%- elif k == 'server_monitoring'%}
+    server_monitoring = [
+      {
+          admin_state = "{{ keys['server_monitoring'] }}"
+          password    = 0
+          username    = "admin"
+      }
+    ]
   {%- elif v == None %}
   {%- elif v | int(-1) != -1 %}
     {{ k }} = {{ v }}

@@ -80,7 +80,6 @@ def apply_terraform(args, folders):
         print(f'  - {base_dir}{folder}')
     print(f'\n  Beginning Terraform Plan and Apply in each folder.')
     print(f'\n-----------------------------------------------------------------------------\n')
-    time.sleep(7)
 
     running_directory = os.getcwd()
     # tf_path = '.terraform/providers/registry.terraform.io/'
@@ -99,9 +98,12 @@ def apply_terraform(args, folders):
     print(output.decode('utf-8'))
     response_p = ''
     response_a = ''
-    print(f'-plugin-dir={running_directory}/{tfe_dir}')
     for folder in folders:
-        path = f'{base_dir}{folder}' 
+        path = f'{base_dir}{folder}'
+        if os.path.isfile(os.path.join(path, '.terraform.lock.hcl')):
+            os.remove(os.path.join(path, '.terraform.lock.hcl'))
+        if os.path.isdir(os.path.join(path, '.terraform')):
+            shutil.rmtree(os.path.join(path, '.terraform'))
         lock_count = 0
         tfe_cmd = subprocess.Popen(
             ['terraform', 'init', f'-plugin-dir={running_directory}/{tfe_dir}'],

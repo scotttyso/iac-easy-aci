@@ -36,7 +36,7 @@ a2 = '(leaf|spine)_pg|pol_(cdp|fc|l2|link_level|lldp|mcp|port_(ch|sec)|stp)|pool
 access_regex = f'^({a1}|{a2})$'
 
 admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
-apps_epgs_regex = '^(apic_inb|(app|epg|vmm)_(add|(vmm_)?policy)|mgmt_epg)$'
+apps_epgs_regex = '^((app|epg|vmm)_(add|(vmm_)?policy))$'
 bds_regex = '^((bd)_(add|general|l3|subnet))$'
 contracts_regex = '(^(assign_contract|(contract|filter|subject)_(add|entry))$)'
 
@@ -53,7 +53,7 @@ sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
 tenants_regex = '^(tenant_(add|site)|vrf_(add|community|policy))$'
-tenant_pol_regex = '^(bgp_pfx|(eigrp|ospf)_interface)$'
+tenant_pol_regex = '^(apic_inb|bgp_pfx|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
 #=================================================================
