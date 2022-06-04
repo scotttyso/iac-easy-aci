@@ -29,6 +29,25 @@
       {
       {%- for key, value in i.items() %}
         {%- if value == None %}
+        {%- elif value is mapping %}
+        {{ key }} = [
+          {
+          {%- for keys, values in value.items() %}
+            {%- if values == None %}
+            {%- elif values | int(-1) != -1 %}
+            {{ keys }} = {{ values }}
+            {%- elif values == 'false' or values == 'true' %}
+            {{ keys }} = {{ values }}
+            {%- else %}
+            {{ keys }} = "{{ values }}"
+            {%- endif %}
+            {%- if not loop.last %}
+          },
+            {%- else %}
+          }
+            {%- endif %}
+          {%- endfor %}
+          ]
         {%- elif value is iterable and (value is not string and value is not mapping) %}
         {{ key }} = [
           {%- for item in value %}

@@ -82,21 +82,18 @@
                             "class.system_settings": {
                                 "enum": [
                                     "apic_connectivity_preference",
-                                    "bgp_autonous_system_number",
-                                    "bgp_route_reflector",
+                                    "bgp_autonomous_system_number",
+                                    "bgp_route_reflectors",
                                     "global_aes_encryption_settings"
                                 ]
                             },
                             "class.tenants": {
                                 "enum": [
-                                    "apics_inband",
+                                    "apics_inband_mgmt_addresses",
                                     "application_epgs",
                                     "application_profiles",
                                     "bridge_domains",
-                                    "bridge_domain_subnets",
                                     "contracts",
-                                    "l3out_floating_svi",
-                                    "l3out_hsrp",
                                     "l3out_logical_node_profiles",
                                     "l3out_static_route",
                                     "l3outs",
@@ -197,19 +194,18 @@
                                 },
                                 "system_settings": {
                                     "apic_connectivity_preference": {},
-                                    "bgp_autonous_system_number": {},
-                                    "bgp_route_reflector": {},
+                                    "bgp_autonomous_system_number": {},
+                                    "bgp_route_reflectors": {},
                                     "global_aes_encryption_settings": {}
                                 },
                                 "tenants": {
-                                    "apics_inband": {},
+                                    "apics_inband_mgmt_addresses": {},
                                     "application_epg_policies": {},
                                     "application_epgs": {},
                                     "application_epg_vmm_policies": {},
                                     "application_profiles": {},
                                     "bgp_peer_policies": {},
                                     "bgp_peers": {},
-                                    "bridge_domain_subnets": {},
                                     "bridge_domains": {},
                                     "bridge_domains_general": {},
                                     "bridge_domains_l3": {},
@@ -279,7 +275,8 @@
                                     "switches_leaf_policy_groups.tf",
                                     "switches_spine_policy_groups.tf",
                                     "variables.tf",
-                                    "virtual_networking.tf"
+                                    "virtual_networking.tf",
+                                    "vpc_domain_policies.tf"
                                 ],
                                 "admin": [
                                     "README.md",
@@ -322,7 +319,8 @@
                                 "system_settings": [
                                     "README.md",
                                     "apic_connectivity_preference.tf",
-                                    "bgp.tf",
+                                    "bgp_autonomous_system_number.tf",
+                                    "bgp_route_reflectors.tf",
                                     "coop_group.tf",
                                     "data_sources.tf",
                                     "endpoint_controls.tf",
@@ -337,17 +335,14 @@
                                 ],
                                 "tenant": [
                                     "README.md",
-                                    "apics_inband.tf",
+                                    "apics_inband_mgmt_addresses.tf",
                                     "application_epgs.tf",
                                     "application_profiles.tf",
                                     "bridge_domains.tf",
                                     "contracts.tf",
                                     "data_sources.tf",
                                     "filters.tf",
-                                    "l3out_floating_svi.tf",
-                                    "l3out_interface_profiles_hsrp.tf",
                                     "l3out_logical_node_profiles.tf",
-                                    "l3out_static_routes.tf",
                                     "l3outs.tf",
                                     "locals.tf",
                                     "outputs.tf",
@@ -2450,6 +2445,25 @@
                     {},
                     {
                         "properties": {
+                            "days": {
+                                "description": "Scheduled Days.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "every-day",
+                                    "even-day",
+                                    "odd-day",
+                                    "Sunday",
+                                    "Monday",
+                                    "Tuesday",
+                                    "Wednesday",
+                                    "Thursday",
+                                    "Friday",
+                                    "Saturday",
+                                    "Sunday"
+                                ],
+                                "default": "json",
+                                "x-omitempty": true
+                            },
                             "format": {
                                 "description": "Format of the Backup File.",
                                 "type": "list_of_values",
@@ -2458,6 +2472,15 @@
                                     "xml"
                                 ],
                                 "default": "json",
+                                "x-omitempty": true
+                            },
+                            "hour": {
+                                "description": "Hour of the day to perform the backup.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 0,
+                                "maximum": 23,
+                                "default": 0,
                                 "x-omitempty": true
                             },
                             "include_secure_fields": {
@@ -2479,50 +2502,7 @@
                                 "default": 0,
                                 "x-omitempty": true
                             },
-                            "optional_args": {
-                                "description": ""
-                            },
-                            "required_args": {
-                                "format": "",
-                                "include_secure_fields": "",
-                                "max_snapshot_count": "",
-                                "name": "",
-                                "scheduled_days": "",
-                                "scheduled_hour": "",
-                                "scheduled_minute": "",
-                                "site_group": "",
-                                "snapshot": "",
-                                "start_now": ""
-                            },
-                            "scheduled_days": {
-                                "description": "Scheduled Days.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "every-day",
-                                    "even-day",
-                                    "odd-day",
-                                    "Sunday",
-                                    "Monday",
-                                    "Tuesday",
-                                    "Wednesday",
-                                    "Thursday",
-                                    "Friday",
-                                    "Saturday",
-                                    "Sunday"
-                                ],
-                                "default": "json",
-                                "x-omitempty": true
-                            },
-                            "scheduled_hour": {
-                                "description": "Hour of the day to perform the backup.",
-                                "type": "integer",
-                                "format": "int64",
-                                "minimum": 0,
-                                "maximum": 23,
-                                "default": 0,
-                                "x-omitempty": true
-                            },
-                            "scheduled_minute": {
+                            "minute": {
                                 "description": "Minute of the day to perform the backup.",
                                 "type": "integer",
                                 "format": "int64",
@@ -2530,6 +2510,21 @@
                                 "maximum": 59,
                                 "default": 0,
                                 "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": ""
+                            },
+                            "required_args": {
+                                "days": "",
+                                "format": "",
+                                "hour": "",
+                                "include_secure_fields": "",
+                                "max_snapshot_count": "",
+                                "minute": "",
+                                "name": "",
+                                "site_group": "",
+                                "snapshot": "",
+                                "start_now": ""
                             },
                             "snapshot": {
                                 "description": "Flag to define if the backup is a snapshot.",
@@ -5291,6 +5286,23 @@
                     {},
                     {
                         "properties": {
+                            "inband_epg": {
+                                "description": "APIC Inband Management EPG.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "apic_node_id": {
+                                "description": "APIC Node Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 15,
+                                "default": 1,
+                                "x-omitempty": true
+                            },
                             "inband_ipv4": {
                                 "description": "IPv4 Address of the Inband Management Interface.",
                                 "type": "hostname",
@@ -5316,9 +5328,10 @@
                                 "inband_ipv6_gateway": ""
                             },
                             "required_args": {
+                                "inband_epg": "",
                                 "inband_ipv4": "",
                                 "inband_ipv4_gateway": "",
-                                "node_id": "",
+                                "apic_node_id": "",
                                 "pod_id": "",
                                 "site_group": ""
                             }
@@ -5484,13 +5497,13 @@
                                 "fibre_channel_domain_association": ""
                             },
                             "preferred_group_member": {
-                                "description": "Preferred Group Member.",
+                                "description": "If an EPG is marked as a Preferred Group Member, it is put into an internally created contract group where all members of the group are allowed to communicate with each other without requiring a contract between them.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "exclude",
-                                    "include"
+                                    "false",
+                                    "true"
                                 ],
-                                "default": "exclude",
+                                "default": "false",
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -8785,10 +8798,10 @@
                                 "description": "Enable the Preferred Group feature to allow preferred group members in the VRF to communicate with each other without requiring a contract between them.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "disabled",
-                                    "enabled"
+                                    "false",
+                                    "true"
                                 ],
-                                "default": "disabled",
+                                "default": "false",
                                 "x-omitempty": true
                             },
                             "required_args": {

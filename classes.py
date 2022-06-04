@@ -4,6 +4,7 @@
 # Source Modules
 #=============================================================================
 from collections import OrderedDict
+from copyreg import remove_extension
 from easy_functions import apic_post, countKeys, findKeys, findVars
 from easy_functions import easyDict_append, easyDict_append_policy, easyDict_append_subtype
 from easy_functions import interface_selector_workbook, process_kwargs
@@ -644,11 +645,16 @@ class admin(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        Additions = {
-            'configuration_export': [],
+        templateVars['schedule'] = {
+            'days':templateVars['days'],
+            'hour':templateVars['hour'],
+            'minute':templateVars['minute']
         }
-        templateVars.update(Additions)
-        
+        templateVars.update({'configuration_export': []})
+        remove_list = ['days', 'hour', 'minute']
+        for i in remove_list:
+            templateVars.pop(i)
+    
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'admin'
         templateVars['data_type'] = 'configuration_backups'
@@ -1710,7 +1716,7 @@ class site_policies(object):
         easyDict = kwargs['easyDict']
         jsonData = kwargs['easy_jsonData']['components']['schemas']['easy_aci']['allOf'][1]['properties']
         templateVars = {}
-        templateVars['annotation'] = 'iac-easy-aci-v%s' % (jsonData['version'])
+        templateVars['annotation'] = 'orchestrator:terraform:easy-aci-v%s' % (jsonData['version'])
         templateVars['class_type'] = 'sites'
         for k, v in easyDict['sites']['site_settings'].items():
             site_name = v[0]['site_name']
@@ -1826,7 +1832,7 @@ class system_settings(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
-        templateVars['data_type'] = 'bgp_autonous_system_number'
+        templateVars['data_type'] = 'bgp_autonomous_system_number'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -1848,7 +1854,7 @@ class system_settings(object):
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'system_settings'
-        templateVars['data_type'] = 'bgp_route_reflector'
+        templateVars['data_type'] = 'bgp_route_reflectors'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -1902,10 +1908,11 @@ class tenants(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         templateVars['tenant'] = 'mgmt'
+        templateVars['management_epg'] = templateVars['inband_epg']
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
-        templateVars['data_type'] = 'apics_inband'
+        templateVars['data_type'] = 'apics_inband_mgmt_addresses'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -1976,6 +1983,7 @@ class tenants(object):
             'annotations':templateVars['annotations'],
             'description':templateVars['description'],
             'global_alias':templateVars['global_alias'],
+            'tenant':templateVars['tenant'],
             'vrf':templateVars['vrf'],
             'vrf_tenant':templateVars['vrf_tenant']
         })
@@ -1985,10 +1993,12 @@ class tenants(object):
         templateVars['l3_configurations'].update({
             'associated_l3outs':{
                 'l3out':templateVars['l3out'],
+                'link_local_ipv6_address':templateVars['link_local_ipv6_address'],
                 'tenant':templateVars['vrf_tenant'],
                 'route_profile':templateVars['l3_configurations']['route_profile']
             },
             'custom_mac_address':templateVars['custom_mac_address'],
+            'subnets':{},
         })
         aa = templateVars['l3_configurations']['associated_l3outs']
         if aa['l3out'] == None and aa['tenant'] == None and aa['route_profile'] == None:
@@ -1996,16 +2006,22 @@ class tenants(object):
         templateVars['l3_configurations'] = OrderedDict(sorted(templateVars['l3_configurations'].items()))
 
         pop_list = [
+            'alias',
+            'annotations',
+            'custom_mac_address',
             'description',
             'endpoint_clear',
             'general_policy',
+            'global_alias',
             'l3out',
             'l3_policy',
+            'link_local_ipv6_address',
             'vrf',
             'vrf_tenant'
         ]
         for i in pop_list:
             templateVars.pop(i)
+        templateVars = OrderedDict(sorted(templateVars.items()))
         
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
@@ -2082,18 +2098,24 @@ class tenants(object):
         }
         pop_list = [
             'advertise_externally',
-            'shared_between_vrfs',
+            'bridge_domain',
+            'gateway_ip',
             'neighbor_discovery',
             'no_default_svi_gateway',
-            'querier_ip'
+            'querier_ip',
+            'shared_between_vrfs',
+            'site_group',
+            'tenant',
         ]
         for i in pop_list:
             templateVars.pop(i)
         
+        bds = kwargs['easyDict']['tenants']['bridge_domains'][kwargs['site_group']]
+        for bd in bds:
+            if bd['name'] == kwargs['bridge_domain'] and bd['tenant'] == kwargs['tenant']:
+                bd['l3_configurations']['subnets'].update({kwargs['gateway_ip']:templateVars})
+        print(json.dumps(bds, indent=4))
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'tenants'
-        templateVars['data_type'] = 'bridge_domain_subnets'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
         
     #=============================================================================
@@ -2805,7 +2827,7 @@ class tenants(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         split_list = [
             'primary_preferred_addresses',
-            'link_locals',
+            'link_local_addresses',
             'mac_addresses',
             'secondary_addresses',
         ]
@@ -2864,7 +2886,7 @@ class tenants(object):
         templateVars['node_list'] = [int(s) for s in str(templateVars['node_list']).split(',')]
         templateVars['nodes'] = []
         if len(templateVars['node_router_ids']) == len(templateVars['node_list']):
-            for x in range(1, len(templateVars['node_router_ids']) + 1):
+            for x in range(1, len(templateVars['node_router_ids'])):
                 node = {
                     'node_id':templateVars['node_list'][x],
                     'router_id':templateVars['node_router_ids'][x],
@@ -2909,7 +2931,8 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
+        
+        templateVars['name'] = templateVars['profile_name']
         templateVars.pop('profile_name')
         policy_dict = {kwargs['profile_name']:templateVars}
 

@@ -18,7 +18,7 @@
       {%- elif value == 'false' or value == 'true' %}
         {{ key }} = {{ value }}
       {%- elif value is mapping %}
-        {{ key }} = [
+        "{{ key }}" = [
           {
         {%- for keys, values in value.items() %}
           {%- if keys == 'l3out' and values == None %}

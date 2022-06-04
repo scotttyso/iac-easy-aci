@@ -138,6 +138,8 @@
           }
             {%- endfor %}
         ]
+          {%- else %}
+        enhanced_lag_policy = []
           {%- endif %}
         {%- elif value | int(-1) != -1 %}
         {{ key }} = {{ value }}

@@ -366,8 +366,8 @@ def main():
     # Begin Proceedures to Create files
     read_easy_jsonData(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
-    merge_easy_aci_repository(args, easy_jsonData)
-
+    merge_easy_aci_repository(args, easy_jsonData, **easyDict)
+    exit()
     uncommitted_folders = git_check_status(args)
     apply_terraform(args, uncommitted_folders)
 

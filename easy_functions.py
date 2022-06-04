@@ -823,7 +823,7 @@ def interface_selector_workbook(templateVars, **kwargs):
 #======================================================
 # Function to Merge Easy ACI Repository to Dest Folder
 #======================================================
-def merge_easy_aci_repository(args, easy_jsonData):
+def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
     jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
     baseRepo = args.dir
     
@@ -840,25 +840,28 @@ def merge_easy_aci_repository(args, easy_jsonData):
         g = cmd.Git(tfe_dir)
         g.pull()
 
-    # Get All sub-folders from tfDir
     folders = []
-    for root, dirs, files in os.walk(baseRepo):
-        for name in dirs:
-            # print(os.path.join(root, name))
-            folders.append(os.path.join(root, name))
-    folders.sort()
-
+    # Get All sub-folders from tfDir
+    for k, v in easyDict['sites']['site_settings'].items():
+        site_name = v[0]['site_name']
+        site_dirs = next(os.walk(os.path.join(baseRepo, site_name)))[1]
+        site_dirs.sort()
+        for dir in site_dirs:
+            folders.append(os.path.join(baseRepo, site_name, dir))
+    
+    # Now Loop over the folders and Check for 
     module_folders = ['access', 'admin', 'fabric', 'switch', 'system_settings', 'tenant']
     for folder in folders:
-        # Determine the Type of Folder. i.e. Is this for Access Policies
-        if os.path.isdir(folder):
-            for mod in module_folders:
-                if mod in folder:
-                    src_dir = os.path.join(tfe_dir, 'modules', mod)
-                    copy_files = os.listdir(src_dir)
-                    for fname in copy_files:
-                        if not os.path.isdir(os.path.join(src_dir, fname)):
-                            shutil.copy2(os.path.join(src_dir, fname), folder)
+        for mod in module_folders:
+            if mod in folder:
+                src_dir = os.path.join(tfe_dir, 'modules', mod)
+                copy_files = os.listdir(src_dir)
+                if not 'tenant_mgmt' in folder and mod == 'tenant':
+                    if 'apics_inband_mgmt_addresses.tf' in copy_files:
+                        copy_files.remove('apics_inband_mgmt_addresses.tf')
+                for fname in copy_files:
+                    if not os.path.isdir(os.path.join(src_dir, fname)):
+                        shutil.copy2(os.path.join(src_dir, fname), folder)
 
     # Loop over the folder list again and create blank auto.tfvars files for anything that doesn't already exist
     for folder in folders:
@@ -986,7 +989,7 @@ def read_easy_jsonData(args, easy_jsonData, **easyDict):
                     # Add Variables for Template Functions
                     templateVars['template_type'] = func
                         
-                    if re.search('^(apic_connectivity_preference|bgp_autonous_system_number)$', func):
+                    if re.search('^(apic_connectivity_preference|bgp_autonomous_system_number)$', func):
                         kwargs["template_file"] = 'template_open2.jinja2'
                     else:
                         kwargs["template_file"] = 'template_open.jinja2'
