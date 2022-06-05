@@ -32,11 +32,7 @@
     {%- elif key == 'remote_port' %}
         {{ key }} = {{ value }}
         snapshot    = {{ keys['snapshot'] }}
-      {%- if i['authentication_type'] == 'SshKeyContents' %}
-        ssh_key_contents      = 1
-        ssh_key_passphrase    = 1
-      {%- endif %}
-        start_now             = "{{ keys['start_now'] }}"
+        start_now   = "{{ keys['start_now'] }}"
       {%- if i['authentication_type'] == 'UsePassword' %}
         username = "{{ i['username'] }}"
       {%- endif %}
@@ -66,11 +62,25 @@
         {{ k }} = {{ v }}
   {%- elif v == 'false' or v == 'true' %}
         {{ k }} = {{ v }}
+  {%- elif v is mapping %}
+    {{ k }} = [
+      {
+    {%- for key, value in v.items() %}
+      {%- if value == None %}
+      {%- elif value | int(-1) != -1 %}
+        {{ key }} = {{ value }}
+      {%- elif value == 'false' or value == 'true' %}
+        {{ key }} = {{ value }}
+      {%- else %}
+        {{ key }} = "{{ value }}"
+      {%- endif %}
+    {%- endfor %}
+      }
+    ]
   {%- else %}
         {{ k }} = "{{ v }}"
   {%- endif %}
 {%- endfor %}
       }
     ]
-
   }

@@ -6,20 +6,6 @@
                     {},
                     {
                         "properties": {
-                            "apic_versions": {
-                                "description": "APIC Releases.  Select the Version that Most Closely matches your version.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "5.2(4e)",
-                                    "5.2(4d)",
-                                    "5.2(3g)",
-                                    "5.1(4c)",
-                                    "5.0(2h)",
-                                    "4.2(7t)"
-                                ],
-                                "default": "5.2(4d)",
-                                "x-omitempty": true
-                            },
                             "classes": {
                                 "enum": [
                                     "access",
@@ -340,11 +326,12 @@
                                     "application_profiles.tf",
                                     "bridge_domains.tf",
                                     "contracts.tf",
-                                    "data_sources.tf",
                                     "filters.tf",
                                     "l3out_logical_node_profiles.tf",
                                     "l3outs.tf",
                                     "locals.tf",
+                                    "ndo_sites.tf",
+                                    "ndo_users.tf",
                                     "outputs.tf",
                                     "policies_bgp_address_family_context.tf",
                                     "policies_bgp_best_path.tf",
@@ -1461,6 +1448,14 @@
                                 "default": null,
                                 "x-omitempty": true
                             },
+                            "interface": {
+                                "description": "Switchport Identifier.",
+                                "type": "string",
+                                "minimum": 3,
+                                "maximum": 5,
+                                "pattern": "^[\\d]/[\\d]+(/[\\d]+)?$",
+                                "x-omitempty": true
+                            },
                             "interface_profile": {
                                 "description": "Name of the Interface Profile.",
                                 "type": "string",
@@ -1499,25 +1494,18 @@
                                 "enum": [
                                     "access",
                                     "breakout",
-                                    "bundle"
+                                    "bundle",
+                                    "spine_pg"
                                 ],
                                 "default": "bundle",
                                 "x-omitempty": true
                             },
-                            "port": {
-                                "description": "Switchport Identifier.",
-                                "type": "string",
-                                "minimum": 3,
-                                "maximum": 5,
-                                "pattern": "^[\\d]/[\\d]+(/[\\d]+)?$",
-                                "x-omitempty": true
-                            },
                             "required_args": {
+                                "interface": "",
                                 "interface_profile": "",
                                 "interface_selector": "",
                                 "node_id": "",
                                 "pod_id": "",
-                                "port": "",
                                 "site_group": ""
                             },
                             "switchport_mode": {
@@ -6805,11 +6793,11 @@
                                 "description": "Type of Contract.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "OOB",
-                                    "Standard",
-                                    "Taboo"
+                                    "oob",
+                                    "standard",
+                                    "taboo"
                                 ],
-                                "default": "Standard",
+                                "default": "standard",
                                 "x-omitempty": true
                             },
                             "enable_policy_compression": {
@@ -6867,11 +6855,11 @@
                                 "description": "Type of Contract.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "OOB",
-                                    "Standard",
-                                    "Taboo"
+                                    "oob",
+                                    "standard",
+                                    "taboo"
                                 ],
-                                "default": "Standard",
+                                "default": "standard",
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -7907,6 +7895,15 @@
                                 "default": "local",
                                 "x-omitempty": true
                             },
+                            "encap_vlan": {
+                                "description": "VLAN Tag.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 4095,
+                                "default": null,
+                                "x-omitempty": true
+                            },
                             "interface_or_policy_group": {
                                 "description": "Physical Interface or Interface Policy Group for port-channel/vpc interfaces.",
                                 "type": "string",
@@ -7978,6 +7975,7 @@
                             "required_args": {
                                 "auto_state": "",
                                 "encap_scope": "",
+                                "encap_vlan": "",
                                 "interface_or_policy_group": "",
                                 "interface_type": "",
                                 "ipv6_dad": "",
@@ -7985,21 +7983,11 @@
                                 "mtu": "",
                                 "policy_name": "",
                                 "primary_preferred_addresses": "",
-                                "target_dscp": "",
-                                "vlan": ""
+                                "target_dscp": ""
                             },
                             "secondary_addresses": {
                                 "description": "A List of Secondary Addresses.",
                                 "type": "list_of_hosts",
-                                "x-omitempty": true
-                            },
-                            "vlan": {
-                                "description": "VLAN Tag.",
-                                "type": "integer",
-                                "format": "int64",
-                                "minimum": 1,
-                                "maximum": 4095,
-                                "default": null,
                                 "x-omitempty": true
                             }
                         }
@@ -8793,6 +8781,14 @@
                                 "schema": "",
                                 "sites": "",
                                 "template": ""
+                            },
+                            "policy_source_tenant": {
+                                "description": "The Name of the Tenant that contains the policies like protocol policies, monitor policies, etc.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             },
                             "preferred_group": {
                                 "description": "Enable the Preferred Group feature to allow preferred group members in the VRF to communicate with each other without requiring a contract between them.",

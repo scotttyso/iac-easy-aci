@@ -4,8 +4,7 @@
 # Source Modules
 #=============================================================================
 from collections import OrderedDict
-from copyreg import remove_extension
-from easy_functions import apic_post, countKeys, findKeys, findVars
+from easy_functions import apic_get, apic_post, countKeys, findKeys, findVars, sensitive_var_value
 from easy_functions import easyDict_append, easyDict_append_policy, easyDict_append_subtype
 from easy_functions import interface_selector_workbook, process_kwargs
 from easy_functions import required_args_add, required_args_remove
@@ -984,11 +983,7 @@ class fabric(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        Additions = {
-            'name':'default',
-        }
-        templateVars.update(Additions)
+        templateVars['name'] = 'default'
         
         # Convert to Lists
         if ',' in templateVars["dns_providers"]:
@@ -1063,13 +1058,9 @@ class fabric(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        Additions = {
-            'name':'default',
-            'smtp_server': [],
-            'smart_destinations': [],
-        }
-        templateVars.update(Additions)
+        templateVars['name'] = 'default'
+        templateVars['smtp_server'] = []
+        templateVars['smart_destinations'] = []
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
@@ -1154,7 +1145,7 @@ class fabric(object):
             clientDict = {}
             templateVars["clients"] = templateVars["clients"].split(',')
             for i in templateVars["clients"]:
-                clientDict.update({'address':i})
+                clientDict.update({i:{}})
             templateVars["clients"] = clientDict
 
         # Add Dictionary to Policy
@@ -1243,16 +1234,12 @@ class fabric(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['name'] = 'default'
+        templateVars['snmp_client_groups'] = []
+        templateVars['snmp_communities'] = []
+        templateVars['snmp_destinations'] = []
+        templateVars['users'] = []
 
-        Additions = {
-            'name':'default',
-            'snmp_client_groups': [],
-            'snmp_communities': [],
-            'snmp_destinations': [],
-            'users': [],
-        }
-        templateVars.update(Additions)
-        
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'fabric'
         templateVars['data_type'] = 'snmp_policies'
@@ -1315,11 +1302,7 @@ class fabric(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        Additions = {
-            'name':'default',
-            'remote_destinations': []
-        }
+        Additions = {'name':'default', 'remote_destinations': []}
         templateVars.update(Additions)
         
         # Add Dictionary to easyDict
@@ -1375,18 +1358,19 @@ class switches(object):
         # Add Dictionary to Policy
         templateVars['interface_description'] = templateVars['description']
         templateVars['interface_description'] = templateVars['description']
-        if len(templateVars['port'].split(',')) > 2:
+        if len(templateVars['interface'].split(',')) > 2:
             templateVars['sub_port'] = 'true'
         else:
             templateVars['sub_port'] = 'false'
-        templateVars.pop('access_or_native_vlan')
-        templateVars.pop('description')
-        templateVars.pop('interface_profile')
-        templateVars.pop('interface_selector')
-        templateVars.pop('node_id')
-        templateVars.pop('pod_id')
-        templateVars.pop('switchport_mode')
-        templateVars.pop('trunk_port_allowed_vlans')
+        pop_list = ['access_or_native_vlan', 'description', 'interface_profile',
+            'interface_selector', 'node_id', 'pod_id',  'switchport_mode', 
+            'trunk_port_allowed_vlans', 
+        ]
+        for i in pop_list:
+            templateVars.pop(i)
+        pgt = templateVars['policy_group_type']
+        if pgt == 'spine_pg': templateVars.pop('policy_group_type')
+
         templateVars['class_type'] = 'switches'
         templateVars['data_type'] = 'switch_profiles'
         templateVars['data_subtype'] = 'interfaces'
@@ -1670,18 +1654,31 @@ class site_policies(object):
         jsonVars = kwargs['easy_jsonData']['components']['schemas']['easy_aci']['allOf'][1]['properties']
         # Prompt User for the Version of the Controller
         if templateVars['controller_type'] == 'apic':
-            # APIC Version
-            kwargs["var_description"] = f"Select the Version that Most Closely matches "\
-                f'your version for the Site "{templateVars["site_name"]}".'
-            kwargs["jsonVars"] = jsonVars['apic_versions']['enum']
-            kwargs["defaultVar"] = jsonVars['apic_versions']['default']
-            kwargs["varType"] = 'APIC Version'
-            templateVars['version'] = variablesFromAPI(**kwargs)
-            #templateVars['version'] = '5.2(4e)'
+            # Obtain the APIC version from the API
+            templateVars['easyDict'] = kwargs['easyDict']
+            templateVars['jsonData'] = jsonData
+            templateVars["Variable"] = 'apicPass'
+            apic_pass = sensitive_var_value(**templateVars)
+            pop_list = ['easyDict', 'jsonData', 'Variable']
+            for i in pop_list:
+                templateVars.pop(i)
+            if not kwargs['login_domain'] == None:
+                apic_user = f"apic#{kwargs['login_domain']}\\{kwargs['username']}"
+            else:
+                apic_user = kwargs['username']
+            fablogin = apicLogin(kwargs['controller'], apic_user, apic_pass)
+            cookies = fablogin.login()
+
+            # Locate template for method
+            template_file = "aaaRefresh.json"
+            uri = 'api/aaaRefresh'
+            uriResponse = apic_get(kwargs['controller'], cookies, uri, template_file)
+            verJson = uriResponse.json()
+            templateVars['version'] = verJson['imdata'][0]['aaaLogin']['attributes']['version']
         else:
             # NDO Version
-            kwargs["var_description"] = f'Select the Version that Most Closely matches '\
-                f'your version for the Site "{templateVars["site_name"]}".'
+            kwargs["var_description"] = f'Select the Nexus Dashboard Orchestrator Version'\
+                f' for the Site "{templateVars["site_name"]}".'
             kwargs["jsonVars"] = jsonVars['easyDict']['latest_versions']['ndo_versions']['enum']
             kwargs["defaultVar"] = jsonVars['easyDict']['latest_versions']['ndo_versions']['default']
             kwargs["varType"] = 'NDO Version'
@@ -1983,7 +1980,6 @@ class tenants(object):
             'annotations':templateVars['annotations'],
             'description':templateVars['description'],
             'global_alias':templateVars['global_alias'],
-            'tenant':templateVars['tenant'],
             'vrf':templateVars['vrf'],
             'vrf_tenant':templateVars['vrf_tenant']
         })
@@ -2114,7 +2110,7 @@ class tenants(object):
         for bd in bds:
             if bd['name'] == kwargs['bridge_domain'] and bd['tenant'] == kwargs['tenant']:
                 bd['l3_configurations']['subnets'].update({kwargs['gateway_ip']:templateVars})
-        print(json.dumps(bds, indent=4))
+
         # Add Dictionary to easyDict
         return kwargs['easyDict']
         

@@ -43,6 +43,34 @@ class InsufficientArgs(Exception):
 #======================================================
 # Function to POST to the APIC Config API
 #======================================================
+def apic_get(apic, cookies, uri, section=''):
+    s = requests.Session()
+    r = ''
+    while r == '':
+        try:
+            r = s.get(
+                'https://{}/{}.json'.format(apic, uri),
+                cookies=cookies,
+                verify=False
+            )
+            status = r.status_code
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error, pausing before retrying. Error: {}"
+                .format(e))
+            time.sleep(5)
+        except Exception as e:
+            print("Method {} failed. Exception: {}".format(section[:-5], e))
+            status = 666
+            return(status)
+    if print_response_always:
+        print(r.text)
+    if status != 200 and print_response_on_fail:
+        print(r.text)
+    return r
+
+#======================================================
+# Function to POST to the APIC Config API
+#======================================================
 def apic_post(apic, payload, cookies, uri, section=''):
     if print_payload:
         print(payload)
@@ -205,7 +233,7 @@ def create_selector(ws_sw, ws_sw_row_count, **templateVars):
                 templateVars['node_id'],
                 templateVars['switch_name'],
                 port_selector,modport,
-                'access','','','','',''
+                'spine_pg','','','','',''
             ]
         else:
             data = [
@@ -225,7 +253,7 @@ def create_selector(ws_sw, ws_sw_row_count, **templateVars):
             else:
                 cell.style = 'ws_even'
         if templateVars['node_type'] == 'spine':
-            templateVars['dv3'] = DataValidation(type="list", formula1='spine_policy_groups', allow_blank=True)
+            templateVars['dv3'] = DataValidation(type="list", formula1='spine_pg', allow_blank=True)
         else:
             templateVars['dv3'] = DataValidation(type="list", formula1=f'INDIRECT(H{ws_sw_row_count})', allow_blank=True)
         ws_sw.add_data_validation(templateVars['dv3'])
@@ -675,7 +703,7 @@ def interface_selector_workbook(templateVars, **kwargs):
         ws_sw.column_dimensions['B'].width = 30
         ws_sw.column_dimensions['C'].width = 30
         ws_sw.column_dimensions['D'].width = 30
-        data = ['access', 'breakout', 'bundle', 'spine_policy_groups']
+        data = ['access', 'breakout', 'bundle', 'spine_pg']
         ws_sw.append(data)
         for cell in ws_sw['1:1']:
             cell.style = 'Heading 1'
@@ -708,9 +736,9 @@ def interface_selector_workbook(templateVars, **kwargs):
             if dname in wb_sw.defined_names:
                 wb_sw.defined_names.delete(dname)
         if templateVars['node_type'] == 'spine':
-            new_range = openpyxl.workbook.defined_name.DefinedName('spine_policy_groups',attr_text=f"formulas!$D$2:$D{last_row}")
-            if 'spine_policy_groups' in wb_sw.defined_names:
-                # wb_sw.defined_names.delete('spine_policy_groups')
+            new_range = openpyxl.workbook.defined_name.DefinedName('spine_pg',attr_text=f"formulas!$D$2:$D{last_row}")
+            if not 'spine_pg' in wb_sw.defined_names:
+                # wb_sw.defined_names.delete('spine_pg')
                 wb_sw.defined_names.append(new_range)
         elif pgroup == 'leaf_interfaces_policy_groups_access':
             new_range = openpyxl.workbook.defined_name.DefinedName('access',attr_text=f"formulas!$A$2:$A{last_row}")
@@ -748,7 +776,7 @@ def interface_selector_workbook(templateVars, **kwargs):
         ws_sw.column_dimensions['M'].width = 30
         dv1 = DataValidation(type="list", formula1='"intf_selector"', allow_blank=True)
         if templateVars['node_type'] == 'spine':
-            dv2 = DataValidation(type="list", formula1='"access"', allow_blank=True)
+            dv2 = DataValidation(type="list", formula1='"spine_pg"', allow_blank=True)
         else:
             dv2 = DataValidation(type="list", formula1='"access,breakout,bundle"', allow_blank=True)
         dv4 = DataValidation(type="list", formula1='"access,aaep_encap,trunk"', allow_blank=True)
@@ -767,7 +795,7 @@ def interface_selector_workbook(templateVars, **kwargs):
         for cell in ws_sw['2:2']:
             cell.style = 'Heading 2'
         data = [
-            'Type','site_group','pod_id','node_id','interface_profile','interface_selector','port','policy_group_type',
+            'Type','site_group','pod_id','node_id','interface_profile','interface_selector','interface','policy_group_type',
             'policy_group','description','switchport_mode','access_or_native_vlan','trunk_port_allowed_vlans'
         ]
         ws_sw.append(data)
@@ -849,7 +877,7 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
         for dir in site_dirs:
             folders.append(os.path.join(baseRepo, site_name, dir))
     
-    # Now Loop over the folders and Check for 
+    # Now Loop over the folders and merge the module files
     module_folders = ['access', 'admin', 'fabric', 'switch', 'system_settings', 'tenant']
     for folder in folders:
         for mod in module_folders:
@@ -1461,25 +1489,27 @@ def tfc_post(url, payload, site_header, section=''):
 # Function to Format Terraform Files
 #======================================================
 def terraform_fmt(files, folder, path_sep):
+    # Create the A_unused_variables.auto.tfvars to house all the unused variables
+    empty_auto_tfvars = f'{folder}{path_sep}Empty_variable_maps.auto.tfvars'
+    wr_file = open(empty_auto_tfvars, 'w')
+    wrString = f'#______________________________________________'\
+              '\n#'\
+              '\n# UNUSED Variables'\
+              '\n#______________________________________________\n\n'
+    wr_file.write(wrString)
     for file in files:
         varFiles = f"{file.split('.')[0]}.auto.tfvars"
         dest_file = f'{folder}{path_sep}{varFiles}'
         if not os.path.isfile(dest_file):
-            wr_file = open(dest_file, 'w')
             x = file.split('.')
-            x2 = x[0].split('_')
-            varList = []
-            for var in x2:
-                var = var.capitalize()
-                varList.append(var)
-            varDescr = ' '.join(varList)
-            varDescr = varDescr + '- Variables'
-
-            wrString = f'#______________________________________________\n#\n# {varDescr}\n'\
-                '#______________________________________________\n'\
-                '\n%s = {\n}\n' % (file.split('.')[0])
+            if re.search('(ndo_sites|ndo_users)', x[0]):
+                wrString = f'{x[0]} = ''[]\n'
+            else:
+                wrString = f'{x[0]} = ''{}\n'
             wr_file.write(wrString)
-            wr_file.close()
+
+    # Close the Unused Variables File
+    wr_file.close()
 
     # Run terraform fmt to cleanup the formating for all of the auto.tfvar files and tf files if needed
     print(f'\n-------------------------------------------------------------------------------------------\n')
