@@ -1,7 +1,7 @@
 
-  "{{ keys['name'] }}" = {
+  {{ keys['apic_node_id'] }} = {
 {%- for k, v in keys.items() %}
-  {%- if k == 'controller_type' or k == 'class_type' or k == 'name' %}
+  {%- if k == 'controller_type' or k == 'class_type' or k == 'apic_node_id' %}
   {%- elif k == 'policy_type' or k == 'site_group' or k == 'template_type' %}
   {%- elif k == 'tenant' %}
   {%- elif v == None %}

@@ -1624,7 +1624,7 @@
                                 "x-omitempty": true
                             },
                             "node_type": {
-                                "description": "What is the Role of the Switch in the Fabric.",
+                                "description": "What is the Node-Type of the Switch in the Fabric.",
                                 "type": "list_of_values",
                                 "enum": [
                                     "leaf",
@@ -1682,10 +1682,22 @@
                                 "node_type": "",
                                 "ooband_mgmt_epg": "",
                                 "pod_id": "",
+                                "role": "",
                                 "serial_number": "",
                                 "site_group": "",
                                 "switch_model": "",
                                 "switch_name": ""
+                            },
+                            "role": {
+                                "description": "What is the Role of the Switch in the Fabric.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "leaf",
+                                    "spine",
+                                    "unspecified"
+                                ],
+                                "default": "leaf",
+                                "x-omitempty": true
                             },
                             "serial_number": {
                                 "description": "Serial Number of the Switch.",
@@ -5399,7 +5411,7 @@
                                 "default": "admin_up",
                                 "x-omitempty": true
                             },
-                            "epg_contract_master": {
+                            "epg_contract_masters": {
                                 "description": "Input Format is 'application_profile:application_epg'.  The Name of an Existing EPG that will serve as a contract master for this EPG, from which this EPG will inherit contracts (you must have previously created the contract master EPG.)",
                                 "type": "list_of_string",
                                 "minimum": 1,
@@ -5480,7 +5492,7 @@
                                 "contract_exception_tag": "",
                                 "custom_qos": "",
                                 "data_plane_policer": "",
-                                "epg_contract_master": "",
+                                "epg_contract_masters": "",
                                 "fhs_trust_control_policy": "",
                                 "fibre_channel_domain_association": ""
                             },
@@ -5748,6 +5760,7 @@
                                 "epg_to_aaep_mode": "",
                                 "global_alias": "",
                                 "physical_domains": "",
+                                "policy_source_tenant": "",
                                 "schema": "",
                                 "sites": "",
                                 "template": "",
@@ -5759,6 +5772,14 @@
                             "physical_domains": {
                                 "description": "Name(s) of the Physical Domains to associate to this EPG.",
                                 "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "policy_source_tenant": {
+                                "description": "Name for the tenant in which Policies were created.",
+                                "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
@@ -6331,6 +6352,14 @@
                                 "vrf": "",
                                 "vrf_tenant": ""
                             },
+                            "policy_source_tenant": {
+                                "description": "Name for the tenant in which the Policies were created.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "preferred_group_member": {
                                 "description": "Preferred Group Member.",
                                 "type": "list_of_values",
@@ -6818,7 +6847,7 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "log": {
+                            "log_packets": {
                                 "description": "Enables contract permit and deny logging.",
                                 "type": "list_of_values",
                                 "enum": [
@@ -6828,7 +6857,20 @@
                                 "default": "false",
                                 "x-omitempty": true
                             },
+                            "match_type": {
+                                "description": "Subject Match Criteria.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "All",
+                                    "AtleastOne",
+                                    "AtmostOne",
+                                    "None"
+                                ],
+                                "default": "AtleastOne",
+                                "x-omitempty": true
+                            },
                             "optional_args": {
+                                "description": ""
                             },
                             "required_args": {
                                 "action": "",
@@ -6837,7 +6879,10 @@
                                 "contract_type": "",
                                 "enable_policy_compression": "",
                                 "filters_to_assign": "",
-                                "log": "",
+                                "log_packets": "",
+                                "match_type": "",
+                                "name": "",
+                                "qos_class": "",
                                 "site_group": "",
                                 "target_dscp": "",
                                 "tenant": ""
@@ -7119,7 +7164,7 @@
                                 "default": 0,
                                 "x-omitempty": true
                             },
-                            "local_asn": {
+                            "local_as_number": {
                                 "description": "The local autonomous system number (ASN). The local Autonomous System Number can be in 4-byte asplain format from 1 to 4294967295.  Note:  ACI does not support asdot or asdot+ format AS numbers.",
                                 "type": "integer",
                                 "format": "int64",
@@ -7128,7 +7173,7 @@
                                 "default": null,
                                 "x-omitempty": true
                             },
-                            "local_asn_config": {
+                            "local_as_number_config": {
                                 "description": "The local Autonomous System Number (ASN) configuration. Using a local AS number rather than the Global AS permits the routing devices in the associated network to appear to belong to the former AS. The configuration can be:  * no-Prepend+replace-as+dual-as—Does not allow prepending on local AS and is replaced with both AS numbers.  Note: You can prepend one or more autonomous system (AS) numbers at the beginning of an AS path. The AS numbers are added at the beginning of the path after the actual AS number from which the route originates has been added to the path. Prepending an AS path makes a shorter AS path look longer and therefore less preferable to BGP.  * no-prepend—Does not allow prepending on local AS.  * no options—Does not allow alteration of local AS.  * no-Prepend+replace-as—Does not allow prepending on local AS and is replaces AS number.",
                                 "type": "list_of_values",
                                 "enum": [
@@ -7144,7 +7189,7 @@
                                 "bgp_password": "",
                                 "bgp_peer_prefix_policy": "",
                                 "description": "",
-                                "local_asn": "",
+                                "local_as_number": "",
                                 "policy_source_tenant": ""
                             },
                             "peer_address": {
@@ -7152,7 +7197,16 @@
                                 "type": "hostname",
                                 "x-omitempty": true
                             },
-                            "peer_interface": {
+                            "peer_asn": {
+                                "description": "A number that uniquely identifies the neighbor autonomous system. The Autonomous System Number can be in 4-byte asplain format from 1 to 4294967295.  Note:  ACI does not support asdot or asdot+ format AS numbers.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 4294967295,
+                                "default": null,
+                                "x-omitempty": true
+                            },
+                            "peer_level": {
                                 "description": "The interface type used to source the Peer Connection.",
                                 "type": "list_of_values",
                                 "enum": [
@@ -7170,26 +7224,17 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "remote_asn": {
-                                "description": "A number that uniquely identifies the neighbor autonomous system. The Autonomous System Number can be in 4-byte asplain format from 1 to 4294967295.  Note:  ACI does not support asdot or asdot+ format AS numbers.",
-                                "type": "integer",
-                                "format": "int64",
-                                "minimum": 1,
-                                "maximum": 4294967295,
-                                "default": null,
-                                "x-omitempty": true
-                            },
                             "required_args": {
                                 "admin_state": "",
                                 "bgp_peer_shared_policy": "",
                                 "ebgp_multihop_ttl": "",
-                                "local_asn_config": "",
+                                "local_as_number_config": "",
                                 "peer_address": "",
-                                "peer_interface": "",
-                                "remote_asn": "",
-                                "weight": ""
+                                "peer_asn": "",
+                                "peer_level": "",
+                                "weight_for_routes_from_neighbor": ""
                             },
-                            "weight": {
+                            "weight_for_routes_from_neighbor": {
                                 "description": "The allowed weight for routes from the peer. The weight assigned locally to the router is used to select the best path. The range is from 0 to 65535.",
                                 "type": "integer",
                                 "format": "int64",
@@ -7938,9 +7983,9 @@
                                 "type": "list_of_hosts",
                                 "x-omitempty": true
                             },
-                            "mac_addresses": {
-                                "description": "List of MAC Addresses to apply to the Interface Configuration.  SVI's will have two mac addresses and routed/sub-interfaces will have one, if desiring a custom mac.",
-                                "type": "list_of_mac_address",
+                            "mac_address": {
+                                "description": "Custom MAC Address to apply to the Interface Configuration.",
+                                "type": "mac_address",
                                 "x-omitempty": true
                             },
                             "mode": {
@@ -7964,7 +8009,7 @@
                             "optional_args": {
                                 "description": "",
                                 "link_local_addresses": "",
-                                "mac_addresses": "",
+                                "mac_address": "",
                                 "secondary_addresses": ""
                             },
                             "primary_preferred_addresses": {

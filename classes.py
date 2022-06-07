@@ -2192,7 +2192,7 @@ class tenants(object):
             'bidirectional_forwarding_detection':templateVars['bidirectional_forwarding_detection'],
             'disable_connected_check':templateVars['disable_connected_check']
         }
-        templateVars['peer_controls'] = {
+        templateVars['private_as_control'] = {
             'remove_all_private_as':templateVars['remove_all_private_as'],
             'remove_private_as':templateVars['remove_private_as'],
             'replace_private_as_with_local_as':templateVars['replace_private_as_with_local_as']
@@ -2237,6 +2237,7 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['subjects'] = []
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
@@ -2276,13 +2277,22 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['directives'] = {
+            'enable_policy_compression':templateVars['enable_policy_compression'],
+            'log':templateVars['log_packets']
+        }
+        templateVars['filters'] = templateVars['filters_to_assign'].split(',')
+        templateVars.pop('enable_policy_compression')
+        templateVars.pop('filters_to_assign')
+        templateVars.pop('log_packets')
+        templateVars = OrderedDict(sorted(templateVars.items()))
 
         # Add Dictionary to Policy
         templateVars['class_type'] = 'tenants'
         templateVars['data_type'] = 'contracts'
-        templateVars['data_subtype'] = 'filters'
-        templateVars['policy_name'] = templateVars['contract']
-        templateVars.pop('contract')
+        templateVars['data_subtype'] = 'subjects'
+        templateVars['policy_name'] = templateVars['contract_name']
+        templateVars.pop('contract_name')
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -2351,6 +2361,7 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['monitoring_policy'] = 'default'
 
         if re.search('^(inb|oob)$', epgpolicy['epg_type']):
             jsonData = required_args_add(pop_list, jsonData)
@@ -2387,6 +2398,7 @@ class tenants(object):
                     'allow_micro_segmentation': vmmpolicy['allow_micro_segmentation'],
                     'custom_epg_name': templateVars['custom_epg_name'],
                     'delimiter': vmmpolicy['delimiter'],
+                    'deploy_immediacy': vmmpolicy['deploy_immediacy'],
                     'domain': i,
                     'domain_type': 'vmm',
                     'number_of_ports': vmmpolicy['number_of_ports'],
@@ -2602,6 +2614,9 @@ class tenants(object):
     # Function - Contract Filter
     #=============================================================================
     def filter_add(self, **kwargs):
+        # print(json.dumps(kwargs['easyDict']['tenants']['l3out_logical_node_profiles'], indent=4))
+        # exit()
+
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.Filters']['allOf'][1]['properties']
 
@@ -2756,7 +2771,10 @@ class tenants(object):
                         templateVars.pop('easyDict')
                         templateVars.pop('jsonData')
                         templateVars.pop('Variable')
+                        aa['password'] = aa['bgp_password']
+                        aa.pop('bgp_password')
 
+                    aa = OrderedDict(sorted(aa.items()))
                     templateVars['bgp_peers'].append(aa)
                 else:
                     validating.error_policy_not_found('bgp_peers', **kwargs)
@@ -2794,7 +2812,8 @@ class tenants(object):
         ]
         for i in pop_list:
             templateVars.pop(i)
-        
+
+
         # Add Dictionary to Policy
         templateVars['policy_name'] = kwargs['node_profile']
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
@@ -2821,17 +2840,64 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        split_list = [
-            'primary_preferred_addresses',
-            'link_local_addresses',
-            'mac_addresses',
-            'secondary_addresses',
-        ]
-        for i in split_list:
-            if not templateVars[i] == None:
-                templateVars[i] = templateVars[i].split(',')
+        if templateVars['interface_type'] == 'ext-svi':
+            if not templateVars['link_local_addresses'] == None:
+                if not len(templateVars['link_local_addresses'].split(',')) == 2:
+                    validating.error_interface_address('link_local_addresses', **kwargs)
+                link_local_a = templateVars['link_local_addresses'].split(',')[0]
+                link_local_b = templateVars['link_local_addresses'].split(',')[1]
+            else:
+                link_local_a = None
+                link_local_b = None
+            if not templateVars['primary_preferred_addresses'] == None:
+                if not len(templateVars['primary_preferred_addresses'].split(',')) == 2:
+                    validating.error_interface_address('primary_preferred_addresses', **kwargs)
+                primary_a = templateVars['primary_preferred_addresses'].split(',')[0]
+                primary_b = templateVars['primary_preferred_addresses'].split(',')[1]
+            else:
+                primary_a = None
+                primary_b = None
+            if not templateVars['secondary_addresses'] == None:
+                if not len(templateVars['secondary_addresses'].split(',')) % 2  == 0:
+                    validating.error_interface_address('secondary_addresses', **kwargs)
+                xsplit = templateVars['secondary_addresses'].split(',')
+                half = len(xsplit)//2
+                secondaries_a = xsplit[:half]
+                secondaries_b = xsplit[half:]
+            else:
+                secondaries_a = None
+                secondaries_b = None
+            
+            templateVars['svi_addresses'] = [
+                {
+                    'link_local_address':link_local_a,
+                    'primary_preferred_address':primary_a,
+                    'secondary_addresses':secondaries_a,
+                    'side':'A'
+                },
+                {
+                    'link_local_address':link_local_b,
+                    'primary_preferred_address':primary_b,
+                    'secondary_addresses':secondaries_b,
+                    'side':'B'
+                }
+            ]
+        else:
+            if not templateVars['link_local_addresses'] == None:
+                if not len(templateVars['link_local_addresses'].split(',')) == 1:
+                    validating.error_interface_address('link_local_addresses', **kwargs)
+            templateVars['link_local_address'] = templateVars['link_local_addresses']
+            if not templateVars['primary_preferred_addresses'] == None:
+                if not len(templateVars['primary_preferred_addresses'].split(',')) == 1:
+                    validating.error_interface_address('primary_preferred_addresses', **kwargs)
+            templateVars['primary_preferred_address'] = templateVars['primary_preferred_addresses']
+            if not templateVars['secondary_addresses'] == None:
+                templateVars['secondary_addresses'] = templateVars['secondary_addresses'].split(',')
 
+        templateVars.pop('link_local_addresses')
+        templateVars.pop('primary_preferred_addresses')
         templateVars.pop('policy_name')
+        templateVars = OrderedDict(sorted(templateVars.items()))
         policy_dict = {kwargs['policy_name']:templateVars}
 
         if re.search('^(l3-port|sub-interface)$', kwargs['interface_type']):
@@ -2881,14 +2947,18 @@ class tenants(object):
         templateVars['node_router_ids'] = templateVars['node_router_ids'].split(',')
         templateVars['node_list'] = [int(s) for s in str(templateVars['node_list']).split(',')]
         templateVars['nodes'] = []
-        if len(templateVars['node_router_ids']) == len(templateVars['node_list']):
-            for x in range(1, len(templateVars['node_router_ids'])):
-                node = {
-                    'node_id':templateVars['node_list'][x],
-                    'router_id':templateVars['node_router_ids'][x],
-                    'use_router_id_as_loopback':templateVars['use_router_id_as_loopback']
-                }
-                templateVars['nodes'].append(node)
+        for x in range(0, len(templateVars['node_list'])):
+            node = {
+                'node_id':templateVars['node_list'][x],
+                'router_id':templateVars['node_router_ids'][x],
+                'use_router_id_as_loopback':templateVars['use_router_id_as_loopback']
+            }
+            templateVars['nodes'].append(node)
+
+        # Remove Arguments
+        templateVars.pop('node_list')
+        templateVars.pop('node_router_ids')
+        templateVars.pop('use_router_id_as_loopback')
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'

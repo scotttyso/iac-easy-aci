@@ -34,16 +34,6 @@
       {%- endfor %}
           }
         ]
-     {%- elif '_addresses' in key or key == 'link_locals' %}
-        {{ key }} = [
-      {%- for i in value %}
-       {%- if not loop.last %}
-          "{{ i }}",
-       {%- else %}
-          "{{ i }}"
-       {%- endif %}
-      {%- endfor %}
-        ]
      {%- elif value is iterable and (value is not string and value is not mapping) %}
         {{ key }} = [
       {%- for i in value %}

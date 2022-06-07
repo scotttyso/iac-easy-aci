@@ -393,6 +393,12 @@ def easyDict_append_subtype(templateVars, **kwargs):
                     templateVars.pop('l3out')
                     i[data_subtype].append(templateVars)
                     break
+            elif class_type == 'tenants' and data_type == 'contracts':
+                if i['name'] == policy_name and i['contract_type'] == templateVars['contract_type']:
+                    templateVars.pop('contract_type')
+                    templateVars.pop('tenant')
+                    i[data_subtype].append(templateVars)
+                    break
             elif class_type == 'tenants':
                 if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
                     # templateVars.pop('tenant')
@@ -884,9 +890,6 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
             if mod in folder:
                 src_dir = os.path.join(tfe_dir, 'modules', mod)
                 copy_files = os.listdir(src_dir)
-                if not 'tenant_mgmt' in folder and mod == 'tenant':
-                    if 'apics_inband_mgmt_addresses.tf' in copy_files:
-                        copy_files.remove('apics_inband_mgmt_addresses.tf')
                 for fname in copy_files:
                     if not os.path.isdir(os.path.join(src_dir, fname)):
                         shutil.copy2(os.path.join(src_dir, fname), folder)

@@ -17,6 +17,45 @@
         {{ key }} = {{ value }}
       {%- elif value == 'false' or value == 'true' %}
         {{ key }} = {{ value }}
+      {%- elif key == 'subnets' %}
+        {{ key }} = {
+        {%- for keys, values in value.items() %}
+          {%- if values == None %}
+          {%- elif values | int(-1) != -1 %}
+            {{ keys }} = {{ values }}
+          {%- elif values == 'false' or values == 'true' %}
+            {{ keys }} = {{ values }}
+          {%- elif values is mapping %}
+            "{{ keys }}" = {
+            {%- for a, b in values.items() %}
+              {%- if b == None %}
+              {%- elif b | int(-1) != -1 %}
+                {{ a }} = {{ b }}
+              {%- elif b == 'false' or b == 'true' %}
+                {{ a }} = {{ b }}
+              {%- elif b is mapping %}
+                "{{ a }}" = [
+                  {
+                {%- for c, d in b.items() %}
+                  {%- if d == None %}
+                  {%- elif d | int(-1) != -1 %}
+                    {{ c }} = {{ d }}
+                  {%- elif d == 'false' or d == 'true' %}
+                    {{ c }} = {{ d }}
+                  {%- endif %}
+                {%- endfor %}
+                  }
+                ]
+              {%- else %}
+                {{ a }} = "{{ b }}"
+              {%- endif %}
+            {%- endfor %}
+            }
+          {%- else %}
+            {{ keys }} = "{{ values }}"
+          {%- endif %}
+        {%- endfor %}
+        }
       {%- elif value is mapping %}
         {{ key }} = [
           {

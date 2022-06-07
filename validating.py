@@ -38,6 +38,26 @@ def error_policy_not_found(var, **kwargs):
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
+def error_interface_address(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    int_type = kwargs['interface_type']
+    varValue = kwargs[var]
+    if int_type == 'ext_svi':
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Row {row_num} of Worksheet {ws.title}. There should be an even')
+        print(f'   number of addresses for variable {var} when the type is {int_type}.  The')
+        print(f'   value of "{varValue}" did not match this criteria.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+    else:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Row {row_num} of Worksheet {ws.title}. There should be a single')
+        print(f'   address for variable {var} when the type is {int_type}.  The')
+        print(f'   value of "{varValue}" did not match this criteria.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
 def error_int_selector(row_num, ws, int_select):
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'   Error on Row {row_num} of Worksheet {ws.title}. Interface Selector {int_select}')
