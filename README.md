@@ -10,11 +10,11 @@
 
 1. Run the Intial Configuration wizard on the APICs.
 
-2. If Integrating with TFCB (Terraform Cloud for Business), Sign up for an Account at ![Terraform Cloud](https://app.terraform.io/). Log in and generate the User API Key. You will need this when you create the TF Cloud Target in Intersight.  If not a paid version, you will need to enable the trial account.
+2. If Integrating with TFCB (Terraform Cloud for Business), Sign up for an Account at [Terraform Cloud](https://app.terraform.io/). Log in and generate the User API Key. You will need this when you create the TF Cloud Target in Intersight.  If not a paid version, you will need to enable the trial account.
 
 3. Clone this repository to your own VCS Repository for the VCS Integration with Terraform Cloud.
 
-4. Integrate your VCS Repository into the TFCB Orgnization following these instructions: ![VCS Integration](https://www.terraform.io/docs/cloud/vcs/index.html).  Be sure to copy the OAth Token which you will use later on for Workspace provisioning.
+4. Integrate your VCS Repository into the TFCB Orgnization following these instructions: [VCS Integration](https://www.terraform.io/docs/cloud/vcs/index.html).  Be sure to copy the OAth Token which you will use later on for Workspace provisioning.
 
 ## Obtain tokens and keys
 
@@ -22,7 +22,7 @@
 
 * terraform_cloud_token
 
-  instructions: ![Terraform Cloud API Tokens](https://www.terraform.io/docs/cloud/users-teams-organizations/api-tokens.html)
+  instructions: [Terraform Cloud API Tokens](https://www.terraform.io/docs/cloud/users-teams-organizations/api-tokens.html)
 
 * tfc_organization (TFCB Organization Name)
 * agent_pool (The Name of the Agent Pool in the TFCB Account)
