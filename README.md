@@ -25,7 +25,7 @@
   instructions: [Terraform Cloud API Tokens](https://www.terraform.io/docs/cloud/users-teams-organizations/api-tokens.html)
 
 * tfc_organization (TFCB Organization Name)
-* agent_pool (The Name of the Agent Pool in the TFCB Account)
+* agent_pool (The Name of the Agent Pool in the TFCB Account).  To Create: [Intersight Service for Terraform](https://community.cisco.com/t5/data-center-and-cloud-documents/intersight-service-for-terraform/ta-p/4301093)
 * vcs_repo (The Name of your Version Control Repository. i.e. CiscoDevNet/intersight-tfb-iks)
 
 ### APIC Variables
