@@ -3,7 +3,7 @@
 {%- for k, v in keys.items() %}
   {%- if k == 'controller_type' or k == 'class_type' or k == 'apic_node_id' %}
   {%- elif k == 'policy_type' or k == 'site_group' or k == 'template_type' %}
-  {%- elif k == 'tenant' %}
+  {%- elif k == 'tenant'  or k == 'inband_epg' %}
   {%- elif v == None %}
   {%- elif v | int(-1) != -1 %}
     {{ k }} = {{ v }}

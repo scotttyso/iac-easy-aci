@@ -28,7 +28,7 @@
         key                 = {{ keys['key'] }}
         management_epg      = "{{ keys['management_epg'] }}"
         management_epg_type = "{{ keys['management_epg_type'] }}"
-        order               = {{ loop.index + 5 }}
+        order               = {{ loop.index }}
       {%- if not loop.last %}
       },
       {%- else %}

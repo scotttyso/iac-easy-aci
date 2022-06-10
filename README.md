@@ -1,71 +1,20 @@
-# IAC - Easy ACI Python Wrapper (Pre-Release)
+# IAC - Easy ACI Python Wrapper
 
-* Note: this is a work in progress
+## Updates/News
 
-## Use Cases
+* Note: First Initial Release.  Looking for Testers
 
-* Deploy New ACI Fabrics using Terraform via a Python wrapper with an Excel spreadsheet.
+## Pre-Requirements
 
-### Access Policies - modules/access
-
-* Domains
- - Access Domains
- - l3Out Domains
- - Physical Domains
-
-* Global Polices
- - Attachable Access Entity (AEP) Policies
-
-* Interface Policies
-  - CDP Interface Policies
-  - Fibre-Channel Interface Policies
-  - Layer2 Interface Policies
-  - LACP (Port-Channel) Interface Policies
-  - Link Level Policies
-  - LLDP Interface Policies
-  - MisCabling Protocol (MCP) Interface Policies
-  - Port Security Policies
-  - Spanning Tree Interface Policies
-
-* Leaf
-  - Fabric Membership
-  - Interface Profiles
-  - Interface Selectors
-  - Switch Profiles
-  - Switch Policy Groups
-
-* Spine
-  - Fabric Membership
-  - Interface Profiles
-  - Interface Selectors
-  - Switch Profiles
-  - Switch Policy Groups
-
-* VLAN Pools
-
-### Admin Policies - modules/admin
-
-* Maintenance Groups
-
-### Fabric Policies - modules/fabric
-
-* bgp_asn
-
-### Tenants - module/tenants
-
-* Bridge Domains
-
-### Pre-requisites and Guidelines
+* Deploy New/Existing ACI Fabrics using Terraform via a Python wrapper with an Excel spreadsheet.
 
 1. Run the Intial Configuration wizard on the APICs.
 
-2. Sign up for a TFCB (Terraform for Cloud Business) at <https://app.terraform.io/>. Log in and generate the User API Key. You will need this when you create the TF Cloud Target in Intersight.  If not a paid version, you will need to enable the trial account.
+2. If Integrating with TFCB (Terraform Cloud for Business), Sign up for an Account at ![Terraform Cloud](https://app.terraform.io/). Log in and generate the User API Key. You will need this when you create the TF Cloud Target in Intersight.  If not a paid version, you will need to enable the trial account.
 
 3. Clone this repository to your own VCS Repository for the VCS Integration with Terraform Cloud.
 
-4. Integrate your VCS Repository into the TFCB Orgnization following these instructions: <https://www.terraform.io/docs/cloud/vcs/index.html>.  Be sure to copy the OAth Token which you will use later on for Workspace provisioning.
-
-## VERY IMPORTANT NOTE: The Terraform Cloud provider stores terraform state in plain text.  Do not remove the .gitignore that is protecting you from uploading the state files to a public repository in this base directory.  The rest of the modules don't have this same risk
+4. Integrate your VCS Repository into the TFCB Orgnization following these instructions: ![VCS Integration](https://www.terraform.io/docs/cloud/vcs/index.html).  Be sure to copy the OAth Token which you will use later on for Workspace provisioning.
 
 ## Obtain tokens and keys
 
@@ -73,14 +22,9 @@
 
 * terraform_cloud_token
 
-  instructions: <https://www.terraform.io/docs/cloud/users-teams-organizations/api-tokens.html>
-
-* tfc_oath_token
-
-  instructions: <https://www.terraform.io/docs/cloud/vcs/index.html>
+  instructions: ![Terraform Cloud API Tokens](https://www.terraform.io/docs/cloud/users-teams-organizations/api-tokens.html)
 
 * tfc_organization (TFCB Organization Name)
-* tfc_email (Must be an Email Assigned to the TFCB Account)
 * agent_pool (The Name of the Agent Pool in the TFCB Account)
 * vcs_repo (The Name of your Version Control Repository. i.e. CiscoDevNet/intersight-tfb-iks)
 
@@ -155,33 +99,43 @@ $env:TF_VAR_ndoUser="{ndo_username}"
 $env:TF_VAR_ndoPass="{user_password}"
 ```
 
-## Execute the Terraform Plan
-
 ### Terraform Cloud
 
-When running in Terraform Cloud with VCS Integration the first Plan will need to be run from the UI but subsiqent runs should trigger automatically
+When running in Terraform Cloud with VCS Integration, the first Plan will need to be run from the UI but subsiqent runs should trigger automatically, if auto-run is left on the workspace
 
-### Terraform CLI
+### Running the Code:
 
-* Execute the Plan - Linux
+* Execute the Script - Linux
 
 ```bash
-# First time execution requires initialization.  Not needed on subsequent runs.
-# terraform init
-terraform plan -out="main.plan"
-terraform apply "main.plan"
+./main.py {options}
 ```
 
-* Execute the Plan - Windows
+* Execute the Script - Windows
 
 ```powershell
-# First time execution requires initialization.  Not needed on subsequent runs.
-# terraform.exe init
-terraform.exe plan -out="main.plan"
-terraform.exe apply "main.plan"
+python main.py {options}
 ```
 
-When run, this module will Create the Terraform Cloud Workspace(s) and Assign the Variables to the workspace(s).
+List of Options are below:
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+```bash
+usage: main.py [-h] [-d DIR] [-wb WORKBOOK] [-ws WORKSHEET]
+
+IaC Easy ACI Deployment Module
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DIR, --dir DIR     The Directory to use for the Creation of the Terraform Files.
+  -wb WORKBOOK, --workbook WORKBOOK
+                        The source Workbook.
+  -ws WORKSHEET, --worksheet WORKSHEET
+                        Only evaluate this single worksheet. Worksheet values are: 1. access - for Access 2. admin: for Admin 3. bridge_domains: for
+                        Bridge Domains 4. contracts: for Contracts 5. epgs: for EPGs 6. fabric: for Fabric 7. l3out: for L3Out 8. port_convert: for Uplink
+                        to Download Conversion 8. sites: for Sites 9. switches: for Switch Profiles 10. system_settings: for System Settings 11. tenants:
+                        for Tenants 12. virtual_networking: for Virtual Networking
+```
+
+* -d - This should typically be utilized to speficy the output directory (Repo) for the Terraform Files.
+* -wb - Name of the Workbook to be read.  If not specified the default is "ACI_Base_Workbookv2.xlsx
+* -ws - Use this option to run the process on only a specific worksheet in the workbook

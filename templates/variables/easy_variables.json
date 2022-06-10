@@ -80,6 +80,7 @@
                                     "application_profiles",
                                     "bridge_domains",
                                     "contracts",
+                                    "filters",
                                     "l3out_logical_node_profiles",
                                     "l3out_static_route",
                                     "l3outs",
@@ -5303,34 +5304,34 @@
                                 "default": 1,
                                 "x-omitempty": true
                             },
-                            "inband_ipv4": {
+                            "ipv4_address": {
                                 "description": "IPv4 Address of the Inband Management Interface.",
                                 "type": "hostname",
                                 "x-omitempty": true
                             },
-                            "inband_ipv4_gateway": {
+                            "ipv4_gateway": {
                                 "description": "IPv4 Gateway of the Inband Management Interface.",
                                 "type": "hostname",
                                 "x-omitempty": true
                             },
-                            "inband_ipv6": {
+                            "ipv6_address": {
                                 "description": "IPv6 Address of the Inband Management Interface.",
                                 "type": "hostname",
                                 "x-omitempty": true
                             },
-                            "inband_ipv6_gateway": {
+                            "ipv6_gateway": {
                                 "description": "IPv6 Gateway of the Inband Management Interface.",
                                 "type": "hostname",
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "inband_ipv6": "",
-                                "inband_ipv6_gateway": ""
+                                "ipv4_address": "",
+                                "ipv4_gateway": "",
+                                "ipv6_address": "",
+                                "ipv6_gateway": ""
                             },
                             "required_args": {
                                 "inband_epg": "",
-                                "inband_ipv4": "",
-                                "inband_ipv4_gateway": "",
                                 "apic_node_id": "",
                                 "pod_id": "",
                                 "site_group": ""
@@ -6689,17 +6690,7 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "apply_both_directions": {
-                                "description": "Flag to apply the contract in both directions.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "contract_name": {
+                            "contract": {
                                 "description": "Name of the Contract.",
                                 "type": "string",
                                 "minimum": 1,
@@ -6707,7 +6698,7 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "apply_type": {
+                            "contract_type": {
                                 "description": "Based on the type of contract, how it should be applied.  A standard contract can be applied as a consumer, provider, interface or intra EPG apply type.  Taboo is just taboo.",
                                 "type": "list_of_values",
                                 "enum": [
@@ -6748,8 +6739,9 @@
                                 "vrfs": ""
                             },
                             "required_args": {
-                                "apply_type": "",
                                 "contract": "",
+                                "contract_type": "",
+                                "qos_class": "",
                                 "site_group": "",
                                 "target_type": "",
                                 "tenant": ""
@@ -6768,6 +6760,8 @@
                                 "enum": [
                                     "epg",
                                     "external_epg",
+                                    "inb",
+                                    "oob",
                                     "vrf"
                                 ],
                                 "default": "epg",
@@ -8817,6 +8811,18 @@
                     {},
                     {
                         "properties": {
+                            "match_type": {
+                                "description": "Subject Match Criteria.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "All",
+                                    "AtleastOne",
+                                    "AtmostOne",
+                                    "None"
+                                ],
+                                "default": "AtleastOne",
+                                "x-omitempty": true
+                            },
                             "optional_args": {
                                 "alias": "",
                                 "annotations": "",
@@ -8846,6 +8852,7 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
+                                "match_type": "",
                                 "name": "",
                                 "preferred_group": "",
                                 "site_group": "",

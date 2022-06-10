@@ -1594,17 +1594,12 @@ def validate_args(jsonData, **kwargs):
             validating.site_group('site_group', **kwargs)
         elif jsonData[i]['type'] == 'hostname':
             if not (kwargs[i] == None or kwargs[i] == ''):
-                count = 1
-                for hostname in kwargs[i].split(','):
-                    kwargs[f'{i}_{count}'] = hostname
-                    if ':' in hostname:
-                        validating.ip_address(f'{i}_{count}', **kwargs)
-                    elif re.search('[a-z]', hostname, re.IGNORECASE):
-                        validating.dns_name(f'{i}_{count}', **kwargs)
-                    else:
-                        validating.ip_address(f'{i}_{count}', **kwargs)
-                    kwargs.pop(f'{i}_{count}')
-                    count += 1
+                if ':' in kwargs[i]:
+                    validating.ip_address(i, **kwargs)
+                elif re.search('[a-z]', kwargs[i], re.IGNORECASE):
+                    validating.dns_name(i, **kwargs)
+                else:
+                    validating.ip_address(i, **kwargs)
         elif jsonData[i]['type'] == 'email':
             if not (kwargs[i] == None or kwargs[i] == ''):
                 validating.email(i, **kwargs)
@@ -1654,7 +1649,7 @@ def validate_args(jsonData, **kwargs):
             if not (kwargs[i] == None or kwargs[i] == ''):
                 validating.string_pattern(i, jsonData, **kwargs)
         else:
-            print(f'error validating.  Type not found {i}. 2')
+            print(f"error validating.  Type not found {jsonData[i]['type']}. 2.")
             exit()
     for i in jsonData['optional_args']:
         if not (kwargs[i] == None or kwargs[i] == ''):
@@ -1666,6 +1661,13 @@ def validate_args(jsonData, **kwargs):
                 validating.domain(i, **kwargs)
             elif jsonData[i]['type'] == 'email':
                 validating.email(i, **kwargs)
+            elif jsonData[i]['type'] == 'hostname':
+                if ':' in kwargs[i]:
+                    validating.ip_address(i, **kwargs)
+                elif re.search('[a-z]', kwargs[i], re.IGNORECASE):
+                    validating.dns_name(i, **kwargs)
+                else:
+                    validating.ip_address(i, **kwargs)
             elif jsonData[i]['type'] == 'integer':
                 validating.number_check(i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'list_of_integer':
@@ -1702,7 +1704,7 @@ def validate_args(jsonData, **kwargs):
             elif jsonData[i]['type'] == 'string':
                 validating.string_pattern(i, jsonData, **kwargs)
             else:
-                print(f'error validating.  Type not found {i}. 3.')
+                print(f"error validating.  Type not found {jsonData[i]['type']}. 3.")
                 exit()
     return kwargs
 

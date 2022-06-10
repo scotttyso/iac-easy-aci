@@ -38,7 +38,7 @@ access_regex = f'^({a1}|{a2})$'
 admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
 apps_epgs_regex = '^((app|epg|vmm)_(add|(vmm_)?policy))$'
 bds_regex = '^((bd)_(add|general|l3|subnet))$'
-contracts_regex = '(^(assign_contract|(contract|filter|subject)_(add|entry|filters))$)'
+contracts_regex = '(^(contract|filter|subject)_(add|assign|entry|filters)$)'
 
 f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)'
 f2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'

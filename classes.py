@@ -2250,19 +2250,98 @@ class tenants(object):
     #=============================================================================
     def contract_assign(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfile']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.ContractAssignments']['allOf'][1]['properties']
 
+        pop_list = []
+        if 'external_epg' in kwargs['target_type']:
+            pop_list = ['l3out', 'external_epgs']
+            jsonData = required_args_add(pop_list, jsonData)
+        elif 'epg' in kwargs['target_type']:
+            pop_list = ['application_epgs', 'application_profile']
+            jsonData = required_args_add(pop_list, jsonData)
+        elif re.search('^(inb|oob)$', kwargs['target_type']):
+            pop_list.append('application_epgs')
+            jsonData = required_args_add(pop_list, jsonData)
+        elif 'vrf' in kwargs['target_type']:
+            pop_list.append('vrfs')
+            jsonData = required_args_add(pop_list, jsonData)
+        
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['monitoring_policy'] = 'default'
 
-        # Add Dictionary to easyDict
-        templateVars['class_type'] = 'tenants'
-        templateVars['data_type'] = 'application_profiles'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        # Remove Items in the Pop List
+        jsonData = required_args_remove(pop_list, jsonData)
+
+        # Attach the Contract to the EPG and VRF Resource(s)
+        if re.search('^(epg|inb|oob)$', kwargs['target_type']):
+            easyDict = kwargs['easyDict']['tenants']['application_epgs']
+            for i in kwargs['application_epgs'].split(','):
+                item_count = 0
+                for item in easyDict[kwargs['site_group']]:
+                    if item['tenant'] == kwargs['target_tenant'] and item['application_profile'
+                    ] == kwargs['application_profile'] and item['name'] == i:
+                        contract = {
+                            'contract_type':templateVars['contract_type'],
+                            'name':templateVars['contract'],
+                            'qos_class':templateVars['qos_class'],
+                            'schema':templateVars['schema'],
+                            'sites':templateVars['sites'],
+                            'tenant':templateVars['tenant'],
+                            'template':templateVars['template']
+                        }
+                        item['contracts'].append(contract)
+                        item_count += 1
+                if item_count == 0:
+                    print(f'Did not find Application EPG {i}.  Exiting Script')
+                    exit()
+        elif 'external_epg' in kwargs['target_type']:
+            easyDict = kwargs['easyDict']['tenants']['l3outs']
+            for i in kwargs['external_epgs'].split(','):
+                item_count = 0
+                for item in easyDict[kwargs['site_group']]:
+                    if item['tenant'] == kwargs['target_tenant'] and item['name'] == kwargs['l3out']:
+                        for ext_epg in item['external_epgs']:
+                            if ext_epg['name'] == i:
+                                contract = {
+                                    'contract_type':kwargs['contract_type'],
+                                    'name':kwargs['contract'],
+                                    'qos_class':kwargs['qos_class'],
+                                    'schema':kwargs['schema'],
+                                    'sites':kwargs['sites'],
+                                    'tenant':kwargs['tenant'],
+                                    'template':kwargs['template']
+                                }
+                                ext_epg['contracts'].append(contract)
+                                item_count += 1
+                if item_count == 0:
+                    print(f'Did not find External EPG {i}.  Exiting Script')
+                    exit()
+        elif 'vrf' in kwargs['target_type']:
+            easyDict = kwargs['easyDict']['tenants']['vrfs']
+            tType = 'vrfs'
+            for i in kwargs['vrfs'].split(','):
+                item_count = 0
+                for item in easyDict[kwargs['site_group']]:
+                    if item['tenant'] == kwargs['target_tenant'] and item['name'] == i:
+                        contract = {
+                            'contract_type':templateVars['contract_type'],
+                            'name':templateVars['contract'],
+                            'qos_class':templateVars['qos_class'],
+                            'schema':templateVars['schema'],
+                            'sites':templateVars['sites'],
+                            'tenant':templateVars['tenant'],
+                            'template':templateVars['template']
+                        }
+                        item['epg_esg_collection_for_vrfs']['contracts'].append(contract)
+                        item_count += 1
+                if item_count == 0:
+                    print(f'Did not find VRF {i}.  Exiting Script')
+                    exit()
+        
+        # Return EasyDict
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2355,6 +2434,8 @@ class tenants(object):
             pop_list.append('application_profile')
             if epgpolicy['epg_type'] == 'oob': pop_list.append('bridge_domain')
             jsonData = required_args_remove(pop_list, jsonData)
+            if epgpolicy['epg_type'] == 'inb':
+                jsonData = required_args_add(['vlans'], jsonData)
         
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2365,6 +2446,8 @@ class tenants(object):
 
         if re.search('^(inb|oob)$', epgpolicy['epg_type']):
             jsonData = required_args_add(pop_list, jsonData)
+            if epgpolicy['epg_type'] == 'inb':
+                jsonData = required_args_remove(['vlans'], jsonData)
 
         domain_list = ['physical_domains', 'vmm_domains']
         for i in domain_list:
@@ -2432,6 +2515,8 @@ class tenants(object):
             templateVars.pop('epg_to_aaeps')
         if not len(templateVars['domains']) > 0:
             templateVars.pop('domains')
+        if templateVars['epg_type'] == 'inb':
+            templateVars['vlan'] = templateVars['vlans'].split(',')[0]
 
         pop_list = [
             'custom_epg_name',
@@ -2444,7 +2529,7 @@ class tenants(object):
             'vmm_vlans'
         ]
         for i in pop_list:
-            templateVars.pop(i)
+            if templateVars.get(i): templateVars.pop(i)
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
@@ -2508,6 +2593,7 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        templateVars['contracts'] = []
         templateVars['subnets'] = []
 
         # Attach the External EPG Policy Additional Attributes
@@ -3108,12 +3194,20 @@ class tenants(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         templateVars['communities'] = []
+        templateVars['epg_esg_collection_for_vrfs'] = dict(
+            contracts = [],
+            match_type = kwargs['match_type']
+        )
+        templateVars.pop('match_type')
 
         # Attach the VRF Policy Additional Attributes
         if kwargs['easyDict']['tenants']['vrf_policies'].get(templateVars['vrf_policy']):
             templateVars.update(kwargs['easyDict']['tenants']['vrf_policies'][templateVars['vrf_policy']])
         else:
             validating.error_policy_not_found('vrf_policy', **kwargs)
+
+        # Add the ESG Collection Argument
+
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
