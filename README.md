@@ -29,18 +29,23 @@
 
 ### APIC Variables
 
+* apicUser - If using SSH-KEY based Authetnication, it Must be a local user.
+
 For Certificate based Authentication
 
-* apicUser - Must be a local user.
 * privateKey
 * certName
 
 For User Based Authentication
 
-* apicUser
 * apicPass
 
 Note: for authentication with non-Local Credentials use the following format for the user: "apic:{login_domain}\\\\{user}"
+
+### Nexus Dashboard Orchestrator Variables
+
+* apicUser
+* apicPass
 
 ### Import the Variables into your Environment before Running the Terraform Cloud Provider module(s) in this directory
 
