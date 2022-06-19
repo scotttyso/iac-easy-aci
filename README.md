@@ -6,7 +6,7 @@
 
 ## Pre-Requirements
 
-* Deploy New/Existing ACI Fabrics using Terraform via a Python wrapper with an Excel spreadsheet.
+* Deploy New/Existing ACI Fabrics using Terraform via a Python wrapper with an Excel spreadsheet datasource.
 
 1. Run the Intial Configuration wizard on the APICs.
 

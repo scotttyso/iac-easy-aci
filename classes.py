@@ -2493,6 +2493,7 @@ class tenants(object):
                         'forged_transmits': vmmpolicy['forged_transmits'],
                         'mac_changes': vmmpolicy['mac_changes']
                     },
+                    'switch_provider': vmmpolicy['switch_provider'],
                     'vlan_mode': vmmpolicy['vlan_mode'],
                     'vlans': templateVars['vmm_vlans']
                 })

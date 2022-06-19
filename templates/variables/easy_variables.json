@@ -2541,10 +2541,10 @@
                                 "description": "Flag to Start the Backup now.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "triggered",
-                                    "untriggered"
+                                    "false",
+                                    "true"
                                 ],
-                                "default": "untriggered",
+                                "default": "false",
                                 "x-omitempty": true
                             }
                         }
@@ -6841,17 +6841,7 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "log_packets": {
-                                "description": "Enables contract permit and deny logging.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "match_type": {
+                            "label_match_criteria": {
                                 "description": "Subject Match Criteria.",
                                 "type": "list_of_values",
                                 "enum": [
@@ -6861,6 +6851,16 @@
                                     "None"
                                 ],
                                 "default": "AtleastOne",
+                                "x-omitempty": true
+                            },
+                            "log_packets": {
+                                "description": "Enables contract permit and deny logging.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -6873,8 +6873,8 @@
                                 "contract_type": "",
                                 "enable_policy_compression": "",
                                 "filters_to_assign": "",
+                                "label_match_criteria": "",
                                 "log_packets": "",
-                                "match_type": "",
                                 "name": "",
                                 "qos_class": "",
                                 "site_group": "",
@@ -7596,6 +7596,16 @@
                                 "default": "false",
                                 "x-omitempty": true
                             },
+                            "aggregate_import": {
+                                "description": "Imports all routes of a subnet (0/0 subnets).",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
                             "aggregate_shared_routes": {
                                 "description": "Available if you select Shared Route Control Subnet above. When a route is learned in one VRF that needs to be leaked into another VRF, the routes can be leaked by matching the subnet exactly, or can be leaked in an aggregate way according to a subnet mask.  Note:  For aggregate shared routes, multiple subnet masks can be used to determine which specific route groups are leaked between VRFs (for example, 10.1.0.0/16), or 0/0 can be used to share all subnet routes across multiple VRFS.",
                                 "type": "list_of_values",
@@ -7634,6 +7644,16 @@
                                 "default": "true",
                                 "x-omitempty": true
                             },
+                            "import_route_control_subnet": {
+                                "description": "Controls the subnets allowed into the fabric, and can include set and match rules to filter routes. Supported for BGP and OSPF, but not for EIGRP; if the user enables the import control policy for an unsupported protocol, it will be automatically ignored. The import control policy is not enabled by default, but you can enable it by navigating to the configured L3Out. Click the Policy/Main tabs to display the Properties window for the configured L3Out, then check the box next to Route Control Enforcement: Import.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
                             "shared_route_control_subnet": {
                                 "description": "Controls which external prefixes are advertised to other VRFs, which have a contract interface for shared L3Out services.",
                                 "type": "list_of_values",
@@ -7660,10 +7680,12 @@
                             },
                             "required_args": {
                                 "aggregate_export": "",
+                                "aggregate_import": "",
                                 "aggregate_shared_routes": "",
                                 "export_route_control_subnet": "",
                                 "external_epg": "",
                                 "external_subnets_for_external_epg": "",
+                                "import_route_control_subnet": "",
                                 "l3out": "",
                                 "shared_route_control_subnet": "",
                                 "shared_security_import_subnet": "",
@@ -8811,8 +8833,8 @@
                     {},
                     {
                         "properties": {
-                            "match_type": {
-                                "description": "Subject Match Criteria.",
+                            "label_match_criteria": {
+                                "description": "Represents the provider label match criteria. The options are:",
                                 "type": "list_of_values",
                                 "enum": [
                                     "All",
@@ -8852,7 +8874,7 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "match_type": "",
+                                "label_match_criteria": "",
                                 "name": "",
                                 "preferred_group": "",
                                 "site_group": "",
