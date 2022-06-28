@@ -5668,6 +5668,7 @@
                                 "policy_name": "",
                                 "port_allocation": "",
                                 "port_binding": "",
+                                "switch_provider": "",
                                 "resolution_immediacy": "",
                                 "vlan_mode": ""
                             },
@@ -5680,6 +5681,21 @@
                                     "pre-provision"
                                 ],
                                 "default": "on-demand",
+                                "x-omitempty": true
+                            },
+                            "switch_provider": {
+                                "description": "The Vendor for the Virtual Switch.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "CloudFoundry",
+                                    "Kubernetes",
+                                    "Microsoft",
+                                    "OpenShift",
+                                    "OpenStack",
+                                    "Redhat",
+                                    "VMware"
+                                ],
+                                "default": "reject",
                                 "x-omitempty": true
                             },
                             "vlan_mode": {
@@ -7654,26 +7670,6 @@
                                 "default": "false",
                                 "x-omitempty": true
                             },
-                            "shared_route_control_subnet": {
-                                "description": "Controls which external prefixes are advertised to other VRFs, which have a contract interface for shared L3Out services.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
-                            "shared_security_import_subnet": {
-                                "description": "Configures the classifier for the subnets in the VRF where the routes are leaked.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
-                                "x-omitempty": true
-                            },
                             "optional_args": {
                                 "route_control_profiles": "",
                                 "route_summarization_policy": ""
@@ -7707,6 +7703,26 @@
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "shared_route_control_subnet": {
+                                "description": "Controls which external prefixes are advertised to other VRFs, which have a contract interface for shared L3Out services.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "shared_security_import_subnet": {
+                                "description": "Configures the classifier for the subnets in the VRF where the routes are leaked.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false", 
+                                    "true"
+                                ],
+                                "default": "false",
                                 "x-omitempty": true
                             },
                             "subnets": {
@@ -8736,7 +8752,7 @@
                                 "default": "enabled",
                                 "x-omitempty": true
                             },
-                            "known_multicast_allow": {
+                            "layer3_multicast": {
                                 "description": "",
                                 "type": "list_of_values",
                                 "enum": [
@@ -8811,7 +8827,7 @@
                             "required_args": {
                                 "bd_enforcement_status": "",
                                 "ip_data_plane_learning": "",
-                                "known_multicast_allow": "",
+                                "layer3_multicast": "",
                                 "policy_control_enforcement_direction": "",
                                 "policy_control_enforcement_preference": "",
                                 "policy_name": ""

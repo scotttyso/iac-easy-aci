@@ -3197,9 +3197,9 @@ class tenants(object):
         templateVars['communities'] = []
         templateVars['epg_esg_collection_for_vrfs'] = dict(
             contracts = [],
-            match_type = kwargs['match_type']
+            match_type = kwargs['label_match_criteria']
         )
-        templateVars.pop('match_type')
+        templateVars.pop('label_match_criteria')
 
         # Attach the VRF Policy Additional Attributes
         if kwargs['easyDict']['tenants']['vrf_policies'].get(templateVars['vrf_policy']):

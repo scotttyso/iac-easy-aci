@@ -26,6 +26,8 @@
             {%- endif %}
           {%- endfor %}
         ]
+        {%- elif key == 'dvs_version' %}
+        {{ key }} = "{{ value }}"
         {%- elif value | int(-1) != -1 %}
         {{ key }} = {{ value }}
         {%- elif value == 'false' or value == 'true' %}
