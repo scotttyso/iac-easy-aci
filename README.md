@@ -16,6 +16,71 @@
 
 4. Integrate your VCS Repository into the TFCB Orgnization following these instructions: [VCS Integration](https://www.terraform.io/docs/cloud/vcs/index.html).  Be sure to copy the OAth Token which you will use later on for Workspace provisioning.
 
+## Getting Started
+
+## Install Visual Studio Code
+
+- Download Here: [Visual Studio Code](https://code.visualstudio.com/Download)
+
+- Recommended Extensions: 
+  - GitHub Pull Requests and Issues - Author GitHub
+  - HashiCorp Terraform - Author HashiCorp
+  - Pylance - Author Microsoft
+  - Python - Author Microsoft
+  - PowerShell (Windows) - Author Microsoft
+
+- Authorize Visual Studio Code to GitHub via the GitHub Extension
+
+## Install git
+
+- Linux - Use the System Package Manager - apt/yum etc.
+
+```bash
+sudo apt update
+sudo apt install git
+```
+
+- Windows Download Here: [Git](https://git-scm.com/download/win)
+
+configure Git Credentials
+
+```bash
+git config --global user.name "<username>"   
+git config --global user.email "<email>"
+```
+
+## Python Requirements
+
+- Python 3.6 or Greater
+- Linux - Use the System Package Manager - apt/yum etc.
+- Windows Download Here: [Python](https://www.python.org/downloads/) 
+- For Windows.  Make sure python.exe and pip.exe are available via the system path.
+- Windows Example (The Folder Python310 would be according to the Python Release) - Administrator Session
+
+```powershell
+$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path
+$newpath = "$oldpath;%USERPROFILE%\AppData\Local\Programs\Python\Python310\;%USERPROFILE%\AppData\Local\Programs\Python\Python310\Scripts\"
+Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newpath
+```
+
+- Update the System Path in the Visual Studio Terminal Window
+
+```powershell
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+```
+
+### Clone this Repository
+
+```bash
+git clone https://github.com/scotttyso/iac-easy-aci
+```
+
+- Install the Requirements File
+
+```bash
+$ pip install -r requirements.txt
+```
+
 ## Obtain tokens and keys
 
 ### Terraform Cloud Variables

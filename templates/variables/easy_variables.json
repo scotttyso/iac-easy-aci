@@ -377,7 +377,7 @@
                                 "README.md",
                                 "variables.tf"
                             ],
-                            "version": "0.9.5"
+                            "version": "1.2"
                         }
                     }
                 ]
@@ -8410,6 +8410,88 @@
                                 "maximum": 100,
                                 "default": 75,
                                 "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.policies.dhcpRelay": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "address": {
+                                "description": "The server IP address.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            },
+                            "application_profile": {
+                                "description": "The Name of an Existing Application Profile, if epg_type is application_epg.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "epg": {
+                                "description": "The Name of an Existing Application EPG or External EPG.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "epg_type": {
+                                "description": "The Type of EPG to assign to the DHCP relay Provider.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "application_epg", 
+                                    "external_epg"
+                                ],
+                                "default": "application_epg",
+                                "x-omitempty": true
+                            },
+                            "l3out": {
+                                "description": "Name of parent L3Out object, if epg_type is external_epg.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "mode": {
+                                "description": "DHCP relay policy mode.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "visible", 
+                                    "not-visible"
+                                ],
+                                "default": "visible",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "application_profile": "",
+                                "description": "",
+                                "l3out": ""
+                            },
+                            "owner": {
+                                "description": "Owner of the target relay servers.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "infra", 
+                                    "tenant"
+                                ],
+                                "default": "infra",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "address": "",
+                                "epg": "",
+                                "epg_type": "",
+                                "mode": "",
+                                "name": "",
+                                "owner": "",
+                                "tenant": ""
                             }
                         }
                     }

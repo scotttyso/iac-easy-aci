@@ -53,7 +53,7 @@ sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
 tenants_regex = '^(tenant_(add|site)|vrf_(add|community|policy))$'
-tenant_pol_regex = '^(apic_inb|bgp_pfx|(eigrp|ospf)_interface)$'
+tenant_pol_regex = '^(apic_inb|bgp_pfx|dhcp_relay|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
 #=================================================================
@@ -367,7 +367,6 @@ def main():
     read_easy_jsonData(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     merge_easy_aci_repository(args, easy_jsonData, **easyDict)
-    exit()
     uncommitted_folders = git_check_status(args)
     apply_terraform(args, uncommitted_folders)
 

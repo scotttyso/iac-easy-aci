@@ -2376,7 +2376,45 @@ class tenants(object):
         return kwargs['easyDict']
 
     #=============================================================================
-    # Function - Application Profiles
+    # Function - EIGRP Interface Policy
+    #=============================================================================
+    def dhcp_relay(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.policies.dhcpRelay']['allOf'][1]['properties']
+
+        pop_list = []
+        if 'external_epg' in kwargs['epg_type']: pop_list = ['l3out']
+        else: pop_list = ['application_epg']
+        jsonData = required_args_add(pop_list, jsonData)
+
+        # Validate User Input
+        kwargs = validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        jsonData = required_args_remove(pop_list, jsonData)
+
+        pop_list = ['address', 'application_profile', 'epg', 'epg_type', 'l3out']
+        templateVars['dhcp_relay_providers'] = {
+            'address':templateVars['address'],
+            'application_profile':templateVars['application_profile'],
+            'epg':templateVars['epg'],
+            'epg_type':templateVars['epg_type'],
+            'l3out':templateVars['l3out'],
+            'tenant':templateVars['tenant'],
+        }
+
+        for i in pop_list:
+            templateVars.pop(i)
+        
+        # Add Dictionary to easyDict
+        templateVars['class_type'] = 'tenants'
+        templateVars['data_type'] = 'policies_dhcp_relay'
+        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        return kwargs['easyDict']
+
+    #=============================================================================
+    # Function - EIGRP Interface Policy
     #=============================================================================
     def eigrp_interface(self, **kwargs):
         # Get Variables from Library
