@@ -1,6 +1,6 @@
 
   "{{ keys['name'] }}" = {
-{%- for k, v in keys.items() %}
+{%- for k, v in keys.items()|sort() %}
   {%- if k == 'class_type' or k == 'name' %}
   {%- elif k == 'policy_type' or k == 'site_group' or k == 'template_type' %}
   {%- elif v == None %}
@@ -17,6 +17,12 @@
         {{ key }} = {{ value }}
       {%- elif value == 'false' or value == 'true' %}
         {{ key }} = {{ value }}
+      {%- elif key == 'names' %}
+        {{ key }} = [
+        {%- for item in value %}
+          "{{ item }}",
+        {%- endfor %}
+        ]
       {%- elif key == 'subnets' %}
         {{ key }} = {
         {%- for keys, values in value.items() %}

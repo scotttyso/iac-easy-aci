@@ -2072,6 +2072,39 @@ class tenants(object):
     #=============================================================================
     # Function - Bridge Domain - Subnets
     #=============================================================================
+    def bd_dhcp(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.dhcpRelayLabels']['allOf'][1]['properties']
+
+        # Validate User Input
+        kwargs = validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        if ',' in templateVars['names']:
+            templateVars['names'] = templateVars['names'].split(',')
+            print(templateVars['names'])
+
+        # Modify the templateVars scope and subnet_control
+        pop_list = [
+            'bridge_domain',
+            'site_group',
+            'tenant',
+        ]
+        for i in pop_list:
+            templateVars.pop(i)
+        
+        bds = kwargs['easyDict']['tenants']['bridge_domains'][kwargs['site_group']]
+        for bd in bds:
+            if bd['name'] == kwargs['bridge_domain'] and bd['tenant'] == kwargs['tenant']:
+                bd['dhcp_relay_labels'] = templateVars
+
+        # Add Dictionary to easyDict
+        return kwargs['easyDict']
+        
+    #=============================================================================
+    # Function - Bridge Domain - Subnets
+    #=============================================================================
     def bd_subnet(self, **kwargs):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.Subnets']['allOf'][1]['properties']
@@ -2408,8 +2441,12 @@ class tenants(object):
             templateVars.pop(i)
         
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'tenants'
-        templateVars['data_type'] = 'policies_dhcp_relay'
+        if templateVars['owner'] == 'tenant':
+            templateVars['class_type'] = 'tenants'
+            templateVars['data_type'] = 'policies_dhcp_relay'
+        else:
+            templateVars['class_type'] = 'access'
+            templateVars['data_type'] = 'global_dhcp_relay'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 

@@ -21,6 +21,7 @@
                                     "domains_layer3",
                                     "domains_physical",
                                     "global_attachable_access_entity_profiles",
+                                    "global_dhcp_relay",
                                     "leaf_interfaces_policy_groups_access",
                                     "leaf_interfaces_policy_groups_breakout",
                                     "leaf_interfaces_policy_groups_bundle",
@@ -121,6 +122,7 @@
                                     "domains_layer3": {},
                                     "domains_physical": {},
                                     "global_attachable_access_entity_profiles": {},
+                                    "global_dhcp_relay": {},
                                     "firmware": {},
                                     "interface_policies": {},
                                     "leaf_interfaces_policy_groups_access": {},
@@ -242,6 +244,7 @@
                                     "domains_layer3.tf",
                                     "domains_physical.tf",
                                     "global_attachable_access_entity_profiles.tf",
+                                    "global_dhcp_relay.tf",
                                     "leaf_interfaces_policy_groups_access.tf",
                                     "leaf_interfaces_policy_groups_breakout.tf",
                                     "leaf_interfaces_policy_groups_bundle.tf",
@@ -5834,6 +5837,51 @@
                             "vmm_vlans": {
                                 "description": "List of VLANs to assign to the VMM Domain for Static Bindings.",
                                 "type": "list_of_vlans",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.bd.dhcpRelayLabels": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "dhcp_option_policy": {
+                                "description": "The Name of a DHCP Option Policy to assign to the DHCP Relay Label.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "names": {
+                                "description": "A list of DHCP Relay Policies to assign to the Bridge Domain.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "dhcp_option_policy": ""
+                            },
+                            "required_args": {
+                                "bridge_domain": "",
+                                "names": "",
+                                "scope": "",
+                                "site_group": "",
+                                "tenant": ""
+                            },
+                            "scope": {
+                                "description": "The owner of the target relay. The DHCP relay is any host that forwards DHCP packets between clients and servers. The relays are used to forward requests and replies between clients and servers when they are not on the same physical subnet. The relay owner can be:  * infra — The owner is the infrastructure  * tenant — The owner is the tenant.  The default is infra.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "infra",
+                                    "tenant"
+                                ],
+                                "default": "infra",
                                 "x-omitempty": true
                             }
                         }

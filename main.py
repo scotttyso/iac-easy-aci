@@ -37,7 +37,7 @@ access_regex = f'^({a1}|{a2})$'
 
 admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
 apps_epgs_regex = '^((app|epg|vmm)_(add|(vmm_)?policy))$'
-bds_regex = '^((bd)_(add|general|l3|subnet))$'
+bds_regex = '^((bd)_(add|dhcp|general|l3|subnet))$'
 contracts_regex = '(^(contract|filter|subject)_(add|assign|entry|filters)$)'
 
 f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)'
@@ -367,8 +367,8 @@ def main():
     read_easy_jsonData(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     merge_easy_aci_repository(args, easy_jsonData, **easyDict)
-    uncommitted_folders = git_check_status(args)
-    apply_terraform(args, uncommitted_folders)
+    changed_folders = git_check_status(args)
+    apply_terraform(args, changed_folders)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')

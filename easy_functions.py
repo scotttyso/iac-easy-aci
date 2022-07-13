@@ -180,25 +180,41 @@ def apply_terraform(args, folders):
             tfe_cmd.wait()
             if not output == None:
                 print(output.decode('utf-8'))
+            print(f'\n--------------------------------------------------------------------------------\n')
+            print(f'  Terraform Apply Complete.  Please Review for any errors and confirm next steps')
+            print(f'\n--------------------------------------------------------------------------------\n')
 
         while True:
-            if response_p == 'A':
-                response_p = ''
-                print(f'\n-----------------------------------------------------------------------------\n')
-                print(f'  Terraform Apply Complete.  Please Review for any errors and confirm if you')
-                print(f'  want to move forward.  "M" to Move to the Next Section. "Q" to Quit..')
-                print(f'\n-----------------------------------------------------------------------------\n')
-                response_a = input('  Please Enter ["M" or "Q"]: ')
-            elif response_p == 'S':
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'  Please confirm if you want to commit the folder or just move forward.')
+            print(f'  "C" to Commit the folder and move forward.')
+            print(f'  "M" to Move to the Next Section.')
+            print(f'  "Q" to Quit..')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            response_a = input('  Please Enter ["C", "M" or "Q"]: ')
+            if response_a == 'C':
                 break
-            if response_a == 'M':
+            elif response_a == 'M':
                 break
             elif response_a == 'Q':
                 exit()
             else:
                 print(f'\n-----------------------------------------------------------------------------\n')
-                print(f'  A Valid Response is either "M" or "Q"...')
+                print(f'  A Valid Response is either "C", "M" or "Q"...')
                 print(f'\n-----------------------------------------------------------------------------\n')
+
+        while True:
+            if response_a == 'C':
+                print(f'\n-----------------------------------------------------------------------------\n')
+                commit_message = input(f'  Please Enter your Commit Message for the folder {folder}: ')
+                baseRepo = Repo(args.dir)
+                baseRepo.git.add(update=True)
+                baseRepo.git.commit('-m', f'{commit_message}', '--', folder)
+                baseRepo.git.push()
+                break
+            else:
+                break
+
 
 #======================================================
 # Function to Count the Number of Keys/Columns
@@ -635,9 +651,18 @@ def git_base_repo(args, wb):
 #======================================================
 def git_check_status(args):
     baseRepo = Repo(args.dir)
-    untracked_files = baseRepo.untracked_files
+    untrackedFiles = baseRepo.untracked_files
     random_folders = []
-    for file in untracked_files:
+    modified = baseRepo.git.status()
+    modifiedList = [y for y in (x.strip() for x in modified.splitlines()) if y]
+    for line in modifiedList:
+        if re.search(r'modified:   (.+\.auto\.tfvars)', line):
+            file = re.search(r'modified:   (.+\.auto.tfvars)', line).group(1)
+            dirname, filename = os.path.split(file)
+            if not dirname in random_folders:
+                random_folders.append(dirname)
+            
+    for file in untrackedFiles:
         dirname, filename = os.path.split(file)
         if not dirname in random_folders:
             random_folders.append(dirname)
