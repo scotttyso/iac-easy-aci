@@ -3484,6 +3484,8 @@ class terraform_cloud(object):
                     templateVars["varId"] = var
                     templateVars["varKey"] = var
                     sensitive_var_site_group(**templateVars)
+                    osvar = f'TF_VAR_{var}'
+                    templateVars["varValue"] = os.environ.get(osvar)
                     templateVars["Sensitive"] = True
                     terraform_cloud().tfcVariables(**templateVars)
 
@@ -3756,9 +3758,9 @@ class terraform_cloud(object):
             workingDir = templateVars["workingDirectory"]
             templateVars["workingDirectory"] = workingDir.replace('\\', '/')
 
-        if re.search(r'\/', templateVars["workingDirectory"]):
-            workingDir = templateVars["workingDirectory"]
-            templateVars["workingDirectory"] = workingDir[1 : ]
+        # if re.search(r'\/', templateVars["workingDirectory"]):
+        #     workingDir = templateVars["workingDirectory"]
+        #     templateVars["workingDirectory"] = workingDir[1 : ]
         
         if not key_count > 0:
             #-------------------------------

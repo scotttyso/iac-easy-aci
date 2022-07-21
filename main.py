@@ -368,7 +368,7 @@ def main():
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     merge_easy_aci_repository(args, easy_jsonData, **easyDict)
     changed_folders = git_check_status(args)
-    apply_terraform(args, changed_folders)
+    apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')

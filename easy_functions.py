@@ -100,20 +100,22 @@ def apic_post(apic, payload, cookies, uri, section=''):
 # 'terraform apply' in the each folder of the
 # Destination Directory.
 #======================================================
-def apply_terraform(args, folders):
+def apply_terraform(args, folders, **easyDict):
     base_dir = args.dir
-    print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'  Found the Followng Folders with uncommitted changes:\n')
-    for folder in folders:
-        print(f'  - {base_dir}{folder}')
-    print(f'\n  Beginning Terraform Plan and Apply in each folder.')
-    print(f'\n-----------------------------------------------------------------------------\n')
-
+    jsonData = easyDict
     running_directory = os.getcwd()
     # tf_path = '.terraform/providers/registry.terraform.io/'
     opSystem = platform.system()
     if opSystem == 'Windows': path_sep = '\\'
     else: path_sep = '/'
+
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'  Found the Followng Folders with uncommitted changes:\n')
+    for folder in folders:
+        print(f'  - {base_dir}{folder}')
+    print(f'\n  Beginning Terraform Proceedures.')
+    print(f'\n-----------------------------------------------------------------------------\n')
+
     tfe_dir = f'.terraform{path_sep}providers{path_sep}'
     tfe_cmd = subprocess.Popen(['terraform', 'init', '-upgrade'],
         cwd=running_directory,
@@ -127,68 +129,83 @@ def apply_terraform(args, folders):
     response_p = ''
     response_a = ''
     for folder in folders:
+        site_name = folder.split(path_sep)[0]
+        site_match = 0
+        for k, v in easyDict['sites']['site_settings'].items():
+            if v[0]['site_name'] == site_name:
+                run_loc = v[0]['run_location']
+                site_match = 1
+        if site_match == 0:
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'  Could not determine the Run Location for folder {folder}:\n')
+            print(f'  Defined Site Names not found in the Path.')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
+
         path = f'{base_dir}{folder}'
-        if os.path.isfile(os.path.join(path, '.terraform.lock.hcl')):
-            os.remove(os.path.join(path, '.terraform.lock.hcl'))
-        if os.path.isdir(os.path.join(path, '.terraform')):
-            shutil.rmtree(os.path.join(path, '.terraform'))
-        lock_count = 0
-        tfe_cmd = subprocess.Popen(
-            ['terraform', 'init', f'-plugin-dir={running_directory}/{tfe_dir}'],
-            cwd=path,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-        output, err = tfe_cmd.communicate()
-        tfe_cmd.wait()
-        print(output.decode('utf-8'))
-        if 'does not match configured version' in output.decode('utf-8'):
-            lock_count =+ 1
-
-        if lock_count > 0:
+        if run_loc == 'local':
+            if os.path.isfile(os.path.join(path, '.terraform.lock.hcl')):
+                os.remove(os.path.join(path, '.terraform.lock.hcl'))
+            if os.path.isdir(os.path.join(path, '.terraform')):
+                shutil.rmtree(os.path.join(path, '.terraform'))
+            lock_count = 0
             tfe_cmd = subprocess.Popen(
-                ['terraform', 'init', '-upgrade', f'-plugin-dir={running_directory}/{tfe_dir}']
-                , cwd=path
+                ['terraform', 'init', f'-plugin-dir={running_directory}/{tfe_dir}'],
+                cwd=path,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
             )
+            output, err = tfe_cmd.communicate()
             tfe_cmd.wait()
             print(output.decode('utf-8'))
-        tfe_cmd = subprocess.Popen(['terraform', 'plan', '-out=main.plan'], cwd=path)
-        output, err = tfe_cmd.communicate()
-        tfe_cmd.wait()
-        if not output == None:
-            print(output.decode('utf-8'))
-        while True:
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'  Terraform Plan Complete.  Please Review the Plan and confirm if you want')
-            print(f'  to move forward.  "A" to Apply the Plan. "S" to Skip.  "Q" to Quit.')
-            print(f'  Current Working Directory: {folder}')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            response_p = input('  Please Enter ["A", "S" or "Q"]: ')
-            if re.search('^(A|S)$', response_p):
-                break
-            elif response_p == 'Q':
-                exit()
-            else:
-                print(f'\n-----------------------------------------------------------------------------\n')
-                print(f'  A Valid Response is either "A", "S" or "Q"...')
-                print(f'\n-----------------------------------------------------------------------------\n')
+            if 'does not match configured version' in output.decode('utf-8'):
+                lock_count =+ 1
 
-        if response_p == 'A':
-            tfe_cmd = subprocess.Popen(['terraform', 'apply', '-parallelism=1', 'main.plan'], cwd=path)
-            tfe_cmd.wait()
+            if lock_count > 0:
+                tfe_cmd = subprocess.Popen(
+                    ['terraform', 'init', '-upgrade', f'-plugin-dir={running_directory}/{tfe_dir}']
+                    , cwd=path
+                )
+                tfe_cmd.wait()
+                print(output.decode('utf-8'))
+            tfe_cmd = subprocess.Popen(['terraform', 'plan', '-out=main.plan'], cwd=path)
             output, err = tfe_cmd.communicate()
             tfe_cmd.wait()
             if not output == None:
                 print(output.decode('utf-8'))
-            print(f'\n--------------------------------------------------------------------------------\n')
-            print(f'  Terraform Apply Complete.  Please Review for any errors and confirm next steps')
-            print(f'\n--------------------------------------------------------------------------------\n')
+            while True:
+                print(f'\n-----------------------------------------------------------------------------\n')
+                print(f'  Terraform Plan Complete.  Please Review the Plan and confirm if you want')
+                print(f'  to move forward.  "A" to Apply the Plan. "S" to Skip.  "Q" to Quit.')
+                print(f'  Current Working Directory: {folder}')
+                print(f'\n-----------------------------------------------------------------------------\n')
+                response_p = input('  Please Enter ["A", "S" or "Q"]: ')
+                if re.search('^(A|S)$', response_p):
+                    break
+                elif response_p == 'Q':
+                    exit()
+                else:
+                    print(f'\n-----------------------------------------------------------------------------\n')
+                    print(f'  A Valid Response is either "A", "S" or "Q"...')
+                    print(f'\n-----------------------------------------------------------------------------\n')
+
+            if response_p == 'A':
+                tfe_cmd = subprocess.Popen(['terraform', 'apply', '-parallelism=1', 'main.plan'], cwd=path)
+                tfe_cmd.wait()
+                output, err = tfe_cmd.communicate()
+                tfe_cmd.wait()
+                if not output == None:
+                    print(output.decode('utf-8'))
+                print(f'\n--------------------------------------------------------------------------------\n')
+                print(f'  Terraform Apply Complete.  Please Review for any errors and confirm next steps')
+                print(f'\n--------------------------------------------------------------------------------\n')
 
         while True:
             print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'  Folder: {path}.')
             print(f'  Please confirm if you want to commit the folder or just move forward.')
-            print(f'  "C" to Commit the folder and move forward.')
-            print(f'  "M" to Move to the Next Section.')
+            print(f'  "C" to Commit the Folder and move forward.')
+            print(f'  "M" to Move to the Next Folder.')
             print(f'  "Q" to Quit..')
             print(f'\n-----------------------------------------------------------------------------\n')
             response_a = input('  Please Enter ["C", "M" or "Q"]: ')
@@ -214,7 +231,6 @@ def apply_terraform(args, folders):
                 break
             else:
                 break
-
 
 #======================================================
 # Function to Count the Number of Keys/Columns
