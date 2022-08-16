@@ -3227,7 +3227,7 @@ class tenants(object):
                 templateVars['users'] = []
                 for i in kwargs['easyDict']['tenants']['sites'][kwargs['site_group']]:
                     if i['tenant'] == templateVars['name']:
-                        for x in i['users'].split(','):
+                        for x in i['users']:
                             if not x in templateVars['users']:
                                 templateVars['users'].append(x)
                         templateVars['sites'].append(i)
@@ -3250,6 +3250,8 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        if ',' in templateVars['users']:
+            templateVars['users'] = templateVars['users'].split(',')
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'

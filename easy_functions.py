@@ -225,7 +225,7 @@ def apply_terraform(args, folders, **easyDict):
                 print(f'\n-----------------------------------------------------------------------------\n')
                 commit_message = input(f'  Please Enter your Commit Message for the folder {folder}: ')
                 baseRepo = Repo(args.dir)
-                baseRepo.git.add(update=True)
+                baseRepo.git.add(all=True)
                 baseRepo.git.commit('-m', f'{commit_message}', '--', folder)
                 baseRepo.git.push()
                 break
@@ -1533,7 +1533,7 @@ def tfc_post(url, payload, site_header, section=''):
 # Function to Format Terraform Files
 #======================================================
 def terraform_fmt(files, folder, path_sep):
-    # Create the A_unused_variables.auto.tfvars to house all the unused variables
+    # Create the Empty_variable_maps.auto.tfvars to house all the unused variables
     empty_auto_tfvars = f'{folder}{path_sep}Empty_variable_maps.auto.tfvars'
     wr_file = open(empty_auto_tfvars, 'w')
     wrString = f'#______________________________________________'\
