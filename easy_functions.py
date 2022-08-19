@@ -41,7 +41,7 @@ class InsufficientArgs(Exception):
     pass
 
 #======================================================
-# Function to POST to the APIC Config API
+# Function to GET to the APIC Config API
 #======================================================
 def apic_get(apic, cookies, uri, section=''):
     s = requests.Session()
