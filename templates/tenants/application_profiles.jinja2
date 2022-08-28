@@ -1,7 +1,10 @@
 
   "{{ keys['name'] }}" = {
-{%- for k, v in keys.items() %}
-  {%- if k == 'controller_type' or k == 'class_type' or k == 'name' %}
+{%- for k, v in keys.items()|sort %}
+  {%- if k == 'controller_type' and v == 'apic' %}
+  {%- elif k == 'controller_type' %}
+    {{ k }} = "{{ v }}"
+  {%- elif k == 'class_type' or k == 'name' %}
   {%- elif k == 'policy_type' or k == 'site_group' or k == 'template_type' %}
   {%- elif k == 'tenant' %}
   {%- elif v == None %}
@@ -9,6 +12,16 @@
     {{ k }} = {{ v }}
   {%- elif v == 'false' or v == 'true' %}
     {{ k }} = {{ v }}
+  {%- elif v is iterable and (v is not string and v is not mapping) %}
+    {{ k }} = [
+    {%- for s in v %}
+      {%- if not loop.last %}
+      "{{ s }}",
+      {%- else %}
+      "{{ s }}"
+      {%- endif %}
+    {%- endfor %}
+    ]
   {%- else %}
     {{ k }} = "{{ v }}"
   {%- endif %}

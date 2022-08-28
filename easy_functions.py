@@ -546,34 +546,8 @@ def get_latest_versions(easyDict):
     # Set Terraform Version
     terraform_version = repoVer
 
-     # Get the Latest Release Tag for Nexus Dashboard Orchestrator
-    url = f'https://dcappcenter.cisco.com/nexus-dashboard-orchestrator.html'
-    r = requests.get(url, stream=True)
-    ndoVer = None
-    stringMatch = False
-    while stringMatch == False:
-        for line in r.iter_lines():
-            toString = line.decode("utf-8")
-            if re.search(r'product-id=\"(\d+)\"', toString):
-                ndoVer = re.search(r'product-id=\"(\d+)\"', toString).group(1)
-                break
-        stringMatch = True
-
-    if ndoVer == None:
-        print('\n   Error!!!  Could not find the version of NDO on the dcappcenter.\n')
-        exit()
-    url = f'https://dcappcenter.cisco.com/rest/V1/product/platforms?id={ndoVer}&approvedOnly=true'
-    r = requests.post(url, stream=True)
-    ndoVersions = []
-    stringMatch = False
-    while stringMatch == False:
-        for item in r.json():
-            ndoVersions.append(item['label'])
-        stringMatch = True
     easyDict['latest_versions']['aci_provider_version'] = aci_provider_version
     easyDict['latest_versions']['ndo_provider_version'] = ndo_provider_version
-    easyDict['latest_versions']['ndo_versions']['enum'] = ndoVersions
-    easyDict['latest_versions']['ndo_versions']['default'] = ndoVersions[0]
     easyDict['latest_versions']['terraform_version'] = terraform_version
 
     return easyDict
@@ -946,6 +920,34 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
                         if xRemove in files:
                             files.remove(xRemove)
                     terraform_fmt(files, folder, path_sep)
+
+#======================================================
+# Function to GET to the NDO API
+#======================================================
+def ndo_get(ndo, cookies, uri, section=''):
+    s = requests.Session()
+    r = ''
+    while r == '':
+        try:
+            r = s.get(
+                'https://{}/{}'.format(ndo, uri),
+                cookies=cookies,
+                verify=False
+            )
+            status = r.status_code
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error, pausing before retrying. Error: {}"
+                .format(e))
+            time.sleep(5)
+        except Exception as e:
+            print("Method {} failed. Exception: {}".format(section[:-5], e))
+            status = 666
+            return(status)
+    if print_response_always:
+        print(r.text)
+    if status != 200 and print_response_on_fail:
+        print(r.text)
+    return r
 
 #======================================================
 # Function to validate input for each method
@@ -1546,10 +1548,7 @@ def terraform_fmt(files, folder, path_sep):
         dest_file = f'{folder}{path_sep}{varFiles}'
         if not os.path.isfile(dest_file):
             x = file.split('.')
-            if re.search('(ndo_sites|ndo_users)', x[0]):
-                wrString = f'{x[0]} = ''[]\n'
-            else:
-                wrString = f'{x[0]} = ''{}\n'
+            wrString = f'{x[0]} = ''{}\n'
             wr_file.write(wrString)
 
     # Close the Unused Variables File
@@ -1604,8 +1603,11 @@ def validate_args(jsonData, **kwargs):
         'profile_name',
         'port_channel_policy',
         'qos_class',
+        'schema',
         'session_logs',
+        'sites',
         'target_dscp',
+        'template',
         'tenant',
         'username',
         'vrf'
@@ -1620,6 +1622,9 @@ def validate_args(jsonData, **kwargs):
             elif globalData[i]['type'] == 'key_value':
                 if not (kwargs[i] == None or kwargs[i] == ''):
                     validating.key_value(i, globalData, **kwargs)
+            elif globalData[i]['type'] == 'list_of_string':
+                if not (kwargs[i] == None or kwargs[i] == ''):
+                    validating.string_list(i, globalData, **kwargs)
             elif globalData[i]['type'] == 'list_of_values':
                 if kwargs[i] == None:
                     kwargs[i] = globalData[i]['default']
@@ -1695,7 +1700,18 @@ def validate_args(jsonData, **kwargs):
     for i in jsonData['optional_args']:
         if not (kwargs[i] == None or kwargs[i] == ''):
             if i in global_args:
-                validating.validator(i, **kwargs)
+                if globalData[i]['type'] == 'integer':
+                    validating.number_check(i, globalData, **kwargs)
+                elif globalData[i]['type'] == 'key_value':
+                    validating.key_value(i, globalData, **kwargs)
+                elif globalData[i]['type'] == 'list_of_string':
+                    validating.string_list(i, globalData, **kwargs)
+                elif globalData[i]['type'] == 'list_of_values':
+                    validating.list_values(i, globalData, **kwargs)
+                elif globalData[i]['type'] == 'string':
+                    validating.string_pattern(i, globalData, **kwargs)
+                else:
+                    validating.validator(i, **kwargs)
             elif re.search(r'^module_[\d]+$', i):
                 validating.list_values_key('modules', i, jsonData, **kwargs)
             elif jsonData[i]['type'] == 'domain':

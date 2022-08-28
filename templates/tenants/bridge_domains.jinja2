@@ -25,7 +25,7 @@
         ]
       {%- elif key == 'subnets' %}
         {{ key }} = {
-        {%- for keys, values in value.items() %}
+        {%- for keys, values in value.items()|sort %}
           {%- if values == None %}
           {%- elif values | int(-1) != -1 %}
             {{ keys }} = {{ values }}
@@ -99,6 +99,16 @@
             {%- endfor %}
               }
             ]
+          {%- elif keys == 'l3out' %}
+            {{ keys }} = [
+            {%- for s in values %}
+              {%- if not loop.last %}
+              "{{ s }}",
+              {%- else %}
+              "{{ s }}"
+              {%- endif %}
+            {%- endfor %}
+            ]
           {%- else %}
             {{ keys }} = "{{ values }}"
           {%- endif %}
@@ -127,6 +137,16 @@
       {%- endif %}
     {%- endfor %}
       }
+    ]
+  {%- elif v is iterable and (v is not string and v is not mapping) %}
+    {{ k }} = [
+    {%- for s in v %}
+      {%- if not loop.last %}
+      "{{ s }}",
+      {%- else %}
+      "{{ s }}"
+      {%- endif %}
+    {%- endfor %}
     ]
   {%- else %}
     {{ k }} = "{{ v }}"

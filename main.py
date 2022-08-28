@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ACI/NDO IAC - 
+"""ACI/NDO IaC - 
 This Script is to Create Terraform HCL configuration from an Excel Spreadsheet.
 It uses argparse to take in the following CLI arguments:
     d or dir:           Base Directory to use for creation of the HCL Configuration Files
@@ -52,7 +52,7 @@ port_convert_regex = '^port_cnvt$'
 sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
-tenants_regex = '^(tenant_(add|site)|vrf_(add|community|policy))$'
+tenants_regex = '^((template|tenant)_(add|site)|vrf_(add|community|policy))$'
 tenant_pol_regex = '^(apic_inb|bgp_pfx|dhcp_relay|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
@@ -321,16 +321,7 @@ def main():
     easyDict = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['easyDict']
 
     # Obtain the Latest Provider Releases
-    # easyDict = get_latest_versions(easyDict)
-    ndoVersions = [
-        "3.7.1g","3.7.1d","3.5.2f","3.5.1e","3.4.1i","3.4.1a","3.3.1e","3.2.1f","3.1.1l",
-        "3.1.1i","3.1.1h","3.1.1g","3.0.3m","3.0.3l","3.0.3i","3.0.2k","3.0.2j"
-    ]
-    easyDict['latest_versions']['aci_provider_version'] = "2.1.0"
-    easyDict['latest_versions']['ndo_provider_version'] = "0.6.0"
-    easyDict['latest_versions']['ndo_versions']['enum'] = ndoVersions
-    easyDict['latest_versions']['ndo_versions']['default'] = ndoVersions[0]
-    easyDict['latest_versions']['terraform_version'] = "1.1.9"
+    easyDict = get_latest_versions(easyDict)
 
     # Initialize the Base Repo/Terraform Working Directory
     if not os.path.isdir(args.dir):

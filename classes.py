@@ -4,11 +4,11 @@
 # Source Modules
 #=============================================================================
 from collections import OrderedDict
-from easy_functions import apic_get, apic_post, countKeys, findKeys, findVars, sensitive_var_value
+from easy_functions import apic_get, apic_post, countKeys, findKeys, findVars
 from easy_functions import easyDict_append, easyDict_append_policy, easyDict_append_subtype
-from easy_functions import interface_selector_workbook, process_kwargs
+from easy_functions import interface_selector_workbook, ndo_get, process_kwargs
 from easy_functions import required_args_add, required_args_remove
-from easy_functions import sensitive_var_site_group, stdout_log, tfc_get, tfc_patch, tfc_post
+from easy_functions import sensitive_var_site_group, sensitive_var_value, stdout_log, tfc_get, tfc_patch, tfc_post
 from easy_functions import validate_args, varBoolLoop, variablesFromAPI, varStringLoop
 from easy_functions import vlan_list_full, write_to_site
 from openpyxl import load_workbook
@@ -1336,6 +1336,65 @@ class fabric(object):
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
 # for detailed information on the Arguments used by this Class.
 #=====================================================================================
+class ndoLogin(object):
+    def __init__(self, ndo, domain, pword, user):
+        self.domain = domain
+        self.ndo = ndo
+        self.pword = pword
+        self.user = user
+
+    def login(self):
+        # Load login json payload
+        payload = '''
+        {{
+            "username": "{user}",
+            "password": "{pword}",
+            "domainId": "{domain}"
+        }}
+        '''.format(user=self.user, pword=self.pword, domain=self.domain)
+        payload = json.loads(payload)
+        s = requests.Session()
+        # Try the request, if exception, exit program w/ error
+        try:
+            # Verify is disabled as there are issues if it is enabled
+            newHeaders = {'Content-type': 'application/json'}
+            r = requests.post('https://{}/login'.format(self.ndo),
+                       data=json.dumps(payload), verify=False, headers=newHeaders)
+
+            # Capture HTTP status code from the request
+            status = r.status_code
+
+            # Capture the APIC cookie for all other future calls
+            cookies = r.cookies
+            # Log login status/time(?) somewhere
+            if status == 400:
+                print("Error 400 - Bad Request - ABORT!")
+                print("Probably have a bad URL")
+                sys.exit()
+            if status == 401:
+                print("Error 401 - Unauthorized - ABORT!")
+                print("Probably have incorrect credentials")
+                sys.exit()
+            if status == 403:
+                print("Error 403 - Forbidden - ABORT!")
+                print("Server refuses to handle your request")
+                sys.exit()
+            if status == 404:
+                print("Error 404 - Not Found - ABORT!")
+                print("Seems like you're trying to POST to a page that doesn't"
+                      " exist.")
+                sys.exit()
+        except Exception as e:
+            print("Something went wrong logging into Nexus Dashboard Orchestor - ABORT!")
+            # Log exit reason somewhere
+            raise LoginFailed(e)
+        self.cookies = cookies
+        return cookies
+
+#=====================================================================================
+# Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet
+# for detailed information on the Arguments used by this Class.
+#=====================================================================================
 class switches(object):
     def __init__(self, type):
         self.type = type
@@ -1676,14 +1735,25 @@ class site_policies(object):
             verJson = uriResponse.json()
             templateVars['version'] = verJson['imdata'][0]['aaaLogin']['attributes']['version']
         else:
-            # NDO Version
-            kwargs["var_description"] = f'Select the Nexus Dashboard Orchestrator Version'\
-                f' for the Site "{templateVars["site_name"]}".'
-            kwargs["jsonVars"] = jsonVars['easyDict']['latest_versions']['ndo_versions']['enum']
-            kwargs["defaultVar"] = jsonVars['easyDict']['latest_versions']['ndo_versions']['default']
-            kwargs["varType"] = 'NDO Version'
-            templateVars['version'] = variablesFromAPI(**kwargs)
-            #templateVars['version'] = '3.7.1g'
+            # Obtain the NDO version from the API
+            templateVars['easyDict'] = kwargs['easyDict']
+            templateVars['jsonData'] = jsonData
+            templateVars["Variable"] = 'ndoPass'
+            ndo_domain = kwargs['login_domain']
+            ndo_user = kwargs['username']
+            ndo_pass = sensitive_var_value(**templateVars)
+            pop_list = ['easyDict', 'jsonData', 'Variable']
+            for i in pop_list:
+                templateVars.pop(i)
+            fablogin = ndoLogin(kwargs['controller'], ndo_domain, ndo_pass, ndo_user)
+            cookies = fablogin.login()
+
+            # Locate template for method and obtain running Version
+            template_file = "aaaRefresh.json"
+            uri = 'mso/api/v1/platform/version'
+            uriResponse = ndo_get(kwargs['controller'], cookies, uri, template_file)
+            verJson = uriResponse.json()
+            templateVars['version'] = verJson['version']
 
         if templateVars['controller_type'] == 'apic': 
             site_wb = '%s_interface_selectors.xlsx' % (kwargs['site_name'])
@@ -1731,7 +1801,6 @@ class site_policies(object):
                 templateVars['ndoHostname'] = v[0]['controller']
                 templateVars['ndoUser'] = v[0]['username']
                 templateVars['ndo_version'] = v[0]['version']
-                templateVars['users'] = []
                 if not v[0]['login_domain'] == None:
                     templateVars['ndoDomain'] = v[0]['login_domain']
             
@@ -1925,7 +1994,10 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['monitoring_policy'] = 'default'
+        if not templateVars['sites'] == None:
+            templateVars['sites'] = templateVars['sites'].split(',')
+        else:
+            templateVars['monitoring_policy'] = 'default'
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
@@ -1969,7 +2041,6 @@ class tenants(object):
             'monitoring_policy':'default',
             'netflow_monitor_policies':atr['netflow_monitor_policies'],
             'optimize_wan_bandwidth':atr['optimize_wan_bandwidth'],
-            'netflow_monitor_policies':atr['netflow_monitor_policies'],
             'rogue_coop_exception_list':atr['rogue_coop_exception_list'],
         }
         templateVars['advanced_troubleshooting'] = OrderedDict(sorted(advanced_troubleshooting.items()))
@@ -1986,6 +2057,10 @@ class tenants(object):
         templateVars['general'] = OrderedDict(sorted(templateVars['general'].items()))
 
         # Move Variables to the L3 Configurations Map
+        if not templateVars['l3out'] == None:
+            templateVars['l3out'] = templateVars['l3out'].split(',')
+        if not templateVars['sites'] == None:
+            templateVars['sites'] = templateVars['sites'].split(',')
         templateVars['l3_configurations'].update({
             'associated_l3outs':{
                 'l3out':templateVars['l3out'],
@@ -2001,6 +2076,18 @@ class tenants(object):
             templateVars['l3_configurations'].pop('associated_l3outs')
         templateVars['l3_configurations'] = OrderedDict(sorted(templateVars['l3_configurations'].items()))
 
+        pop_list = [
+            'disable_ip_data_plane_learning_for_pbr',
+            'first_hop_security_policy',
+            'intersite_l2_stretch',
+            'intersite_bum_traffic_allow',
+            'netflow_monitor_policies',
+            'optimize_wan_bandwidth',
+            'rogue_coop_exception_list'
+        ]
+        for i in pop_list:
+            templateVars['l3_configurations'].pop(i)
+        
         pop_list = [
             'alias',
             'annotations',
@@ -2018,7 +2105,7 @@ class tenants(object):
         for i in pop_list:
             templateVars.pop(i)
         templateVars = OrderedDict(sorted(templateVars.items()))
-        
+
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'
         templateVars['data_type'] = 'bridge_domains'
@@ -2083,7 +2170,6 @@ class tenants(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         if ',' in templateVars['names']:
             templateVars['names'] = templateVars['names'].split(',')
-            print(templateVars['names'])
 
         # Modify the templateVars scope and subnet_control
         pop_list = [
@@ -3207,6 +3293,65 @@ class tenants(object):
         return kwargs['easyDict']
 
     #=============================================================================
+    # Function - Schema and Templates
+    #=============================================================================
+    def template_add(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.Schemas']['allOf'][1]['properties']
+
+        # Determine if tenants match and add arguments to requirements if so.
+        pop_list = []
+        if kwargs['schema_tenant'] == kwargs['tenant']:
+            pop_list = ['template', 'sites']
+            jsonData = required_args_add(pop_list, jsonData)
+
+        # Validate User Input
+        kwargs = validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        # Remove Items in the Pop List
+        jsonData = required_args_remove(pop_list, jsonData)
+
+        # Modify Variables for Lists and name attribute
+        templateVars['name'] = templateVars['schema']
+        templateVars.pop('schema')
+        if not templateVars['sites'] == None:
+            templateVars['sites'] = templateVars['sites'].split(',')
+        templateVars['templates'] = [{
+            'name':templateVars['template'],
+            'sites':templateVars['sites']
+        }]
+
+        print(json.dumps(kwargs['easyDict']['tenants']['schemas'], indent=4))
+        if re.search(r'\d{1,16}', kwargs['site_group']):
+            exists = False
+            if kwargs['easyDict']['tenants']['schemas'].get(kwargs['site_group']):
+                for i in kwargs['easyDict']['tenants']['schemas'][kwargs['site_group']]:
+                    if i['name'] == templateVars['name'] and i['tenant'] == templateVars['tenant']:
+                        exists = True
+                        i['templates'].append(
+                            {
+                                'name':templateVars['template'],
+                                'sites':templateVars['sites']
+                            }
+                        )
+            if exists == False:
+                # Add Dictionary to easyDict
+                pop_list = ['template', 'sites']
+                if templateVars['sites'] == None:
+                    pop_list.append('templates')
+                for i in pop_list:
+                    templateVars.pop(i)
+                templateVars['class_type'] = 'tenants'
+                templateVars['data_type'] = 'schemas'
+                kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+                return kwargs['easyDict']
+            else:
+                return kwargs['easyDict']
+
+    #=============================================================================
     # Function - Tenants
     #=============================================================================
     def tenant_add(self, **kwargs):
@@ -3220,16 +3365,15 @@ class tenants(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         templateVars['monitoring_policy'] = 'default'
         templateVars['tenant'] = templateVars['name']
+        if not templateVars['users'] == None:
+            if ',' in templateVars['users']:
+                templateVars['users'] = templateVars['users'].split(',')
 
         if re.search(r'\d{1,16}', kwargs['site_group']):
             if kwargs['easyDict']['tenants']['sites'].get(kwargs['site_group']):
                 templateVars['sites'] = []
-                templateVars['users'] = []
                 for i in kwargs['easyDict']['tenants']['sites'][kwargs['site_group']]:
                     if i['tenant'] == templateVars['name']:
-                        for x in i['users']:
-                            if not x in templateVars['users']:
-                                templateVars['users'].append(x)
                         templateVars['sites'].append(i)
 
         # Add Dictionary to easyDict
@@ -3250,8 +3394,6 @@ class tenants(object):
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        if ',' in templateVars['users']:
-            templateVars['users'] = templateVars['users'].split(',')
 
         # Add Dictionary to easyDict
         templateVars['class_type'] = 'tenants'

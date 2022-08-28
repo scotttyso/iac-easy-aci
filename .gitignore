@@ -14,8 +14,8 @@ APIC-IN.xsd
 ~$ACI_Base_Workbookv2.xlsx
 ~$Asgard_interface_selectors.xlsx
 ~$Wakanda_interface_selectors.xlsx
-Asgard_interface_selectors.xlsx
-Wakanda_interface_selectors.xlsx
+# Asgard_interface_selectors.xlsx
+# Wakanda_interface_selectors.xlsx
 crash.log
 
 # Ignore any .tfvars files that are generated automatically for each Terraform run. Most

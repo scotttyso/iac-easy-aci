@@ -101,7 +101,6 @@
                                     "route_map_match_rules",
                                     "route_maps_for_route_control",
                                     "schemas",
-                                    "sites",
                                     "tenants",
                                     "vrfs"
                                 ]
@@ -334,8 +333,6 @@
                                     "l3out_logical_node_profiles.tf",
                                     "l3outs.tf",
                                     "locals.tf",
-                                    "ndo_sites.tf",
-                                    "ndo_users.tf",
                                     "outputs.tf",
                                     "policies_bgp_address_family_context.tf",
                                     "policies_bgp_best_path.tf",
@@ -4797,7 +4794,7 @@
                             },
                             "l3out": {
                                 "description": "L3Out name.",
-                                "type": "string",
+                                "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
@@ -5005,6 +5002,14 @@
                                     "unspecified"
                                 ],
                                 "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "template": {
+                                "description": "Template name.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "tenant": {
@@ -6382,7 +6387,7 @@
                             },
                             "l3out": {
                                 "description": "Name of the L3Out.",
-                                "type": "string",
+                                "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
@@ -8677,6 +8682,58 @@
                     }
                 ]
             },
+            "tenants.Schemas": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "optional_args": {
+                                "description": "",
+                                "sites": "",
+                                "template": ""
+                            },
+                            "required_args": {
+                                "schema": "",
+                                "schema_tenant": "",
+                                "site_group": "",
+                                "tenant": ""
+                            },
+                            "schema": {
+                                "description": "Name of the Schema to Create.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "schema_tenant": {
+                                "description": "Name of the Schema Tenant.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "sites": {
+                                "description": "Names of Sites to Associate to the Schema.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "template": {
+                                "description": "Name of the Template to Assign to the Schema.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "tenants.Sites": {
                 "allOf": [
                     {},
@@ -8758,20 +8815,11 @@
                             "required_args": {
                                 "tenant": "",
                                 "site": "",
-                                "site_group": "",
-                                "users": ""
+                                "site_group": ""
                             },
                             "site": {
                                 "description": "Name of the Site.",
                                 "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "users": {
-                                "description": "Names of a Layer3 Domains.",
-                                "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
@@ -8790,11 +8838,44 @@
                                 "alias": "",
                                 "annotations": "",
                                 "description": "",
-                                "global_alias": ""
+                                "global_alias": "",
+                                "users": ""
                             },
                             "required_args": {
                                 "name": "",
                                 "site_group": ""
+                            },
+                            "users": {
+                                "description": "Names of Tenant Users.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.Users": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "optional_args": {
+                            },
+                            "required_args": {
+                                "tenant": "",
+                                "site_group": "",
+                                "users": ""
+                            },
+                            "users": {
+                                "description": "Names of a Tenant Users.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             }
                         }
                     }
