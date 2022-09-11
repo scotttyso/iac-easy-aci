@@ -2030,6 +2030,17 @@ class tenants(object):
         else:
             validating.error_policy_not_found('l3_policy', **kwargs)
         
+        # Attach the Bridge Domain NDO Policy Additional Attributes, if defined.
+        if not templateVars['ndo_policy'] == None:
+            if kwargs['easyDict']['tenants']['bridge_domains_ndo'].get(templateVars['ndo_policy']):
+                templateVars.update(kwargs['easyDict']['tenants']['bridge_domains_ndo'][templateVars['ndo_policy']])
+            else:
+                validating.error_policy_not_found('ndo_policy', **kwargs)
+        if not templateVars.get('vrf_schema'):
+            templateVars['vrf_schema'] = None
+        if not templateVars.get('vrf_template'):
+            templateVars['vrf_template'] = None
+
         # Move Variables to the Advanced/Troubleshooting Map
         atr = templateVars['l3_configurations']
         advanced_troubleshooting = {
@@ -2052,6 +2063,8 @@ class tenants(object):
             'description':templateVars['description'],
             'global_alias':templateVars['global_alias'],
             'vrf':templateVars['vrf'],
+            'vrf_schema':templateVars['vrf_schema'],
+            'vrf_template':templateVars['vrf_template'],
             'vrf_tenant':templateVars['vrf_tenant']
         })
         templateVars['general'] = OrderedDict(sorted(templateVars['general'].items()))
@@ -2059,8 +2072,9 @@ class tenants(object):
         # Move Variables to the L3 Configurations Map
         if not templateVars['l3out'] == None:
             templateVars['l3out'] = templateVars['l3out'].split(',')
-        if not templateVars['sites'] == None:
-            templateVars['sites'] = templateVars['sites'].split(',')
+        if templateVars.get('sites'):
+            if not templateVars['sites'] == None:
+                templateVars['sites'] = templateVars['sites'].split(',')
         templateVars['l3_configurations'].update({
             'associated_l3outs':{
                 'l3out':templateVars['l3out'],
@@ -2070,6 +2084,7 @@ class tenants(object):
             },
             'custom_mac_address':templateVars['custom_mac_address'],
             'subnets':{},
+            'virtual_mac_address':templateVars['virtual_mac_address']
         })
         aa = templateVars['l3_configurations']['associated_l3outs']
         if aa['l3out'] == None and aa['tenant'] == None and aa['route_profile'] == None:
@@ -2099,7 +2114,11 @@ class tenants(object):
             'l3out',
             'l3_policy',
             'link_local_ipv6_address',
+            'ndo_policy',
+            'virtual_mac_address',
             'vrf',
+            'vrf_schema',
+            'vrf_template',
             'vrf_tenant'
         ]
         for i in pop_list:
@@ -2135,7 +2154,7 @@ class tenants(object):
         return kwargs['easyDict']
 
     #=============================================================================
-    # Function - Bridge Domains - General Policies
+    # Function - Bridge Domains - Layer3 Policies
     #=============================================================================
     def bd_l3(self, **kwargs):
         # Get Variables from Library
@@ -2153,6 +2172,28 @@ class tenants(object):
         # Add Dictionary to easyDict
         policy_dict['class_type'] = 'tenants'
         policy_dict['data_type'] = 'bridge_domains_l3'
+        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        return kwargs['easyDict']
+
+    #=============================================================================
+    # Function - Bridge Domains - Nexus Dashboard Orchestrator Policies
+    #=============================================================================
+    def bd_ndo(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.Orchestrator']['allOf'][1]['properties']
+
+        # Validate User Input
+        kwargs = validate_args(jsonData, **kwargs)
+
+        # Validate inputs, return dict of template vars
+        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+
+        templateVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:templateVars}
+
+        # Add Dictionary to easyDict
+        policy_dict['class_type'] = 'tenants'
+        policy_dict['data_type'] = 'bridge_domains_ndo'
         kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
@@ -3301,8 +3342,8 @@ class tenants(object):
 
         # Determine if tenants match and add arguments to requirements if so.
         pop_list = []
-        if kwargs['schema_tenant'] == kwargs['tenant']:
-            pop_list = ['template', 'sites']
+        if kwargs['template_tenant'] == kwargs['tenant']:
+            pop_list = ['template', 'sites', 'template_tenant']
             jsonData = required_args_add(pop_list, jsonData)
 
         # Validate User Input
@@ -3321,10 +3362,10 @@ class tenants(object):
             templateVars['sites'] = templateVars['sites'].split(',')
         templateVars['templates'] = [{
             'name':templateVars['template'],
-            'sites':templateVars['sites']
+            'sites':templateVars['sites'],
+            'tenant':templateVars['template_tenant']
         }]
 
-        print(json.dumps(kwargs['easyDict']['tenants']['schemas'], indent=4))
         if re.search(r'\d{1,16}', kwargs['site_group']):
             exists = False
             if kwargs['easyDict']['tenants']['schemas'].get(kwargs['site_group']):
@@ -3334,7 +3375,8 @@ class tenants(object):
                         i['templates'].append(
                             {
                                 'name':templateVars['template'],
-                                'sites':templateVars['sites']
+                                'sites':templateVars['sites'],
+                                'tenant':templateVars['template_tenant']
                             }
                         )
             if exists == False:
@@ -3426,7 +3468,10 @@ class tenants(object):
         else:
             validating.error_policy_not_found('vrf_policy', **kwargs)
 
-        # Add the ESG Collection Argument
+        # If NDO Split Sites if Necessary
+        if templateVars.get('sites'):
+            if not templateVars['sites'] == None:
+                templateVars['sites'] = templateVars['sites'].split(',')
 
 
         # Add Dictionary to easyDict

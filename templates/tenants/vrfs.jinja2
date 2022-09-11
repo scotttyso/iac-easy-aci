@@ -49,11 +49,11 @@
       }
         {%- endif %}
       {%- elif item | int(-1) != -1 %}
-      {{ item }}
+      {{ item }},
       {%- elif item == 'false' or item == 'true' %}
-      {{ item }}
+      {{ item }},
       {%- else %}
-      "{{ item }}"
+      "{{ item }}",
       {%- endif %}
     {%- endfor %}
     ]

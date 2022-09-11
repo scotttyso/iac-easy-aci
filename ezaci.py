@@ -21,6 +21,7 @@ import json
 import os
 import platform
 import re
+import sys
 
 #=====================================================================
 # Note: This is simply to make it so the classes don't appear Unused.
@@ -37,7 +38,7 @@ access_regex = f'^({a1}|{a2})$'
 
 admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
 apps_epgs_regex = '^((app|epg|vmm)_(add|(vmm_)?policy))$'
-bds_regex = '^((bd)_(add|dhcp|general|l3|subnet))$'
+bds_regex = '^((bd)_(add|dhcp|general|l3|ndo|subnet))$'
 contracts_regex = '(^(contract|filter|subject)_(add|assign|entry|filters)$)'
 
 f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)'
@@ -272,14 +273,19 @@ def main():
     )
     args = Parser.parse_args()
 
-    jsonFile = 'templates/variables/easy_variables.json'
+    # Determine the Operating System
+    opSystem = platform.system()
+    kwargs = {}
+    kwargs['args'] = args
+    script_path = os.path.dirname(os.path.realpath(sys.argv[0]))
+    if opSystem == 'Windows': path_sep = '\\'
+    else: path_sep = '/'
+
+    jsonFile = f'{script_path}{path_sep}templates{path_sep}variables{path_sep}easy_variables.json'
     jsonOpen = open(jsonFile, 'r')
     easy_jsonData = json.load(jsonOpen)
     jsonOpen.close()
 
-    opSystem = platform.system()
-    if opSystem == 'Windows': path_sep = '\\'
-    else: path_sep = '/'
     destdirCheck = False
     while destdirCheck == False:
         splitDir = args.dir.split(path_sep)

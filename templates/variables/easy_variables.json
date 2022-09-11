@@ -197,6 +197,7 @@
                                     "bridge_domains": {},
                                     "bridge_domains_general": {},
                                     "bridge_domains_l3": {},
+                                    "bridge_domains_ndo": {},
                                     "contracts": {},
                                     "eigrp_interface_profiles": {},
                                     "external_epg_policies": {},
@@ -6184,6 +6185,49 @@
                     }
                 ]
             },
+            "tenants.bd.Orchestrator": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "optional_args": {
+                                "vrf_schema": "",
+                                "vrf_template": ""
+                            },
+                            "policy_name": {
+                                "description": "Name for this Bridge Domain - Nexus Dashboard Orchestrator Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "policy_name": "",
+                                "schema": "",
+                                "template": "",
+                                "sites": ""
+                            },
+                            "vrf_schema": {
+                                "description": "Name for the VRF Schema.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "vrf_template": {
+                                "description": "Name for VRF Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "tenants.bd.Subnets": {
                 "allOf": [
                     {},
@@ -6406,6 +6450,14 @@
                                 "type": "hostname",
                                 "x-omitempty": true
                             },
+                            "ndo_policy": {
+                                "description": "Name of the Nexus Dashboard Orchestrator Conifgurations Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "optional_args": {
                                 "alias": "",
                                 "annotations": "",
@@ -6416,9 +6468,8 @@
                                 "l3out": "",
                                 "link_local_ipv6_address": "",
                                 "policy_source_tenant": "",
-                                "schema": "",
-                                "sites": "",
-                                "template": "",
+                                "ndo_policy": "",
+                                "virtual_mac_address": "",
                                 "vrf": "",
                                 "vrf_tenant": ""
                             },
@@ -6446,6 +6497,11 @@
                                 "name": "",
                                 "site_group": "",
                                 "tenant": ""
+                            },
+                            "virtual_mac_address": {
+                                "description": "The bridge domain virtual MAC address.  Note: The BD virtual MAC address and the subnet virutal IP address must be the same for all ACI fabrics for that bridge domain. Multiple bridge domains can be configured to communicate across connected ACI fabrics. The virtual MAC address and the virtual IP address can be shared across bridge domains.",
+                                "type": "mac_address",
+                                "x-omitempty": true
                             },
                             "vrf_tenant": {
                                 "description": "Name of the VRF Tenant.",
@@ -8690,11 +8746,11 @@
                             "optional_args": {
                                 "description": "",
                                 "sites": "",
-                                "template": ""
+                                "template": "",
+                                "template_tenant": ""
                             },
                             "required_args": {
                                 "schema": "",
-                                "schema_tenant": "",
                                 "site_group": "",
                                 "tenant": ""
                             },
@@ -8706,8 +8762,8 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "schema_tenant": {
-                                "description": "Name of the Schema Tenant.",
+                            "template_tenant": {
+                                "description": "Name of the Template Tenant.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
