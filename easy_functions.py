@@ -142,7 +142,7 @@ def apply_terraform(args, folders, **easyDict):
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
 
-        path = f'{base_dir}{folder}'
+        path = f'{base_dir}{path_sep}{folder}'
         if run_loc == 'local':
             if os.path.isfile(os.path.join(path, '.terraform.lock.hcl')):
                 os.remove(os.path.join(path, '.terraform.lock.hcl'))
@@ -200,37 +200,38 @@ def apply_terraform(args, folders, **easyDict):
                 print(f'  Terraform Apply Complete.  Please Review for any errors and confirm next steps')
                 print(f'\n--------------------------------------------------------------------------------\n')
 
-        while True:
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'  Folder: {path}.')
-            print(f'  Please confirm if you want to commit the folder or just move forward.')
-            print(f'  "C" to Commit the Folder and move forward.')
-            print(f'  "M" to Move to the Next Folder.')
-            print(f'  "Q" to Quit..')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            response_a = input('  Please Enter ["C", "M" or "Q"]: ')
-            if response_a == 'C':
-                break
-            elif response_a == 'M':
-                break
-            elif response_a == 'Q':
-                exit()
-            else:
+        if args.git_check == 'True':
+            while True:
                 print(f'\n-----------------------------------------------------------------------------\n')
-                print(f'  A Valid Response is either "C", "M" or "Q"...')
+                print(f'  Folder: {path}.')
+                print(f'  Please confirm if you want to commit the folder or just move forward.')
+                print(f'  "C" to Commit the Folder and move forward.')
+                print(f'  "M" to Move to the Next Folder.')
+                print(f'  "Q" to Quit..')
                 print(f'\n-----------------------------------------------------------------------------\n')
+                response_a = input('  Please Enter ["C", "M" or "Q"]: ')
+                if response_a == 'C':
+                    break
+                elif response_a == 'M':
+                    break
+                elif response_a == 'Q':
+                    exit()
+                else:
+                    print(f'\n-----------------------------------------------------------------------------\n')
+                    print(f'  A Valid Response is either "C", "M" or "Q"...')
+                    print(f'\n-----------------------------------------------------------------------------\n')
 
-        while True:
-            if response_a == 'C':
-                print(f'\n-----------------------------------------------------------------------------\n')
-                commit_message = input(f'  Please Enter your Commit Message for the folder {folder}: ')
-                baseRepo = Repo(args.dir)
-                baseRepo.git.add(all=True)
-                baseRepo.git.commit('-m', f'{commit_message}', '--', folder)
-                baseRepo.git.push()
-                break
-            else:
-                break
+            while True:
+                if response_a == 'C':
+                    print(f'\n-----------------------------------------------------------------------------\n')
+                    commit_message = input(f'  Please Enter your Commit Message for the folder {folder}: ')
+                    baseRepo = Repo(args.dir)
+                    baseRepo.git.add(all=True)
+                    baseRepo.git.commit('-m', f'{commit_message}', '--', folder)
+                    baseRepo.git.push()
+                    break
+                else:
+                    break
 
 #======================================================
 # Function to Count the Number of Keys/Columns
@@ -493,6 +494,42 @@ def findVars(ws, func, rows, count):
         var_dict[vcount]['row'] = i + vcount - 1
         vcount += 1
     return var_dict
+
+#======================================================
+# Function to Get List of Folders
+#======================================================
+def get_folders(args):
+    baseFolder = args.dir
+    random_folders = []
+    for subdir, dirs, files in os.walk(baseFolder):
+        if not '.terraform' in subdir:
+            if len(subdir.split('/')) == 3:
+                dirx = subdir.split('/')
+                subdir = f'{dirx[1]}/{dirx[2]}'
+                random_folders.append(subdir)
+    
+    random_folders = list(set(random_folders))
+    random_folders.sort()
+    if not len(random_folders) > 0:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   There were no folders in the Destination Directory.')
+        print(f'   There may be something wrong with the input spreadsheet.')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+    strict_folders = []
+    folder_order = ['access', 'common', 'mgmt']
+    for folder in folder_order:
+        for fx in random_folders:
+            if folder in fx:
+                strict_folders.append(fx)
+    for folder in strict_folders:
+        if folder in random_folders:
+            random_folders.remove(folder)
+    for folder in random_folders:
+        strict_folders.append(folder)
+
+    return strict_folders
 
 #======================================================
 # Function to Merge Easy ACI Repository to Dest Folder
@@ -1092,7 +1129,6 @@ def read_easy_jsonData(args, easy_jsonData, **easyDict):
                     templateVars['policy_type'] = policyType
                     
                     kwargs["initial_write"] = True
-                    print(kwargs)
                     write_to_site(templateVars, **kwargs)
 
         for func in funcList:
@@ -1173,7 +1209,7 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
             )
             easyDict = eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
     
-    stdout_log(ws, row_num, 'end')
+    stdout_log(ws, None, 'end')
     # Return the easyDict
     return easyDict
 

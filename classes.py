@@ -1721,19 +1721,23 @@ class site_policies(object):
             pop_list = ['easyDict', 'jsonData', 'Variable']
             for i in pop_list:
                 templateVars.pop(i)
-            if not kwargs['login_domain'] == None:
-                apic_user = f"apic#{kwargs['login_domain']}\\{kwargs['username']}"
-            else:
-                apic_user = kwargs['username']
-            fablogin = apicLogin(kwargs['controller'], apic_user, apic_pass)
-            cookies = fablogin.login()
 
-            # Locate template for method
-            template_file = "aaaRefresh.json"
-            uri = 'api/aaaRefresh'
-            uriResponse = apic_get(kwargs['controller'], cookies, uri, template_file)
-            verJson = uriResponse.json()
-            templateVars['version'] = verJson['imdata'][0]['aaaLogin']['attributes']['version']
+            if kwargs['args'].skip_version_check == 'True':
+                templateVars['version'] = '4.2(7m)'
+            else:
+                if not kwargs['login_domain'] == None:
+                    apic_user = f"apic#{kwargs['login_domain']}\\{kwargs['username']}"
+                else:
+                    apic_user = kwargs['username']
+                fablogin = apicLogin(kwargs['controller'], apic_user, apic_pass)
+                cookies = fablogin.login()
+
+                # Locate template for method
+                template_file = "aaaRefresh.json"
+                uri = 'api/aaaRefresh'
+                uriResponse = apic_get(kwargs['controller'], cookies, uri, template_file)
+                verJson = uriResponse.json()
+                templateVars['version'] = verJson['imdata'][0]['aaaLogin']['attributes']['version']
         else:
             # Obtain the NDO version from the API
             templateVars['easyDict'] = kwargs['easyDict']
@@ -1745,15 +1749,19 @@ class site_policies(object):
             pop_list = ['easyDict', 'jsonData', 'Variable']
             for i in pop_list:
                 templateVars.pop(i)
-            fablogin = ndoLogin(kwargs['controller'], ndo_domain, ndo_pass, ndo_user)
-            cookies = fablogin.login()
 
-            # Locate template for method and obtain running Version
-            template_file = "aaaRefresh.json"
-            uri = 'mso/api/v1/platform/version'
-            uriResponse = ndo_get(kwargs['controller'], cookies, uri, template_file)
-            verJson = uriResponse.json()
-            templateVars['version'] = verJson['version']
+            if kwargs['args'].skip_version_check == 'True':
+                templateVars['version'] = '3.2(7l)'
+            else:
+                fablogin = ndoLogin(kwargs['controller'], ndo_domain, ndo_pass, ndo_user)
+                cookies = fablogin.login()
+
+                # Locate template for method and obtain running Version
+                template_file = "aaaRefresh.json"
+                uri = 'mso/api/v1/platform/version'
+                uriResponse = ndo_get(kwargs['controller'], cookies, uri, template_file)
+                verJson = uriResponse.json()
+                templateVars['version'] = verJson['version']
 
         if templateVars['controller_type'] == 'apic': 
             site_wb = '%s_interface_selectors.xlsx' % (kwargs['site_name'])

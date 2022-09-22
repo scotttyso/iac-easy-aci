@@ -11,7 +11,7 @@ It uses argparse to take in the following CLI arguments:
 #======================================================
 from classes import access, admin, fabric, site_policies, switches, system_settings, tenants
 from easy_functions import apply_terraform
-from easy_functions import git_base_repo, git_check_status
+from easy_functions import get_folders, git_base_repo, git_check_status
 from easy_functions import countKeys, findKeys, findVars
 from easy_functions import get_latest_versions, merge_easy_aci_repository
 from easy_functions import read_easy_jsonData, read_in
@@ -183,15 +183,15 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
     ws = wb['Apps and EPGs']
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # # Evaluate the L3Out Worksheet
-    # func_regex = l3out_regex
-    # ws = wb['L3Out']
-    # easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    # Evaluate the L3Out Worksheet
+    func_regex = l3out_regex
+    ws = wb['L3Out']
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # # Evaluate the Contracts Worksheet
-    # func_regex = contracts_regex
-    # ws = wb['Contracts']
-    # easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    # Evaluate the Contracts Worksheet
+    func_regex = contracts_regex
+    ws = wb['Contracts']
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     return easyDict
 
@@ -237,7 +237,7 @@ def read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func
             )
             easyDict = eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
     
-    stdout_log(ws, row_num, 'end')
+    stdout_log(ws, None, 'end')
     # Return the easyDict
     return easyDict
 
@@ -250,9 +250,13 @@ def main():
         default = 'ACI',
         help = 'The Directory to use for the Creation of the Terraform Files.'
     )
-    Parser.add_argument('-g', '--git',
-        default = 'run',
-        help = 'To Skip git check set this to ignore.'
+    Parser.add_argument('-g', '--git_check',
+        default = 'True',
+        help = 'To Skip the Git Commit Check set this to False.'
+    )
+    Parser.add_argument('-s', '--skip_version_check',
+        default = 'False',
+        help = 'To Skip the Version Check set this to True.'
     )
     Parser.add_argument('-wb', '--workbook',
         default = 'ACI_Base_Workbookv2.xlsx',
@@ -368,8 +372,11 @@ def main():
     read_easy_jsonData(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     merge_easy_aci_repository(args, easy_jsonData, **easyDict)
-    # changed_folders = git_check_status(args)
-    # apply_terraform(args, changed_folders, **easyDict)
+    if args.git_check == 'True':
+        changed_folders = git_check_status(args)
+    else:
+        changed_folders = get_folders(args)
+    apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')
