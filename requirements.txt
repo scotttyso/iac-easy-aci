@@ -3,6 +3,7 @@ collection
 GitPython
 git_status_checker
 ipaddress
+jinja2
 openpyxl
 ordered_set
 phonenumbers
