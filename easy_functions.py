@@ -1092,6 +1092,7 @@ def read_easy_jsonData(args, easy_jsonData, **easyDict):
                     templateVars['policy_type'] = policyType
                     
                     kwargs["initial_write"] = True
+                    print(kwargs)
                     write_to_site(templateVars, **kwargs)
 
         for func in funcList:

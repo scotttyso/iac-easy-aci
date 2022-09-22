@@ -184,14 +184,14 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # # Evaluate the L3Out Worksheet
-    func_regex = l3out_regex
-    ws = wb['L3Out']
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    # func_regex = l3out_regex
+    # ws = wb['L3Out']
+    # easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # # Evaluate the Contracts Worksheet
-    func_regex = contracts_regex
-    ws = wb['Contracts']
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    # func_regex = contracts_regex
+    # ws = wb['Contracts']
+    # easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     return easyDict
 
@@ -249,6 +249,10 @@ def main():
     Parser.add_argument('-d', '--dir',
         default = 'ACI',
         help = 'The Directory to use for the Creation of the Terraform Files.'
+    )
+    Parser.add_argument('-g', '--git',
+        default = 'run',
+        help = 'To Skip git check set this to ignore.'
     )
     Parser.add_argument('-wb', '--workbook',
         default = 'ACI_Base_Workbookv2.xlsx',
@@ -364,8 +368,8 @@ def main():
     read_easy_jsonData(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     merge_easy_aci_repository(args, easy_jsonData, **easyDict)
-    changed_folders = git_check_status(args)
-    apply_terraform(args, changed_folders, **easyDict)
+    # changed_folders = git_check_status(args)
+    # apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')
