@@ -372,10 +372,12 @@ def main():
     read_easy_jsonData(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     merge_easy_aci_repository(args, easy_jsonData, **easyDict)
+    changed_folders = []
     if args.git_check == 'True':
         changed_folders = git_check_status(args)
     else:
         changed_folders = get_folders(args)
+    print(changed_folders)
     apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
