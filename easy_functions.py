@@ -918,7 +918,7 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
     tfe_dir = 'tfe_modules'
     if opSystem == 'Windows': path_sep = '\\'
     else: path_sep = '/'
-    tfe_modules = f'tfe_dir{path_sep}modules'
+    tfe_modules = f'{tfe_dir}{path_sep}modules'
     git_url = "https://github.com/terraform-cisco-modules/terraform-easy-aci"
     if not os.path.isdir(tfe_dir):
         os.mkdir(tfe_dir)
