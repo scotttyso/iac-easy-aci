@@ -377,7 +377,7 @@ def main():
         changed_folders = git_check_status(args)
     else:
         changed_folders = get_folders(args)
-    print(changed_folders)
+    print(f'These are the folders "{changed_folders}"')
     apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
