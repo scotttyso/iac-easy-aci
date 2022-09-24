@@ -507,7 +507,7 @@ def get_folders(args, path_sep):
         if not '.terraform' in subdir:
             if len(subdir.split(path_sep)) == 3:
                 dirx = subdir.split(path_sep)
-                subdir = f'{dirx[1]}/{dirx[2]}'
+                subdir = f'{dirx[1]}{path_sep}{dirx[2]}'
                 random_folders.append(subdir)
     
     random_folders = list(set(random_folders))
