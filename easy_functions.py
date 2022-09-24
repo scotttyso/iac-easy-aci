@@ -129,8 +129,6 @@ def apply_terraform(args, folders, **easyDict):
     response_p = ''
     response_a = ''
     for folder in folders:
-        print(f'folder_path is {folder}')
-        print(f'split is {folder.split(path_sep)}')
         site_name = folder.split(path_sep)[0]
         site_match = 0
         for k, v in easyDict['sites']['site_settings'].items():
@@ -584,6 +582,7 @@ def get_latest_versions(easyDict):
 
     # Set Terraform Version
     terraform_version = repoVer
+    terraform_version = "1.2.9"
 
     easyDict['latest_versions']['aci_provider_version'] = aci_provider_version
     easyDict['latest_versions']['ndo_provider_version'] = ndo_provider_version
