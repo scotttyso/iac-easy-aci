@@ -498,13 +498,13 @@ def findVars(ws, func, rows, count):
 #======================================================
 # Function to Get List of Folders
 #======================================================
-def get_folders(args):
+def get_folders(args, path_sep):
     baseFolder = args.dir
     random_folders = []
     for subdir, dirs, files in os.walk(baseFolder):
         if not '.terraform' in subdir:
-            if len(subdir.split('/')) == 3:
-                dirx = subdir.split('/')
+            if len(subdir.split(path_sep)) == 3:
+                dirx = subdir.split(path_sep)
                 subdir = f'{dirx[1]}/{dirx[2]}'
                 random_folders.append(subdir)
     
