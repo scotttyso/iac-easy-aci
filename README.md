@@ -177,19 +177,19 @@ When running in Terraform Cloud with VCS Integration, the first Plan will need t
 * Execute the Script - Linux
 
 ```bash
-./main.py {options}
+./ezaci.py {options}
 ```
 
 * Execute the Script - Windows
 
 ```powershell
-python main.py {options}
+python ezaci.py {options}
 ```
 
 List of Options are below:
 
 ```bash
-usage: main.py [-h] [-d DIR] [-wb WORKBOOK] [-ws WORKSHEET]
+usage: ezaci.py [-h] [-d DIR] [-wb WORKBOOK] [-ws WORKSHEET]
 
 IaC Easy ACI Deployment Module
 
