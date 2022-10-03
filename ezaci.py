@@ -2,7 +2,9 @@
 """ACI/NDO IaC - 
 This Script is to Create Terraform HCL configuration from an Excel Spreadsheet.
 It uses argparse to take in the following CLI arguments:
-    d or dir:           Base Directory to use for creation of the HCL Configuration Files
+    d or dir:        Base Directory to use for creation of the HCL Configuration Files
+    g or git-check:  By default the script will use git to check the destination for git status.  Set to False to disable.
+    s or skip-version-check: Setting this to "True" will disable the login to the controllers to determine the running version.
     w or workbook:   Name of Excel Workbook file for the Data Source
 """
 
@@ -250,11 +252,11 @@ def main():
         default = 'ACI',
         help = 'The Directory to use for the Creation of the Terraform Files.'
     )
-    Parser.add_argument('-g', '--git_check',
+    Parser.add_argument('-g', '--git-check',
         default = 'True',
         help = 'To Skip the Git Commit Check set this to False.'
     )
-    Parser.add_argument('-s', '--skip_version_check',
+    Parser.add_argument('-s', '--skip-version-check',
         default = 'False',
         help = 'To Skip the Version Check set this to True.'
     )

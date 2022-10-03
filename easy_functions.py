@@ -582,7 +582,6 @@ def get_latest_versions(easyDict):
 
     # Set Terraform Version
     terraform_version = repoVer
-    terraform_version = "1.2.9"
 
     easyDict['latest_versions']['aci_provider_version'] = aci_provider_version
     easyDict['latest_versions']['ndo_provider_version'] = ndo_provider_version

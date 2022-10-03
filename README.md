@@ -189,13 +189,17 @@ python ezaci.py {options}
 List of Options are below:
 
 ```bash
-usage: ezaci.py [-h] [-d DIR] [-wb WORKBOOK] [-ws WORKSHEET]
+usage: ezaci.py [-h] [-d DIR] [-g GIT-CHECK] [-s SKIP-VERSION-CHECK] [-wb WORKBOOK] [-ws WORKSHEET]
 
 IaC Easy ACI Deployment Module
 
 optional arguments:
   -h, --help            show this help message and exit
   -d DIR, --dir DIR     The Directory to use for the Creation of the Terraform Files.
+  -g GIT_CHECK, --git_check GIT_CHECK
+                        To Skip the Git Commit Check set this to False.
+  -s SKIP_VERSION_CHECK, --skip_version_check SKIP_VERSION_CHECK
+                        To Skip the Version Check set this to True.
   -wb WORKBOOK, --workbook WORKBOOK
                         The source Workbook.
   -ws WORKSHEET, --worksheet WORKSHEET
@@ -206,5 +210,7 @@ optional arguments:
 ```
 
 * -d - This should typically be utilized to speficy the output directory (Repo) for the Terraform Files.
+* -g - If set to False, the script will not use git to check status of files and will instead check all files.
+* -s - If set to True, the Script will not perform a login to the controllers to determine the running version.
 * -wb - Name of the Workbook to be read.  If not specified the default is "ACI_Base_Workbookv2.xlsx
 * -ws - Use this option to run the process on only a specific worksheet in the workbook
