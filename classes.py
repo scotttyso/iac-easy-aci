@@ -3,9 +3,10 @@
 #=============================================================================
 # Source Modules
 #=============================================================================
+from copy import deepcopy
 from collections import OrderedDict
 from easy_functions import apic_get, apic_post, countKeys, findKeys, findVars
-from easy_functions import easyDict_append, easyDict_append_policy, easyDict_append_subtype
+from easy_functions import easyDict_append, easyDict_append_policy, easyDict_append_subtype, easyDict_update
 from easy_functions import interface_selector_workbook, ndo_get, process_kwargs
 from easy_functions import required_args_add, required_args_remove
 from easy_functions import sensitive_var_site_group, sensitive_var_value, stdout_log, tfc_get, tfc_patch, tfc_post
@@ -53,7 +54,7 @@ class access(object):
     #=============================================================================
     def domains_l3(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.domains.Layer3']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.domains.Layer3']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -72,7 +73,7 @@ class access(object):
     #=============================================================================
     def domains_phys(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.domains.Physical']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.domains.Physical']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -91,7 +92,7 @@ class access(object):
     #=============================================================================
     def global_aaep(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.global.attachableAccessEntityProfile']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.global.attachableAccessEntityProfile']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -117,7 +118,7 @@ class access(object):
     #=============================================================================
     def interface_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.interfacePolicies']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policyGroups.interfacePolicies']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -139,7 +140,7 @@ class access(object):
     #=============================================================================
     def leaf_pg(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.switches.leafPolicyGroup']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.switches.leafPolicyGroup']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -158,7 +159,7 @@ class access(object):
     #=============================================================================
     def pg_access(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.leafAccessPort']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policyGroups.leafAccessPort']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -187,7 +188,7 @@ class access(object):
     #=============================================================================
     def pg_breakout(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.leafBreakOut']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policyGroups.leafBreakOut']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -206,7 +207,7 @@ class access(object):
     #=============================================================================
     def pg_bundle(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.leafBundle']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policyGroups.leafBundle']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -235,7 +236,7 @@ class access(object):
     #=============================================================================
     def pg_spine(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policyGroups.spineAccessPort']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policyGroups.spineAccessPort']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -254,7 +255,7 @@ class access(object):
     #=============================================================================
     def pol_cdp(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.cdpInterface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policies.cdpInterface']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -273,7 +274,7 @@ class access(object):
     #=============================================================================
     def pol_fc(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.fibreChannelInterface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policies.fibreChannelInterface']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -292,7 +293,7 @@ class access(object):
     #=============================================================================
     def pol_l2(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.L2Interface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policies.L2Interface']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -311,7 +312,7 @@ class access(object):
     #=============================================================================
     def pol_link_level(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.linkLevel']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policies.linkLevel']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -330,7 +331,7 @@ class access(object):
     #=============================================================================
     def pol_lldp(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.lldpInterface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policies.lldpInterface']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -349,7 +350,7 @@ class access(object):
     #=============================================================================
     def pol_mcp(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.mcpInterface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policies.mcpInterface']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -368,7 +369,7 @@ class access(object):
     #=============================================================================
     def pol_port_ch(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.PortChannel']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policies.PortChannel']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -387,7 +388,7 @@ class access(object):
     #=============================================================================
     def pol_port_sec(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.portSecurity']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policies.portSecurity']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -406,7 +407,7 @@ class access(object):
     #=============================================================================
     def pol_stp(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.policies.spanningTreeInterface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.policies.spanningTreeInterface']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -425,7 +426,7 @@ class access(object):
     #=============================================================================
     def pools_vlan(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.pools.Vlan']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.pools.Vlan']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -444,7 +445,7 @@ class access(object):
     #=============================================================================
     def spine_pg(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.switches.spinePolicyGroup']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.switches.spinePolicyGroup']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -463,7 +464,7 @@ class access(object):
     #=============================================================================
     def vmm_controllers(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.vmm.Controllers']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.vmm.Controllers']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -484,7 +485,7 @@ class access(object):
     #=============================================================================
     def vmm_creds(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.vmm.Credentials']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.vmm.Credentials']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -514,7 +515,7 @@ class access(object):
     #=============================================================================
     def vmm_domain(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.vmm.Domains']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.vmm.Domains']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -550,7 +551,7 @@ class access(object):
     #=============================================================================
     def vmm_elagp(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.vmm.enhancedLag']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.vmm.enhancedLag']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -570,7 +571,7 @@ class access(object):
     #=============================================================================
     def vmm_vswitch(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.vmm.vswitchPolicy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.vmm.vswitchPolicy']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -599,7 +600,7 @@ class admin(object):
     #=============================================================================
     def auth(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.Authentication']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['admin.Authentication']['allOf'][1]['properties']
         
         # Check for Variable values that could change required arguments
         if 'console_realm' in kwargs:
@@ -636,7 +637,7 @@ class admin(object):
     #=============================================================================
     def export_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.exportPolicy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['admin.exportPolicy']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -665,7 +666,7 @@ class admin(object):
     #=============================================================================
     def mg_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.firmware.Policy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['admin.firmware.Policy']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -685,7 +686,7 @@ class admin(object):
     #=============================================================================
     def maint_group(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.firmware.MaintenanceGroups']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['admin.firmware.MaintenanceGroups']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -710,7 +711,7 @@ class admin(object):
     #=============================================================================
     def radius(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.Radius']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['admin.Radius']['allOf'][1]['properties']
         
         # Check for Variable values that could change required arguments
         if 'server_monitoring' in kwargs:
@@ -753,7 +754,7 @@ class admin(object):
     #=============================================================================
     def remote_host(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.remoteHost']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['admin.remoteHost']['allOf'][1]['properties']
 
         # Check for Variable values that could change required arguments
         if 'authentication_type' in kwargs:
@@ -808,7 +809,7 @@ class admin(object):
     #=============================================================================
     def security(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.globalSecurity']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['admin.globalSecurity']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -827,7 +828,7 @@ class admin(object):
     #=============================================================================
     def tacacs(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['admin.Tacacs']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['admin.Tacacs']['allOf'][1]['properties']
         
         # Check for Variable values that could change required arguments
         if 'server_monitoring' in kwargs:
@@ -937,7 +938,7 @@ class fabric(object):
     #=============================================================================
     def date_time(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.DateandTime']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.DateandTime']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -957,8 +958,7 @@ class fabric(object):
         templateVars.update(Additions)
         
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'date_and_time'
+        templateVars['class_path'] = 'fabric,policies,pod,date_and_time'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -967,7 +967,7 @@ class fabric(object):
     #=============================================================================
     def dns_profile(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.dnsProfiles']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.dnsProfiles']['allOf'][1]['properties']
 
         if not kwargs['dns_domains'] == None:
             if ',' in kwargs['dns_domains']:
@@ -1000,7 +1000,7 @@ class fabric(object):
     #=============================================================================
     def ntp(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.Ntp']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.Ntp']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1009,8 +1009,9 @@ class fabric(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to Policy
-        templateVars['class_type'] = 'fabric'
-        templateVars['data_type'] = 'date_and_time'
+        print(json.dumps(kwargs['easyDict']['sites'], indent=4))
+        exit()
+        templateVars['class_path'] = 'fabric,policies,pod,date_and_time'
         templateVars['data_subtype'] = 'ntp_servers'
         templateVars['policy_name'] = 'default'
         kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
@@ -1021,7 +1022,7 @@ class fabric(object):
     #=============================================================================
     def ntp_key(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.NtpKeys']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.NtpKeys']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1051,7 +1052,7 @@ class fabric(object):
     #=============================================================================
     def smart_callhome(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartCallHome']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.smartCallHome']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1073,7 +1074,7 @@ class fabric(object):
     #=============================================================================
     def smart_destinations(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartDestinations']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.smartDestinations']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1094,7 +1095,7 @@ class fabric(object):
     #=============================================================================
     def smart_smtp_server(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.smartSmtpServer']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.smartSmtpServer']['allOf'][1]['properties']
 
         # Check for Variable values that could change required arguments
         if 'secure_smtp' in kwargs:
@@ -1132,7 +1133,7 @@ class fabric(object):
     #=============================================================================
     def snmp_clgrp(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpClientGroups']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.snmpClientGroups']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1161,7 +1162,7 @@ class fabric(object):
     #=============================================================================
     def snmp_community(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpCommunities']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.snmpCommunities']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1191,7 +1192,7 @@ class fabric(object):
     #=============================================================================
     def snmp_destinations(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpDestinations']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.snmpDestinations']['allOf'][1]['properties']
 
         # Check for Variable values that could change required arguments
         if 'version' in kwargs:
@@ -1227,7 +1228,7 @@ class fabric(object):
     #=============================================================================
     def snmp_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpPolicy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.snmpPolicy']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1251,7 +1252,7 @@ class fabric(object):
     #=============================================================================
     def snmp_user(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.snmpUsers']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.snmpUsers']['allOf'][1]['properties']
 
         # Check for Variable values that could change required arguments
         if 'privacy_key' in kwargs:
@@ -1295,7 +1296,7 @@ class fabric(object):
     #=============================================================================
     def syslog(self, **kwargs):
        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.Syslog']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.Syslog']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1316,7 +1317,7 @@ class fabric(object):
     #=============================================================================
     def syslog_destinations(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['fabric.syslogRemoteDestinations']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['fabric.syslogRemoteDestinations']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1406,7 +1407,7 @@ class switches(object):
     #=============================================================================
     def intf_selector(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.profiles.interfaceSelectors']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.profiles.interfaceSelectors']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1442,7 +1443,7 @@ class switches(object):
     #=============================================================================
     def port_cnvt(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.switches.portConvert']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.switches.portConvert']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1512,7 +1513,7 @@ class switches(object):
     #=============================================================================
     def switch(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.profiles.switchProfiles']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.profiles.switchProfiles']['allOf'][1]['properties']
 
         if re.search('Grp_[A-F]', kwargs['site_group']):
             print(f"\n-----------------------------------------------------------------------------\n")
@@ -1667,7 +1668,7 @@ class switches(object):
     #=============================================================================
     def sw_modules(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['access.profiles.switchModules']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['access.profiles.switchModules']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1700,8 +1701,9 @@ class site_policies(object):
     # Function - Site Settings
     #=============================================================================
     def site_id(self, **kwargs):
+        args = kwargs['args']
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['site.Identifiers']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['site.Identifiers']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1710,7 +1712,6 @@ class site_policies(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         kwargs["multi_select"] = False
-        jsonVars = kwargs['easy_jsonData']['components']['schemas']['easy_aci']['allOf'][1]['properties']
         # Prompt User for the Version of the Controller
         if templateVars['controller_type'] == 'apic':
             # Obtain the APIC version from the API
@@ -1722,7 +1723,7 @@ class site_policies(object):
             for i in pop_list:
                 templateVars.pop(i)
 
-            if kwargs['args'].skip_version_check == 'True':
+            if args.skip_version_check == True:
                 templateVars['version'] = '4.2(7m)'
             else:
                 if not kwargs['login_domain'] == None:
@@ -1775,12 +1776,15 @@ class site_policies(object):
                         wb_wr.remove_sheet(sheetToDelete)
                 wb_wr.save(filename=site_wb)
 
-        # Add Dictionary to easyDict
-        kwargs['site_group'] = templateVars['site_id']
-        templateVars['class_type'] = 'sites'
-        templateVars['data_type'] = 'site_settings'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-        kwargs['easyDict'] = OrderedDict(sorted(kwargs['easyDict'].items()))
+        # Attach the Site Dictionary
+        siteDict = kwargs['easy_jsonData']['easy_aci']['allOf'][1]['properties']['siteDict']
+        if not kwargs['easyDict'].get('sites'):
+            kwargs['easyDict'].update(deepcopy({'sites':{}}))
+        kwargs['easyDict']['sites'].update(deepcopy({templateVars['site_id']:siteDict}))
+        
+        # Attach the Site Settings
+        templateVars = OrderedDict(sorted(templateVars.items()))
+        kwargs['easyDict']['sites'][templateVars['site_id']]['site_settings'].update(deepcopy(templateVars))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1789,44 +1793,61 @@ class site_policies(object):
     def site_settings(self, **kwargs):
         args = kwargs['args']
         easyDict = kwargs['easyDict']
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['easy_aci']['allOf'][1]['properties']
-        templateVars = {}
-        templateVars['annotation'] = 'orchestrator:terraform:easy-aci-v%s' % (jsonData['version'])
-        templateVars['class_type'] = 'sites'
-        for k, v in easyDict['sites']['site_settings'].items():
-            site_name = v[0]['site_name']
-            if v[0]['controller_type'] == 'apic':
-                templateVars['apicHostname'] = v[0]['controller']
-                templateVars['apic_version'] = v[0]['version']
-                if v[0]['auth_type'] == 'username':
-                    if not v[0]['login_domain'] == None:
-                        login_domain = v[0]['login_domain']
-                        username = v[0]['username']
+        jsonData = kwargs['easy_jsonData']['easy_aci']['allOf'][1]['properties']
+        for k, v in easyDict['sites'].items():
+            templateVars = {}
+            templateVars['annotation'] = 'orchestrator:terraform:easy-aci-v%s' % (jsonData['version'])
+            templateVars['annotations'] = [
+                {
+                    'key':'orchestrator',
+                    'value':f'terraform:easy-aci:v{jsonData["version"]}'
+                }
+            ]
+            templateVars['controller_type'] = v['site_settings']['controller_type']
+            if v['site_settings']['controller_type'] == 'apic':
+                templateVars['apicHostname'] = v['site_settings']['controller']
+                templateVars['apic_version'] = v['site_settings']['version']
+                if v['site_settings']['auth_type'] == 'username':
+                    if not v['site_settings']['login_domain'] == None:
+                        login_domain = v['site_settings']['login_domain']
+                        username = v['site_settings']['username']
                         templateVars['apicUser'] = f"apic#{login_domain}\\{username}"
                     else:
-                        templateVars['apicUser'] = v[0]['username']
+                        templateVars['apicUser'] = v['site_settings']['username']
             else:
-                templateVars['ndoHostname'] = v[0]['controller']
-                templateVars['ndoUser'] = v[0]['username']
-                templateVars['ndo_version'] = v[0]['version']
-                if not v[0]['login_domain'] == None:
-                    templateVars['ndoDomain'] = v[0]['login_domain']
+                templateVars['ndoHostname'] = v['site_settings']['controller']
+                templateVars['ndoUser'] = v['site_settings']['username']
+                templateVars['ndo_version'] = v['site_settings']['version']
+                if not v['site_settings']['login_domain'] == None:
+                    templateVars['ndoDomain'] = v['site_settings']['login_domain']
             
-            templateVars['template_type'] = 'variables'
-            templateVars = OrderedDict(sorted(templateVars.items()))
-            siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
-            kwargs['auth_type'] = v[0]['auth_type']
-            kwargs['controller_type'] = v[0]['controller_type']
+            # siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
+            kwargs['auth_type'] = v['site_settings']['auth_type']
+            kwargs['class_type'] = 'sites'
+            kwargs['controller_type'] = v['site_settings']['controller_type']
             kwargs["initial_write"] = True
-            kwargs['site_group'] = v[0]['site_id']
-            kwargs["template_file"] = 'variables.jinja2'
-            kwargs["tfvars_file"] = 'variables'
-            for folder in siteDirs:
-                kwargs["dest_dir"] = folder
-                write_to_site(templateVars, **kwargs)
+            kwargs['site'] = k
+            kwargs['site_name'] = v['site_settings']['site_name']
+            kwargs['template_file'] = 'variables.j2'
+            kwargs['tf_file'] = 'variables.auto.tfvars'
 
-            if v[0]['run_location'] == 'tfc' and v[0]['configure_terraform_cloud'] == "true":
-                terraform_cloud().create_terraform_workspaces(siteDirs, site_name, **kwargs)
+            kwargs["dest_dir"] = ''
+            templateVars = OrderedDict(sorted(templateVars.items()))
+            write_to_site(templateVars, **kwargs)
+
+            templateVars = {
+                "aci_provider_version": easyDict['latest_versions']['aci_provider_version'],
+                "ndo_provider_version": easyDict['latest_versions']['ndo_provider_version'],
+                "terraform_version": easyDict['latest_versions']['terraform_version'],
+                "utils_provider_version": easyDict['latest_versions']['utils_provider_version']
+            }
+            kwargs["template_file"] = 'provider.j2'
+            kwargs["tf_file"] = 'provider.tf'
+            templateVars = OrderedDict(sorted(templateVars.items()))
+            write_to_site(templateVars, **kwargs)
+
+            if v['site_settings']['run_location'] == 'tfc' and v['site_settings']['configure_terraform_cloud'] == "true":
+                terraform_cloud().create_terraform_workspaces(kwargs['site_name'], kwargs['site_name'], **kwargs)
 
         return kwargs['easyDict']
 
@@ -1835,7 +1856,7 @@ class site_policies(object):
     #=============================================================================
     def group_id(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['site.Groups']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['site.Groups']['allOf'][1]['properties']
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
@@ -1847,21 +1868,22 @@ class site_policies(object):
         templateVars.pop('ws')
 
         sites = []
-        for x in range(1, 16):
+        for x in range(1, 11):
             if not kwargs[f'site_{x}'] == None:
                 sites.append(kwargs[f'site_{x}'])
 
         # Save the Site Information into Environment Variables
         os.environ[kwargs['site_group']] = '%s' % (templateVars)
 
-        # Add Dictionary to easyDict
+
+        # Add Site Group to easyDict
         templateVars = {
             'site_group':kwargs['site_group'],
             'sites':sites,
         }
-        templateVars['class_type'] = 'sites'
-        templateVars['data_type'] = 'site_groups'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        if not kwargs['easyDict'].get('site_groups'):
+            kwargs['easyDict'].update(deepcopy({'site_groups':{}}))
+        kwargs['easyDict']['site_groups'].update({kwargs['site_group']:{'sites':sites}})
         return kwargs['easyDict']
 
 #=====================================================================================
@@ -1877,7 +1899,7 @@ class system_settings(object):
     #=============================================================================
     def apic_preference(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['system.apicConnectivityPreference']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['system.apicConnectivityPreference']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1886,9 +1908,8 @@ class system_settings(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'system_settings'
-        templateVars['data_type'] = 'apic_connectivity_preference'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['class_path'] = 'system_settings,apic_connectivity_preference'
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1896,7 +1917,7 @@ class system_settings(object):
     #=============================================================================
     def bgp_asn(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['system.bgpASN']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['system.bgpASN']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1905,8 +1926,7 @@ class system_settings(object):
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'system_settings'
-        templateVars['data_type'] = 'bgp_autonomous_system_number'
+        kwargs['class_path'] = 'system_settings,bgp'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
@@ -1915,7 +1935,7 @@ class system_settings(object):
     #=============================================================================
     def bgp_rr(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['system.bgpRouteReflector']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['system.bgpRouteReflector']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
@@ -1923,32 +1943,26 @@ class system_settings(object):
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Convert to Lists
-        templateVars["node_list"] = vlan_list_full(templateVars["node_list"])
-
         # Add Dictionary to easyDict
-        templateVars['class_type'] = 'system_settings'
-        templateVars['data_type'] = 'bgp_route_reflectors'
+        kwargs['class_path'] = 'system_settings,bgp_route_reflectors,pods'
         kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
     # Function - Global AES Passphrase Encryption Settings
     #=============================================================================
-    def global_aes(self, **kwargs):
+    def recommended_settings(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['system.globalAesEncryptionSettings']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['system.recommendedSettings']['allOf'][1]['properties']
 
         # Validate User Input
         validate_args(jsonData, **kwargs)
 
         # Validate inputs, return dict of template vars
         templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['class_type'] = 'system_settings'
-        templateVars['data_type'] = 'global_aes_encryption_settings'
         
         # If enable_encryption confirm aes_passphrase is set
-        if kwargs['enable_encryption'] == 'true':
+        if kwargs['global_aes_encryption_settings'] == 'true':
             templateVars['easyDict'] = kwargs['easyDict']
             templateVars['jsonData'] = jsonData
             templateVars["Variable"] = 'aes_passphrase'
@@ -1958,7 +1972,8 @@ class system_settings(object):
             templateVars.pop('Variable')
 
         # Add Dictionary to easyDict
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['class_path'] = 'system_settings,recommended_settings'
+        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
@@ -1974,7 +1989,7 @@ class tenants(object):
     #=============================================================================
     def apic_inb(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.apic.InbandMgmt']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.apic.InbandMgmt']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -1995,7 +2010,7 @@ class tenants(object):
     #=============================================================================
     def app_add(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationProfiles']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.applicationProfiles']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2018,7 +2033,7 @@ class tenants(object):
     #=============================================================================
     def bd_add(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bridgeDomains']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.bridgeDomains']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2144,7 +2159,7 @@ class tenants(object):
     #=============================================================================
     def bd_general(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.General']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.bd.General']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2166,7 +2181,7 @@ class tenants(object):
     #=============================================================================
     def bd_l3(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.L3Configurations']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.bd.L3Configurations']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2188,7 +2203,7 @@ class tenants(object):
     #=============================================================================
     def bd_ndo(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.Orchestrator']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.bd.Orchestrator']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2210,7 +2225,7 @@ class tenants(object):
     #=============================================================================
     def bd_dhcp(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.dhcpRelayLabels']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.bd.dhcpRelayLabels']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2242,7 +2257,7 @@ class tenants(object):
     #=============================================================================
     def bd_subnet(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.bd.Subnets']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.bd.Subnets']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2287,7 +2302,7 @@ class tenants(object):
     #=============================================================================
     def bgp_peer(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.bgpPeerConnectivityProfile']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.bgpPeerConnectivityProfile']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2315,7 +2330,7 @@ class tenants(object):
     #=============================================================================
     def bgp_pfx(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.policies.bgpPrefix']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.policies.bgpPrefix']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2334,7 +2349,7 @@ class tenants(object):
     #=============================================================================
     def bgp_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.bgpPeerConnectivityProfile.Policy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.bgpPeerConnectivityProfile.Policy']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2398,7 +2413,7 @@ class tenants(object):
     #=============================================================================
     def contract_add(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.Contracts']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.contract.Contracts']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2418,7 +2433,7 @@ class tenants(object):
     #=============================================================================
     def contract_assign(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.ContractAssignments']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.contract.ContractAssignments']['allOf'][1]['properties']
 
         pop_list = []
         if 'external_epg' in kwargs['target_type']:
@@ -2517,7 +2532,7 @@ class tenants(object):
     #=============================================================================
     def contract_filters(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.ContractFilters']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.contract.ContractFilters']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2548,7 +2563,7 @@ class tenants(object):
     #=============================================================================
     def dhcp_relay(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.policies.dhcpRelay']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.policies.dhcpRelay']['allOf'][1]['properties']
 
         pop_list = []
         if 'external_epg' in kwargs['epg_type']: pop_list = ['l3out']
@@ -2590,7 +2605,7 @@ class tenants(object):
     #=============================================================================
     def eigrp_interface(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.policies.eigrpInterface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.policies.eigrpInterface']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2609,7 +2624,7 @@ class tenants(object):
     #=============================================================================
     def eigrp_profile(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.eigrpInterfaceProfile']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.eigrpInterfaceProfile']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2631,7 +2646,7 @@ class tenants(object):
     #=============================================================================
     def epg_add(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationEpgs']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.applicationEpgs']['allOf'][1]['properties']
 
         # Attach the EPG Policy Additional Attributes
         if kwargs['easyDict']['tenants']['application_epg_policies'].get(kwargs['epg_policy']):
@@ -2753,7 +2768,7 @@ class tenants(object):
     #=============================================================================
     def epg_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationEpg.Policy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.applicationEpg.Policy']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2775,7 +2790,7 @@ class tenants(object):
     #=============================================================================
     def epg_vmm_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.applicationEpg.VMMPolicy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.applicationEpg.VMMPolicy']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2797,7 +2812,7 @@ class tenants(object):
     #=============================================================================
     def ext_epg(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.externalEpg']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.externalEpg']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2830,7 +2845,7 @@ class tenants(object):
     #=============================================================================
     def ext_epg_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.externalEpg.Policy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.externalEpg.Policy']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2852,7 +2867,7 @@ class tenants(object):
     #=============================================================================
     def ext_epg_sub(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.externalEpg.Subnet']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.externalEpg.Subnet']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2915,7 +2930,7 @@ class tenants(object):
         # exit()
 
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.Filters']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.contract.Filters']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2935,7 +2950,7 @@ class tenants(object):
     #=============================================================================
     def filter_entry(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.contract.filterEntry']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.contract.filterEntry']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2957,7 +2972,7 @@ class tenants(object):
     #=============================================================================
     def l3out_add(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.L3Out']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.L3Out']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -2995,7 +3010,7 @@ class tenants(object):
     #=============================================================================
     def l3out_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.L3Out.Policy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.L3Out.Policy']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3029,7 +3044,7 @@ class tenants(object):
     #=============================================================================
     def node_interface(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.logicalNodeInterfaceProfile']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeInterfaceProfile']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3121,7 +3136,7 @@ class tenants(object):
     #=============================================================================
     def node_intf_cfg(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.logicalNodeInterfaceProfile.InterfaceConfiguration']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeInterfaceProfile.InterfaceConfiguration']['allOf'][1]['properties']
 
         pop_list = []
         if re.search('^(l3-port|sub-interface)$', kwargs['interface_type']):
@@ -3211,7 +3226,7 @@ class tenants(object):
     #=============================================================================
     def node_intf_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.logicalNodeInterfaceProfile.Policy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeInterfaceProfile.Policy']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3233,7 +3248,7 @@ class tenants(object):
     #=============================================================================
     def node_profile(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.logicalNodeProfile']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeProfile']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3268,7 +3283,7 @@ class tenants(object):
     #=============================================================================
     def ospf_interface(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.policies.ospfInterface']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.policies.ospfInterface']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3287,7 +3302,7 @@ class tenants(object):
     #=============================================================================
     def ospf_profile(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.ospfInterfaceProfile']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.ospfInterfaceProfile']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3310,7 +3325,7 @@ class tenants(object):
     #=============================================================================
     def ospf_routing(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.l3out.ospfRoutingProfile']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.l3out.ospfRoutingProfile']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3346,7 +3361,7 @@ class tenants(object):
     #=============================================================================
     def template_add(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.Schemas']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.Schemas']['allOf'][1]['properties']
 
         # Determine if tenants match and add arguments to requirements if so.
         pop_list = []
@@ -3406,7 +3421,7 @@ class tenants(object):
     #=============================================================================
     def tenant_add(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.Tenants']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.Tenants']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3437,7 +3452,7 @@ class tenants(object):
     #=============================================================================
     def tenant_site(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.Sites']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.Sites']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3456,7 +3471,7 @@ class tenants(object):
     #=============================================================================
     def vrf_add(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.Vrfs']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.Vrfs']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3493,7 +3508,7 @@ class tenants(object):
     #=============================================================================
     def vrf_community(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.vrf.Community']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.vrf.Community']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3524,7 +3539,7 @@ class tenants(object):
     #=============================================================================
     def vrf_policy(self, **kwargs):
         # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['tenants.vrf.Policy']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['tenants.vrf.Policy']['allOf'][1]['properties']
 
         # Validate User Input
         kwargs = validate_args(jsonData, **kwargs)
@@ -3564,7 +3579,7 @@ class terraform_cloud(object):
     #=============================================================================
     def create_terraform_workspaces(self, folders, site, **kwargs):
         easyDict = kwargs['easyDict']
-        jsonData = kwargs['easy_jsonData']['components']['schemas']['site.Identifiers']['allOf'][1]['properties']
+        jsonData = kwargs['easy_jsonData']['site.Identifiers']['allOf'][1]['properties']
         site_group = kwargs['site_group']
         tfcb_config = []
         valid = False

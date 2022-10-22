@@ -8,35 +8,35 @@
                         "properties": {
                             "classes": {
                                 "enum": [
-                                    "access",
                                     "admin",
                                     "fabric",
                                     "switches",
                                     "system_settings",
-                                    "tenants"
+                                    "tenants",
+                                    "virtual_networking"
                                 ]
                             },
                             "class.access": {
                                 "enum": [
-                                    "domains_layer3",
-                                    "domains_physical",
-                                    "global_attachable_access_entity_profiles",
-                                    "global_dhcp_relay",
+                                    "l3_domains",
+                                    "physical_domains",
+                                    "attachable_access_entity_profiles",
+                                    "dhcp_relay",
                                     "leaf_interfaces_policy_groups_access",
                                     "leaf_interfaces_policy_groups_breakout",
                                     "leaf_interfaces_policy_groups_bundle",
-                                    "policies_cdp_interface",
-                                    "policies_fibre_channel_interface",
-                                    "policies_l2_interface",
-                                    "policies_link_level",
-                                    "policies_lldp_interface",
-                                    "policies_mcp_interface",
-                                    "policies_port_channel",
-                                    "policies_port_security",
-                                    "policies_spanning_tree_interface",
-                                    "pools_vlan",
-                                    "spine_interface_policy_groups",
-                                    "switches_leaf_policy_groups",
+                                    "cdp_interface",
+                                    "fibre_channel_interface",
+                                    "l2_interface",
+                                    "link_level",
+                                    "lldp_interface",
+                                    "mcp_interface",
+                                    "port_channel",
+                                    "port_security",
+                                    "spanning_tree_interface",
+                                    "vlan",
+                                    "leaf",
+                                    "spine",
                                     "switches_spine_policy_groups",
                                     "virtual_networking"
                                 ]
@@ -71,7 +71,7 @@
                                     "apic_connectivity_preference",
                                     "bgp_autonomous_system_number",
                                     "bgp_route_reflectors",
-                                    "global_aes_encryption_settings"
+                                    "recommended_settings"
                                 ]
                             },
                             "class.tenants": {
@@ -104,137 +104,6 @@
                                     "tenants",
                                     "vrfs"
                                 ]
-                            },
-                            "processes": {
-                                "enum": [
-                                    "access",
-                                    "admin",
-                                    "fabric",
-                                    "switches",
-                                    "system_settings",
-                                    "tenants",
-                                    "virtual_networking"
-                                ]
-                            },
-                            "easyDict": {
-                                "access": {
-                                    "domains_layer3": {},
-                                    "domains_physical": {},
-                                    "global_attachable_access_entity_profiles": {},
-                                    "global_dhcp_relay": {},
-                                    "firmware": {},
-                                    "interface_policies": {},
-                                    "leaf_interfaces_policy_groups_access": {},
-                                    "leaf_interfaces_policy_groups_breakout": {},
-                                    "leaf_interfaces_policy_groups_bundle": {},
-                                    "policies_cdp_interface": {},
-                                    "policies_fibre_channel_interface": {},
-                                    "policies_l2_interface": {},
-                                    "policies_link_level": {},
-                                    "policies_lldp_interface": {},
-                                    "policies_mcp_interface": {},
-                                    "policies_port_channel": {},
-                                    "policies_port_security": {},
-                                    "policies_spanning_tree_interface": {},
-                                    "pools_vlan": {},
-                                    "spine_modules": {},
-                                    "switches_leaf_policy_groups": {},
-                                    "switches_spine_policy_groups": {},
-                                    "spine_interface_policy_groups": {},
-                                    "virtual_networking": {}
-                                },
-                                "admin": {
-                                    "authentication": {},
-                                    "configuration_backups": {},
-                                    "firmware": {},
-                                    "security": {},
-                                    "radius": {},
-                                    "tacacs": {}
-                                },
-                                "fabric": {
-                                    "date_and_time": {},
-                                    "dns_profiles": {},
-                                    "smart_callhome": {},
-                                    "snmp_policies": {},
-                                    "syslog": {}
-                                },
-                                "inventory": {},
-                                "latest_versions": {
-                                    "aci_provider_version": "",
-                                    "ndo_provider_version": "",
-                                    "ndo_versions": {
-                                        "description": "List of NDO Versions obtained from dcappcenter.",
-                                        "type": "list_of_values",
-                                        "enum": [],
-                                        "default": ""
-                                    },
-                                    "terraform_version": ""
-                                },
-                                "sensitive_vars": {
-                                },
-                                "sites": {
-                                    "site_settings": {},
-                                    "site_groups": {}
-                                },
-                                "switches": {
-                                    "switch_profiles": {},
-                                    "vpc_domains": {}
-                                },
-                                "system_settings": {
-                                    "apic_connectivity_preference": {},
-                                    "bgp_autonomous_system_number": {},
-                                    "bgp_route_reflectors": {},
-                                    "global_aes_encryption_settings": {}
-                                },
-                                "tenants": {
-                                    "apics_inband_mgmt_addresses": {},
-                                    "application_epg_policies": {},
-                                    "application_epgs": {},
-                                    "application_epg_vmm_policies": {},
-                                    "application_profiles": {},
-                                    "bgp_peer_policies": {},
-                                    "bgp_peers": {},
-                                    "bridge_domains": {},
-                                    "bridge_domains_general": {},
-                                    "bridge_domains_l3": {},
-                                    "bridge_domains_ndo": {},
-                                    "contracts": {},
-                                    "eigrp_interface_profiles": {},
-                                    "external_epg_policies": {},
-                                    "filters": {},
-                                    "hsrp_policies": {},
-                                    "l3out_floating_svi": {},
-                                    "l3out_interface_profiles_hsrp": {},
-                                    "l3out_static_route": {},
-                                    "l3out_policies": {},
-                                    "l3out_logical_node_profiles": {},
-                                    "l3outs": {},
-                                    "node_interface_configurations": {},
-                                    "node_interface_profile_policies": {},
-                                    "ospf_external_profiles": {},
-                                    "ospf_interface_profiles": {},
-                                    "policies_bgp_address_family_context": {},
-                                    "policies_bgp_best_path": {},
-                                    "policies_bgp_peer_prefix": {},
-                                    "policies_bgp_route_summarization": {},
-                                    "policies_bgp_timers": {},
-                                    "policies_bfd_interface": {},
-                                    "policies_dhcp_option": {},
-                                    "policies_dhcp_relay": {},
-                                    "policies_eigrp_interface": {},
-                                    "policies_endpoint_retention": {},
-                                    "policies_ospf_interface": {},
-                                    "policies_ospf_route_summarization": {},
-                                    "policies_ospf_timers": {},
-                                    "route_map_match_rules": {},
-                                    "route_map_set_rules": {},
-                                    "route_maps_for_route_control": {},
-                                    "schemas": {},
-                                    "sites": {},
-                                    "tenants": {},
-                                    "vrf_policies": {},
-                                    "vrfs": {}
-                                }
                             },
                             "files": {
                                 "description": "Files to Pull down from the Easy ACI Project.",
@@ -360,6 +229,28 @@
                                     "vrfs.tf"
                                 ]
                             },
+                            "latest_versions": {
+                                "aci_provider_version": "",
+                                "ndo_provider_version": "",
+                                "terraform_version": "",
+                                "utils_provider_version": ""
+                            },
+                            "processes": {
+                                "enum": [
+                                    "system_settings"
+                                ]
+                            },
+                            "processes_all": {
+                                "enum": [
+                                    "access",
+                                    "admin",
+                                    "fabric",
+                                    "switches",
+                                    "system_settings",
+                                    "tenants",
+                                    "virtual_networking"
+                                ]
+                            },
                             "remove_files": [
                                 "coop_group.tf",
                                 "data_sources.tf",
@@ -378,7 +269,12 @@
                                 "README.md",
                                 "variables.tf"
                             ],
-                            "version": "1.2"
+                            "siteDict": {
+                                "sensitive_vars": [
+                                ],
+                                "site_settings": {}
+                            },
+                            "version": "2.0"
                         }
                     }
                 ]
@@ -2108,7 +2004,6 @@
                                 "dvs_version": "",
                                 "hostname": "",
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "site_group": "",
                                 "stats_collection": "",
                                 "switch_scope": "",
@@ -3076,7 +2971,6 @@
                                 "key": "",
                                 "login_domain": "",
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "port": "",
                                 "retries": "",
                                 "server_monitoring": "",
@@ -3198,7 +3092,6 @@
                             "required_args": {
                                 "authentication_type": "",
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "protocol": "",
                                 "remote_hosts": "",
                                 "remote_path": "",
@@ -3301,7 +3194,6 @@
                                 "key": "",
                                 "login_domain": "",
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "port": "",
                                 "retries": "",
                                 "server_monitoring": "",
@@ -3901,7 +3793,6 @@
                                 "dns_domains": "",
                                 "dns_providers": "",
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "preferred": "",
                                 "site_group": ""
                             }
@@ -3960,7 +3851,6 @@
                             "required_args": {
                                 "hostname": "",
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "maximum_polling_interval": "",
                                 "minimum_polling_interval": "",
                                 "preferred": "",
@@ -4148,7 +4038,6 @@
                             },
                             "required_args": {
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "port_number": "",
                                 "secure_smtp": "",
                                 "smtp_server": "",
@@ -4197,7 +4086,6 @@
                             "required_args": {
                                 "clients": "",
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "name": "",
                                 "site_group": ""
                             }
@@ -4278,7 +4166,6 @@
                             "required_args": {
                                 "host": "",
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "port": "",
                                 "site_group": "",
                                 "version": ""
@@ -4637,7 +4524,6 @@
                                 "forwarding_facility": "",
                                 "host": "",
                                 "management_epg": "",
-                                "management_epg_type": "",
                                 "port": "",
                                 "severity": "",
                                 "site_group": "",
@@ -5064,12 +4950,7 @@
                                 "site_7": "",
                                 "site_8": "",
                                 "site_9": "",
-                                "site_10": "",
-                                "site_11": "",
-                                "site_12": "",
-                                "site_13": "",
-                                "site_14": "",
-                                "site_15": ""
+                                "site_10": ""
                             },
                             "required_args": {
                                 "site_1": "",
@@ -5175,8 +5056,8 @@
                     {},
                     {
                         "properties": {
-                            "apic_connectivity_preference": {
-                                "description": "APIC connectivity Preference.",
+                            "interface_to_use_for_external_connections": {
+                                "description": "APIC Interface connectivity Preference.",
                                 "type": "list_of_values",
                                 "enum": [
                                     "ooband",
@@ -5187,8 +5068,8 @@
                             },
                             "optional_args": {},
                             "required_args": {
-                                "site_group": "",
-                                "apic_connectivity_preference": ""
+                                "interface_to_use_for_external_connections": "",
+                                "site_group": ""
                             }
                         }
                     }
@@ -5222,7 +5103,7 @@
                     {},
                     {
                         "properties": {
-                            "node_list": {
+                            "route_reflector_nodes": {
                                 "description": "BGP Route Reflector List.",
                                 "type": "list_of_integer",
                                 "format": "int64",
@@ -5233,15 +5114,15 @@
                             },
                             "optional_args": {},
                             "required_args": {
-                                "node_list": "",
                                 "pod_id": "",
+                                "route_reflector_nodes": "",
                                 "site_group": ""
                             }
                         }
                     }
                 ]
             },
-            "system.globalAesEncryptionSettings": {
+            "system.recommendedSettings": {
                 "allOf": [
                     {},
                     {
@@ -5251,40 +5132,86 @@
                                 "maximum": 32,
                                 "pattern": "^[\\S+]{16,32}$"
                             },
-                            "clear_passphrase": {
-                                "description": "Flag to Remove the current encryption passphrase.",
+                            "coop_group": {
+                                "description": "Boolean to configure or not configure Coop Group best practices.",
                                 "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
                                 ],
-                                "default": "false",
+                                "default": "true",
                                 "x-omitempty": true
                             },
-                            "enable_encryption": {
-                                "description": "If Encryption should be Enabled or Not.",
+                            "endpoint_controls": {
+                                "description": "Boolean to configure or not configure Endpoint Controls best practices.",
                                 "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
                                 ],
-                                "default": "false",
+                                "default": "true",
                                 "x-omitempty": true
                             },
-                            "optional_args": {},
-                            "passphrase_key_derivation_version": {
-                                "description": "Flag for Key Derivation Version.",
+                            "fabric_wide_settings": {
+                                "description": "Boolean to configure or not configure Fabric Wide Settings best practices.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "v1"
+                                    "false",
+                                    "true"
                                 ],
-                                "default": "v1",
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "global_aes_encryption_settings": {
+                                "description": "Boolean to configure or not configure Global AES Encryption Settings best practices.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "isis_policy": {
+                                "description": "Boolean to configure or not configure IS-IS Policy best practices.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                            },
+                            "port_tracking": {
+                                "description": "Boolean to configure or not configure Port Tracking best practices.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "ptp_and_latency_measurement": {
+                                "description": "Boolean to configure or not configure PTP and Latency Measurement best practices.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "clear_passphrase": "",
-                                "enable_encryption": "",
-                                "passphrase_key_derivation_version": "",
+                                "coop_group": "",
+                                "endpoint_controls": "",
+                                "fabric_wide_settings": "",
+                                "global_aes_encryption_settings": "",
+                                "isis_policy": "",
+                                "port_tracking": "",
+                                "ptp_and_latency_measurement": "",
                                 "site_group": ""
                             }
                         }

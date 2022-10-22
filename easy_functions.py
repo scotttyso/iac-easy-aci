@@ -3,6 +3,7 @@
 #======================================================
 # Source Modules
 #======================================================
+from copy import deepcopy
 from collections import OrderedDict
 from git import cmd, Repo
 from openpyxl import load_workbook
@@ -23,6 +24,7 @@ import sys
 import stdiomask
 import time
 import validating
+import yaml
 
 # Global options for debugging
 print_payload = False
@@ -379,80 +381,286 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
                         print('hello')
 
 #======================================================
+# Function for Processing Loops to auto.tfvars files
+#======================================================
+def create_yaml(args, easy_jsonData, **easyDict):
+    jsonData = easy_jsonData['easy_aci']['allOf'][1]['properties']
+    classes = jsonData['processes']['enum']
+
+    for k in easyDict['sites'].items():
+        # print(k)
+        #print(json.dumps(easyDict['sites'][k], indent=4))
+        print(yaml.dump(k))
+    # Loop to write the Header and content to the files
+    exit()
+    for class_type in classes:
+        funcList = jsonData[f'class.{class_type}']['enum']
+        for func in funcList:
+            for k, v in easyDict[class_type][func].items():
+                for i in v:
+                    templateVars = i
+                    kwargs = {
+                        'args': args,
+                        'easyDict': easyDict,
+                        'row_num': f'{func}_section',
+                        'site_group': k,
+                        'ws': easyDict['wb']['System Settings']
+                    }
+
+                    # Add Variables for Template Functions
+                    templateVars['template_type'] = func
+                        
+                    if re.search('^(apic_connectivity_preference|bgp_autonomous_system_number)$', func):
+                        kwargs["template_file"] = 'template_open2.jinja2'
+                    else:
+                        kwargs["template_file"] = 'template_open.jinja2'
+
+                    kwargs['tfvars_file'] = func
+                    x = func.split('_')
+                    policyType = ''
+                    xcount = 0
+                    for i in x:
+                        if not i == 'and' and xcount == 0:
+                            policyType = policyType + i.capitalize()
+                        elif 'and' in i:
+                            policyType = policyType + ' ' + i
+                        else:
+                            policyType = policyType + ' ' + i.capitalize()
+                        xcount += 1
+                    policyType = policyType.replace('Aaep', 'AAEP')
+                    policyType = policyType.replace('Aes', 'AES')
+                    policyType = policyType.replace('Apic', 'APIC')
+                    policyType = policyType.replace('Cdp', 'CDP')
+                    policyType = policyType.replace('Lldp', 'LLDP')
+                    policyType = policyType.replace('Radius', 'RADIUS')
+                    policyType = policyType.replace('Snmp', 'SNMP')
+                    policyType = policyType.replace('Tacacs', 'TACACS+')
+                    policyType = policyType.replace('Vpc', 'VPC')
+                    templateVars['policy_type'] = policyType
+                    
+                    kwargs["initial_write"] = True
+                    write_to_site(templateVars, **kwargs)
+
+        for func in funcList:
+            for k, v in easyDict[class_type][func].items():
+                for i in v:
+                    templateVars = i
+                    kwargs = {
+                        'args': args,
+                        'easyDict': easyDict,
+                        'row_num': f'{func}_section',
+                        'site_group': k,
+                        'ws': easyDict['wb']['System Settings']
+                    }
+
+                    # Write the template to the Template File
+                    kwargs['tfvars_file'] = func
+                    kwargs["initial_write"] = False
+                    kwargs["template_file"] = f'{func}.jinja2'
+                    write_to_site(templateVars, **kwargs)
+
+    # Add Closing Bracket to auto.tfvars that are dictionaries    
+    for k, v in easyDict['sites']['site_settings'].items():
+        site_name = v[0]['site_name']
+        siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
+        siteDirs.sort()
+        for folder in siteDirs:
+            files = [f for f in os.listdir(os.path.join(args.dir, site_name, folder)) if 'auto.tfvars' in f]
+            for file in files:
+                if not re.search('(bgp_auto|connectivity|variables)', file):
+                    file_name = open(os.path.join(args.dir, site_name, folder, file), 'r')
+                    end_count = 0
+                    for line in file_name:
+                        if re.search(r'^}', line):
+                            end_count += 1
+                    file_name.close
+                    if end_count == 0:
+                            file_name = open(os.path.join(args.dir, site_name, folder, file), 'a+')
+                            file_name.write('\n}\n')
+                            file_name.close()
+
+#======================================================
 # Function to Append the easyDict Dictionary
 #======================================================
 def easyDict_append(templateVars, **kwargs):
-    templateVars = OrderedDict(sorted(templateVars.items()))
-    class_type = templateVars['class_type']
-    data_type = templateVars['data_type']
-    templateVars.pop('data_type')
-    if not kwargs['easyDict'][class_type][data_type].get(kwargs['site_group']):
-        kwargs['easyDict'][class_type][data_type].update({kwargs['site_group']:[]})
+    # templateVars = OrderedDict(sorted(templateVars.items()))
+    class_path = kwargs['class_path']
+    cS = class_path.split(',')
+    templateVars.pop('site_group')
+    def site_append(cS, site, templateVars):
+        if not kwargs['easyDict']['sites'].get(site):
+            validating.site_group_error('site_group', **kwargs)
+
+        # Confirm the Key Exists
+        if not kwargs['easyDict']['sites'][site].get(cS[0]):
+            kwargs['easyDict']['sites'][site].update(deepcopy({cS[0]:{}}))
+        if len(cS) == 2:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:[]}))
+        if len(cS) == 3:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:[]}))
+        if len(cS) == 4:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:[]}))
+        if len(cS) == 5:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].get(cS[4]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy({cS[4]:[]}))
+        # append the Dictionary
+        if len(cS) == 2:   kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy(templateVars))
+        elif len(cS) == 3: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].append(deepcopy(templateVars))
+        elif len(cS) == 4: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy(templateVars))
+        elif len(cS) == 5: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]].append(deepcopy(templateVars))
+
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, templateVars)
+        else:
+            validating.site_group_error('site_group', **kwargs)
+    else:
+        site_append(cS, kwargs['site_group'], templateVars)
         
-    kwargs['easyDict'][class_type][data_type][kwargs['site_group']].append(templateVars)
     return kwargs['easyDict']
 
 #======================================================
 # Function to Append the easyDict Dictionary
 #======================================================
 def easyDict_append_policy(templateVars, **kwargs):
-    templateVars = OrderedDict(sorted(templateVars.items()))
-    class_type = templateVars['class_type']
-    data_type = templateVars['data_type']
-    templateVars.pop('class_type')
-    templateVars.pop('data_type')
-    kwargs['easyDict'][class_type][data_type].update(templateVars)
+    class_path = kwargs['class_path']
+    cS = class_path.split(',')
+    templateVars.pop('site_group')
+    def site_update(cS, site, templateVars):
+        if not kwargs['easyDict']['sites'].get(site):
+            validating.site_group_error('site_group', **kwargs)
+
+        # Confirm the Key(s) Exists
+        if not kwargs['easyDict']['sites'][site].get(cS[0]):
+            kwargs['easyDict']['sites'][site].append(deepcopy({cS[0]:{}}))
+        if len(cS) >= 2:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].append(deepcopy({cS[1]:{}}))
+        if len(cS) >= 3:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy({cS[2]:{}}))
+        if len(cS) >= 4:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].append(deepcopy({cS[3]:{}}))
+        if len(cS) == 5:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].get(cS[4]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy({cS[4]:{}}))
+
+        # Append the Dictionary
+        if len(cS) == 1:   kwargs['easyDict']['sites'][site][cS[0]].append(deepcopy(templateVars))
+        elif len(cS) == 2:   kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy(templateVars))
+        elif len(cS) == 3: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].append(deepcopy(templateVars))
+        elif len(cS) == 4: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy(templateVars))
+        elif len(cS) == 5: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]].append(deepcopy(templateVars))
+
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_update(cS, site, templateVars)
+        else:
+            validating.site_group_error('site_group', **kwargs)
+    else:
+        site_update(cS, kwargs['site_group'], templateVars)
+        
     return kwargs['easyDict']
 
 #======================================================
 # Function to Append Subtype easyDict Dictionary
 #======================================================
 def easyDict_append_subtype(templateVars, **kwargs):
-    templateVars = OrderedDict(sorted(templateVars.items()))
-    class_type   = templateVars['class_type']
-    data_type    = templateVars['data_type']
-    data_subtype = templateVars['data_subtype']
-    policy_name  = templateVars['policy_name']
-    templateVars.pop('class_type')
-    templateVars.pop('data_type')
-    templateVars.pop('data_subtype')
-    templateVars.pop('policy_name')
+    # templateVars = OrderedDict(sorted(templateVars.items()))
+    class_path   = kwargs['class_path']
+    cS = class_path.split(',')
+    policy  = kwargs['policy']
+    policy_name  = kwargs['policy_name']
     templateVars.pop('site_group')
-    if kwargs['easyDict'][class_type][data_type].get(kwargs['site_group']):
-        for i in kwargs['easyDict'][class_type][data_type][kwargs['site_group']]:
-            # print(json.dumps(i, indent=4))
-            if class_type == 'tenants' and data_type == 'l3out_logical_node_profiles':
-                if i['name'] == policy_name and i['tenant'] == templateVars['tenant'] and i['l3out'] == templateVars['l3out']:
-                    templateVars.pop('l3out')
-                    i[data_subtype].append(templateVars)
+    def site_append(cS, site, templateVars):
+        # Update the Dictionary
+        if len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site][cS[0]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+
+        for i in dict1:
+            if 'bgp_route_reflectors' in class_path:
+                if i[policy] == policy_name:
+                    i[cS[2]] = templateVars
                     break
-            elif class_type == 'tenants' and data_type == 'contracts':
-                if i['name'] == policy_name and i['contract_type'] == templateVars['contract_type']:
-                    templateVars.pop('contract_type')
-                    templateVars.pop('tenant')
-                    i[data_subtype].append(templateVars)
-                    break
-            elif class_type == 'tenants':
-                if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
-                    # templateVars.pop('tenant')
-                    i[data_subtype].append(templateVars)
-                    break
-            else:
-                if i['name'] == policy_name:
-                    i[data_subtype].append(templateVars)
-    elif 'Grp_' in kwargs['site_group']:
-        site_group = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
-        for site in site_group['sites']:
-            for i in kwargs['easyDict'][class_type][data_type][str(site)]:
-                if class_type == 'tenants':
-                    if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
-                        templateVars.pop['tenant']
-                        i[data_subtype].append(templateVars)
-                else:
-                    if i['name'] == policy_name:
-                        i[data_subtype].append(templateVars)
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, templateVars)
+        else:
+            validating.site_group_error('site_group', **kwargs)
+    else:
+        site_append(cS, kwargs['site_group'], templateVars)
 
     # Return Dictionary
+    return kwargs['easyDict']
+
+#======================================================
+# Function to Append the easyDict Dictionary
+#======================================================
+def easyDict_update(templateVars, **kwargs):
+    class_path = kwargs['class_path']
+    cS = class_path.split(',')
+    templateVars.pop('site_group')
+    def site_update(cS, site, templateVars):
+        if not kwargs['easyDict']['sites'].get(site):
+            validating.site_group_error('site_group', **kwargs)
+
+        # Confirm the Key(s) Exists
+        if not kwargs['easyDict']['sites'][site].get(cS[0]):
+            kwargs['easyDict']['sites'][site].update(deepcopy({cS[0]:{}}))
+        if len(cS) >= 2:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
+        if len(cS) >= 3:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
+        if len(cS) >= 4:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:{}}))
+        if len(cS) == 5:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].get(cS[4]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].update(deepcopy({cS[4]:{}}))
+
+        # Update the Dictionary
+        if len(cS) == 1:   kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy(templateVars))
+        elif len(cS) == 2:   kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy(templateVars))
+        elif len(cS) == 3: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy(templateVars))
+        elif len(cS) == 4: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].update(deepcopy(templateVars))
+        elif len(cS) == 5: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]].update(deepcopy(templateVars))
+
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_update(cS, site, templateVars)
+        else:
+            validating.site_group_error('site_group', **kwargs)
+    else:
+        site_update(cS, kwargs['site_group'], templateVars)
+        
     return kwargs['easyDict']
 
 #======================================================
@@ -567,6 +775,22 @@ def get_latest_versions(easyDict):
     # Set NDO Provider Version
     ndo_provider_version = repoVer
 
+    # Get the Latest Release Tag for the provider-mso repository
+    url = f'https://github.com/netascode/terraform-provider-utils/tags/'
+    r = requests.get(url, stream=True)
+    repoVer = 'BLANK'
+    stringMatch = False
+    while stringMatch == False:
+        for line in r.iter_lines():
+            toString = line.decode("utf-8")
+            if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
+                repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
+                break
+        stringMatch = True
+    
+    # Set NDO Provider Version
+    utils_provider_version = repoVer
+
     # Get the Latest Release Tag for Terraform
     url = f'https://github.com/hashicorp/terraform/tags'
     r = requests.get(url, stream=True)
@@ -574,6 +798,7 @@ def get_latest_versions(easyDict):
     stringMatch = False
     while stringMatch == False:
         for line in r.iter_lines():
+            # print(line)
             toString = line.decode("utf-8")
             if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
                 repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
@@ -586,6 +811,7 @@ def get_latest_versions(easyDict):
     easyDict['latest_versions']['aci_provider_version'] = aci_provider_version
     easyDict['latest_versions']['ndo_provider_version'] = ndo_provider_version
     easyDict['latest_versions']['terraform_version'] = terraform_version
+    easyDict['latest_versions']['utils_provider_version'] = utils_provider_version
 
     return easyDict
 
@@ -910,7 +1136,7 @@ def interface_selector_workbook(templateVars, **kwargs):
 # Function to Merge Easy ACI Repository to Dest Folder
 #======================================================
 def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
-    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
+    jsonData = easy_jsonData['easy_aci']['allOf'][1]['properties']
     baseRepo = args.dir
     
     # Setup Operating Environment
@@ -1082,7 +1308,7 @@ def process_workbook(templateVars, **kwargs):
 # Function for Processing Loops to auto.tfvars files
 #======================================================
 def read_easy_jsonData(args, easy_jsonData, **easyDict):
-    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
+    jsonData = easy_jsonData['easy_aci']['allOf'][1]['properties']
     classes = jsonData['classes']['enum']
 
     # Loop to write the Header and content to the files
@@ -1241,27 +1467,17 @@ def sensitive_var_site_group(**kwargs):
     site_group = kwargs['site_group']
     sensitive_var = kwargs['Variable']
 
-    # Add the Sensitive Variable to easyDict
-    if 'tenants' in kwargs['class_type']:
-        class_type = f"tenant_{kwargs['tenant']}"
-    else:
-        class_type = kwargs['class_type']
-    if not 'tfcVariables' in class_type:
-        if not kwargs['easyDict']['sensitive_vars'].get(site_group):
-            kwargs['easyDict']['sensitive_vars'].update({site_group:{}})
-        if not kwargs['easyDict']['sensitive_vars'][site_group].get(class_type):
-            kwargs['easyDict']['sensitive_vars'][site_group].update({class_type:[]})
-        kwargs['easyDict']['sensitive_vars'][site_group][class_type].append(sensitive_var)
-
     # Loop Through Site Groups to confirm Sensitive Variable in the Environment
     if re.search('Grp_[A-F]', site_group):
-       siteGroup = kwargs['easyDict']['sites']['site_groups'][site_group][0]
+       siteGroup = kwargs['easyDict']['site_groups'][site_group]
        for site in siteGroup['sites']:
-            siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
+            kwargs['easyDict']['sites'][site]['sensitive_vars'].append(sensitive_var)
+            siteDict = kwargs['easyDict']['sites'][site]['site_settings']
             if siteDict['run_location'] == 'local' or siteDict['configure_terraform_cloud'] == 'true':
                 sensitive_var_value(**kwargs)
     else:
-        siteDict = kwargs['easyDict']['sites']['site_settings'][site_group][0]
+        kwargs['easyDict']['sites'][site_group]['sensitive_vars'].append(sensitive_var)
+        siteDict = kwargs['easyDict']['sites'][site_group]['site_settings']
         if siteDict['run_location'] == 'local' or siteDict['configure_terraform_cloud'] == 'true':
             sensitive_var_value(**kwargs)
     return kwargs['easyDict']
@@ -1614,7 +1830,7 @@ def terraform_fmt(files, folder, path_sep):
 # Function to Validate Worksheet User Input
 #======================================================
 def validate_args(jsonData, **kwargs):
-    globalData = kwargs['easy_jsonData']['components']['schemas']['globalData']['allOf'][1]['properties']
+    globalData = kwargs['easy_jsonData']['globalData']['allOf'][1]['properties']
     global_args = [
         'admin_state',
         'application_epg',
@@ -2025,22 +2241,36 @@ def vlan_range(vlan_list, **templateVars):
 # Function to Determine which sites to write files to.
 #======================================================
 def write_to_site(templateVars, **kwargs):
-    class_type = templateVars['class_type']
-    aci_template_path = pkg_resources.resource_filename(f'classes', 'templates/')
+    args       = kwargs['args']
+    baseRepo   = args.dir
+    class_type = kwargs['class_type']
+    dest_dir   = kwargs["dest_dir"]
+    dest_file  = kwargs["tf_file"]
+    row_num    = kwargs["row_num"]
+    site       = str(kwargs['site'])
+    site_name  = kwargs["site_name"]
+    ws         = kwargs["ws"]
 
+    aci_template_path = pkg_resources.resource_filename(f'classes', 'templates/')
     templateLoader = jinja2.FileSystemLoader(
         searchpath=(aci_template_path + '%s/') % (class_type))
     templateEnv = jinja2.Environment(loader=templateLoader)
-    ws = kwargs["ws"]
-    row_num = kwargs["row_num"]
-    site_group = str(kwargs['site_group'])
     
     # Define the Template Source
-    kwargs["template"] = templateEnv.get_template(kwargs["template_file"])
+    template = templateEnv.get_template(kwargs["template_file"])
+
+    if kwargs["initial_write"] == True:
+        write_method = 'w'
+    else:
+        write_method = 'a'
 
     # Process the template
-    if 'tenants' in class_type:
-        kwargs["dest_dir"] = 'tenant_%s' % (templateVars['tenant'])
+    if 'access' in class_type:
+        kwargs["dest_dir"] = 'fabric:access-policies'
+    elif 'tenants' in class_type:
+        kwargs["dest_dir"] = 'tenants/%s' % (templateVars['tenant'])
+    elif 'fabric' in class_type:
+        kwargs["dest_dir"] = 'fabric:fabric-policies'
     elif 'switches' in class_type:
         if templateVars['template_type'] == 'switch_profiles':
             if not templateVars['vpc_name'] == None:
@@ -2053,63 +2283,24 @@ def write_to_site(templateVars, **kwargs):
         kwargs["dest_dir"] = kwargs["dest_dir"]
     else:
         kwargs["dest_dir"] = '%s' % (class_type)
-    kwargs["dest_file"] = '%s.auto.tfvars' % (kwargs["tfvars_file"])
-    if kwargs["initial_write"] == True:
-        kwargs["write_method"] = 'w'
-    else:
-        kwargs["write_method"] = 'a'
 
-    def process_siteDetails(site_dict, templateVars, **kwargs):
-        # Create kwargs for site_name controller and controller_type
-        kwargs['controller'] = site_dict.get('controller')
-        kwargs['controller_type'] = site_dict.get('controller_type')
-        templateVars['controller_type'] = site_dict.get('controller_type')
-        kwargs['site_name'] = site_dict.get('site_name')
-        kwargs['version'] = site_dict.get('version')
-        if templateVars['template_type'] == 'firmware':
-            templateVars['version'] = kwargs['version']
-        if kwargs['controller_type'] == 'ndo' and templateVars['template_type'] == 'tenants':
-            if templateVars['users'] == None:
-                validating.error_tenant_users(**kwargs)
-            else:
-                for user in templateVars['users']:
-                    regexp = '^[a-zA-Z0-9\_\-]+$'
-                    validating.length_and_regex(regexp, 'users', user, 1, 64)
-        # Create Terraform file from Template
-        write_to_template(templateVars, **kwargs)
+    # Obtain the Site Dictionary
+    siteDict = kwargs['easyDict']['sites'][site]['site_settings']
 
-    if re.search('Grp_[A-F]', site_group):
-        siteGroup = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
-        for site in siteGroup['sites']:
-            siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
-            # Add Site Detials to kwargs and write to template
-            process_siteDetails(siteDict, templateVars, **kwargs)
-
-    elif re.search(r'\d+', site_group):
-        siteDict = kwargs['easyDict']['sites']['site_settings'][kwargs['site_group']][0]
-
-        # Add Site Detials to kwargs and write to template
-        process_siteDetails(siteDict, templateVars, **kwargs)
-
-    else:
-        print(f"\n-----------------------------------------------------------------------------\n")
-        print(f"   Error on Worksheet {ws.title}, Row {row_num} Site_Group, value {kwargs['site_group']}.")
-        print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
-        print(f"\n-----------------------------------------------------------------------------\n")
-        exit()
-
-#======================================================
-# Function to write files from Templates
-#======================================================
-def write_to_template(templateVars, **kwargs):
-    # Set Function Variables
-    args = kwargs['args']
-    baseRepo = args.dir
-    dest_dir  = kwargs["dest_dir"]
-    dest_file = kwargs["dest_file"]
-    site_name = kwargs["site_name"]
-    template  = kwargs["template"]
-    wr_method = kwargs["write_method"]
+    # Create kwargs for site_name controller and controller_type
+    kwargs['controller'] = siteDict.get('controller')
+    kwargs['controller_type'] = siteDict.get('controller_type')
+    kwargs['site_name'] = siteDict.get('site_name')
+    kwargs['version'] = siteDict.get('version')
+    if kwargs['tf_file'] == 'firmware.auto.tfvars':
+        templateVars['version'] = kwargs['version']
+    if kwargs['controller_type'] == 'ndo' and kwargs['tf_file'] == 'tenants.auto.tfvars':
+        if templateVars['users'] == None:
+            validating.error_tenant_users(**kwargs)
+        else:
+            for user in templateVars['users']:
+                regexp = '^[a-zA-Z0-9\_\-]+$'
+                validating.length_and_regex(regexp, 'users', user, 1, 64)
 
     # Make sure the Destination Path and Folder Exist
     if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
@@ -2123,14 +2314,11 @@ def write_to_template(templateVars, **kwargs):
         create_file = f'type nul >> {os.path.join(dest_dir, dest_file)}'
         os.system(create_file)
     tf_file = os.path.join(dest_dir, dest_file)
-    wr_file = open(tf_file, wr_method)
+    wr_file = open(tf_file, write_method)
 
     # Render Payload and Write to File
     templateVars = json.loads(json.dumps(templateVars))
-    if templateVars['class_type'] == 'system_settings':
-        payload = template.render(templateVars)
-    else:
-        templateVars = {'keys':templateVars}
-        payload = template.render(templateVars)
+    templateVars = {'keys':templateVars}
+    payload = template.render(templateVars)
     wr_file.write(payload)
     wr_file.close()

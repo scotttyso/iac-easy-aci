@@ -513,21 +513,40 @@ def site_group(var, **kwargs):
     if 'Grp_' in varValue:
         if not re.search('Grp_[A-F]', varValue):
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site Group "{varValue}"')
             print(f'   is invalid.  A valid Group Name is Grp_A thru Grp_F.  Exiting....')
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     elif re.search(r'\d+', varValue):
         if not validators.between(int(varValue), min=1, max=15):
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site "{varValue}"')
             print(f'   is invalid.  A valid Site ID is between 1 and 15.  Exiting....')
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     else:
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
-        print(f'   is invalid.  A valid Site_Group is either 1 thru 15 or Group_A thru Group_F.')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site Group "{varValue}"')
+        print(f'   is invalid.  A valid Site is either 1 thru 15 or for Site Groups')
+        print(f'   Group_A thru Group_F.  Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def site_group_error(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if 'Grp_' in varValue:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site Group "{varValue}"')
+        print(f'   is not defined.  "{varValue}" was not defined on the sites worksheet.')
+        print(f'   Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+    else:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site "{varValue}"')
+        print(f'   is not defined.  "{varValue}" was not defined on the sites worksheet.')
         print(f'   Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
@@ -536,7 +555,7 @@ def site_groups(**kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']
     var_list = ['site_group']
-    for x in range (1,16):
+    for x in range (1,11):
         var_list.append(f'site_{x}')
     for var in var_list:
         varValue = kwargs[var]
@@ -544,7 +563,7 @@ def site_groups(**kwargs):
             if 'Grp_' in varValue:
                 if not re.search('^Grp_[A-F]$', varValue):
                     print(f'\n-----------------------------------------------------------------------------\n')
-                    print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
+                    print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, site group "{varValue}"')
                     print(f'   is invalid.  A valid Group Name is Grp_A thru Grp_F.  Exiting....')
                     print(f'\n-----------------------------------------------------------------------------\n')
                     exit()

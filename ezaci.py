@@ -12,7 +12,7 @@ It uses argparse to take in the following CLI arguments:
 # Source Modules
 #======================================================
 from classes import access, admin, fabric, site_policies, switches, system_settings, tenants
-from easy_functions import apply_terraform
+from easy_functions import apply_terraform, create_yaml
 from easy_functions import get_folders, git_base_repo, git_check_status
 from easy_functions import countKeys, findKeys, findVars
 from easy_functions import get_latest_versions, merge_easy_aci_repository
@@ -54,7 +54,7 @@ l3out_regex = f'^({l3out1}|{l3out2})$'
 port_convert_regex = '^port_cnvt$'
 sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
-system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
+system_settings_regex = '^(apic_preference|bgp_(asn|rr)|recommended_settings)$'
 tenants_regex = '^((template|tenant)_(add|site)|vrf_(add|community|policy))$'
 tenant_pol_regex = '^(apic_inb|bgp_pfx|dhcp_relay|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
@@ -252,16 +252,16 @@ def main():
         default = 'ACI',
         help = 'The Directory to use for the Creation of the Terraform Files.'
     )
-    Parser.add_argument('-g', '--git-check',
-        default = 'True',
-        help = 'To Skip the Git Commit Check set this to False.'
+    Parser.add_argument(
+        '-g', '--git-check', action='store_true',
+        help = 'Flag to Skip the Git Commit Check.'
     )
-    Parser.add_argument('-s', '--skip-version-check',
-        default = 'False',
-        help = 'To Skip the Version Check set this to True.'
+    Parser.add_argument(
+        '-s', '--skip-version-check', action='store_true',
+        help = 'Flag to Skip the APIC and NDO Version Check.'
     )
     Parser.add_argument('-wb', '--workbook',
-        default = 'ACI_Base_Workbookv2.xlsx',
+        default = 'ACI_Base_Workbookv3.xlsx',
         help = 'The source Workbook.'
     )
     Parser.add_argument('-ws', '--worksheet', 
@@ -334,7 +334,9 @@ def main():
     wb = read_in(excel_workbook)
 
     # Create Dictionary for Worksheets in the Workbook
-    easyDict = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['easyDict']
+    easy_jsonData = easy_jsonData['components']['schemas']
+    easyDict = {}
+    easyDict['latest_versions'] = easy_jsonData['easy_aci']['allOf'][1]['properties']['latest_versions']
 
     # Obtain the Latest Provider Releases
     easyDict = get_latest_versions(easyDict)
@@ -364,22 +366,24 @@ def main():
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     else:
-        process_list = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['processes']['enum']
+        process_list = easy_jsonData['easy_aci']['allOf'][1]['properties']['processes']['enum']
         for x in process_list:
             process_type = f'process_{x}'
             easyDict = eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
 
 
+    print(json.dumps(easyDict['sites'], indent=4))
     # Begin Proceedures to Create files
-    read_easy_jsonData(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
-    merge_easy_aci_repository(args, easy_jsonData, **easyDict)
-    changed_folders = []
-    if args.git_check == 'True':
-        changed_folders = git_check_status(args)
-    else:
-        changed_folders = get_folders(args, path_sep)
-    apply_terraform(args, changed_folders, **easyDict)
+    create_yaml(args, easy_jsonData, **easyDict)
+    # read_easy_jsonData(args, easy_jsonData, **easyDict)
+    # merge_easy_aci_repository(args, easy_jsonData, **easyDict)
+    # changed_folders = []
+    # if args.git_check == 'True':
+    #     changed_folders = git_check_status(args)
+    # else:
+    #     changed_folders = get_folders(args, path_sep)
+    # apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')
