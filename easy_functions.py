@@ -385,100 +385,69 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
 #======================================================
 def create_yaml(args, easy_jsonData, **easyDict):
     jsonData = easy_jsonData['easy_aci']['allOf'][1]['properties']
-    classes = jsonData['processes']['enum']
+    classes = jsonData['classes']['enum']
+    def write_file(dest_dir, dest_file, dict, title1):
+        class MyDumper(yaml.Dumper):
+            def increase_indent(self, flow=False, indentless=False):
+                return super(MyDumper, self).increase_indent(flow, False)
 
-    for k in easyDict['sites'].items():
-        # print(k)
-        #print(json.dumps(easyDict['sites'][k], indent=4))
-        print(yaml.dump(k))
-    # Loop to write the Header and content to the files
-    exit()
-    for class_type in classes:
-        funcList = jsonData[f'class.{class_type}']['enum']
-        for func in funcList:
-            for k, v in easyDict[class_type][func].items():
-                for i in v:
-                    templateVars = i
-                    kwargs = {
-                        'args': args,
-                        'easyDict': easyDict,
-                        'row_num': f'{func}_section',
-                        'site_group': k,
-                        'ws': easyDict['wb']['System Settings']
-                    }
+        if not os.path.exists(os.path.join(dest_dir, dest_file)):
+            create_file = f'type nul >> {os.path.join(dest_dir, dest_file)}'
+            os.system(create_file)
+        wr_file = open(os.path.join(dest_dir, dest_file), 'w')
+        wr_file.write('---\n')
+        wr_file = open(os.path.join(dest_dir, dest_file), 'a')
+        dash_length = '='*(len(title1) + 20)
+        wr_file.write(f'#{dash_length}\n')
+        wr_file.write(f'#   {title1} - Variables\n')
+        wr_file.write(f'#{dash_length}\n')
+        wr_file.write(yaml.dump(dict, Dumper=MyDumper, default_flow_style=False))
+        wr_file.close()
 
-                    # Add Variables for Template Functions
-                    templateVars['template_type'] = func
-                        
-                    if re.search('^(apic_connectivity_preference|bgp_autonomous_system_number)$', func):
-                        kwargs["template_file"] = 'template_open2.jinja2'
+    for k,v in easyDict['sites'].items():
+        baseRepo = args.dir
+        site_name = easyDict['sites'][k]['site_settings']['site_name']
+        
+        # Remove Random Lines from Dictionary.  Need to figure out why this happens
+        pop_list = ['snmp_client_groups', 'snmp_communities', 'snmp_destinations', 'users']
+        if easyDict['sites'][k].get('fabric'):
+            if easyDict['sites'][k]['fabric'].get('policies'):
+                if easyDict['sites'][k]['fabric']['policies'].get('pod'):
+                    if easyDict['sites'][k]['fabric']['policies'].get('pod'):
+                        for item in easyDict['sites'][k]['fabric']['policies']['pod']['date_and_time']:
+                            for i in pop_list:
+                                if item.get(i): item.pop(i)
+        for item in classes:
+            if easyDict['sites'][k].get(item):
+                dest_dir = jsonData[f'class.{item}']['directory']
+                if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
+                    opSystem = platform.system()
+                    if opSystem == 'Windows': path_sep = '\\'
+                    else: path_sep = '/'
+                    dest_path = f'{os.path.join(baseRepo, site_name)}{path_sep}{dest_dir}'
+                    os.makedirs(dest_path)
+                dest_dir = os.path.join(baseRepo, site_name, dest_dir)
+                for i in jsonData[f'class.{item}']['enum']:
+                    if item == i:
+                        dict = {item:easyDict['sites'][k][item]}
                     else:
-                        kwargs["template_file"] = 'template_open.jinja2'
-
-                    kwargs['tfvars_file'] = func
-                    x = func.split('_')
-                    policyType = ''
-                    xcount = 0
-                    for i in x:
-                        if not i == 'and' and xcount == 0:
-                            policyType = policyType + i.capitalize()
-                        elif 'and' in i:
-                            policyType = policyType + ' ' + i
+                        dict = {item:{i:easyDict['sites'][k][item][i]}}
+                    if item == 'switch' and i == 'switch_profiles':
+                        icount = 0
+                        for items in dict['switch']['switch_profiles']:
+                            dest_file = f"{items['name']}.yaml"
+                            title1 = items['name']
+                            dict2 = {item:{i:easyDict['sites'][k][item][i][icount]}}
+                            write_file(dest_dir, dest_file, dict2, title1)
+                            icount += 1
+                    else:
+                        dest_file = f'{i}.yaml'
+                        if item == i:
+                            title1 = str.title(item.replace('_', ' '))
                         else:
-                            policyType = policyType + ' ' + i.capitalize()
-                        xcount += 1
-                    policyType = policyType.replace('Aaep', 'AAEP')
-                    policyType = policyType.replace('Aes', 'AES')
-                    policyType = policyType.replace('Apic', 'APIC')
-                    policyType = policyType.replace('Cdp', 'CDP')
-                    policyType = policyType.replace('Lldp', 'LLDP')
-                    policyType = policyType.replace('Radius', 'RADIUS')
-                    policyType = policyType.replace('Snmp', 'SNMP')
-                    policyType = policyType.replace('Tacacs', 'TACACS+')
-                    policyType = policyType.replace('Vpc', 'VPC')
-                    templateVars['policy_type'] = policyType
-                    
-                    kwargs["initial_write"] = True
-                    write_to_site(templateVars, **kwargs)
-
-        for func in funcList:
-            for k, v in easyDict[class_type][func].items():
-                for i in v:
-                    templateVars = i
-                    kwargs = {
-                        'args': args,
-                        'easyDict': easyDict,
-                        'row_num': f'{func}_section',
-                        'site_group': k,
-                        'ws': easyDict['wb']['System Settings']
-                    }
-
-                    # Write the template to the Template File
-                    kwargs['tfvars_file'] = func
-                    kwargs["initial_write"] = False
-                    kwargs["template_file"] = f'{func}.jinja2'
-                    write_to_site(templateVars, **kwargs)
-
-    # Add Closing Bracket to auto.tfvars that are dictionaries    
-    for k, v in easyDict['sites']['site_settings'].items():
-        site_name = v[0]['site_name']
-        siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
-        siteDirs.sort()
-        for folder in siteDirs:
-            files = [f for f in os.listdir(os.path.join(args.dir, site_name, folder)) if 'auto.tfvars' in f]
-            for file in files:
-                if not re.search('(bgp_auto|connectivity|variables)', file):
-                    file_name = open(os.path.join(args.dir, site_name, folder, file), 'r')
-                    end_count = 0
-                    for line in file_name:
-                        if re.search(r'^}', line):
-                            end_count += 1
-                    file_name.close
-                    if end_count == 0:
-                            file_name = open(os.path.join(args.dir, site_name, folder, file), 'a+')
-                            file_name.write('\n}\n')
-                            file_name.close()
-
+                            title1 = f"{str.title(item.replace('_', ' '))} -> {str.title(i.replace('_', ' '))}"
+                        write_file(dest_dir, dest_file, dict, title1)
+                        
 #======================================================
 # Function to Append the easyDict Dictionary
 #======================================================
@@ -487,6 +456,12 @@ def easyDict_append(templateVars, **kwargs):
     class_path = kwargs['class_path']
     cS = class_path.split(',')
     templateVars.pop('site_group')
+    pop_list = []
+    for k,v in templateVars.items():
+        if v == None:
+            pop_list.append(k)
+    for i in pop_list:
+        templateVars.pop(i)
     def site_append(cS, site, templateVars):
         if not kwargs['easyDict']['sites'].get(site):
             validating.site_group_error('site_group', **kwargs)
@@ -517,7 +492,7 @@ def easyDict_append(templateVars, **kwargs):
             if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
                 kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:{}}))
             if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].get(cS[4]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy({cS[4]:[]}))
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].update(deepcopy({cS[4]:[]}))
         # append the Dictionary
         if len(cS) == 2:   kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy(templateVars))
         elif len(cS) == 3: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].append(deepcopy(templateVars))
@@ -549,26 +524,37 @@ def easyDict_append_policy(templateVars, **kwargs):
 
         # Confirm the Key(s) Exists
         if not kwargs['easyDict']['sites'][site].get(cS[0]):
-            kwargs['easyDict']['sites'][site].append(deepcopy({cS[0]:{}}))
-        if len(cS) >= 2:
+            kwargs['easyDict']['sites'][site].update(deepcopy({cS[0]:{}}))
+        if len(cS) == 2:
             if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
-                kwargs['easyDict']['sites'][site][cS[0]].append(deepcopy({cS[1]:{}}))
-        if len(cS) >= 3:
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:[]}))
+        if len(cS) == 3:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
             if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy({cS[2]:{}}))
-        if len(cS) >= 4:
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:[]}))
+        if len(cS) == 4:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
             if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].append(deepcopy({cS[3]:{}}))
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:[]}))
         if len(cS) == 5:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:{}}))
             if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].get(cS[4]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy({cS[4]:{}}))
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].update(deepcopy({cS[4]:[]}))
 
         # Append the Dictionary
         if len(cS) == 1:   kwargs['easyDict']['sites'][site][cS[0]].append(deepcopy(templateVars))
         elif len(cS) == 2:   kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy(templateVars))
         elif len(cS) == 3: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].append(deepcopy(templateVars))
         elif len(cS) == 4: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy(templateVars))
-        elif len(cS) == 5: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]].append(deepcopy(templateVars))
 
     if 'Grp_' in kwargs['site_group']:
         if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
@@ -592,17 +578,69 @@ def easyDict_append_subtype(templateVars, **kwargs):
     policy  = kwargs['policy']
     policy_name  = kwargs['policy_name']
     templateVars.pop('site_group')
+    pop_list = []
+    for k,v in templateVars.items():
+        if v == None:
+            pop_list.append(k)
+    for i in pop_list:
+        templateVars.pop(i)
     def site_append(cS, site, templateVars):
-        # Update the Dictionary
+        # Assign the Dictionary
         if len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site][cS[0]]
         elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
         elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
+
+        for k, v in dict1.items():
+            for i in v:
+                if not i.get(cS[-1]):
+                    i[cS[-1]] = []
+                if i[policy] == policy_name:
+                    i[cS[-1]].append(deepcopy(templateVars))
+                    break
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, templateVars)
+        else:
+            validating.site_group_error('site_group', **kwargs)
+    else:
+        site_append(cS, kwargs['site_group'], templateVars)
+
+    # Return Dictionary
+    return kwargs['easyDict']
+
+#======================================================
+# Function to Append Subtype easyDict Dictionary
+#======================================================
+def easyDict_append_arg(templateVars, **kwargs):
+    # templateVars = OrderedDict(sorted(templateVars.items()))
+    class_path   = kwargs['class_path']
+    cS = class_path.split(',')
+    policy  = kwargs['policy']
+    policy_name  = kwargs['policy_name']
+    templateVars.pop('site_group')
+    pop_list = []
+    for k,v in templateVars.items():
+        if v == None:
+            pop_list.append(k)
+    for i in pop_list:
+        templateVars.pop(i)
+    def site_append(cS, site, templateVars):
+        # Assign the Dictionary
+        if len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
+        elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]]
 
         for i in dict1:
-            if 'bgp_route_reflectors' in class_path:
-                if i[policy] == policy_name:
-                    i[cS[2]] = templateVars
-                    break
+            if not i.get(cS[-1]):
+                i[cS[-1]] = []
+            if i[policy] == policy_name:
+                i[cS[-1]].extend(templateVars[cS[-1]])
+                break
         
     if 'Grp_' in kwargs['site_group']:
         if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
@@ -620,10 +658,58 @@ def easyDict_append_subtype(templateVars, **kwargs):
 #======================================================
 # Function to Append the easyDict Dictionary
 #======================================================
+def easyDict_merge(templateVars, **kwargs):
+    # templateVars = OrderedDict(sorted(templateVars.items()))
+    class_path = kwargs['class_path']
+    cS = class_path.split(',')
+    policy  = kwargs['policy']
+    policy_name  = kwargs['policy_name']
+    templateVars.pop('site_group')
+    pop_list = []
+    for k,v in templateVars.items():
+        if v == None:
+            pop_list.append(k)
+    for i in pop_list:
+        templateVars.pop(i)
+    def site_merge(cS, site, templateVars):
+        if not kwargs['easyDict']['sites'].get(site):
+            validating.site_group_error('site_group', **kwargs)
+
+        # Assign the Dictionary
+        if len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[4]][cS[5]]
+
+        for i in dict1:
+            if i[policy] == policy_name:
+                i.update(deepcopy(templateVars))
+                break
+
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_merge(cS, site, templateVars)
+        else:
+            validating.site_group_error('site_group', **kwargs)
+    else:
+        site_merge(cS, kwargs['site_group'], templateVars)
+        
+    return kwargs['easyDict']
+
+#======================================================
+# Function to Append the easyDict Dictionary
+#======================================================
 def easyDict_update(templateVars, **kwargs):
     class_path = kwargs['class_path']
     cS = class_path.split(',')
     templateVars.pop('site_group')
+    pop_list = []
+    for k,v in templateVars.items():
+        if v == None:
+            pop_list.append(k)
+    for i in pop_list:
+        templateVars.pop(i)
     def site_update(cS, site, templateVars):
         if not kwargs['easyDict']['sites'].get(site):
             validating.site_group_error('site_group', **kwargs)
@@ -661,6 +747,50 @@ def easyDict_update(templateVars, **kwargs):
     else:
         site_update(cS, kwargs['site_group'], templateVars)
         
+    return kwargs['easyDict']
+
+#======================================================
+# Function to Append Subtype easyDict Dictionary
+#======================================================
+def easyDict_update_subtype(templateVars, **kwargs):
+    # templateVars = OrderedDict(sorted(templateVars.items()))
+    class_path   = kwargs['class_path']
+    cS = class_path.split(',')
+    policy  = kwargs['policy']
+    policy_name  = kwargs['policy_name']
+    templateVars.pop('site_group')
+    pop_list = []
+    for k,v in templateVars.items():
+        if v == None:
+            pop_list.append(k)
+    for i in pop_list:
+        templateVars.pop(i)
+    def site_append(cS, site, templateVars):
+        # Assign the Dictionary
+        if len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site][cS[0]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
+
+        for k, v in dict1.items():
+            for i in v:
+                if not i.get(cS[-1]):
+                    i[cS[-1]] = {}
+                if i[policy] == policy_name:
+                    i[cS[-1]].update(deepcopy(templateVars))
+                    break
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, templateVars)
+        else:
+            validating.site_group_error('site_group', **kwargs)
+    else:
+        site_append(cS, kwargs['site_group'], templateVars)
+
+    # Return Dictionary
     return kwargs['easyDict']
 
 #======================================================
@@ -949,33 +1079,28 @@ def git_check_status(args):
 def interface_selector_workbook(templateVars, **kwargs):
     # Set the Workbook var
     wb_sw = kwargs['wb_sw']
+    site_group = kwargs['site_group']
 
     # Use Switch_Type to Determine the Number of ports on the switch
     modules,port_count = switch_model_ports(kwargs['row_num'], templateVars['switch_model'])
 
     # Get the Interface Policy Groups from EasyDict
     if templateVars['node_type'] == 'spine':
-        pg_list = ['spine_interface_policy_groups']
+        pg_list = ['spine_pg']
     else:
-        pg_list = [
-            'leaf_interfaces_policy_groups_access',
-            'leaf_interfaces_policy_groups_breakout',
-            'leaf_interfaces_policy_groups_bundle'
-        ]
+        pg_list = ['access', 'breakout', 'bundle']
     switch_pgs = {}
     for pgroup in pg_list:
         switch_pgs[pgroup] = []
-        for k, v in kwargs['easyDict']['access'][pgroup].items():
-            if re.search('Grp_', k):
-                site_group = kwargs['easyDict']['sites']['site_groups'][k][0]
-                for site in site_group['sites']:
-                    if int(templateVars['site_group']) == int(site):
-                        for i in v:
-                            switch_pgs[pgroup].append(i['name'])
+        if 'spine_pg' in pgroup:
+            pgroups = kwargs['easyDict']['sites'][site_group]['access']['interfaces']['spine']['policy_groups']
+        else:
+            pgroups = kwargs['easyDict']['sites'][site_group]['access']['interfaces']['leaf']['policy_groups'][pgroup]
+        for i in pgroups:
+            if pgroup == 'bundle':
+                switch_pgs[pgroup].extend(i['names'])
             else:
-                if int(k) == int(templateVars['site_group']):
-                    for i in v:
-                        switch_pgs[pgroup].append(i['name'])
+                switch_pgs[pgroup].append(i['name'])
 
     # Sort the Policy Group List and Convert to a string
     for pgroup in pg_list:
@@ -995,9 +1120,9 @@ def interface_selector_workbook(templateVars, **kwargs):
 
     ws_sw = wb_sw['formulas']
     for pgroup in pg_list:
-        if pgroup == 'leaf_interfaces_policy_groups_access': x = 1
-        elif pgroup == 'leaf_interfaces_policy_groups_breakout': x = 2
-        elif pgroup == 'leaf_interfaces_policy_groups_bundle': x = 3
+        if pgroup == 'access': x = 1
+        elif pgroup == 'breakout': x = 2
+        elif pgroup == 'bundle': x = 3
         elif templateVars['node_type'] == 'spine': x = 4
         if len(switch_pgs[pgroup]) > 0:
             row_start = 2
@@ -1024,17 +1149,17 @@ def interface_selector_workbook(templateVars, **kwargs):
             if not 'spine_pg' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('spine_pg')
                 wb_sw.defined_names.append(new_range)
-        elif pgroup == 'leaf_interfaces_policy_groups_access':
+        elif pgroup == 'access':
             new_range = openpyxl.workbook.defined_name.DefinedName('access',attr_text=f"formulas!$A$2:$A{last_row}")
             if not 'access' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('access')
                 wb_sw.defined_names.append(new_range)
-        elif pgroup == 'leaf_interfaces_policy_groups_breakout':
+        elif pgroup == 'breakout':
             new_range = openpyxl.workbook.defined_name.DefinedName('breakout',attr_text=f"formulas!$B$2:$B{last_row}")
             if not 'breakout' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('breakout')
                 wb_sw.defined_names.append(new_range)
-        elif pgroup == 'leaf_interfaces_policy_groups_bundle':
+        elif pgroup == 'bundle':
             new_range = openpyxl.workbook.defined_name.DefinedName('bundle',attr_text=f"formulas!$C$2:$C{last_row}")
             if not 'bundle' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('bundle')
@@ -1093,37 +1218,24 @@ def interface_selector_workbook(templateVars, **kwargs):
         templateVars['port_count'] = port_count
         sw_type = str(templateVars['switch_model'])
         if re.search('^(95[0-1][4-8])', sw_type):
-            mod_keys = kwargs['easyDict']['access']['spine_modules'].keys()
-            site_group = templateVars["site_group"]
-            spine_modules = ''
-            if site_group in mod_keys:
-                spine_modules = kwargs['easyDict']['access']['spine_modules'][site_group][0]
-            else:
-                site_groups = kwargs['easyDict']['sites']['site_groups'].keys()
-                x = []
-                for s in site_groups:
-                    if 'Grp_' in s:
-                        x.append(s)
-                site_groups = x
-                for sgroup in site_groups:
-                    if site_group in kwargs['easyDict']['sites']['site_groups'][sgroup][0]['sites']:
-                        spine_modules = kwargs['easyDict']['access']['spine_modules'][sgroup][0]
-            modDict = {}
-            if not spine_modules == '':
-                node_list = spine_modules['node_list']
-                if str(templateVars['node_id']) in node_list:
-                    modDict = spine_modules
-            else:
-                print(f"Error, Could not find the Module list for spine {templateVars['node_id']}")
-                exit()
-            
-            for x in range(1, int(modules) + 1):
-                module_type = modDict[f'module_{x}']
-                if not module_type == None:
-                    if re.search('^X97', module_type):
-                        templateVars['module'] = x
-                        templateVars['port_count'] = spine_module_port_count(module_type)
-                        ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
+            if kwargs['easyDict']['sites'][site_group]['switch'].get('spine_modules'):
+                modCount = 0
+                for i in kwargs['easyDict']['sites'][site_group]['switch']['spine_modules']:
+                    modDict = {}
+                    if str(templateVars['node_id']) in i['node_list']:
+                        modDict = i
+                        modCount += 1
+                if modCount == 0:
+                    print(f"Error, Could not find the Module list for spine {templateVars['node_id']}")
+                    exit()
+                
+                for x in range(1, int(modules) + 1):
+                    module_type = modDict[f'module_{x}']
+                    if not module_type == None:
+                        if re.search('^X97', module_type):
+                            templateVars['module'] = x
+                            templateVars['port_count'] = spine_module_port_count(module_type)
+                            ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
         else:
             templateVars['module'] = 1
             ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
@@ -1572,6 +1684,9 @@ def sensitive_var_value(**kwargs):
                 elif 'radius_monitoring_password' in sensitive_var:
                     sKey = 'radius_monitoring_password'
                     varTitle = 'RADIUS Monitoring Password.'
+                elif 'remote_password' in sensitive_var:
+                    sKey = 'remote_password'
+                    varTitle = 'The Remote Host password.'
                 elif re.search('snmp_(authorization|privacy)_key', sensitive_var):
                     sKey = 'snmp_key'
                     x = sensitive_var.split('_')

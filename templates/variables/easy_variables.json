@@ -8,101 +8,60 @@
                         "properties": {
                             "classes": {
                                 "enum": [
+                                    "access",
                                     "admin",
                                     "fabric",
-                                    "switches",
+                                    "switch",
                                     "system_settings",
                                     "tenants",
                                     "virtual_networking"
                                 ]
                             },
                             "class.access": {
+                                "directory": "fabric:access-policies",
                                 "enum": [
-                                    "l3_domains",
-                                    "physical_domains",
-                                    "attachable_access_entity_profiles",
-                                    "dhcp_relay",
-                                    "leaf_interfaces_policy_groups_access",
-                                    "leaf_interfaces_policy_groups_breakout",
-                                    "leaf_interfaces_policy_groups_bundle",
-                                    "cdp_interface",
-                                    "fibre_channel_interface",
-                                    "l2_interface",
-                                    "link_level",
-                                    "lldp_interface",
-                                    "mcp_interface",
-                                    "port_channel",
-                                    "port_security",
-                                    "spanning_tree_interface",
-                                    "vlan",
-                                    "leaf",
-                                    "spine",
-                                    "switches_spine_policy_groups",
-                                    "virtual_networking"
+                                    "interfaces",
+                                    "physical_and_external_domains",
+                                    "policies",
+                                    "pools",
+                                    "switches"
                                 ]
                             },
                             "class.admin": {
+                                "directory": "admin",
                                 "enum": [
-                                    "authentication",
-                                    "configuration_backups",
-                                    "firmware",
-                                    "security",
-                                    "radius",
-                                    "tacacs"
+                                    "admin"
                                 ]
                             },
                             "class.fabric": {
+                                "directory": "fabric:fabric-policies",
                                 "enum": [
-                                    "date_and_time",
-                                    "dns_profiles",
-                                    "smart_callhome",
-                                    "snmp_policies",
-                                    "syslog"
+                                    "fabric"
                                 ]
                             },
-                            "class.switches": {
+                            "class.switch": {
+                                "directory": "switches",
                                 "enum": [
                                     "switch_profiles",
                                     "vpc_domains"
                                 ]
                             },
                             "class.system_settings": {
+                                "directory": "system_settings",
                                 "enum": [
-                                    "apic_connectivity_preference",
-                                    "bgp_autonomous_system_number",
-                                    "bgp_route_reflectors",
-                                    "recommended_settings"
+                                    "system_settings"
                                 ]
                             },
                             "class.tenants": {
+                                "directory": "tenants",
                                 "enum": [
-                                    "apics_inband_mgmt_addresses",
-                                    "application_epgs",
-                                    "application_profiles",
-                                    "bridge_domains",
-                                    "contracts",
-                                    "filters",
-                                    "l3out_logical_node_profiles",
-                                    "l3out_static_route",
-                                    "l3outs",
-                                    "policies_bgp_address_family_context",
-                                    "policies_bgp_best_path",
-                                    "policies_bgp_peer_prefix",
-                                    "policies_bgp_route_summarization",
-                                    "policies_bgp_timers",
-                                    "policies_bfd_interface",
-                                    "policies_dhcp_option",
-                                    "policies_dhcp_relay",
-                                    "policies_eigrp_interface",
-                                    "policies_endpoint_retention",
-                                    "policies_ospf_interface",
-                                    "policies_ospf_route_summarization",
-                                    "policies_ospf_timers",
-                                    "route_map_match_rules",
-                                    "route_maps_for_route_control",
-                                    "schemas",
-                                    "tenants",
-                                    "vrfs"
+                                    "tenant"
+                                ]
+                            },
+                            "class.virtual_networking": {
+                                "directory": "virtual_networking",
+                                "enum": [
+                                    "virtual_networking"
                                 ]
                             },
                             "files": {
@@ -237,11 +196,6 @@
                             },
                             "processes": {
                                 "enum": [
-                                    "system_settings"
-                                ]
-                            },
-                            "processes_all": {
-                                "enum": [
                                     "access",
                                     "admin",
                                     "fabric",
@@ -251,24 +205,6 @@
                                     "virtual_networking"
                                 ]
                             },
-                            "remove_files": [
-                                "coop_group.tf",
-                                "data_sources.tf",
-                                "endpoint_controls.tf",
-                                "fabric_node_controls.tf",
-                                "fabric_wide_settings.tf",
-                                "isis_policy.tf",
-                                "l3_interface.tf",
-                                "locals.tf",
-                                "main.tf",
-                                "output.tf",
-                                "outputs.tf",
-                                "pod_profiles.tf",
-                                "port_tracking.tf",
-                                "provider.tf",
-                                "README.md",
-                                "variables.tf"
-                            ],
                             "siteDict": {
                                 "sensitive_vars": [
                                 ],
@@ -882,11 +818,19 @@
                     }
                 ]
             },
-            "access.policyGroups.interfacePolicies": {
+            "access.policyGroups.leafAccessPort": {
                 "allOf": [
                     {},
                     {
                         "properties": {
+                            "attachable_entity_profile": {
+                                "description": "Name of the Attachable Access Entity Profile.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "copp_interface_policy": {
                                 "description": "Name of the Control Plane Policing Interface Policy.",
                                 "type": "string",
@@ -911,16 +855,24 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "fibre_channel_interface_policy": {
-                                "description": "Name of the Fibre Channel Interface Policy.",
+                            "dot1x_port_authentication_policy": {
+                                "description": "Name of the 802.1x Port Authentication Policy.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "interface_policy": {
-                                "description": "Name for this Shared Interface Policy.",
+                            "dwdm_policy": {
+                                "description": "Name of the DWDM Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "fibre_channel_interface_policy": {
+                                "description": "Name of the Fibre Channel Interface Policy.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -988,6 +940,9 @@
                                 "copp_interface_policy": "",
                                 "data_plane_policing_egress": "",
                                 "data_plane_policing_ingress": "",
+                                "description": "",
+                                "dot1x_port_authentication_policy": "",
+                                "dwdm_policy": "",
                                 "fibre_channel_interface_policy": "",
                                 "l2_interface_policy": "",
                                 "link_flap_policy": "",
@@ -997,11 +952,22 @@
                                 "macsec_policy": "",
                                 "mcp_interface_policy": "",
                                 "monitoring_policy": "",
+                                "netflow_monitor_policies": "",
+                                "poe_interface_policy": "",
                                 "port_security_policy": "",
                                 "priority_flow_control_policy": "",
                                 "slow_drain_policy": "",
                                 "spanning_tree_interface_policy": "",
-                                "storm_control_policy": ""
+                                "storm_control_policy": "",
+                                "synce_interface_policy": ""
+                            },
+                            "poe_interface_policy": {
+                                "description": "Name of the PoE Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             },
                             "port_security_policy": {
                                 "description": "Name of the Port Security Interface Policy.",
@@ -1020,7 +986,9 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "interface_policy": ""
+                                "attachable_entity_profile": "",
+                                "name": "",
+                                "site_group": ""
                             },
                             "slow_drain_policy": {
                                 "description": "Name of the Slow Drain Interface Policy.",
@@ -1045,70 +1013,6 @@
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "access.policyGroups.leafAccessPort": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "attachable_entity_profile": {
-                                "description": "Name of the Attachable Access Entity Profile.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "dot1x_port_authentication_policy": {
-                                "description": "Name of the 802.1x Port Authentication Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "dwdm_policy": {
-                                "description": "Name of the DWDM Interface Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "interface_policy": {
-                                "description": "Name of the Shared Interface Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "optional_args": {
-                                "description": "",
-                                "dot1x_port_authentication_policy": "",
-                                "dwdm_policy": "",
-                                "global_alias": "",
-                                "netflow_monitor_policies": "",
-                                "poe_interface_policy": "",
-                                "synce_interface_policy": ""
-                            },
-                            "poe_interface_policy": {
-                                "description": "Name of the PoE Interface Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "required_args": {
-                                "attachable_entity_profile": "",
-                                "interface_policy": "",
-                                "name": "",
-                                "site_group": ""
                             },
                             "synce_interface_policy": {
                                 "description": "Name of the Synce Interface Policy.",
@@ -1117,69 +1021,6 @@
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "access.policyGroups.leafBundle": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "attachable_entity_profile": {
-                                "description": "Name of the Attachable Access Entity Profile.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "link_aggregation_policy": {
-                                "description": "Name of the Port-Channel Interface Policy (LACP).",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "link_aggregation_type": {
-                                "description": "Defines if the Port-Channel is local to a switch (pc) or redundant accross a pair (vpc)",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "pc",
-                                    "vpc"
-                                ],
-                                "default": "link",
-                                "x-omitempty": true
-                            },
-                            "interface_policy": {
-                                "description": "Name of the Shared Interface Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "optional_args": {
-                                "description": "",
-                                "netflow_monitor_policies": ""
-                            },
-                            "poe_interface": {
-                                "description": "Name of the PoE Interface Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "required_args": {
-                                "attachable_entity_profile": "",
-                                "interface_policy": "",
-                                "link_aggregation_policy": "",
-                                "link_aggregation_type": "",
-                                "name": "",
-                                "site_group": ""
                             }
                         }
                     }
@@ -1210,6 +1051,238 @@
                                 "breakout_map": "",
                                 "name": "",
                                 "site_group": ""
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policyGroups.leafBundles": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "names": {
+                                "description": "Name of the Attachable Access Entity Profile.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                            },
+                            "required_args": {
+                                "names": "",
+                                "site_group": "",
+                                "template_name": ""
+                            },
+                            "template_name": {
+                                "description": "Name of the Storm Control Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "access.policyGroups.leafBundleTemplate": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "attachable_entity_profile": {
+                                "description": "Name of the Attachable Access Entity Profile.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "copp_interface_policy": {
+                                "description": "Name of the Control Plane Policing Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "data_plane_policing_egress": {
+                                "description": "Name of the egress Data Plane Policing Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "data_plane_policing_ingress": {
+                                "description": "Name of the ingress Data Plane Policing Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "fibre_channel_interface_policy": {
+                                "description": "Name of the Fibre Channel Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "l2_interface_policy": {
+                                "description": "Name of the L2 Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_aggregation_type": {
+                                "description": "Defines if the Port-Channel is local to a switch (pc) or redundant accross a pair (vpc)",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "pc",
+                                    "vpc"
+                                ],
+                                "default": "link",
+                                "x-omitempty": true
+                            },
+                            "link_flap_policy": {
+                                "description": "Name of the Link Flap Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_level_flow_control_policy": {
+                                "description": "Name of the Link Level Flow Control Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "link_level_policy": {
+                                "description": "Name of the Link Level Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "macsec_policy": {
+                                "description": "Name of the MacSec Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "mcp_interface_policy": {
+                                "description": "Name of the Mis-Cabling Protocol Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "monitoring_policy": {
+                                "description": "Name of the Monitoring Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "cdp_interface_policy": "",
+                                "copp_interface_policy": "",
+                                "data_plane_policing_egress": "",
+                                "data_plane_policing_ingress": "",
+                                "description": "",
+                                "fibre_channel_interface_policy": "",
+                                "l2_interface_policy": "",
+                                "link_flap_policy": "",
+                                "link_level_flow_control_policy": "",
+                                "link_level_policy": "",
+                                "lldp_interface_policy": "",
+                                "macsec_policy": "",
+                                "mcp_interface_policy": "",
+                                "monitoring_policy": "",
+                                "netflow_monitor_policies": "",
+                                "port_security_policy": "",
+                                "priority_flow_control_policy": "",
+                                "slow_drain_policy": "",
+                                "spanning_tree_interface_policy": "",
+                                "storm_control_policy": ""
+                            },
+                            "port_channel_policy": {
+                                "description": "Name of the Port-Channel Interface Policy (LACP).",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "port_security_policy": {
+                                "description": "Name of the Port Security Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "priority_flow_control_policy": {
+                                "description": "Name of the Priority Flow Control Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "attachable_entity_profile": "",
+                                "link_aggregation_type": "",
+                                "port_channel_policy": "",
+                                "site_group": "",
+                                "template_name": ""
+                            },
+                            "slow_drain_policy": {
+                                "description": "Name of the Slow Drain Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "spanning_tree_interface_policy": {
+                                "description": "Name of the Spanning Tree Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "storm_control_policy": {
+                                "description": "Name of the Storm Control Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name of the Storm Control Interface Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             }
                         }
                     }
@@ -1662,6 +1735,108 @@
                     }
                 ]
             },
+            "access.preBuiltPolicies": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "cdp_interface": {
+                                "description": "Boolean to configure or not configure CDP Interface Pre-Built Policies.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "fibre_channel_interface": {
+                                "description": "Boolean to configure or not configure Fibre-Channel Interface Pre-Built Policies.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "l2_interface": {
+                                "description": "Boolean to configure or not configure L2 Interface Pre-Built Policies.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "link_level": {
+                                "description": "Boolean to configure or not configure Link Level Pre-Built Policies.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "lldp_interface": {
+                                "description": "Boolean to configure or not configure LLDP Interface Pre-Built Policies.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "mcp_interface": {
+                                "description": "Boolean to configure or not configure Mis-Cabling Protocol Interface Pre-Built Policies.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                            },
+                            "port_channel": {
+                                "description": "Boolean to configure or not configure Port Channel Interface Pre-Built Policies.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "cdp_interface": "",
+                                "fibre_channel_interface": "",
+                                "l2_interface": "",
+                                "link_level": "",
+                                "lldp_interface": "",
+                                "mcp_interface": "",
+                                "port_channel": "",
+                                "spanning_tree_interface": "",
+                                "site_group": ""
+                            },
+                            "spanning_tree_interface": {
+                                "description": "Boolean to configure or not configure Spanning Tree Interface Pre-Built Policies.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "access.switches.leafPolicyGroup": {
                 "allOf": [
                     {},
@@ -2068,16 +2243,8 @@
                             "optional_args": {
                                 "description": ""
                             },
-                            "password": {
-                                "description": "Controller Login Password Identifier.",
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 5,
-                                "x-omitempty": true
-                            },
                             "required_args": {
                                 "domain_name": "",
-                                "password": "",
                                 "site_group": "",
                                 "username": ""
                             },
@@ -2871,6 +3038,7 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
+                                "site_group": "",
                                 "console_realm": "",
                                 "default_realm": "",
                                 "fallback_domain_avialability": "",
@@ -2912,15 +3080,6 @@
                                 "type": "list_of_hosts",
                                 "x-omitempty": true
                             },
-                            "key": {
-                                "description": "Secret Key Variable Identifier.",
-                                "type": "integer",
-                                "format": "int64",
-                                "minimum": 1,
-                                "maximum": 5,
-                                "default": 1,
-                                "x-omitempty": true
-                            },
                             "login_domain": {
                                 "description": "Login Domain.",
                                 "type": "string",
@@ -2929,15 +3088,7 @@
                                 "pattern": "^([a-zA-Z0-9][a-zA-Z0-9\\_]+)$",
                                 "x-omitempty": true
                             },
-                            "monitoring_password": {
-                                "description": "RADIUS Server Monitoring Password Identifier.",
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 5,
-                                "x-omitempty": true
-                            },
                             "optional_args": {
-                                "monitoring_password": "",
                                 "username": ""
                             },
                             "port": {
@@ -2968,7 +3119,6 @@
                             "required_args": {
                                 "authorization_protocol": "",
                                 "hosts": "",
-                                "key": "",
                                 "login_domain": "",
                                 "management_epg": "",
                                 "port": "",
@@ -3038,7 +3188,6 @@
                             },
                             "optional_args": {
                                 "description": "",
-                                "password": "",
                                 "username": ""
                             },
                             "protocol": {
@@ -3050,13 +3199,6 @@
                                     "sftp"
                                 ],
                                 "default": "sftp",
-                                "x-omitempty": true
-                            },
-                            "password": {
-                                "description": "Remote Host Password Identifier.",
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 5,
                                 "x-omitempty": true
                             },
                             "remote_hosts": {
@@ -3127,6 +3269,378 @@
                     }
                 ]
             },
+            "admin.smartCallHome": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "contact_information": {
+                                "description": "Smart Callhome contact information field.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 255,
+                                "pattern": "^$|^(?!.{64,})[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+$",
+                                "x-omitempty": true
+                            },
+                            "customer_contact_email": {
+                                "description": "Smart Callhome customer contact email field.",
+                                "type": "email",
+                                "x-omitempty": true
+                            },
+                            "from_email": {
+                                "description": "Smart Callhome from email field.",
+                                "type": "email",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "contact_information": "",
+                                "contract_id": "",
+                                "customer_id": "",
+                                "customer_contact_email": "",
+                                "from_email": "",
+                                "phone_contact": "",
+                                "reply_to_email": "",
+                                "site_id": "",
+                                "street_address": ""
+                            },
+                            "phone_contact": {
+                                "description": "Callhome contact phone number.",
+                                "type": "phone_number",
+                                "x-omitempty": true
+                            },
+                            "reply_to_email": {
+                                "description": "Smart Callhome reply to email field.",
+                                "type": "email",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "admin_state": "",
+                                "site_group": ""
+                            },
+                            "street_address": {
+                                "description": "Smart CallHome street address.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 255,
+                                "pattern": "^[a-zA-Z0-9\\\\!#$%()*,-./:;@ _{|}~?&+]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "admin.smartDestinations": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "email": {
+                                "description": "Smart Callhome destionation email.",
+                                "type": "email",
+                                "x-omitempty": true
+                            },
+                            "format": {
+                                "description": "Format of the Email.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "aml",
+                                    "short-txt",
+                                    "xml"
+                                ],
+                                "default": "short-txt",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {},
+                            "required_args": {
+                                "admin_state": "",
+                                "email": "",
+                                "format": "",
+                                "rfc_compliant": "",
+                                "site_group": ""
+                            },
+                            "rfc_compliant": {
+                                "description": "Should the Message be RFC Compliant.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "admin.smartSmtpServer": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "optional_args": {
+                                "username": ""
+                            },
+                            "port_number": {
+                                "description": "Smart SMTP Server",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 25,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "management_epg": "",
+                                "port_number": "",
+                                "secure_smtp": "",
+                                "smtp_server": "",
+                                "site_group": ""
+                            },
+                            "secure_smtp": {
+                                "description": "Does the SMTP Server Require Credentials.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "false",
+                                "x-omitempty": true
+                            },
+                            "smtp_password": {
+                                "description": "Security SMTP Password.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 128,
+                                "pattern": "^[\\S+]{1,128}$",
+                                "x-omitempty": true
+                            },
+                            "smtp_server": {
+                                "description": "SMTP Server.",
+                                "type": "hostname",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "admin.Syslog": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "audit_logs": {
+                                "description": "Audit Log Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "console_admin_state": {
+                                "description": "Console Syslog Admin State.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "console_severity": {
+                                "description": "Console Severity.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "alerts",
+                                    "critical",
+                                    "emergencies"
+                                ],
+                                "default": "critical",
+                                "x-omitempty": true
+                            },
+                            "events": {
+                                "description": "Audit Log Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "faults": {
+                                "description": "Faults Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "format": {
+                                "description": "Syslog Format.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "aci",
+                                    "nxos"
+                                ],
+                                "default": "aci",
+                                "x-omitempty": true
+                            },
+                            "local_admin_state": {
+                                "description": "Local Syslog Admin State.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "local_severity": {
+                                "description": "Local Severity.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "alerts",
+                                    "critical",
+                                    "debugging",
+                                    "emergencies",
+                                    "errors",
+                                    "information",
+                                    "notifications",
+                                    "warnings"
+                                ],
+                                "default": "information",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {},
+                            "required_args": {
+                                "admin_state": "",
+                                "audit_logs": "",
+                                "console_admin_state": "",
+                                "console_severity": "",
+                                "events": "",
+                                "faults": "",
+                                "format": "",
+                                "local_admin_state": "",
+                                "local_severity": "",
+                                "session_logs": "",
+                                "show_milliseconds_in_timestamp": "",
+                                "show_time_zone_in_timestamp": "",
+                                "site_group": ""
+                            },
+                            "session_logs": {
+                                "description": "Session Log Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "show_milliseconds_in_timestamp": {
+                                "description": "Flag to show milliseconds in timestamp.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            },
+                            "show_time_zone_in_timestamp": {
+                                "description": "Flag to show timezone in timestamp.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "admin.syslogRemoteDestinations": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "forwarding_facility": {
+                                "description": "The Remote Syslog Server Facility.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "local0",
+                                    "local1",
+                                    "local2",
+                                    "local3",
+                                    "local4",
+                                    "local5",
+                                    "local6",
+                                    "local7"
+                                ],
+                                "default": "local7",
+                                "x-omitempty": true
+                            },
+                            "hosts": {
+                                "description": "List of Syslog Remote Destination Servers.",
+                                "type": "list_of_hosts",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {},
+                            "port": {
+                                "description": "Syslog Destination Port.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 65535,
+                                "default": 514,
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "admin_state": "",
+                                "forwarding_facility": "",
+                                "hosts": "",
+                                "management_epg": "",
+                                "port": "",
+                                "severity": "",
+                                "site_group": "",
+                                "transport": ""
+                            },
+                            "severity": {
+                                "description": "The Syslog Severity Level.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "alerts",
+                                    "critical",
+                                    "debugging",
+                                    "emergencies",
+                                    "errors",
+                                    "information",
+                                    "notifications",
+                                    "warnings"
+                                ],
+                                "default": "information",
+                                "x-omitempty": true
+                            },
+                            "transport": {
+                                "description": "Send Syslog using TCP or UDP.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "tcp",
+                                    "udp"
+                                ],
+                                "default": "udp",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "admin.Tacacs": {
                 "allOf": [
                     {},
@@ -3148,15 +3662,6 @@
                                 "type": "list_of_hosts",
                                 "x-omitempty": true
                             },
-                            "key": {
-                                "description": "Secret Key Variable Identifier.",
-                                "type": "integer",
-                                "format": "int64",
-                                "minimum": 1,
-                                "maximum": 5,
-                                "default": 1,
-                                "x-omitempty": true
-                            },
                             "login_domain": {
                                 "description": "Login Domain.",
                                 "type": "string",
@@ -3165,15 +3670,7 @@
                                 "pattern": "^([a-zA-Z0-9][a-zA-Z0-9\\_]+)$",
                                 "x-omitempty": true
                             },
-                            "monitoring_password": {
-                                "description": "TACACS+ Server Monitoring Password Identifier.",
-                                "type": "integer",
-                                "minimum": 1,
-                                "maximum": 5,
-                                "x-omitempty": true
-                            },
                             "optional_args": {
-                                "monitoring_password": "",
                                 "username": ""
                             },
                             "port": {
@@ -3191,7 +3688,6 @@
                                 "events": "",
                                 "faults": "",
                                 "hosts": "",
-                                "key": "",
                                 "login_domain": "",
                                 "management_epg": "",
                                 "port": "",
@@ -3912,101 +4408,13 @@
                     }
                 ]
             },
-            "fabric.smartCallHome": {
+            "fabric.recommendedSettings": {
                 "allOf": [
                     {},
                     {
                         "properties": {
-                            "contact_information": {
-                                "description": "Smart Callhome contact information field.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 255,
-                                "pattern": "^$|^(?!.{64,})[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+$",
-                                "x-omitempty": true
-                            },
-                            "customer_contact_email": {
-                                "description": "Smart Callhome customer contact email field.",
-                                "type": "email",
-                                "x-omitempty": true
-                            },
-                            "from_email": {
-                                "description": "Smart Callhome from email field.",
-                                "type": "email",
-                                "x-omitempty": true
-                            },
-                            "optional_args": {
-                                "contact_information": "",
-                                "contract_id": "",
-                                "customer_id": "",
-                                "customer_contact_email": "",
-                                "from_email": "",
-                                "phone_contact": "",
-                                "reply_to_email": "",
-                                "site_id": "",
-                                "street_address": ""
-                            },
-                            "phone_contact": {
-                                "description": "Callhome contact phone number.",
-                                "type": "phone_number",
-                                "x-omitempty": true
-                            },
-                            "reply_to_email": {
-                                "description": "Smart Callhome reply to email field.",
-                                "type": "email",
-                                "x-omitempty": true
-                            },
-                            "required_args": {
-                                "admin_state": "",
-                                "audit_logs": "",
-                                "events": "",
-                                "faults": "",
-                                "session_logs": "",
-                                "site_group": ""
-                            },
-                            "street_address": {
-                                "description": "Smart CallHome street address.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 255,
-                                "pattern": "^[a-zA-Z0-9\\\\!#$%()*,-./:;@ _{|}~?&+]+$",
-                                "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "fabric.smartDestinations": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "email": {
-                                "description": "Smart Callhome destionation email.",
-                                "type": "email",
-                                "x-omitempty": true
-                            },
-                            "format": {
-                                "description": "Format of the Email.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "aml",
-                                    "short-txt",
-                                    "xml"
-                                ],
-                                "default": "short-txt",
-                                "x-omitempty": true
-                            },
-                            "optional_args": {},
-                            "required_args": {
-                                "admin_state": "",
-                                "email": "",
-                                "format": "",
-                                "rfc_compliant": "",
-                                "site_group": ""
-                            },
-                            "rfc_compliant": {
-                                "description": "Should the Message be RFC Compliant.",
+                            "fabric_node_controls": {
+                                "description": "Boolean to configure or not configure Fabric Node Controls best practices.",
                                 "type": "list_of_values",
                                 "enum": [
                                     "false",
@@ -4014,57 +4422,34 @@
                                 ],
                                 "default": "true",
                                 "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "fabric.smartSmtpServer": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "optional_args": {
-                                "username": ""
                             },
-                            "port_number": {
-                                "description": "Smart SMTP Server",
-                                "type": "integer",
-                                "format": "int64",
-                                "minimum": 1,
-                                "maximum": 65535,
-                                "default": 25,
-                                "x-omitempty": true
-                            },
-                            "required_args": {
-                                "management_epg": "",
-                                "port_number": "",
-                                "secure_smtp": "",
-                                "smtp_server": "",
-                                "site_group": ""
-                            },
-                            "secure_smtp": {
-                                "description": "Does the SMTP Server Require Credentials.",
+                            "l3_interface": {
+                                "description": "Boolean to configure or not configure L3 Interface best practices.",
                                 "type": "list_of_values",
                                 "enum": [
                                     "false",
                                     "true"
                                 ],
-                                "default": "false",
+                                "default": "true",
                                 "x-omitempty": true
                             },
-                            "smtp_password": {
-                                "description": "Security SMTP Password.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 128,
-                                "pattern": "^[\\S+]{1,128}$",
+                            "optional_args": {
+                            },
+                            "pods": {
+                                "description": "Boolean to configure or not configure Pod Profile/Policy Group.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "false",
+                                    "true"
+                                ],
+                                "default": "true",
                                 "x-omitempty": true
                             },
-                            "smtp_server": {
-                                "description": "SMTP Server.",
-                                "type": "hostname",
-                                "x-omitempty": true
+                            "required_args": {
+                                "site_group": "",
+                                "fabric_node_controls": "",
+                                "l3_interface": "",
+                                "pods": ""
                             }
                         }
                     }
@@ -4335,224 +4720,6 @@
                                 "minimum": 8,
                                 "maximum": 130,
                                 "pattern": "^[\\S+]{8,130}$",
-                                "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "fabric.Syslog": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "audit_logs": {
-                                "description": "Audit Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
-                                "x-omitempty": true
-                            },
-                            "console_admin_state": {
-                                "description": "Console Syslog Admin State.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "disabled",
-                                    "enabled"
-                                ],
-                                "default": "enabled",
-                                "x-omitempty": true
-                            },
-                            "console_severity": {
-                                "description": "Console Severity.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "alerts",
-                                    "critical",
-                                    "emergencies"
-                                ],
-                                "default": "critical",
-                                "x-omitempty": true
-                            },
-                            "events": {
-                                "description": "Audit Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
-                                "x-omitempty": true
-                            },
-                            "faults": {
-                                "description": "Faults Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
-                                "x-omitempty": true
-                            },
-                            "format": {
-                                "description": "Syslog Format.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "aci",
-                                    "nxos"
-                                ],
-                                "default": "aci",
-                                "x-omitempty": true
-                            },
-                            "local_admin_state": {
-                                "description": "Local Syslog Admin State.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "disabled",
-                                    "enabled"
-                                ],
-                                "default": "enabled",
-                                "x-omitempty": true
-                            },
-                            "local_severity": {
-                                "description": "Local Severity.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "alerts",
-                                    "critical",
-                                    "debugging",
-                                    "emergencies",
-                                    "errors",
-                                    "information",
-                                    "notifications",
-                                    "warnings"
-                                ],
-                                "default": "information",
-                                "x-omitempty": true
-                            },
-                            "optional_args": {},
-                            "required_args": {
-                                "admin_state": "",
-                                "audit_logs": "",
-                                "console_admin_state": "",
-                                "console_severity": "",
-                                "events": "",
-                                "faults": "",
-                                "format": "",
-                                "local_admin_state": "",
-                                "local_severity": "",
-                                "session_logs": "",
-                                "show_milliseconds_in_timestamp": "",
-                                "show_time_zone_in_timestamp": "",
-                                "site_group": ""
-                            },
-                            "session_logs": {
-                                "description": "Session Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
-                                "x-omitempty": true
-                            },
-                            "show_milliseconds_in_timestamp": {
-                                "description": "Flag to show milliseconds in timestamp.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
-                                "x-omitempty": true
-                            },
-                            "show_time_zone_in_timestamp": {
-                                "description": "Flag to show timezone in timestamp.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
-                                "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "fabric.syslogRemoteDestinations": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "forwarding_facility": {
-                                "description": "The Remote Syslog Server Facility.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "local0",
-                                    "local1",
-                                    "local2",
-                                    "local3",
-                                    "local4",
-                                    "local5",
-                                    "local6",
-                                    "local7"
-                                ],
-                                "default": "local7",
-                                "x-omitempty": true
-                            },
-                            "host": {
-                                "description": "Syslog Remote Destination host.",
-                                "type": "hostname",
-                                "x-omitempty": true
-                            },
-                            "optional_args": {},
-                            "port": {
-                                "description": "Syslog Destination Port.",
-                                "type": "integer",
-                                "format": "int64",
-                                "minimum": 1,
-                                "maximum": 65535,
-                                "default": 514,
-                                "x-omitempty": true
-                            },
-                            "required_args": {
-                                "admin_state": "",
-                                "forwarding_facility": "",
-                                "host": "",
-                                "management_epg": "",
-                                "port": "",
-                                "severity": "",
-                                "site_group": "",
-                                "transport": ""
-                            },
-                            "severity": {
-                                "description": "The Syslog Severity Level.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "alerts",
-                                    "critical",
-                                    "debugging",
-                                    "emergencies",
-                                    "errors",
-                                    "information",
-                                    "notifications",
-                                    "warnings"
-                                ],
-                                "default": "information",
-                                "x-omitempty": true
-                            },
-                            "transport": {
-                                "description": "Send Syslog using TCP or UDP.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "tcp",
-                                    "udp"
-                                ],
-                                "default": "udp",
                                 "x-omitempty": true
                             }
                         }

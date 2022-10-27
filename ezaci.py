@@ -34,28 +34,31 @@ class_list = [access, admin, fabric, site_policies, switches, system_settings, t
 # Regular Expressions to Control wich rows in the
 # Worksheet should be processed.
 #======================================================
-a1 = '(domains_(l3|phys)|global_aaep|interface_policy|pg_(access|breakout|bundle|spine)'
-a2 = '(leaf|spine)_pg|pol_(cdp|fc|l2|link_level|lldp|mcp|port_(ch|sec)|stp)|pools_vlan)'
-access_regex = f'^({a1}|{a2})$'
+ac1 = '(l3|phys)_domains|global_aaep|interface_policy|pg_(access|breakout|bundle|spine|template)'
+ac2 = '(leaf|spine)_pg|pol_(cdp|fc|l2|link_level|lldp|mcp|port_(ch|sec)|stp)|pre_built|vlan_pools'
+access_regex = f'^({ac1}|{ac2})$'
 
-admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
-apps_epgs_regex = '^((app|epg|vmm)_(add|(vmm_)?policy))$'
-bds_regex = '^((bd)_(add|dhcp|general|l3|ndo|subnet))$'
-contracts_regex = '(^(contract|filter|subject)_(add|assign|entry|filters)$)'
+ad1 = 'auth|(export|mg)_policy|maint_group|radius|recommended_settings|remote_host|security|tacacs'
+ad2 = 'smart_(callhome|destinations|smtp_server)|syslog(_destinations)?'
+admin_regex = f'^({ad1}|{ad2})$'
 
-f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)'
-f2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'
-fabric_regex = f'^({f1}|{f2})$'
+apps_epgs_regex = '^(app|epg)_(add|template|vmm_policy)$'
+bds_regex = '^(bd|subnet)_(add|template)$'
+contracts_regex = '^(contract|filter|subject)_(add|assign|entry|filters)$'
 
-l3out1 = '((bgp|eigrp|ospf)_(peer|policy|profile|routing)|ext_epg(_policy|_sub)?)'
-l3out2 = 'l3out_(add|policy)|node_(interface|intf_(cfg|policy)|profile)?'
-l3out_regex = f'^({l3out1}|{l3out2})$'
+fa1 = 'date_time|dns_profile|ntp(_key)?|recommended_settings'
+fa2 = 'snmp_(clgrp|community|destinations|policy|user)'
+fabric_regex = f'^({fa1}|{fa2})$'
+
+l31 = '(bgp|eigrp|ospf)_(peer|policy|profile|routing)|ext_epg(_policy|_sub)?'
+l32 = 'l3out_(add|policy)|node_(interface|intf_(cfg|policy)|profile)?'
+l3out_regex = f'^({l31}|{l32})$'
 
 port_convert_regex = '^port_cnvt$'
 sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|recommended_settings)$'
-tenants_regex = '^((template|tenant)_(add|site)|vrf_(add|community|policy))$'
+tenants_regex = '^(ndo_settings|(template|tenant)_(add|site)|vrf_(add|community))$'
 tenant_pol_regex = '^(apic_inb|bgp_pfx|dhcp_relay|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
@@ -372,7 +375,7 @@ def main():
             easyDict = eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
 
 
-    print(json.dumps(easyDict['sites'], indent=4))
+    # print(json.dumps(easyDict['sites'], indent=4))
     # Begin Proceedures to Create files
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     create_yaml(args, easy_jsonData, **easyDict)
