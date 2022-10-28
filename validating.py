@@ -135,6 +135,20 @@ def error_vrf(row_num, vrf):
     exit()
 
 # Validations
+def boolean(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    valid_count = 1
+    if varValue == 'true' or varValue == 'false':
+        valid_count = 0
+    if not valid_count == 0:
+        print(f'\n--------------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet "{ws.title}", Row {row_num}, Variable {var};')
+        print(f'   must be true or false.  Exiting....')
+        print(f'\n--------------------------------------------------------------------------------\n')
+        exit()
+
 def domain(var, **kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']

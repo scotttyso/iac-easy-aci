@@ -196,12 +196,12 @@
                             },
                             "processes": {
                                 "enum": [
+                                    "tenants",
                                     "access",
                                     "admin",
                                     "fabric",
                                     "switches",
                                     "system_settings",
-                                    "tenants",
                                     "virtual_networking"
                                 ]
                             },
@@ -270,12 +270,8 @@
                         "properties": {
                             "infra_vlan": {
                                 "description": "Flag to Include the Infrastructure VLAN.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "l3_domains": {
@@ -644,32 +640,20 @@
                         "properties": {
                             "fast_select_hot_standby_ports": {
                                 "description": "Configures fast select for hot standby ports. Enabling this feature will allow fast selection of a hot standby port when last active port in the port-channel is going down.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "graceful_convergence": {
                                 "description": "Configures port-channel LACP graceful convergence. Disable this only with LACP ports connected to a Non-Nexus peer. Disabling this with Nexus peer can lead to port suspension.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "load_defer_member_ports": {
                                 "description": "Configures the load-balancing algorithm for port channels that applies to the entire device or to only one module.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "mode": {
@@ -721,22 +705,14 @@
                             },
                             "suspend_individual_port": {
                                 "description": "LACP sets a port to the suspended state if it does not receive an LACP bridge protocol data unit (BPDU) from the peer ports in a port channel. This can cause some servers to fail to boot up as they require LACP to logically bring up the port.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "symmetric_hashing": {
                                 "description": "Bidirectional traffic is forced to use the same physical interface and each physical interface in the port channel is effectively mapped to a set of flows.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -1742,74 +1718,46 @@
                         "properties": {
                             "cdp_interface": {
                                 "description": "Boolean to configure or not configure CDP Interface Pre-Built Policies.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "fibre_channel_interface": {
                                 "description": "Boolean to configure or not configure Fibre-Channel Interface Pre-Built Policies.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "l2_interface": {
                                 "description": "Boolean to configure or not configure L2 Interface Pre-Built Policies.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "link_level": {
                                 "description": "Boolean to configure or not configure Link Level Pre-Built Policies.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "lldp_interface": {
                                 "description": "Boolean to configure or not configure LLDP Interface Pre-Built Policies.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "mcp_interface": {
                                 "description": "Boolean to configure or not configure Mis-Cabling Protocol Interface Pre-Built Policies.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
                             },
                             "port_channel": {
                                 "description": "Boolean to configure or not configure Port Channel Interface Pre-Built Policies.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -1825,12 +1773,8 @@
                             },
                             "spanning_tree_interface": {
                                 "description": "Boolean to configure or not configure Spanning Tree Interface Pre-Built Policies.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -2293,22 +2237,14 @@
                             },
                             "enable_tag_collection": {
                                 "description": "vCenter Tag collection for micro-Segmentation.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "enable_vm_folder_data_retrieval": {
                                 "description": "vCenter VM Folder collection for micro-Segmentation.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "endpoint_retention_time": {
@@ -2549,12 +2485,8 @@
                             },
                             "include_secure_fields": {
                                 "description": "Flag to include secure fields.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "max_snapshot_count": {
@@ -2592,22 +2524,14 @@
                             },
                             "snapshot": {
                                 "description": "Flag to define if the backup is a snapshot.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "start_now": {
                                 "description": "Flag to Start the Backup now.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -2621,22 +2545,14 @@
                         "properties": {
                             "compatibility_check": {
                                 "description": "A property for specifying whether compatibility checks should be ignored when applying the firmware policy.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "graceful_upgrade": {
                                 "description": "This option will enable Graceful Insertion and Removal mode.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "notify_conditions": {
@@ -2686,12 +2602,8 @@
                             },
                             "simulator": {
                                 "description": "Is this an APIC Simulator.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "version_check_override": {
@@ -2745,12 +2657,8 @@
                             },
                             "snapshot": {
                                 "description": "Flag to define if the backup is a snapshot.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "start_now": {
@@ -2800,12 +2708,8 @@
                             },
                             "start_now": {
                                 "description": "Flag to Start an Upgrade right now.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -2903,12 +2807,8 @@
                             },
                             "password_strength_check": {
                                 "description": "Password Strength Check.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -2983,7 +2883,7 @@
                                     "rsa",
                                     "saml",
                                     "tacacs",
-                                    "true"
+                                    true
                                 ],
                                 "default": "local",
                                 "x-omitempty": true
@@ -3008,19 +2908,15 @@
                                     "rsa",
                                     "saml",
                                     "tacacs",
-                                    "true"
+                                    true
                                 ],
                                 "default": "local",
                                 "x-omitempty": true
                             },
                             "fallback_domain_avialability": {
                                 "description": "Should the local domain be available when the default authentication is not local and the providers are reachable.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -3047,12 +2943,8 @@
                             },
                             "use_icmp_reachable_providers_only": {
                                 "description": "Flag to turn on ICMP check for Providers.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             }
                         }
@@ -3360,12 +3252,8 @@
                             },
                             "rfc_compliant": {
                                 "description": "Should the Message be RFC Compliant.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             }
                         }
@@ -3398,12 +3286,8 @@
                             },
                             "secure_smtp": {
                                 "description": "Does the SMTP Server Require Credentials.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "smtp_password": {
@@ -3430,12 +3314,8 @@
                         "properties": {
                             "audit_logs": {
                                 "description": "Audit Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "console_admin_state": {
@@ -3461,22 +3341,14 @@
                             },
                             "events": {
                                 "description": "Audit Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "faults": {
                                 "description": "Faults Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "format": {
@@ -3533,32 +3405,20 @@
                             },
                             "session_logs": {
                                 "description": "Session Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "show_milliseconds_in_timestamp": {
                                 "description": "Flag to show milliseconds in timestamp.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "show_time_zone_in_timestamp": {
                                 "description": "Flag to show timezone in timestamp.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             }
                         }
@@ -4336,12 +4196,8 @@
                             },
                             "preferred": {
                                 "description": "If the NTP Server is Preferred or not.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -4396,12 +4252,8 @@
                             },
                             "trusted": {
                                 "description": "If the NTP Key is trusted or not.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -4415,34 +4267,22 @@
                         "properties": {
                             "fabric_node_controls": {
                                 "description": "Boolean to configure or not configure Fabric Node Controls best practices.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "l3_interface": {
                                 "description": "Boolean to configure or not configure L3 Interface best practices.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "optional_args": {
                             },
                             "pods": {
                                 "description": "Boolean to configure or not configure Pod Profile/Policy Group.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -4588,12 +4428,8 @@
                         "properties": {
                             "audit_logs": {
                                 "description": "Audit Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "contact": {
@@ -4606,22 +4442,14 @@
                             },
                             "events": {
                                 "description": "Audit Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "faults": {
                                 "description": "Faults Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "location": {
@@ -4646,12 +4474,8 @@
                             },
                             "session_logs": {
                                 "description": "Session Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             }
                         }
@@ -4778,12 +4602,8 @@
                             },
                             "audit_logs": {
                                 "description": "Audit Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "bridge_domain": {
@@ -4812,22 +4632,14 @@
                             },
                             "events": {
                                 "description": "Audit Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "faults": {
                                 "description": "Faults Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "filter_name": {
@@ -4995,12 +4807,8 @@
                             },
                             "session_logs": {
                                 "description": "Session Log Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "site_name": {
@@ -5145,12 +4953,8 @@
                             },
                             "configure_terraform_cloud": {
                                 "description": "Flag to Enable or Disable Terraform Cloud.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "controller": {
@@ -5301,74 +5105,46 @@
                             },
                             "coop_group": {
                                 "description": "Boolean to configure or not configure Coop Group best practices.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "endpoint_controls": {
                                 "description": "Boolean to configure or not configure Endpoint Controls best practices.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "fabric_wide_settings": {
                                 "description": "Boolean to configure or not configure Fabric Wide Settings best practices.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "global_aes_encryption_settings": {
                                 "description": "Boolean to configure or not configure Global AES Encryption Settings best practices.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "isis_policy": {
                                 "description": "Boolean to configure or not configure IS-IS Policy best practices.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "optional_args": {
                             },
                             "port_tracking": {
                                 "description": "Boolean to configure or not configure Port Tracking best practices.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "ptp_and_latency_measurement": {
                                 "description": "Boolean to configure or not configure PTP and Latency Measurement best practices.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -5562,12 +5338,8 @@
                             },
                             "has_multicast_source": {
                                 "description": "EPG with Multisite Multicast Source",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "intra_epg_isolation": {
@@ -5602,12 +5374,8 @@
                             },
                             "preferred_group_member": {
                                 "description": "If an EPG is marked as a Preferred Group Member, it is put into an internally created contract group where all members of the group are allowed to communicate with each other without requiring a contract between them.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -5623,12 +5391,8 @@
                             },
                             "useg_epg": {
                                 "description": "Micro-Segmentation EPG.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -5642,12 +5406,8 @@
                         "properties": {
                             "allow_micro_segmentation": {
                                 "description": "Allows microsegmentation for the base EPG.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "allow_promiscuous": {
@@ -5995,22 +5755,14 @@
                         "properties": {
                             "advertise_host_routes": {
                                 "description": "Enabling Host Based Routing on the bridge domain, individual host-routes (/32 prefixes) are advertised from the border leaf switches.  Border leaf switches along with the subnet advertise the individual endpoint (EP) prefixes. The route information is advertised only if the host is connected to the local POD. If the EP is moved away from the local POD or once the EP is removed from EP database, the route advertise is then withdrawn.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "arp_flooding": {
                                 "description": "Enables ARP flooding, so that the Layer 2 broadcast domain maps IP addresses to the MAC addresses. If flooding is disabled, unicast routing will be performed on the target IP address.  If the BD extends outside of ACI, always set to true.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "endpoint_retention_policy": {
@@ -6069,12 +5821,8 @@
                             },
                             "limit_ip_learn_to_subnets": {
                                 "description": "Limits IP address learning to the bridge domain subnets only. Every bridge domain can have multiple subnets associated with it. By default, all IP addresses are learned.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "mld_snoop_policy": {
@@ -6104,22 +5852,14 @@
                             },
                             "pim": {
                                 "description": "Enables the Protocol Independent Multicast (PIM) protocol.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "pimv6": {
                                 "description": "Enables the Protocol Independent Multicast (PIM) IPv6 protocol.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "policy_name": {
@@ -6164,22 +5904,14 @@
                         "properties": {
                             "disable_ip_data_plane_learning_for_pbr": {
                                 "description": "Change this setting to true, only if the bridge domain is to be associated with policy-based redirect (PBR) enabled endpoint groups.  Note: Use caution when changing the default setting for this field. Setting this option to no can cause suboptimal traffic forwarding for non-PBR scenarios.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "ep_move_detection_mode": {
                                 "description": "When the GARP based detection option is enabled, Cisco ACI will trigger an endpoint move based on GARP packets if the move occurs on the same interface and same EPG.  Note: This can only be used when ARP Flooding is enabled.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "first_hop_security_policy": {
@@ -6192,32 +5924,20 @@
                             },
                             "intersite_bum_traffic_allow": {
                                 "description": "When extending the bridge domain between sites this option is to permit broadcast unknown multicast (BUM) traffic between the sites.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "intersite_l2_stretch": {
                                 "description": "Extend the Bridge Domain between ACI Fabrics.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optimize_wan_bandwidth": {
                                 "description": "Optimize WAN Bandwidth when stretching a BD over Multi-Site",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -6267,12 +5987,8 @@
                             },
                             "unicast_routing": {
                                 "description": "enable or disable unicast routing on the Bridge Domain. We recommend disabling, false,  if you have not configured a subnet on the BD.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             }
                         }
@@ -6329,12 +6045,8 @@
                         "properties": {
                             "advertise_externally": {
                                 "description": "The subnet can be exported to a routed connection.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "gateway_ip": {
@@ -6354,22 +6066,14 @@
                             },
                             "no_default_svi_gateway": {
                                 "description": "When using Cisco ACI Multi-Site with this APIC fabric domain (site), indicates that the VRF, EPG, or BD using this subnet are mirrored from another site, which has a relationship to this site through a contract. Do not modify or delete the mirrored objects.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "neighbor_discovery": {
                                 "description": "Enables Neighbor Discovery on the subnet.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "nd_ra_prefix_policy": {
@@ -6382,12 +6086,8 @@
                             },
                             "make_this_ip_address_primary": {
                                 "description": "Indicates if the subnet is the primary IP address for the bridge domain (preferred over the available alternatives). ",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -6409,12 +6109,8 @@
                             },
                             "querier_ip": {
                                 "description": "Enables IGMP Snooping on the subnet.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -6441,22 +6137,14 @@
                             },
                             "shared_between_vrfs": {
                                 "description": "The subnet can be shared with and exported to multiple contexts (VRFs) in the same tenant or across tenants as part of a shared service. An example of a shared service is a routed connection to an EPG present in another context (VRF) in a different tenant. This enables traffic to pass in both directions across contexts (VRFs). An EPG that provides a shared service must have its subnet configured under that EPG (not under a bridge domain), and its scope must be set to advertised externally, and shared between VRFs.  Note: Shared subnets must be unique across the contexts (VRF) involved in the communication. When a subnet under an EPG provides a Layer 3 external network shared service, such a subnet must be globally unique within the entire ACI fabric.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "treat_as_virtual_ip_address": {
                                 "description": "An IP address that doesn't correspond to an actual physical network interface, that is shared by multiple devices.  This is typically used for the Common Pervasive Gateway use case. For more information, see Common Pervasive Gateway in Cisco APIC Layer 3 Configuration Guide.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -6475,12 +6163,8 @@
                             },
                             "endpoint_clear": {
                                 "description": "Set this to Clear the Endpoint Table on the Bridge Domain.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "flood_in_encapsulation": {
@@ -6639,12 +6323,8 @@
                         "properties": {
                             "acknowledgement": {
                                 "description": "TCP Session Rules - Option Acknowledgement.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "arp_flag": {
@@ -6676,12 +6356,8 @@
                             },
                             "established": {
                                 "description": "TCP Session Rules - Option Established.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "ethertype": {
@@ -6711,12 +6387,8 @@
                             },
                             "finish": {
                                 "description": "TCP Session Rules - Option Finish.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "icmpv4_type": {
@@ -6802,12 +6474,8 @@
                             },
                             "match_only_fragments": {
                                 "description": "Match Only Fragements Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -6840,12 +6508,8 @@
                             },
                             "reset": {
                                 "description": "TCP Session Rules - Option Reset.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "source_port_from": {
@@ -6866,22 +6530,14 @@
                             },
                             "stateful": {
                                 "description": "Stateful Flag Values.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "synchronize": {
                                 "description": "TCP Session Rules - Option Synchronize.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -7015,12 +6671,8 @@
                             },
                             "apply_both_directions": {
                                 "description": "Flag to apply the contract in both directions.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "contract_name": {
@@ -7044,12 +6696,8 @@
                             },
                             "enable_policy_compression": {
                                 "description": "Flag to enable contract data storage optimization.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "filters_to_assign": {
@@ -7074,12 +6722,8 @@
                             },
                             "log_packets": {
                                 "description": "Enables contract permit and deny logging.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -7169,12 +6813,8 @@
                             },
                             "enable_bgp": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "l3_domain": {
@@ -7249,22 +6889,14 @@
                             },
                             "export": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "import": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -7276,22 +6908,14 @@
                             },
                             "pim": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "pimv6": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -7467,32 +7091,20 @@
                         "properties": {
                             "af_mcast": {
                                 "description": "Flag to to enable the multicast address-family feature.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "af_ucast": {
                                 "description": "Flag to to enable the unicast address-family feature.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "allow_self_as": {
                                 "description": "Flag to enable the autonomous number check on itself. This allows BGP peer to inject updates if the same AS number is being used.  Note: For an infra tenant peer connectivity profile, this attribute is always enabled.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "allowed_self_as_count": {
@@ -7506,84 +7118,52 @@
                             },
                             "as_override": {
                                 "description": "Flag to enable the BGP AS override feature to override the default setting. The AS override function will replace the AS number from the originating router with the AS number of the sending BGP router in the AS Path of outbound routes. This feature can be enabled per feature per address family (IPv4 or IPv6).  Note:  The Disable Peer AS Check check box must also be checked in order to enable the AS override feature.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "bidirectional_forwarding_detection": {
                                 "description": "Enables BFD on the peer.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "disable_connected_check": {
                                 "description": "Disables the check for peer connection.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "disable_peer_as_check": {
                                 "description": "Flag to disable the peer autonomous number check. When the check box is checked, if the advertising router finds the AS number of the receiver in the AS path, it will not send the route to the receiver.  Note: The Disable Peer AS Check check box must be checked in order to enable the AS override feature.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "next_hop_self": {
                                 "description": "Sends the BGP next hop attribute to itself.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
                             },
                             "remove_all_private_as": {
                                 "description": "In outgoing eBGP route updates to this neighbor, this option removes all private AS numbers from the AS_PATH, regardless of whether a public AS number is included in the AS_PATH.  If the neighbor remote AS is in the AS_PATH, this option is not applied.  To enable this option, Remove private AS must be enabled.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "remove_private_as": {
                                 "description": "In outgoing eBGP route updates to this neighbor, this option removes all private AS numbers from the AS_PATH when the AS_PATH has only private AS numbers.  If the neighbor remote AS is in the AS_PATH, this option is not applied.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "replace_private_as_with_local_as": {
                                 "description": "In outgoing eBGP route updates to this neighbor, this option replaces all private AS numbers in the AS_PATH with ACI local AS, regardless of whether a public AS or the neighbor remote AS is included in the AS_PATH.  To enable this option, Remove all private AS must be enabled.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -7606,32 +7186,20 @@
                             },
                             "send_community": {
                                 "description": "Sends the BGP community attribute to a peer.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "send_domain_path": {
                                 "description": "Sends the BGP domain path attribute to a peer.  If you want to use the BGP Domain-Path feature for loop prevention, first set the Domain Base ID in the BGP Route Reflector page: System > System Settings > BGP Route Reflector.  Then enable the Send Domain Path field in this page.  If you do not want to use the BGP Domain-Path feature for loop prevention but you still want to send a received domain path, only enable the Send Domain Path field in this page. You do not have to set the Domain Base ID in the BGP Route Reflector page in this case.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "send_extended_community": {
                                 "description": "Sends the BGP extended community attribute to a peer.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -7771,12 +7339,8 @@
                             },
                             "preferred_group_member": {
                                 "description": "If an external EPG is marked as a Preferred Group Member, it is put into an internally created contract group where all members of the group are allowed to communicate with each other without requiring a contract between them.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "required_args": {
@@ -7807,42 +7371,26 @@
                         "properties": {
                             "aggregate_export": {
                                 "description": "Exports all routes of a subnet (0/0 subnets).",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "aggregate_import": {
                                 "description": "Imports all routes of a subnet (0/0 subnets).",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "aggregate_shared_routes": {
                                 "description": "Available if you select Shared Route Control Subnet above. When a route is learned in one VRF that needs to be leaked into another VRF, the routes can be leaked by matching the subnet exactly, or can be leaked in an aggregate way according to a subnet mask.  Note:  For aggregate shared routes, multiple subnet masks can be used to determine which specific route groups are leaked between VRFs (for example, 10.1.0.0/16), or 0/0 can be used to share all subnet routes across multiple VRFS.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "export_route_control_subnet": {
                                 "description": "Controls which external networks are advertised out of the fabric using route-maps and IP prefix lists. An IP prefix list is created on the border leaf switch for each subnet that is defined. The export control policy is enabled by default and is supported for BGP, EIGRP, and OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "external_epg": {
@@ -7855,22 +7403,14 @@
                             },
                             "external_subnets_for_external_epg": {
                                 "description": "A classifier for the external EPG, similar to an Access Control List (ACL). The rules and contracts in the external EPG apply at the VRF level to networks matching this subnet.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "import_route_control_subnet": {
                                 "description": "Controls the subnets allowed into the fabric, and can include set and match rules to filter routes. Supported for BGP and OSPF, but not for EIGRP; if the user enables the import control policy for an unsupported protocol, it will be automatically ignored. The import control policy is not enabled by default, but you can enable it by navigating to the configured L3Out. Click the Policy/Main tabs to display the Properties window for the configured L3Out, then check the box next to Route Control Enforcement: Import.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -7910,22 +7450,14 @@
                             },
                             "shared_route_control_subnet": {
                                 "description": "Controls which external prefixes are advertised to other VRFs, which have a contract interface for shared L3Out services.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "shared_security_import_subnet": {
                                 "description": "Configures the classifier for the subnets in the VRF where the routes are leaked.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "subnets": {
@@ -7999,12 +7531,8 @@
                             },
                             "originate_summary_lsa": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "ospf_area_id": {
@@ -8046,22 +7574,14 @@
                             },
                             "send_redistribution_lsas_into_nssa_area": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "suppress_forwarding_address": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             }
                         }
@@ -8547,12 +8067,76 @@
                             },
                             "use_router_id_as_loopback": {
                                 "description": "Flag to add the Router ID as a Loopback.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "true",
+                                "type": "boolean",
+                                "default": true,
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
+            "tenants.ndoSchemas": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "ndo_settings": {
+                                "description": "Name for this NDO Schema Policy to Associate to BD's, EPG's, etc.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optional_args": {
+                                "description": ""
+                            },
+                            "required_args": {
+                                "ndo_settings": "",
+                                "schema": "",
+                                "sites": "",
+                                "template": "",
+                                "vrf_schema": "",
+                                "vrf_template": ""
+                            },
+                            "schema": {
+                                "description": "Name of the Schema to Create.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "sites": {
+                                "description": "Names of Sites to Associate to the Template.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "template": {
+                                "description": "Name of the Template to Assign to the Schema.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "vrf_schema": {
+                                "description": "Name for the VRF Schema.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "vrf_template": {
+                                "description": "Name for VRF Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             }
                         }
@@ -8707,22 +8291,14 @@
                         "properties": {
                             "advertise_subnet": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "bfd": {
                                 "description": "Flag to enable BFD on the Interface for OSPF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "cost_of_interface": {
@@ -8754,12 +8330,8 @@
                             },
                             "mtu_ignore": {
                                 "description": "Flag to ignore the MTU for the Neighbor Establishment.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "network_type": {
@@ -8777,12 +8349,8 @@
                             },
                             "passive_interface": {
                                 "description": "Add the Interface to OSPF but not build neighbor relationships on the Interface.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false", 
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "priority": {
@@ -8826,58 +8394,6 @@
                                 "minimum": 1,
                                 "maximum": 450,
                                 "default": 1,
-                                "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "tenants.Schemas": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "optional_args": {
-                                "description": "",
-                                "sites": "",
-                                "template": "",
-                                "template_tenant": ""
-                            },
-                            "required_args": {
-                                "schema": "",
-                                "site_group": "",
-                                "tenant": ""
-                            },
-                            "schema": {
-                                "description": "Name of the Schema to Create.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "template_tenant": {
-                                "description": "Name of the Template Tenant.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "sites": {
-                                "description": "Names of Sites to Associate to the Schema.",
-                                "type": "list_of_string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "template": {
-                                "description": "Name of the Template to Assign to the Schema.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             }
                         }
@@ -8944,12 +8460,16 @@
                             },
                             "is_aws_account_trusted": {
                                 "description": "",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
+                                "x-omitempty": true
+                            },
+                            "name": {
+                                "description": "Name of the Site.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -8963,17 +8483,7 @@
                                 "is_aws_account_trusted": ""
                             },
                             "required_args": {
-                                "tenant": "",
-                                "site": "",
-                                "site_group": ""
-                            },
-                            "site": {
-                                "description": "Name of the Site.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
+                                "name": ""
                             }
                         }
                     }
@@ -8984,11 +8494,20 @@
                     {},
                     {
                         "properties": {
+                            "ndo_settings": {
+                                "description": "Names of NDO Settings Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "optional_args": {
                                 "alias": "",
                                 "annotations": "",
                                 "description": "",
                                 "global_alias": "",
+                                "ndo_settings": "",
                                 "users": ""
                             },
                             "required_args": {
@@ -8996,31 +8515,7 @@
                                 "site_group": ""
                             },
                             "users": {
-                                "description": "Names of Tenant Users.",
-                                "type": "list_of_string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "tenants.Users": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "optional_args": {
-                            },
-                            "required_args": {
-                                "tenant": "",
-                                "site_group": "",
-                                "users": ""
-                            },
-                            "users": {
-                                "description": "Names of a Tenant Users.",
+                                "description": "Names of the Users to associate to the Tenant.",
                                 "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -9063,12 +8558,8 @@
                         "properties": {
                             "bd_enforcement_status": {
                                 "description": "Only allow endpoints to ping their bridge domain gateways.  Ping from hosts on different bridge domains cannot ping other gateways.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "bgp_timers": {
@@ -9101,26 +8592,6 @@
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "ip_data_plane_learning": {
-                                "description": "Defines if IP addresses are learned through dataplane packets for the VRF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "disabled",
-                                    "enabled"
-                                ],
-                                "default": "enabled",
-                                "x-omitempty": true
-                            },
-                            "layer3_multicast": {
-                                "description": "",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
                                 "x-omitempty": true
                             },
                             "monitoring_policy": {
@@ -9187,8 +8658,6 @@
                             },
                             "required_args": {
                                 "bd_enforcement_status": "",
-                                "ip_data_plane_learning": "",
-                                "layer3_multicast": "",
                                 "policy_control_enforcement_direction": "",
                                 "policy_control_enforcement_preference": "",
                                 "policy_name": ""
@@ -9210,16 +8679,20 @@
                     {},
                     {
                         "properties": {
-                            "label_match_criteria": {
-                                "description": "Represents the provider label match criteria. The options are:",
+                            "ip_data_plane_learning": {
+                                "description": "Defines if IP addresses are learned through dataplane packets for the VRF.",
                                 "type": "list_of_values",
                                 "enum": [
-                                    "All",
-                                    "AtleastOne",
-                                    "AtmostOne",
-                                    "None"
+                                    "disabled",
+                                    "enabled"
                                 ],
-                                "default": "AtleastOne",
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
+                            "layer3_multicast": {
+                                "description": "",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -9227,31 +8700,17 @@
                                 "annotations": "",
                                 "description": "",
                                 "global_alias": "",
-                                "policy_source_tenant": "",
-                                "schema": "",
-                                "sites": "",
-                                "template": ""
-                            },
-                            "policy_source_tenant": {
-                                "description": "The Name of the Tenant that contains the policies like protocol policies, monitor policies, etc.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
+                                "ndo_template": ""
                             },
                             "preferred_group": {
                                 "description": "Enable the Preferred Group feature to allow preferred group members in the VRF to communicate with each other without requiring a contract between them.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "false",
-                                    "true"
-                                ],
-                                "default": "false",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "label_match_criteria": "",
+                                "ip_data_plane_learning": "",
+                                "layer3_multicast": "",
                                 "name": "",
                                 "preferred_group": "",
                                 "site_group": "",

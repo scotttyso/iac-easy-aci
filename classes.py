@@ -5,15 +5,9 @@
 #=============================================================================
 from copy import deepcopy
 from collections import OrderedDict
-from easy_functions import apic_get, apic_post, countKeys, findKeys, findVars, easyDict_append
-from easy_functions import easyDict_append_arg, easyDict_append_policy, easyDict_append_subtype, easyDict_merge
-from easy_functions import easyDict_update, easyDict_update_subtype, interface_selector_workbook, ndo_get
-from easy_functions import process_kwargs, required_args_add, required_args_remove
-from easy_functions import sensitive_var_site_group, sensitive_var_value, stdout_log, tfc_get, tfc_patch, tfc_post
-from easy_functions import validate_args, varBoolLoop, variablesFromAPI, varStringLoop
-from easy_functions import vlan_list_full, write_to_site
 from openpyxl import load_workbook
 from requests.api import delete
+import easy_functions
 import jinja2
 import json
 import os
@@ -57,14 +51,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.domains.Layer3']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,physical_and_external_domains,l3_domains'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -75,14 +69,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.domains.Physical']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,physical_and_external_domains,l3_domains'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -93,20 +87,20 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.global.attachableAccessEntityProfile']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
+        # Split Domain Values to Lists
         domain_list = ['physical_domains', 'l3_domains', 'vmm_domains']
         for i in domain_list:
-            if not templateVars[f'{i}'] == None:
-                templateVars[f'{i}'] = templateVars[f'{i}'].split(',')
-                    
+            if not polVars[f'{i}'] == None:
+                polVars[f'{i}'] = polVars[f'{i}'].split(',')
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,global,attachable_access_entity_profiles'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -117,14 +111,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.switches.leafPolicyGroup']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,switches,leaf,policy_groups'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -135,14 +129,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policyGroups.leafAccessPort']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,interfaces,leaf,policy_groups,access'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -153,14 +147,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policyGroups.leafBreakOut']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,interfaces,leaf,policy_groups,breakout'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -171,18 +165,18 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policyGroups.leafBundles']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars.pop('template_name')
-        templateVars['names'] = templateVars['names'].split(',')
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars.pop('template_name')
+        polVars['names'] = polVars['names'].split(',')
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,interfaces,leaf,policy_groups,bundle,names'
         kwargs['policy'] = 'template_name'
         kwargs['policy_name'] = kwargs['template_name']
-        kwargs['easyDict'] = easyDict_append_arg(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_arg(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -193,18 +187,16 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policyGroups.leafBundleTemplate']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        if not polVars['netflow_monitor_policies'] == None:
+            polVars['netflow_monitor_policies'] = polVars['netflow_monitor_policies'].split(',')
 
-        if not templateVars['netflow_monitor_policies'] == None:
-            if ',' in templateVars['netflow_monitor_policies']:
-                templateVars['netflow_monitor_policies'] = templateVars['netflow_monitor_policies'].split(',')
-
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,interfaces,leaf,policy_groups,bundle'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -215,14 +207,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policyGroups.spineAccessPort']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,interfaces,spine,policy_groups'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -233,14 +225,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policies.cdpInterface']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,cdp_interface'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -251,14 +243,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policies.fibreChannelInterface']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,fibre_channel_interface'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -269,14 +261,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policies.L2Interface']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,l2_interface'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -287,14 +279,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policies.linkLevel']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,link_level'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -305,14 +297,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policies.lldpInterface']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,lldp_interface'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -323,14 +315,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policies.mcpInterface']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,mcp_interface'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -341,14 +333,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policies.PortChannel']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,port_channel'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -359,14 +351,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policies.portSecurity']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,port_security'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -377,14 +369,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.policies.spanningTreeInterface']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,spanning_tree_interface'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -395,14 +387,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.preBuiltPolicies']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,create_pre_built_interface_policies'
-        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_update(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -413,14 +405,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.switches.spinePolicyGroup']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,switches,spine,policy_groups'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -431,14 +423,14 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.pools.Vlan']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,pools,vlan'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -449,17 +441,17 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.vmm.Controllers']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars.pop('domain_name')
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars.pop('domain_name')
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'virtual_networking,vmm,controllers'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = kwargs['domain_name']
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -470,26 +462,20 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.vmm.Credentials']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Check Environment for VMM Credentials Password
-        templateVars['easyDict'] = kwargs['easyDict']
-        templateVars['jsonData'] = jsonData
-        templateVars["Variable"] = f'vmm_password'
-        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        templateVars.pop('easyDict')
-        templateVars.pop('jsonData')
-        templateVars.pop('Variable')
-        templateVars.pop('domain_name')
+        sensitive_list = ['vmm_password']
+        polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'virtual_networking,vmm,credentials'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = kwargs['domain_name']
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -500,32 +486,29 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.vmm.Domains']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Convert to Lists
-        if not templateVars["uplink_names"] == None:
-            if ',' in templateVars["uplink_names"]:
-                templateVars["uplink_names"] = templateVars["uplink_names"].split(',')
-        else:
-            templateVars["uplink_names"] = []
+        if not polVars["uplink_names"] == None:
+            polVars["uplink_names"] = polVars["uplink_names"].split(',')
 
-        upDating = {
+        newDict = {
             'controllers':[],
             'credentials':[],
             'enhanced_lag_policy':[],
-            'domain':[templateVars],
-            'name':templateVars['name'],
-            'site_group':templateVars['site_group'],
+            'domain':[polVars],
+            'name':polVars['name'],
+            'site_group':polVars['site_group'],
             'vswitch_policy':[]
         }
-        templateVars = upDating
+        polVars = newDict
         
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'virtual_networking,vmm'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -536,17 +519,17 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.vmm.enhancedLag']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars.pop('domain_name')
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars.pop('domain_name')
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'virtual_networking,vmm,enhanced_lag_policy'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = kwargs['domain_name']
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -557,17 +540,17 @@ class access(object):
         jsonData = kwargs['easy_jsonData']['access.vmm.vswitchPolicy']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars.pop('domain_name')
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars.pop('domain_name')
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'virtual_networking,vmm,vswitch_policy'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = kwargs['domain_name']
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
@@ -588,53 +571,43 @@ class admin(object):
         # Check for Variable values that could change required arguments
         if 'console_realm' in kwargs:
             if not kwargs['console_realm'] == 'local':
-                jsonData = required_args_add(['console_login_domain'], jsonData)
-        else:
-            kwargs['console_realm'] == 'local'
+                jsonData = easy_functions.args_add(['console_login_domain'], jsonData)
+        else: kwargs['console_realm'] == 'local'
         if 'default_realm' in kwargs:
             if not kwargs['default_realm'] == 'local':
-                jsonData = required_args_add(['default_login_domain'], jsonData)
-        else:
-            kwargs['default_realm'] == 'local'
+                jsonData = easy_functions.args_add(['default_login_domain'], jsonData)
+        else: kwargs['default_realm'] == 'local'
         
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        if templateVars['console_login_domain'] == None:
-            templateVars['console_login_domain'] = ''
-        if templateVars['default_login_domain'] == None:
-            templateVars['default_login_domain'] = ''
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        if polVars['console_login_domain'] == None: polVars['console_login_domain'] = ''
+        if polVars['default_login_domain'] == None: polVars['default_login_domain'] = ''
 
         # Reset jsonData
         if not kwargs['console_realm'] == 'local':
-            jsonData = required_args_remove(['console_login_domain'], jsonData)
+            jsonData = easy_functions.args_remove(['console_login_domain'], jsonData)
         if not kwargs['default_realm'] == 'local':
-            jsonData = required_args_remove(['default_login_domain'], jsonData)
+            jsonData = easy_functions.args_remove(['default_login_domain'], jsonData)
         newT = {
             'name':'default',
-            'console':{
-                'login_domain':templateVars['console_login_domain'],
-                'realm':templateVars['console_realm']
-            },
-            'default':{
-                'login_domain':templateVars['default_login_domain'],
-                'realm':templateVars['default_realm']
-            },
+            'console':{'login_domain':polVars['console_login_domain'],'realm':polVars['console_realm']},
+            'default':{'login_domain':polVars['default_login_domain'],'realm':polVars['default_realm']},
             'icmp_reachability':{
                 'retries':1,
                 'timeout':5,
-                'use_icmp_reachable_providers_only':templateVars['remote_user_login_policy']
+                'use_icmp_reachable_providers_only':polVars['remote_user_login_policy']
             },
-            'remote_user_login_policy':templateVars['remote_user_login_policy'],
-            'site_group':templateVars['site_group']
+            'remote_user_login_policy':polVars['remote_user_login_policy'],
+            'site_group':polVars['site_group']
         }
-        templateVars = newT
+        polVars = newT
         
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'admin,aaa,authentication,aaa'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -645,24 +618,20 @@ class admin(object):
         jsonData = kwargs['easy_jsonData']['admin.exportPolicy']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars['schedule'] = {
-            'days':templateVars['days'],
-            'hour':templateVars['hour'],
-            'minute':templateVars['minute']
-        }
-        templateVars.update({'configuration_export': []})
+        polVars['schedule'] = {'days':polVars['days'], 'hour':polVars['hour'], 'minute':polVars['minute']}
+        polVars.update({'configuration_export': []})
         remove_list = ['days', 'hour', 'minute']
         for i in remove_list:
-            templateVars.pop(i)
+            polVars.pop(i)
     
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'admin,import-export,configuration_backups'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -673,14 +642,14 @@ class admin(object):
         jsonData = kwargs['easy_jsonData']['admin.firmware.Policy']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'admin,firmware,maintenance_group_policies'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -691,18 +660,18 @@ class admin(object):
         jsonData = kwargs['easy_jsonData']['admin.firmware.MaintenanceGroups']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Convert to Lists
-        temp = templateVars['node_list'].split(',')
-        templateVars['node_list'] = [eval(i) for i in temp]
+        temp = polVars['node_list'].split(',')
+        polVars['node_list'] = [eval(i) for i in temp]
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'admin,firmware,maintenance_groups'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -715,47 +684,32 @@ class admin(object):
         # Check for Variable values that could change required arguments
         if 'server_monitoring' in kwargs:
             if kwargs['server_monitoring'] == 'enabled':
-                jsonData = required_args_add(['username'], jsonData)
-        else:
-            kwargs['server_monitoring'] == 'disabled'
+                jsonData = easy_functions.args_add(['username'], jsonData)
+        else: kwargs['server_monitoring'] == 'disabled'
         
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['hosts'] = polVars['hosts'].split(',')
+        pop_list = ['server_monitoring', 'username']
 
-        # Check if the secert is in the Environment.  If not Add it.
-        templateVars['easyDict'] = kwargs['easyDict']
-        templateVars['jsonData'] = jsonData
-        templateVars["Variable"] = f'radius_key'
-        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        if templateVars['server_monitoring'] == 'enabled':
-            # Check if the Password is in the Environment.  If not Add it.
-            templateVars["Variable"] = f'radius_monitoring_password'
-            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        templateVars.pop('easyDict')
-        templateVars.pop('jsonData')
-        templateVars.pop('Variable')
-
-        # Split Hosts Argument
-        if ',' in templateVars['hosts']:
-            templateVars['hosts'] = templateVars['hosts'].split(',')
-        
-        # Reset jsonData
-        if not kwargs['server_monitoring'] == 'disabled':
-            jsonData = required_args_remove(['username'], jsonData)
-            templateVars['server_monitoring'] = {
+        # Check if the Sensitive Variables are in the Environment.  If not Add them.
+        if polVars['server_monitoring'] == 'enabled':
+            jsonData = easy_functions.args_remove(['username'], jsonData)
+            polVars['server_monitoring'] = {
                 'admin_state': kwargs['server_monitoring'],
                 'username': kwargs['username']
             }
-        pop_list = ['server_monitoring', 'username']
-        for i in pop_list:
-            templateVars.pop(i)
-        
-        # Add Dictionary to easyDict
+            sensitive_list = ['radius_key', 'radius_monitoring_password']
+        else: sensitive_list = ['radius_key']
+        polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
+        for i in pop_list: polVars.pop(i)
+
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'admin,aaa,authentication,radius'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -768,49 +722,34 @@ class admin(object):
         # Check for Variable values that could change required arguments
         if 'authentication_type' in kwargs:
             if kwargs['authentication_type'] == 'usePassword':
-                jsonData = required_args_add(['username'], jsonData)
+                jsonData = easy_functions.args_add(['username'], jsonData)
         else:
             kwargs['authentication_type'] == 'usePassword'
-            jsonData = required_args_add(['username'], jsonData)
+            jsonData = easy_functions.args_add(['username'], jsonData)
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars["remote_hosts"] = polVars["remote_hosts"].split(',')
+        polVars.pop('scheduler_name')
         
-        # Check Environment for Sensitive Variables
-        templateVars['easyDict'] = kwargs['easyDict']
-        templateVars['jsonData'] = jsonData
-        if templateVars['authentication_type'] == 'usePassword':
-            # Check if the Password is in the Environment.  If not Add it.
-            templateVars["Variable"] = f'remote_password'
-            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        else:
-            # Check if the SSH Key/Passphrase is in the Environment.  If not Add it.
-            templateVars["Variable"] = 'ssh_key_contents'
-            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-            templateVars["Variable"] = 'ssh_key_passphrase'
-            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        templateVars.pop('easyDict')
-        templateVars.pop('jsonData')
-        templateVars.pop('Variable')
-
+        # Check if the Sensitive Variables are in the Environment.  If not Add them.
+        if polVars['authentication_type'] == 'usePassword':
+            sensitive_list = ['remote_password']
+        else: sensitive_list = ['ssh_key_contents', 'ssh_key_passphrase']
+        polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
 
         # Reset jsonData
         if kwargs['authentication_type'] == 'usePassword':
-            jsonData = required_args_remove(['username'], jsonData)
+            jsonData = easy_functions.args_remove(['username'], jsonData)
         
-        # Convert to Lists
-        if ',' in templateVars["remote_hosts"]:
-            templateVars["remote_hosts"] = templateVars["remote_hosts"].split(',')
-        templateVars.pop('scheduler_name')
-
         # Add Dictionary to Policy
         kwargs['class_path'] = 'admin,import-export,configuration_backups'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = kwargs['scheduler_name']
-        kwargs['easyDict'] = easyDict_merge(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_merge(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -821,23 +760,23 @@ class admin(object):
         jsonData = kwargs['easy_jsonData']['admin.globalSecurity']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['lockout_user'] = {
-          'enable_lockout': templateVars['enable_lockout'],
-          'lockout_duration': templateVars['lockout_duration'],
-          'max_failed_attempts': templateVars['max_failed_attempts'],
-          'max_failed_attempts_window': templateVars['max_failed_attempts_window']
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['lockout_user'] = {
+          'enable_lockout': polVars['enable_lockout'],
+          'lockout_duration': polVars['lockout_duration'],
+          'max_failed_attempts': polVars['max_failed_attempts'],
+          'max_failed_attempts_window': polVars['max_failed_attempts_window']
         }
         pop_list = ['enable_lockout', 'lockout_duration', 'max_failed_attempts', 'max_failed_attempts_window']
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
         
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'admin,aaa,security'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -848,17 +787,17 @@ class admin(object):
         jsonData = kwargs['easy_jsonData']['admin.smartCallHome']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['name'] = 'default'
-        templateVars['smtp_server'] = {}
-        templateVars['smart_destinations'] = []
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['name'] = 'default'
+        polVars['smtp_server'] = {}
+        polVars['smart_destinations'] = []
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'admin,external-data-collectors,smart_callhome'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -869,16 +808,16 @@ class admin(object):
         jsonData = kwargs['easy_jsonData']['admin.smartDestinations']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'admin,external-data-collectors,smart_callhome,smart_destinations'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = 'default'
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -890,32 +829,26 @@ class admin(object):
 
         # Check for Variable values that could change required arguments
         if 'secure_smtp' in kwargs:
-            if 'true' in kwargs['secure_smtp']:
-                jsonData = required_args_add(['username'], jsonData)
-        else:
-            kwargs['secure_smtp'] == 'false'
+             if kwargs['secure_smtp'] == True:
+                jsonData = easy_functions.args_add(['username'], jsonData)
+        else: kwargs['secure_smtp'] == False
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Check if the Smart CallHome SMTP Password is in the Environment and if not add it.
-        if 'true' in kwargs['secure_smtp']:
-            templateVars['easyDict'] = kwargs['easyDict']
-            templateVars['jsonData'] = jsonData
-            templateVars["Variable"] = f'smtp_password'
-            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-            templateVars.pop('easyDict')
-            templateVars.pop('jsonData')
-            templateVars.pop('Variable')
+        # Check if the Sensitive Variables are in the Environment.  If not Add them.
+        if kwargs['secure_smtp'] == True:
+            sensitive_list = ['smtp_password']
+            polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'admin,external-data-collectors,smart_callhome,smtp_server'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = 'default'
-        kwargs['easyDict'] = easyDict_update_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_update_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -926,40 +859,40 @@ class admin(object):
         jsonData = kwargs['easy_jsonData']['admin.Syslog']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         Additions = {
             'console_destination': {
-                'admin_state':templateVars['console_admin_state'],
-                'severity':templateVars['console_severity'],
+                'admin_state':polVars['console_admin_state'],
+                'severity':polVars['console_severity'],
             },
             'include_types': {
-                'audit_logs':templateVars['audit_logs'],
-                'events':templateVars['events'],
-                'faults':templateVars['faults'],
-                'session_logs':templateVars['session_logs']
+                'audit_logs':polVars['audit_logs'],
+                'events':polVars['events'],
+                'faults':polVars['faults'],
+                'session_logs':polVars['session_logs']
             },
             'local_file_destination': {
-                'admin_state':templateVars['local_admin_state'],
-                'severity':templateVars['local_severity'],
+                'admin_state':polVars['local_admin_state'],
+                'severity':polVars['local_severity'],
             },
             'name':'default',
             'remote_destinations': []
         }
         Additions = {'name':'default', 'remote_destinations': []}
-        templateVars.update(Additions)
+        polVars.update(Additions)
         pop_list = [
             'local_admin_state', 'local_severity', 'console_admin_state', 'console_severity',
             'audit_logs', 'events', 'faults', 'session_logs'
         ]
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
         
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'admin,external-data-collectors,syslog'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -970,18 +903,17 @@ class admin(object):
         jsonData = kwargs['easy_jsonData']['admin.syslogRemoteDestinations']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        if ',' in templateVars['hosts']:
-            templateVars['hosts'] = templateVars['hosts'].split(',')
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['hosts'] = polVars['hosts'].split(',')
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'admin,external-data-collectors,syslog,remote_destinations'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = 'default'
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -994,52 +926,38 @@ class admin(object):
         # Check for Variable values that could change required arguments
         if 'server_monitoring' in kwargs:
             if kwargs['server_monitoring'] == 'enabled':
-                jsonData = required_args_add(['username'], jsonData)
-        else:
-            kwargs['server_monitoring'] == 'disabled'
+                jsonData = easy_functions.args_add(['username'], jsonData)
+        else: kwargs['server_monitoring'] == 'disabled'
         
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Check if the secert is in the Environment.  If not Add it.
-        templateVars['easyDict'] = kwargs['easyDict']
-        templateVars['jsonData'] = jsonData
-        templateVars["Variable"] = f'tacacs_key'
-        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        if templateVars['server_monitoring'] == 'enabled':
-            # Check if the Password is in the Environment.  If not Add it.
-            templateVars["Variable"] = f'tacacs_monitoring_password'
-            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        templateVars.pop('easyDict')
-        templateVars.pop('jsonData')
-        templateVars.pop('Variable')
-        templateVars['accounting_include'] = {
-            'audit_logs':templateVars['audit_logs'],
-            'events':templateVars['events'],
-            'faults':templateVars['faults'],
-            'session_logs':templateVars['session_logs']
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['accounting_include'] = {
+            'audit_logs':polVars['audit_logs'],
+            'events':polVars['events'],
+            'faults':polVars['faults'],
+            'session_logs':polVars['session_logs']
         }
-        # Split Hosts Argument
-        if ',' in templateVars['hosts']:
-            templateVars['hosts'] = templateVars['hosts'].split(',')
-        
-        # Reset jsonData
-        if not kwargs['server_monitoring'] == 'disabled':
-            jsonData = required_args_remove(['username'], jsonData)
-            templateVars['server_monitoring'] = {
+        polVars['hosts'] = polVars['hosts'].split(',')
+        pop_list = ['audit_logs', 'events' ,'faults' ,'session_logs', 'server_monitoring', 'username']
+
+        # Check if the Sensitive Variables are in the Environment.  If not Add them.
+        if polVars['server_monitoring'] == 'enabled':
+            jsonData = easy_functions.args_remove(['username'], jsonData)
+            polVars['server_monitoring'] = {
                 'admin_state': kwargs['server_monitoring'],
                 'username': kwargs['username']
             }
-        pop_list = ['audit_logs', 'events' ,'faults' ,'session_logs', 'server_monitoring', 'username']
-        for i in pop_list:
-            templateVars.pop(i)
-        
-        # Add Dictionary to easyDict
+            sensitive_list = ['tacacs_key', 'radius_monitoring_password']
+        else: sensitive_list = ['tacacs_key']
+        polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
+        for i in pop_list: polVars.pop(i)
+
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'admin,aaa,authentication,tacacs'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
@@ -1117,25 +1035,22 @@ class fabric(object):
         jsonData = kwargs['easy_jsonData']['fabric.DateandTime']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # If NTP server state is disabled disable master mode as well.
-        if templateVars['server_state'] == 'disabled':
-            templateVars['master_mode'] = 'disabled'
-        
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        if polVars['server_state'] == 'disabled':
+            polVars['master_mode'] = 'disabled'
         Additions = {
             'authentication_keys': [],
             'name':'default',
             'ntp_servers': [],
         }
-        templateVars.update(Additions)
+        polVars.update(Additions)
         
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'fabric,policies,pod,date_and_time'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1146,50 +1061,42 @@ class fabric(object):
         jsonData = kwargs['easy_jsonData']['fabric.dnsProfiles']['allOf'][1]['properties']
 
         if not kwargs['dns_domains'] == None:
-            if ',' in kwargs['dns_domains']:
-                kwargs['dns_domains'] = kwargs['dns_domains'].split(',')
-            else:
-                kwargs['dns_domains'] = [kwargs['dns_domains']]
+            kwargs['dns_domains'] = kwargs['dns_domains'].split(',')
             if not kwargs['default_domain'] == None:
                 if not kwargs['default_domain'] in kwargs['dns_domains']:
                     kwargs['dns_domains'].append(kwargs['default_domain'])
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['name'] = 'default'
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['name'] = 'default'
         
         # Convert to Lists
-        if ',' in templateVars["dns_providers"]:
-            dns_providers = templateVars["dns_providers"].split(',')
-        templateVars["dns_providers"] = []
+        dns_providers = polVars["dns_providers"].split(',')
+        polVars["dns_providers"] = []
         for i in dns_providers:
-            if templateVars.get('preferred'):
-                if i == templateVars['preferred']:
-                    templateVars["dns_providers"].append({'dns_provider':i,'preferred':'true'})
-                else:
-                    templateVars["dns_providers"].append({'dns_provider':i,'preferred':'false'})
-            else:
-                templateVars["dns_providers"].append({'dns_provider':i,'preferred':'false'})
-        dns_domains = templateVars['dns_domains']
-        templateVars['dns_domains'] = []
+            if polVars.get('preferred'):
+                if i == polVars['preferred']:
+                    polVars["dns_providers"].append({'dns_provider':i,'preferred':True})
+                else: polVars["dns_providers"].append({'dns_provider':i,'preferred':False})
+            else: polVars["dns_providers"].append({'dns_provider':i,'preferred':False})
+        dns_domains = polVars['dns_domains']
+        polVars['dns_domains'] = []
         for i in dns_domains:
-            if templateVars.get('default_domain'):
-                if i == templateVars['default_domain']:
-                    templateVars["dns_domains"].append({'domain':i,'default_domain':'true'})
-                else:
-                    templateVars["dns_domains"].append({'domain':i,'default_domain':'false'})
-            else:
-                templateVars["dns_domains"].append({'domain':i,'default_domain':'false'})
+            if polVars.get('default_domain'):
+                if i == polVars['default_domain']:
+                    polVars["dns_domains"].append({'domain':i,'default_domain':True})
+                else: polVars["dns_domains"].append({'domain':i,'default_domain':False})
+            else: polVars["dns_domains"].append({'domain':i,'default_domain':False})
         pop_list = ['preferred','default_domain']
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'fabric,global,dns_profiles'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1200,16 +1107,16 @@ class fabric(object):
         jsonData = kwargs['easy_jsonData']['fabric.Ntp']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'fabric,policies,pod,date_and_time,ntp_servers'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = 'default'
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1220,25 +1127,20 @@ class fabric(object):
         jsonData = kwargs['easy_jsonData']['fabric.NtpKeys']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Check if the NTP Key is in the Environment.  If not Add it.
-        templateVars['easyDict'] = kwargs['easyDict']
-        templateVars['jsonData'] = jsonData
-        templateVars["Variable"] = f'ntp_key_{kwargs["key_id"]}'
-        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        templateVars.pop('easyDict')
-        templateVars.pop('jsonData')
-        templateVars.pop('Variable')
+        # Check if the Sensitive Variables are in the Environment.  If not Add them.
+        sensitive_list = [f'ntp_key_{kwargs["key_id"]}']
+        polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'fabric,policies,pod,date_and_time,authentication_keys'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = 'default'
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1249,24 +1151,21 @@ class fabric(object):
         jsonData = kwargs['easy_jsonData']['fabric.snmpClientGroups']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Convert to Lists
-        if not templateVars["clients"] == None:
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        if not polVars["clients"] == None:
             clients = []
-            templateVars["clients"] = templateVars["clients"].split(',')
-            for i in templateVars["clients"]:
+            for i in polVars["clients"].split(','):
                 clients.append({'address':i})
-            templateVars["clients"] = clients
+            polVars["clients"] = clients
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'fabric,policies,pod,snmp,snmp_client_groups'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = 'default'
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1277,27 +1176,21 @@ class fabric(object):
         jsonData = kwargs['easy_jsonData']['fabric.snmpCommunities']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['community_variable'] = int(polVars['community_variable'])
 
-        # Check if the SNMP Community is in the Environment.  If not Add it.
-        templateVars['easyDict'] = kwargs['easyDict']
-        templateVars['jsonData'] = jsonData
-        templateVars["Variable"] = f'snmp_community_{kwargs["community_variable"]}'
-        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        templateVars.pop('easyDict')
-        templateVars.pop('jsonData')
-        templateVars.pop('Variable')
-        templateVars['community_variable'] = int(templateVars['community_variable'])
-
+        # Check if the Sensitive Variables are in the Environment.  If not Add them.
+        sensitive_list = [f'snmp_community_{kwargs["community_variable"]}']
+        polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'fabric,policies,pod,snmp,snmp_communities'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = 'default'
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1310,29 +1203,28 @@ class fabric(object):
         # Check for Variable values that could change required arguments
         if 'version' in kwargs:
             if re.fullmatch('(v1|v2c)', kwargs['version']):
-                jsonData = required_args_add(['community_variable'], jsonData)
+                jsonData = easy_functions.args_add(['community_variable'], jsonData)
             elif 'v3' in kwargs['version']:
-                jsonData = required_args_add(['username', 'v3_security_level'], jsonData)
-        else:
-            kwargs['version'] = 'v2c'
+                jsonData = easy_functions.args_add(['username', 'v3_security_level'], jsonData)
+        else: kwargs['version'] = 'v2c'
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Reset Arguments
         if re.fullmatch('(v1|v2c)', kwargs['version']):
-            jsonData = required_args_remove(['community_variable'], jsonData)
+            jsonData = easy_functions.args_remove(['community_variable'], jsonData)
         elif 'v3' in kwargs['version']:
-            jsonData = required_args_remove(['username', 'v3_security_level'], jsonData)
+            jsonData = easy_functions.args_remove(['username', 'v3_security_level'], jsonData)
         
         # Add Dictionary to Policy
         kwargs['class_path'] = 'fabric,policies,pod,snmp,snmp_destinations'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = 'default'
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1343,29 +1235,28 @@ class fabric(object):
         jsonData = kwargs['easy_jsonData']['fabric.snmpPolicy']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['name'] = 'default'
-        templateVars['snmp_client_groups'] = []
-        templateVars['snmp_communities'] = []
-        templateVars['snmp_destinations'] = []
-        templateVars['users'] = []
-        templateVars['include_types'] = {
-            'audit_logs':templateVars['audit_logs'],
-            'events':templateVars['events'],
-            'faults':templateVars['faults'],
-            'session_logs':templateVars['session_logs']
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['name'] = 'default'
+        polVars['snmp_client_groups'] = []
+        polVars['snmp_communities'] = []
+        polVars['snmp_destinations'] = []
+        polVars['users'] = []
+        polVars['include_types'] = {
+            'audit_logs':polVars['audit_logs'],
+            'events':polVars['events'],
+            'faults':polVars['faults'],
+            'session_logs':polVars['session_logs']
         }
         pop_list = ['audit_logs', 'events' ,'faults' ,'session_logs' ]
         for i in pop_list:
-            templateVars.pop(i)
-        
+            polVars.pop(i)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'fabric,policies,pod,snmp'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1378,37 +1269,34 @@ class fabric(object):
         # Check for Variable values that could change required arguments
         if 'privacy_key' in kwargs:
             if not kwargs['privacy_key'] == 'none':
-                jsonData = required_args_add(['privacy_key'], jsonData)
+                jsonData = easy_functions.args_add(['privacy_key'], jsonData)
         else:
             kwargs['privacy_key'] = 'none'
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Check if the Authorization and Privacy Keys are in the environment and if not add them.
-        templateVars['easyDict'] = kwargs['easyDict']
-        templateVars['jsonData'] = jsonData
-        templateVars["Variable"] = f'snmp_authorization_key_{kwargs["authorization_key"]}'
-        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
+        # Check if the Sensitive Variables are in the Environment.  If not Add them.
         if not kwargs['privacy_type'] == 'none':
-            templateVars["Variable"] = f'snmp_privacy_key_{kwargs["privacy_key"]}'
-            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        templateVars.pop('easyDict')
-        templateVars.pop('jsonData')
-        templateVars.pop('Variable')
+            sensitive_list = [
+                f'snmp_authorization_key_{kwargs["authorization_key"]}',
+                f'snmp_privacy_key_{kwargs["privacy_key"]}'
+            ]
+        else: sensitive_list = [f'snmp_authorization_key_{kwargs["authorization_key"]}']
+        polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
 
         # Reset jsonData
         if not kwargs['privacy_key'] == 'none':
-            jsonData = required_args_remove(['privacy_key'], jsonData)
+            jsonData = easy_functions.args_remove(['privacy_key'], jsonData)
         
         # Add Dictionary to Policy
         kwargs['class_path'] = 'fabric,policies,pod,snmp,users'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = 'default'
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1419,14 +1307,14 @@ class fabric(object):
         jsonData = kwargs['easy_jsonData']['fabric.recommendedSettings']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'fabric,recommended_settings'
-        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_update(polVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
@@ -1506,31 +1394,26 @@ class switches(object):
         jsonData = kwargs['easy_jsonData']['access.profiles.interfaceSelectors']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Add Dictionary to Policy
-        templateVars['interface_description'] = templateVars['description']
-        templateVars['interface_description'] = templateVars['description']
-        if len(templateVars['interface'].split(',')) > 2:
-            templateVars['sub_port'] = 'true'
-        else:
-            templateVars['sub_port'] = None
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['interface_description'] = polVars['description']
+        if len(polVars['interface'].split(',')) > 2: polVars['sub_port'] = True
+        else: polVars['sub_port'] = None
         pop_list = [
             'access_or_native_vlan', 'description', 'interface_profile', 'interface_selector',
             'node_id', 'pod_id',  'switchport_mode', 'trunk_port_allowed_vlans'
         ]
-        for i in pop_list:
-            templateVars.pop(i)
-        pgt = templateVars['policy_group_type']
-        if pgt == 'spine_pg': templateVars.pop('policy_group_type')
+        for i in pop_list: polVars.pop(i)
+        pgt = polVars['policy_group_type']
+        if pgt == 'spine_pg': polVars.pop('policy_group_type')
 
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'switch,switch_profiles,interfaces'
         kwargs['policy'] = 'name'
         kwargs['policy_name'] = kwargs['interface_profile']
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1541,65 +1424,59 @@ class switches(object):
         jsonData = kwargs['easy_jsonData']['access.switches.portConvert']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        def process_site(site_dict, templateVars, **kwargs):
+        def process_site(site_dict, polVars, **kwargs):
             if site_dict['auth_type'] == 'username':
                 if not site_dict['login_domain'] == None:
                     apic_user = f"apic#{site_dict['login_domain']}\\{site_dict['username']}"
-                else:
-                    apic_user = site_dict['username']
+                else: apic_user = site_dict['username']
                 
-                # Add Dictionary to Policy
-                templateVars['easyDict'] = kwargs['easyDict']
-                templateVars['jsonData'] = jsonData
-                templateVars["Variable"] = 'apicPass'
-                kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-                templateVars.pop('easyDict')
-                templateVars.pop('jsonData')
-                templateVars.pop('Variable')
+                # Check if the Sensitive Variables are in the Environment.  If not Add them.
+                sensitive_list = ['apicPass']
+                polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
                 apic_pass = os.environ.get('TF_VAR_apicPass')
-                node_list = vlan_list_full(templateVars['node_list'])
-                port_list = vlan_list_full(templateVars['port_list'])
+                node_list = easy_functions.vlan_list_full(polVars['node_list'])
+                port_list = easy_functions.vlan_list_full(polVars['port_list'])
 
                 controller = site_dict['controller']
                 fablogin = apicLogin(controller, apic_user, apic_pass)
                 cookies = fablogin.login()
 
                 for node in node_list:
-                    templateVars['node_id'] = node
+                    polVars['node_id'] = node
                     for port in port_list:
                         # Locate template for method
                         template_file = "check_ports.json"
                         template = self.templateEnv.get_template(template_file)
                         # Render template w/ values from dicts
-                        payload = template.render(templateVars)
+                        payload = template.render(polVars)
                         uri = 'ncapi/config'
                         # port_modes = get(controller, payload, cookies, uri, template_file)
 
                         # Locate template for method
-                        templateVars['port'] = f"1/{port}"
+                        polVars['port'] = f"1/{port}"
                         template_file = "port_convert.json"
                         template = self.templateEnv.get_template(template_file)
                         # Render template w/ values from dicts
-                        payload = template.render(templateVars)
+                        payload = template.render(polVars)
                         uri = 'ncapi/config'
-                        apic_post(controller, payload, cookies, uri, template_file)
+                        easy_functions.apic_post(controller, payload, cookies, uri, template_file)
 
         # Loop Through the Site Groups
-        if re.search('Grp_', templateVars['site_group']):
+        if re.search('Grp_', polVars['site_group']):
             site_group = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
             for site in site_group['sites']:
                 # Process the Site Port Conversions
                 siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
-                process_site(siteDict, templateVars, **kwargs)
+                process_site(siteDict, polVars, **kwargs)
         else:
             # Process the Site Port Conversions
             siteDict = kwargs['easyDict']['sites']['site_settings'][kwargs['site_group']][0]
-            process_site(siteDict, templateVars, **kwargs)
+            process_site(siteDict, polVars, **kwargs)
 
         return kwargs['easyDict']
 
@@ -1623,65 +1500,100 @@ class switches(object):
             for atype in atype_list:
                 if f'{mgmt}_{atype}' in kwargs:
                     if not kwargs[f'{mgmt}_{atype}'] == None:
-                        jsonData = required_args_add([f'{mgmt}_{atype}', f'{mgmt}_{atype}_gateway'], jsonData)
-
+                        jsonData = easy_functions.args_add([f'{mgmt}_{atype}', f'{mgmt}_{atype}_gateway'], jsonData)
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         for mgmt in mgmt_list:
             for atype in atype_list:
                 if f'{mgmt}_{atype}' in jsonData['required_args']:
-                    jsonData = required_args_remove([f'{mgmt}_{atype}', f'{mgmt}_{atype}_gateway'], jsonData)
+                    jsonData = easy_functions.args_remove([f'{mgmt}_{atype}', f'{mgmt}_{atype}_gateway'], jsonData)
+
+        if not polVars['node_type'] == 'spine':
+            if not polVars['vpc_name'] == None:
+                if kwargs['easyDict']['sites'][kwargs['site_group']]['switch'].get('vpc_domains'):
+                    if len(kwargs['easyDict']['sites'][kwargs['site_group']]['switch']['vpc_domains']) > 0:
+                        vpc_count = 0
+                        for i in kwargs['easyDict']['sites'][kwargs['site_group']]['switch']['vpc_domains']:
+                            if i['name'] == polVars['vpc_name']:
+                                i['switches'].append(polVars['node_id'])
+                                vpc_count =+ 1
+                        if vpc_count == 0:
+                            # Add Policy Variables to easyDict
+                            vpcArgs = {
+                                'name':polVars['vpc_name'],
+                                'domain_id':polVars['vpc_domain_id'],
+                                'site_group':kwargs['site_group'],
+                                'switches':[polVars['node_id']],
+                                'vpc_domain_policy':'default',
+                            }
+                            kwargs['class_path'] = 'switch,vpc_domains'
+                            kwargs['easyDict'] = easy_functions.ez_append(vpcArgs, **kwargs)
+                else:
+                    # Add Policy Variables to easyDict
+                    vpcArgs = {
+                        'name':polVars['vpc_name'],
+                        'domain_id':polVars['vpc_domain_id'],
+                        'site_group':kwargs['site_group'],
+                        'switches':[polVars['node_id']],
+                        'vpc_domain_policy':'default',
+                    }
+                    kwargs['class_path'] = 'switch,vpc_domains'
+                    kwargs['easyDict'] = easy_functions.ez_append(vpcArgs, **kwargs)
 
         # Modify the Format of the IP Addressing
-        templateVars.update({
+        polVars.update({
             'interfaces':[],
-            'name':templateVars['switch_name'],
+            'name':polVars['switch_name'],
         })
-        if not templateVars['inband_ipv4_gateway'] == None or not templateVars['inband_ipv6_gateway'] == None:
-            templateVars['inband_addressing'] = {'management_epg':templateVars['inband_mgmt_epg']}
-        if not templateVars['ooband_ipv4_gateway'] == None or not templateVars['ooband_ipv6_gateway'] == None:
-            templateVars['ooband_addressing'] = {'management_epg':templateVars['ooband_mgmt_epg']}
-        if not templateVars['inband_ipv4_gateway'] == None:
-            templateVars['inband_addressing'].update({
-                'ipv4_address':templateVars['inband_ipv4'],
-                'ipv4_gateway':templateVars['inband_ipv4_gateway']
+        if not polVars['inband_ipv4_gateway'] == None or not polVars['inband_ipv6_gateway'] == None:
+            polVars['inband_addressing'] = {'management_epg':polVars['inband_mgmt_epg']}
+        if not polVars['ooband_ipv4_gateway'] == None or not polVars['ooband_ipv6_gateway'] == None:
+            polVars['ooband_addressing'] = {'management_epg':polVars['ooband_mgmt_epg']}
+        if not polVars['inband_ipv4_gateway'] == None:
+            polVars['inband_addressing'].update({
+                'ipv4_address':polVars['inband_ipv4'],
+                'ipv4_gateway':polVars['inband_ipv4_gateway']
             })
-        if not templateVars['inband_ipv6_gateway'] == None:
-            templateVars['inband_addressing'].update({
-                'ipv6_address':templateVars['inband_ipv6'],
-                'ipv6_gateway':templateVars['inband_ipv6_gateway']
+        if not polVars['inband_ipv6_gateway'] == None:
+            polVars['inband_addressing'].update({
+                'ipv6_address':polVars['inband_ipv6'],
+                'ipv6_gateway':polVars['inband_ipv6_gateway']
             })
-        if not templateVars['ooband_ipv4_gateway'] == None:
-            templateVars['ooband_addressing'].update({
-                'ipv4_address':templateVars['ooband_ipv4'],
-                'ipv4_gateway':templateVars['ooband_ipv4_gateway']
+        if not polVars['ooband_ipv4_gateway'] == None:
+            polVars['ooband_addressing'].update({
+                'ipv4_address':polVars['ooband_ipv4'],
+                'ipv4_gateway':polVars['ooband_ipv4_gateway']
             })
-        if not templateVars['inband_ipv6_gateway'] == None:
-            templateVars['inband_addressing'].update({
-                'ipv6_address':templateVars['ooband_ipv6'],
-                'ipv6_gateway':templateVars['ooband_ipv6_gateway']
+        if not polVars['inband_ipv6_gateway'] == None:
+            polVars['inband_addressing'].update({
+                'ipv6_address':polVars['ooband_ipv6'],
+                'ipv6_gateway':polVars['ooband_ipv6_gateway']
             })
         ptypes = ['ipv4', 'ipv6']
         mtypes = ['inband', 'ooband']
         for mtype in mtypes:
-            templateVars.pop(f'{mtype}_mgmt_epg')
+            polVars.pop(f'{mtype}_mgmt_epg')
             for ptype in ptypes:
-                templateVars.pop(f'{mtype}_{ptype}')
-                templateVars.pop(f'{mtype}_{ptype}_gateway')
-        # Add Dictionary to easyDict
+                polVars.pop(f'{mtype}_{ptype}')
+                polVars.pop(f'{mtype}_{ptype}_gateway')
+
+        pop_list = ['vpc_name', 'vpc_domain_id']
+        for i in pop_list: polVars.pop(i)
+
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'switch,switch_profiles'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
 
         # Create or Modify the Interface Selector Workbook
         siteDict = kwargs['easyDict']['sites'][kwargs['site_group']]['site_settings']
         kwargs['excel_workbook'] = '%s_interface_selectors.xlsx' % (siteDict['site_name'])
         kwargs['wb_sw'] = load_workbook(kwargs['excel_workbook'])
-        interface_selector_workbook(templateVars, **kwargs)
+        easy_functions.interface_selector_workbook(polVars, **kwargs)
 
         # Remove Site Worksheet if it Exists
         ws_site = kwargs['wb_sw'].get_sheet_names()
@@ -1700,17 +1612,17 @@ class switches(object):
         class_init = 'switches'
         class_folder = 'switches'
         func_regex = '^intf_selector$'
-        ws = wb[f"{templateVars['switch_name']}"]
+        ws = wb[f"{polVars['switch_name']}"]
         rows = ws.max_row
-        func_list = findKeys(ws, func_regex)
-        stdout_log(ws, None, 'begin')
+        func_list = easy_functions.findKeys(ws, func_regex)
+        easy_functions.stdout_log(ws, None, 'begin')
         for func in func_list:
-            count = countKeys(ws, func)
-            var_dict = findVars(ws, func, rows, count)
+            count = easy_functions.countKeys(ws, func)
+            var_dict = easy_functions.findVars(ws, func, rows, count)
             for pos in var_dict:
                 row_num = var_dict[pos]['row']
                 del var_dict[pos]['row']
-                stdout_log(ws, row_num, 'begin')
+                easy_functions.stdout_log(ws, row_num, 'begin')
                 var_dict[pos].update(
                     {
                         'class_folder':class_folder,
@@ -1727,39 +1639,6 @@ class switches(object):
         kwargs['wb'] = wb
         kwargs['ws'] = ws
         kwargs['wb_sw'].close()
-
-        if not templateVars['node_type'] == 'spine':
-            if not templateVars['vpc_name'] == None:
-                if kwargs['easyDict']['sites'][kwargs['site_group']]['switch'].get('vpc_domains'):
-                    if len(kwargs['easyDict']['sites'][kwargs['site_group']]['switch']['vpc_domains']) > 0:
-                        vpc_count = 0
-                        for i in kwargs['easyDict']['sites'][kwargs['site_group']]['switch']['vpc_domains']:
-                            if i['name'] == templateVars['vpc_name']:
-                                i['switches'].append(templateVars['node_id'])
-                                vpc_count =+ 1
-                        if vpc_count == 0:
-                            # Add Dictionary to easyDict
-                            vpcArgs = {
-                                'name':templateVars['vpc_name'],
-                                'domain_id':templateVars['vpc_domain_id'],
-                                'site_group':kwargs['site_group'],
-                                'switches':[templateVars['node_id']],
-                                'vpc_domain_policy':'default',
-                            }
-                            kwargs['class_path'] = 'switch,vpc_domains'
-                            kwargs['easyDict'] = easyDict_append(vpcArgs, **kwargs)
-                else:
-                    # Add Dictionary to easyDict
-                    vpcArgs = {
-                        'name':templateVars['vpc_name'],
-                        'domain_id':templateVars['vpc_domain_id'],
-                        'site_group':kwargs['site_group'],
-                        'switches':[templateVars['node_id']],
-                        'vpc_domain_policy':'default',
-                    }
-                    kwargs['class_path'] = 'switch,vpc_domains'
-                    kwargs['easyDict'] = easyDict_append(vpcArgs, **kwargs)
-
         return easyDict
 
     #=============================================================================
@@ -1770,17 +1649,17 @@ class switches(object):
         jsonData = kwargs['easy_jsonData']['access.profiles.switchModules']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Split the Node List into Nodes
-        templateVars['node_list'] = templateVars['node_list'].split(',')
+        polVars['node_list'] = polVars['node_list'].split(',')
  
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'switch,spine_modules'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
@@ -1800,25 +1679,25 @@ class site_policies(object):
         jsonData = kwargs['easy_jsonData']['site.Identifiers']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         kwargs["multi_select"] = False
         # Prompt User for the Version of the Controller
-        if templateVars['controller_type'] == 'apic':
+        if polVars['controller_type'] == 'apic':
             # Obtain the APIC version from the API
-            templateVars['easyDict'] = kwargs['easyDict']
-            templateVars['jsonData'] = jsonData
-            templateVars["Variable"] = 'apicPass'
-            apic_pass = sensitive_var_value(**templateVars)
+            polVars['easyDict'] = kwargs['easyDict']
+            polVars['jsonData'] = jsonData
+            polVars["Variable"] = 'apicPass'
+            apic_pass = easy_functions.sensitive_var_value(**polVars)
             pop_list = ['easyDict', 'jsonData', 'Variable']
             for i in pop_list:
-                templateVars.pop(i)
+                polVars.pop(i)
 
             if args.skip_version_check == True:
-                templateVars['version'] = '4.2(7m)'
+                polVars['version'] = '4.2(7m)'
             else:
                 if not kwargs['login_domain'] == None:
                     apic_user = f"apic#{kwargs['login_domain']}\\{kwargs['username']}"
@@ -1830,23 +1709,23 @@ class site_policies(object):
                 # Locate template for method
                 template_file = "aaaRefresh.json"
                 uri = 'api/aaaRefresh'
-                uriResponse = apic_get(kwargs['controller'], cookies, uri, template_file)
+                uriResponse = easy_functions.apic_get(kwargs['controller'], cookies, uri, template_file)
                 verJson = uriResponse.json()
-                templateVars['version'] = verJson['imdata'][0]['aaaLogin']['attributes']['version']
+                polVars['version'] = verJson['imdata'][0]['aaaLogin']['attributes']['version']
         else:
             # Obtain the NDO version from the API
-            templateVars['easyDict'] = kwargs['easyDict']
-            templateVars['jsonData'] = jsonData
-            templateVars["Variable"] = 'ndoPass'
+            polVars['easyDict'] = kwargs['easyDict']
+            polVars['jsonData'] = jsonData
+            polVars["Variable"] = 'ndoPass'
             ndo_domain = kwargs['login_domain']
             ndo_user = kwargs['username']
-            ndo_pass = sensitive_var_value(**templateVars)
+            ndo_pass = easy_functions.sensitive_var_value(**polVars)
             pop_list = ['easyDict', 'jsonData', 'Variable']
             for i in pop_list:
-                templateVars.pop(i)
+                polVars.pop(i)
 
             if kwargs['args'].skip_version_check == 'True':
-                templateVars['version'] = '3.2(7l)'
+                polVars['version'] = '3.2(7l)'
             else:
                 fablogin = ndoLogin(kwargs['controller'], ndo_domain, ndo_pass, ndo_user)
                 cookies = fablogin.login()
@@ -1854,11 +1733,11 @@ class site_policies(object):
                 # Locate template for method and obtain running Version
                 template_file = "aaaRefresh.json"
                 uri = 'mso/api/v1/platform/version'
-                uriResponse = ndo_get(kwargs['controller'], cookies, uri, template_file)
+                uriResponse = easy_functions.ndo_get(kwargs['controller'], cookies, uri, template_file)
                 verJson = uriResponse.json()
-                templateVars['version'] = verJson['version']
+                polVars['version'] = verJson['version']
 
-        if templateVars['controller_type'] == 'apic': 
+        if polVars['controller_type'] == 'apic': 
             site_wb = '%s_interface_selectors.xlsx' % (kwargs['site_name'])
             if not os.path.isfile(site_wb):
                 kwargs['wb'].save(filename=site_wb)
@@ -1874,11 +1753,11 @@ class site_policies(object):
         siteDict = kwargs['easy_jsonData']['easy_aci']['allOf'][1]['properties']['siteDict']
         if not kwargs['easyDict'].get('sites'):
             kwargs['easyDict'].update(deepcopy({'sites':{}}))
-        kwargs['easyDict']['sites'].update(deepcopy({templateVars['site_id']:siteDict}))
+        kwargs['easyDict']['sites'].update(deepcopy({polVars['site_id']:siteDict}))
         
         # Attach the Site Settings
-        templateVars = OrderedDict(sorted(templateVars.items()))
-        kwargs['easyDict']['sites'][templateVars['site_id']]['site_settings'].update(deepcopy(templateVars))
+        polVars = OrderedDict(sorted(polVars.items()))
+        kwargs['easyDict']['sites'][polVars['site_id']]['site_settings'].update(deepcopy(polVars))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -1888,31 +1767,31 @@ class site_policies(object):
         easyDict = kwargs['easyDict']
         jsonData = kwargs['easy_jsonData']['easy_aci']['allOf'][1]['properties']
         for k, v in easyDict['sites'].items():
-            templateVars = {}
-            templateVars['annotation'] = 'orchestrator:terraform:easy-aci-v%s' % (jsonData['version'])
-            templateVars['annotations'] = [
+            polVars = {}
+            polVars['annotation'] = 'orchestrator:terraform:easy-aci-v%s' % (jsonData['version'])
+            polVars['annotations'] = [
                 {
                     'key':'orchestrator',
                     'value':f'terraform:easy-aci:v{jsonData["version"]}'
                 }
             ]
-            templateVars['controller_type'] = v['site_settings']['controller_type']
+            polVars['controller_type'] = v['site_settings']['controller_type']
             if v['site_settings']['controller_type'] == 'apic':
-                templateVars['apicHostname'] = v['site_settings']['controller']
-                templateVars['apic_version'] = v['site_settings']['version']
+                polVars['apicHostname'] = v['site_settings']['controller']
+                polVars['apic_version'] = v['site_settings']['version']
                 if v['site_settings']['auth_type'] == 'username':
                     if not v['site_settings']['login_domain'] == None:
                         login_domain = v['site_settings']['login_domain']
                         username = v['site_settings']['username']
-                        templateVars['apicUser'] = f"apic#{login_domain}\\{username}"
+                        polVars['apicUser'] = f"apic#{login_domain}\\{username}"
                     else:
-                        templateVars['apicUser'] = v['site_settings']['username']
+                        polVars['apicUser'] = v['site_settings']['username']
             else:
-                templateVars['ndoHostname'] = v['site_settings']['controller']
-                templateVars['ndoUser'] = v['site_settings']['username']
-                templateVars['ndo_version'] = v['site_settings']['version']
+                polVars['ndoHostname'] = v['site_settings']['controller']
+                polVars['ndoUser'] = v['site_settings']['username']
+                polVars['ndo_version'] = v['site_settings']['version']
                 if not v['site_settings']['login_domain'] == None:
-                    templateVars['ndoDomain'] = v['site_settings']['login_domain']
+                    polVars['ndoDomain'] = v['site_settings']['login_domain']
             
             # siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
             kwargs['auth_type'] = v['site_settings']['auth_type']
@@ -1925,10 +1804,10 @@ class site_policies(object):
             kwargs['tf_file'] = 'variables.auto.tfvars'
 
             kwargs["dest_dir"] = ''
-            templateVars = OrderedDict(sorted(templateVars.items()))
-            write_to_site(templateVars, **kwargs)
+            polVars = OrderedDict(sorted(polVars.items()))
+            easy_functions.write_to_site(polVars, **kwargs)
 
-            templateVars = {
+            polVars = {
                 "aci_provider_version": easyDict['latest_versions']['aci_provider_version'],
                 "ndo_provider_version": easyDict['latest_versions']['ndo_provider_version'],
                 "terraform_version": easyDict['latest_versions']['terraform_version'],
@@ -1936,8 +1815,8 @@ class site_policies(object):
             }
             kwargs["template_file"] = 'provider.j2'
             kwargs["tf_file"] = 'provider.tf'
-            templateVars = OrderedDict(sorted(templateVars.items()))
-            write_to_site(templateVars, **kwargs)
+            polVars = OrderedDict(sorted(polVars.items()))
+            easy_functions.write_to_site(polVars, **kwargs)
 
             if v['site_settings']['run_location'] == 'tfc' and v['site_settings']['configure_terraform_cloud'] == "true":
                 terraform_cloud().create_terraform_workspaces(kwargs['site_name'], kwargs['site_name'], **kwargs)
@@ -1951,14 +1830,14 @@ class site_policies(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['site.Groups']['allOf'][1]['properties']
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars['row_num'] = kwargs['row_num']
-        templateVars['ws'] = kwargs['ws']
-        validating.site_groups(**templateVars)
-        templateVars.pop('row_num')
-        templateVars.pop('ws')
+        polVars['row_num'] = kwargs['row_num']
+        polVars['ws'] = kwargs['ws']
+        validating.site_groups(**polVars)
+        polVars.pop('row_num')
+        polVars.pop('ws')
 
         sites = []
         for x in range(1, 11):
@@ -1966,11 +1845,11 @@ class site_policies(object):
                 sites.append(kwargs[f'site_{x}'])
 
         # Save the Site Information into Environment Variables
-        os.environ[kwargs['site_group']] = '%s' % (templateVars)
+        os.environ[kwargs['site_group']] = '%s' % (polVars)
 
 
         # Add Site Group to easyDict
-        templateVars = {
+        polVars = {
             'site_group':kwargs['site_group'],
             'sites':sites,
         }
@@ -1995,14 +1874,14 @@ class system_settings(object):
         jsonData = kwargs['easy_jsonData']['system.apicConnectivityPreference']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'system_settings,apic_connectivity_preference'
-        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_update(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2013,14 +1892,14 @@ class system_settings(object):
         jsonData = kwargs['easy_jsonData']['system.bgpASN']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'system_settings,bgp'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2031,17 +1910,17 @@ class system_settings(object):
         jsonData = kwargs['easy_jsonData']['system.bgpRouteReflector']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['pod_id'] = int(templateVars['pod_id'])
-        temp = templateVars['route_reflector_nodes'].split(',')
-        templateVars['route_reflector_nodes'] = [eval(i) for i in temp]
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['pod_id'] = int(polVars['pod_id'])
+        temp = polVars['route_reflector_nodes'].split(',')
+        polVars['route_reflector_nodes'] = [eval(i) for i in temp]
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'system_settings,bgp_route_reflectors,pods'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2052,24 +1931,19 @@ class system_settings(object):
         jsonData = kwargs['easy_jsonData']['system.recommendedSettings']['allOf'][1]['properties']
 
         # Validate User Input
-        validate_args(jsonData, **kwargs)
+        easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         
-        # If enable_encryption confirm aes_passphrase is set
-        if kwargs['global_aes_encryption_settings'] == 'true':
-            templateVars['easyDict'] = kwargs['easyDict']
-            templateVars['jsonData'] = jsonData
-            templateVars["Variable"] = 'aes_passphrase'
-            kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-            templateVars.pop('easyDict')
-            templateVars.pop('jsonData')
-            templateVars.pop('Variable')
+        # Check if the Sensitive Variables are in the Environment.  If not Add them.
+        if kwargs['global_aes_encryption_settings'] == True:
+            sensitive_list = ['aes_passphrase']
+            polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'system_settings,recommended_settings'
-        kwargs['easyDict'] = easyDict_update(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_update(polVars, **kwargs)
         return kwargs['easyDict']
 
 #=====================================================================================
@@ -2088,17 +1962,17 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.apic.InbandMgmt']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['tenant'] = 'mgmt'
-        templateVars['management_epg'] = templateVars['inband_epg']
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['tenant'] = 'mgmt'
+        polVars['management_epg'] = polVars['inband_epg']
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'apics_inband_mgmt_addresses'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'apics_inband_mgmt_addresses'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2109,19 +1983,19 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.applicationProfiles']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        if not templateVars['sites'] == None:
-            templateVars['sites'] = templateVars['sites'].split(',')
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        if not polVars['sites'] == None:
+            polVars['sites'] = polVars['sites'].split(',')
         else:
-            templateVars['monitoring_policy'] = 'default'
+            polVars['monitoring_policy'] = 'default'
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'application_profiles'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'application_profiles'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2132,39 +2006,39 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.bridgeDomains']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Attach the Bridge Domain General Policy Additional Attributes
-        if kwargs['easyDict']['tenants']['bridge_domains_general'].get(templateVars['general_policy']):
-            templateVars['general'] = kwargs['easyDict']['tenants']['bridge_domains_general'][templateVars['general_policy']]
+        if kwargs['easyDict']['tenants']['bridge_domains_general'].get(polVars['general_policy']):
+            polVars['general'] = kwargs['easyDict']['tenants']['bridge_domains_general'][polVars['general_policy']]
         else:
             validating.error_policy_not_found('general_policy', **kwargs)
 
         # Attach the Bridge Domain L3 Configuration Policy Additional Attributes
-        if kwargs['easyDict']['tenants']['bridge_domains_l3'].get(templateVars['l3_policy']):
-            templateVars['l3_configurations'] = kwargs['easyDict']['tenants']['bridge_domains_l3'][templateVars['l3_policy']]
+        if kwargs['easyDict']['tenants']['bridge_domains_l3'].get(polVars['l3_policy']):
+            polVars['l3_configurations'] = kwargs['easyDict']['tenants']['bridge_domains_l3'][polVars['l3_policy']]
         else:
             validating.error_policy_not_found('l3_policy', **kwargs)
         
         # Attach the Bridge Domain NDO Policy Additional Attributes, if defined.
-        if not templateVars['ndo_policy'] == None:
-            if kwargs['easyDict']['tenants']['bridge_domains_ndo'].get(templateVars['ndo_policy']):
-                templateVars.update(kwargs['easyDict']['tenants']['bridge_domains_ndo'][templateVars['ndo_policy']])
+        if not polVars['ndo_policy'] == None:
+            if kwargs['easyDict']['tenants']['bridge_domains_ndo'].get(polVars['ndo_policy']):
+                polVars.update(kwargs['easyDict']['tenants']['bridge_domains_ndo'][polVars['ndo_policy']])
             else:
                 validating.error_policy_not_found('ndo_policy', **kwargs)
-        if not templateVars.get('vrf_schema'):
-            templateVars['vrf_schema'] = None
-        if not templateVars.get('vrf_template'):
-            templateVars['vrf_template'] = None
+        if not polVars.get('vrf_schema'):
+            polVars['vrf_schema'] = None
+        if not polVars.get('vrf_template'):
+            polVars['vrf_template'] = None
 
         # Move Variables to the Advanced/Troubleshooting Map
-        atr = templateVars['l3_configurations']
+        atr = polVars['l3_configurations']
         advanced_troubleshooting = {
             'disable_ip_data_plane_learning_for_pbr':atr['disable_ip_data_plane_learning_for_pbr'],
-            'endpoint_clear':templateVars['endpoint_clear'],
+            'endpoint_clear':polVars['endpoint_clear'],
             'first_hop_security_policy':atr['first_hop_security_policy'],
             'intersite_bum_traffic_allow':atr['intersite_bum_traffic_allow'],
             'intersite_l2_stretch':atr['intersite_l2_stretch'],
@@ -2173,42 +2047,42 @@ class tenants(object):
             'optimize_wan_bandwidth':atr['optimize_wan_bandwidth'],
             'rogue_coop_exception_list':atr['rogue_coop_exception_list'],
         }
-        templateVars['advanced_troubleshooting'] = OrderedDict(sorted(advanced_troubleshooting.items()))
+        polVars['advanced_troubleshooting'] = OrderedDict(sorted(advanced_troubleshooting.items()))
         
         # Move Variables to the General Map
-        templateVars['general'].update({
-            'alias':templateVars['alias'],
-            'annotations':templateVars['annotations'],
-            'description':templateVars['description'],
-            'global_alias':templateVars['global_alias'],
-            'vrf':templateVars['vrf'],
-            'vrf_schema':templateVars['vrf_schema'],
-            'vrf_template':templateVars['vrf_template'],
-            'vrf_tenant':templateVars['vrf_tenant']
+        polVars['general'].update({
+            'alias':polVars['alias'],
+            'annotations':polVars['annotations'],
+            'description':polVars['description'],
+            'global_alias':polVars['global_alias'],
+            'vrf':polVars['vrf'],
+            'vrf_schema':polVars['vrf_schema'],
+            'vrf_template':polVars['vrf_template'],
+            'vrf_tenant':polVars['vrf_tenant']
         })
-        templateVars['general'] = OrderedDict(sorted(templateVars['general'].items()))
+        polVars['general'] = OrderedDict(sorted(polVars['general'].items()))
 
         # Move Variables to the L3 Configurations Map
-        if not templateVars['l3out'] == None:
-            templateVars['l3out'] = templateVars['l3out'].split(',')
-        if templateVars.get('sites'):
-            if not templateVars['sites'] == None:
-                templateVars['sites'] = templateVars['sites'].split(',')
-        templateVars['l3_configurations'].update({
+        if not polVars['l3out'] == None:
+            polVars['l3out'] = polVars['l3out'].split(',')
+        if polVars.get('sites'):
+            if not polVars['sites'] == None:
+                polVars['sites'] = polVars['sites'].split(',')
+        polVars['l3_configurations'].update({
             'associated_l3outs':{
-                'l3out':templateVars['l3out'],
-                'link_local_ipv6_address':templateVars['link_local_ipv6_address'],
-                'tenant':templateVars['vrf_tenant'],
-                'route_profile':templateVars['l3_configurations']['route_profile']
+                'l3out':polVars['l3out'],
+                'link_local_ipv6_address':polVars['link_local_ipv6_address'],
+                'tenant':polVars['vrf_tenant'],
+                'route_profile':polVars['l3_configurations']['route_profile']
             },
-            'custom_mac_address':templateVars['custom_mac_address'],
+            'custom_mac_address':polVars['custom_mac_address'],
             'subnets':{},
-            'virtual_mac_address':templateVars['virtual_mac_address']
+            'virtual_mac_address':polVars['virtual_mac_address']
         })
-        aa = templateVars['l3_configurations']['associated_l3outs']
+        aa = polVars['l3_configurations']['associated_l3outs']
         if aa['l3out'] == None and aa['tenant'] == None and aa['route_profile'] == None:
-            templateVars['l3_configurations'].pop('associated_l3outs')
-        templateVars['l3_configurations'] = OrderedDict(sorted(templateVars['l3_configurations'].items()))
+            polVars['l3_configurations'].pop('associated_l3outs')
+        polVars['l3_configurations'] = OrderedDict(sorted(polVars['l3_configurations'].items()))
 
         pop_list = [
             'disable_ip_data_plane_learning_for_pbr',
@@ -2220,7 +2094,7 @@ class tenants(object):
             'rogue_coop_exception_list'
         ]
         for i in pop_list:
-            templateVars['l3_configurations'].pop(i)
+            polVars['l3_configurations'].pop(i)
         
         pop_list = [
             'alias',
@@ -2241,13 +2115,13 @@ class tenants(object):
             'vrf_tenant'
         ]
         for i in pop_list:
-            templateVars.pop(i)
-        templateVars = OrderedDict(sorted(templateVars.items()))
+            polVars.pop(i)
+        polVars = OrderedDict(sorted(polVars.items()))
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'bridge_domains'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'bridge_domains'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2258,18 +2132,18 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.bd.General']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'bridge_domains_general'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2280,18 +2154,18 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.bd.L3Configurations']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'bridge_domains_l3'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2302,18 +2176,18 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.bd.Orchestrator']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'bridge_domains_ndo'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2324,28 +2198,27 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.bd.dhcpRelayLabels']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        if ',' in templateVars['names']:
-            templateVars['names'] = templateVars['names'].split(',')
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['names'] = polVars['names'].split(',')
 
-        # Modify the templateVars scope and subnet_control
+        # Modify the polVars scope and subnet_control
         pop_list = [
             'bridge_domain',
             'site_group',
             'tenant',
         ]
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
         
         bds = kwargs['easyDict']['tenants']['bridge_domains'][kwargs['site_group']]
         for bd in bds:
             if bd['name'] == kwargs['bridge_domain'] and bd['tenant'] == kwargs['tenant']:
-                bd['dhcp_relay_labels'] = templateVars
+                bd['dhcp_relay_labels'] = polVars
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         return kwargs['easyDict']
         
     #=============================================================================
@@ -2356,20 +2229,20 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.bd.Subnets']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Modify the templateVars scope and subnet_control
-        templateVars['scope'] = {
-            'advertise_externally':templateVars['advertise_externally'],
-            'shared_between_vrfs':templateVars['shared_between_vrfs']
+        # Modify the polVars scope and subnet_control
+        polVars['scope'] = {
+            'advertise_externally':polVars['advertise_externally'],
+            'shared_between_vrfs':polVars['shared_between_vrfs']
         }
-        templateVars['subnet_control'] = {
-            'neighbor_discovery':templateVars['neighbor_discovery'],
-            'no_default_svi_gateway':templateVars['no_default_svi_gateway'],
-            'querier_ip':templateVars['querier_ip']
+        polVars['subnet_control'] = {
+            'neighbor_discovery':polVars['neighbor_discovery'],
+            'no_default_svi_gateway':polVars['no_default_svi_gateway'],
+            'querier_ip':polVars['querier_ip']
         }
         pop_list = [
             'advertise_externally',
@@ -2383,14 +2256,14 @@ class tenants(object):
             'tenant',
         ]
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
         
         bds = kwargs['easyDict']['tenants']['bridge_domains'][kwargs['site_group']]
         for bd in bds:
             if bd['name'] == kwargs['bridge_domain'] and bd['tenant'] == kwargs['tenant']:
-                bd['l3_configurations']['subnets'].update({kwargs['gateway_ip']:templateVars})
+                bd['l3_configurations']['subnets'].update({kwargs['gateway_ip']:polVars})
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         return kwargs['easyDict']
         
     #=============================================================================
@@ -2401,24 +2274,24 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.bgpPeerConnectivityProfile']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Attach the BGP Peer Connectivity Policy Additional Attributes
-        if kwargs['easyDict']['tenants']['bgp_peer_policies'].get(templateVars['bgp_peer_shared_policy']):
-            templateVars.update(kwargs['easyDict']['tenants']['bgp_peer_policies'][templateVars['bgp_peer_shared_policy']])
+        if kwargs['easyDict']['tenants']['bgp_peer_policies'].get(polVars['bgp_peer_shared_policy']):
+            polVars.update(kwargs['easyDict']['tenants']['bgp_peer_policies'][polVars['bgp_peer_shared_policy']])
         else:
             validating.error_policy_not_found('bgp_peer_shared_policy', **kwargs)
 
-        templateVars.pop('bgp_peer_shared_policy')
-        policy_dict = {kwargs['peer_address']:templateVars}
+        polVars.pop('bgp_peer_shared_policy')
+        policy_dict = {kwargs['peer_address']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'bgp_peers'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
         
     #=============================================================================
@@ -2429,15 +2302,15 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.policies.bgpPrefix']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'policies_bgp_peer_prefix'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'policies_bgp_peer_prefix'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2448,33 +2321,33 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.bgpPeerConnectivityProfile.Policy']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Modify the templateVars Address Type Controls, BGP Controls, Peer Controls, and Private AS Controls
-        templateVars['address_type_controls'] = {
-            'af_mcast':templateVars['af_mcast'],
-            'af_ucast':templateVars['af_ucast']
+        # Modify the polVars Address Type Controls, BGP Controls, Peer Controls, and Private AS Controls
+        polVars['address_type_controls'] = {
+            'af_mcast':polVars['af_mcast'],
+            'af_ucast':polVars['af_ucast']
         }
-        templateVars['bgp_controls'] = {
-            'allow_self_as':templateVars['allow_self_as'],
-            'as_override':templateVars['as_override'],
-            'disable_peer_as_check':templateVars['disable_peer_as_check'],
-            'next_hop_self':templateVars['next_hop_self'],
-            'send_community':templateVars['send_community'],
-            'send_domain_path':templateVars['send_domain_path'],
-            'send_extended_community':templateVars['send_extended_community']
+        polVars['bgp_controls'] = {
+            'allow_self_as':polVars['allow_self_as'],
+            'as_override':polVars['as_override'],
+            'disable_peer_as_check':polVars['disable_peer_as_check'],
+            'next_hop_self':polVars['next_hop_self'],
+            'send_community':polVars['send_community'],
+            'send_domain_path':polVars['send_domain_path'],
+            'send_extended_community':polVars['send_extended_community']
         }
-        templateVars['peer_controls'] = {
-            'bidirectional_forwarding_detection':templateVars['bidirectional_forwarding_detection'],
-            'disable_connected_check':templateVars['disable_connected_check']
+        polVars['peer_controls'] = {
+            'bidirectional_forwarding_detection':polVars['bidirectional_forwarding_detection'],
+            'disable_connected_check':polVars['disable_connected_check']
         }
-        templateVars['private_as_control'] = {
-            'remove_all_private_as':templateVars['remove_all_private_as'],
-            'remove_private_as':templateVars['remove_private_as'],
-            'replace_private_as_with_local_as':templateVars['replace_private_as_with_local_as']
+        polVars['private_as_control'] = {
+            'remove_all_private_as':polVars['remove_all_private_as'],
+            'remove_private_as':polVars['remove_private_as'],
+            'replace_private_as_with_local_as':polVars['replace_private_as_with_local_as']
         }
         pop_list = [
             'af_mcast',
@@ -2493,15 +2366,15 @@ class tenants(object):
             'replace_private_as_with_local_as'
         ]
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'bgp_peer_policies'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2512,16 +2385,16 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.contract.Contracts']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['subjects'] = []
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['subjects'] = []
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'contracts'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'contracts'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2534,25 +2407,25 @@ class tenants(object):
         pop_list = []
         if 'external_epg' in kwargs['target_type']:
             pop_list = ['l3out', 'external_epgs']
-            jsonData = required_args_add(pop_list, jsonData)
+            jsonData = easy_functions.args_add(pop_list, jsonData)
         elif 'epg' in kwargs['target_type']:
             pop_list = ['application_epgs', 'application_profile']
-            jsonData = required_args_add(pop_list, jsonData)
+            jsonData = easy_functions.args_add(pop_list, jsonData)
         elif re.search('^(inb|oob)$', kwargs['target_type']):
             pop_list.append('application_epgs')
-            jsonData = required_args_add(pop_list, jsonData)
+            jsonData = easy_functions.args_add(pop_list, jsonData)
         elif 'vrf' in kwargs['target_type']:
             pop_list.append('vrfs')
-            jsonData = required_args_add(pop_list, jsonData)
+            jsonData = easy_functions.args_add(pop_list, jsonData)
         
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Remove Items in the Pop List
-        jsonData = required_args_remove(pop_list, jsonData)
+        jsonData = easy_functions.args_remove(pop_list, jsonData)
 
         # Attach the Contract to the EPG and VRF Resource(s)
         if re.search('^(epg|inb|oob)$', kwargs['target_type']):
@@ -2563,13 +2436,13 @@ class tenants(object):
                     if item['tenant'] == kwargs['target_tenant'] and item['application_profile'
                     ] == kwargs['application_profile'] and item['name'] == i:
                         contract = {
-                            'contract_type':templateVars['contract_type'],
-                            'name':templateVars['contract'],
-                            'qos_class':templateVars['qos_class'],
-                            'schema':templateVars['schema'],
-                            'sites':templateVars['sites'],
-                            'tenant':templateVars['tenant'],
-                            'template':templateVars['template']
+                            'contract_type':polVars['contract_type'],
+                            'name':polVars['contract'],
+                            'qos_class':polVars['qos_class'],
+                            'schema':polVars['schema'],
+                            'sites':polVars['sites'],
+                            'tenant':polVars['tenant'],
+                            'template':polVars['template']
                         }
                         item['contracts'].append(contract)
                         item_count += 1
@@ -2606,13 +2479,13 @@ class tenants(object):
                 for item in easyDict[kwargs['site_group']]:
                     if item['tenant'] == kwargs['target_tenant'] and item['name'] == i:
                         contract = {
-                            'contract_type':templateVars['contract_type'],
-                            'name':templateVars['contract'],
-                            'qos_class':templateVars['qos_class'],
-                            'schema':templateVars['schema'],
-                            'sites':templateVars['sites'],
-                            'tenant':templateVars['tenant'],
-                            'template':templateVars['template']
+                            'contract_type':polVars['contract_type'],
+                            'name':polVars['contract'],
+                            'qos_class':polVars['qos_class'],
+                            'schema':polVars['schema'],
+                            'sites':polVars['sites'],
+                            'tenant':polVars['tenant'],
+                            'template':polVars['template']
                         }
                         item['epg_esg_collection_for_vrfs']['contracts'].append(contract)
                         item_count += 1
@@ -2631,27 +2504,27 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.contract.ContractFilters']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['directives'] = {
-            'enable_policy_compression':templateVars['enable_policy_compression'],
-            'log':templateVars['log_packets']
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['directives'] = {
+            'enable_policy_compression':polVars['enable_policy_compression'],
+            'log':polVars['log_packets']
         }
-        templateVars['filters'] = templateVars['filters_to_assign'].split(',')
-        templateVars.pop('enable_policy_compression')
-        templateVars.pop('filters_to_assign')
-        templateVars.pop('log_packets')
-        templateVars = OrderedDict(sorted(templateVars.items()))
+        polVars['filters'] = polVars['filters_to_assign'].split(',')
+        polVars.pop('enable_policy_compression')
+        polVars.pop('filters_to_assign')
+        polVars.pop('log_packets')
+        polVars = OrderedDict(sorted(polVars.items()))
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'contracts'
-        templateVars['data_subtype'] = 'subjects'
-        templateVars['policy_name'] = templateVars['contract_name']
-        templateVars.pop('contract_name')
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        polVars['data_type'] = 'contracts'
+        polVars['data_subtype'] = 'subjects'
+        polVars['policy_name'] = polVars['contract_name']
+        polVars.pop('contract_name')
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2664,36 +2537,36 @@ class tenants(object):
         pop_list = []
         if 'external_epg' in kwargs['epg_type']: pop_list = ['l3out']
         else: pop_list = ['application_epg']
-        jsonData = required_args_add(pop_list, jsonData)
+        jsonData = easy_functions.args_add(pop_list, jsonData)
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        jsonData = required_args_remove(pop_list, jsonData)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        jsonData = easy_functions.args_remove(pop_list, jsonData)
 
         pop_list = ['address', 'application_profile', 'epg', 'epg_type', 'l3out']
-        templateVars['dhcp_relay_providers'] = {
-            'address':templateVars['address'],
-            'application_profile':templateVars['application_profile'],
-            'epg':templateVars['epg'],
-            'epg_type':templateVars['epg_type'],
-            'l3out':templateVars['l3out'],
-            'tenant':templateVars['tenant'],
+        polVars['dhcp_relay_providers'] = {
+            'address':polVars['address'],
+            'application_profile':polVars['application_profile'],
+            'epg':polVars['epg'],
+            'epg_type':polVars['epg_type'],
+            'l3out':polVars['l3out'],
+            'tenant':polVars['tenant'],
         }
 
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
         
-        # Add Dictionary to easyDict
-        if templateVars['owner'] == 'tenant':
+        # Add Policy Variables to easyDict
+        if polVars['owner'] == 'tenant':
             kwargs['class_path'] = 'tenants'
-            templateVars['data_type'] = 'policies_dhcp_relay'
+            polVars['data_type'] = 'policies_dhcp_relay'
         else:
             kwargs['class_path'] = 'access'
-            templateVars['data_type'] = 'global_dhcp_relay'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+            polVars['data_type'] = 'global_dhcp_relay'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2704,15 +2577,15 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.policies.eigrpInterface']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'policies_eigrp_interface'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'policies_eigrp_interface'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2723,18 +2596,18 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.eigrpInterfaceProfile']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars.pop('profile_name')
-        policy_dict = {kwargs['profile_name']:templateVars}
+        polVars.pop('profile_name')
+        policy_dict = {kwargs['profile_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'eigrp_interface_profiles'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2754,53 +2627,50 @@ class tenants(object):
         if re.search('^(inb|oob)$', epgpolicy['epg_type']):
             pop_list.append('application_profile')
             if epgpolicy['epg_type'] == 'oob': pop_list.append('bridge_domain')
-            jsonData = required_args_remove(pop_list, jsonData)
+            jsonData = easy_functions.args_remove(pop_list, jsonData)
             if epgpolicy['epg_type'] == 'inb':
-                jsonData = required_args_add(['vlans'], jsonData)
+                jsonData = easy_functions.args_add(['vlans'], jsonData)
         
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['monitoring_policy'] = 'default'
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['monitoring_policy'] = 'default'
 
         if re.search('^(inb|oob)$', epgpolicy['epg_type']):
-            jsonData = required_args_add(pop_list, jsonData)
+            jsonData = easy_functions.args_add(pop_list, jsonData)
             if epgpolicy['epg_type'] == 'inb':
-                jsonData = required_args_remove(['vlans'], jsonData)
+                jsonData = easy_functions.args_remove(['vlans'], jsonData)
 
         domain_list = ['physical_domains', 'vmm_domains']
         for i in domain_list:
-            if not templateVars[i] == None:
-                    templateVars[i] = templateVars[i].split(',')
+            if not polVars[i] == None:
+                    polVars[i] = polVars[i].split(',')
             else:
-                templateVars[i] = []
+                polVars[i] = []
 
         vmmpolicy = {}
-        if len(templateVars['vmm_domains']) > 0:
+        if len(polVars['vmm_domains']) > 0:
             # Attach the EPG VMM Policy Additional Attributes
-            if kwargs['easyDict']['tenants']['application_epg_vmm_policies'].get(templateVars['vmm_policy']):
-                vmmpolicy.update(kwargs['easyDict']['tenants']['application_epg_vmm_policies'][templateVars['vmm_policy']])
+            if kwargs['easyDict']['tenants']['application_epg_vmm_policies'].get(polVars['vmm_policy']):
+                vmmpolicy.update(kwargs['easyDict']['tenants']['application_epg_vmm_policies'][polVars['vmm_policy']])
             else:
                 validating.error_policy_not_found('vmm_policy', **kwargs)
 
-        templateVars = {**templateVars, **epgpolicy}
-        templateVars['contracts'] = []
-        templateVars['domains'] = []
-        if not templateVars['physical_domains'] == None:
-            for i in templateVars['physical_domains']:
-                templateVars['domains'].append({'domain': i})
-        if not templateVars['vmm_domains'] == None:
-            if not templateVars['vmm_vlans'] == None:
-                if ',' in  templateVars['vmm_vlans']:
-                    templateVars['vmm_vlans'] = [int(s) for s in templateVars['vmm_vlans'].split(',')]
-                else:
-                     templateVars['vmm_vlans'] = [int( templateVars['vmm_vlans'])]
-            for i in templateVars['vmm_domains']:
-                templateVars['domains'].append({
+        polVars = {**polVars, **epgpolicy}
+        polVars['contracts'] = []
+        polVars['domains'] = []
+        if not polVars['physical_domains'] == None:
+            for i in polVars['physical_domains']:
+                polVars['domains'].append({'domain': i})
+        if not polVars['vmm_domains'] == None:
+            if not polVars['vmm_vlans'] == None:
+                polVars['vmm_vlans'] = [int(s) for s in polVars['vmm_vlans'].split(',')]
+            for i in polVars['vmm_domains']:
+                polVars['domains'].append({
                     'allow_micro_segmentation': vmmpolicy['allow_micro_segmentation'],
-                    'custom_epg_name': templateVars['custom_epg_name'],
+                    'custom_epg_name': polVars['custom_epg_name'],
                     'delimiter': vmmpolicy['delimiter'],
                     'deploy_immediacy': vmmpolicy['deploy_immediacy'],
                     'domain': i,
@@ -2816,29 +2686,26 @@ class tenants(object):
                     },
                     'switch_provider': vmmpolicy['switch_provider'],
                     'vlan_mode': vmmpolicy['vlan_mode'],
-                    'vlans': templateVars['vmm_vlans']
+                    'vlans': polVars['vmm_vlans']
                 })
         epg_to_aaeps = []
-        if not templateVars['epg_to_aaeps'] == None:
-            if not templateVars['vlans'] == None:
-                if ',' in  str(templateVars['vlans']):
-                    templateVars['vlans'] = [int(s) for s in templateVars['vlans'].split(',')]
-                else:
-                     templateVars['vlans'] = [int( templateVars['vlans'])]
-            templateVars['epg_to_aaeps'] = templateVars['epg_to_aaeps'].split(',')
-            for i in templateVars['epg_to_aaeps']:
+        if not polVars['epg_to_aaeps'] == None:
+            if not polVars['vlans'] == None:
+                polVars['vlans'] = [int(s) for s in polVars['vlans'].split(',')]
+            polVars['epg_to_aaeps'] = polVars['epg_to_aaeps'].split(',')
+            for i in polVars['epg_to_aaeps']:
                 epg_to_aaeps.append({
                     'aaep': i,
-                    'mode': templateVars['epg_to_aaep_mode'],
-                    'vlans': templateVars['vlans']
+                    'mode': polVars['epg_to_aaep_mode'],
+                    'vlans': polVars['vlans']
                 })
-        templateVars['epg_to_aaeps'] = epg_to_aaeps
-        if not len(templateVars['epg_to_aaeps']) > 0:
-            templateVars.pop('epg_to_aaeps')
-        if not len(templateVars['domains']) > 0:
-            templateVars.pop('domains')
-        if templateVars['epg_type'] == 'inb':
-            templateVars['vlan'] = templateVars['vlans'].split(',')[0]
+        polVars['epg_to_aaeps'] = epg_to_aaeps
+        if not len(polVars['epg_to_aaeps']) > 0:
+            polVars.pop('epg_to_aaeps')
+        if not len(polVars['domains']) > 0:
+            polVars.pop('domains')
+        if polVars['epg_type'] == 'inb':
+            polVars['vlan'] = polVars['vlans'].split(',')[0]
 
         pop_list = [
             'custom_epg_name',
@@ -2851,12 +2718,12 @@ class tenants(object):
             'vmm_vlans'
         ]
         for i in pop_list:
-            if templateVars.get(i): templateVars.pop(i)
+            if polVars.get(i): polVars.pop(i)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'application_epgs'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'application_epgs'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2867,18 +2734,18 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.applicationEpg.Policy']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'application_epg_policies'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2889,18 +2756,18 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.applicationEpg.VMMPolicy']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'application_epg_vmm_policies'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2911,29 +2778,29 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.externalEpg']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['contracts'] = []
-        templateVars['subnets'] = []
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['contracts'] = []
+        polVars['subnets'] = []
 
         # Attach the External EPG Policy Additional Attributes
-        if kwargs['easyDict']['tenants']['external_epg_policies'].get(templateVars['external_epg_shared_policy']):
-            templateVars.update(kwargs['easyDict']['tenants']['external_epg_policies'][templateVars['external_epg_shared_policy']])
+        if kwargs['easyDict']['tenants']['external_epg_policies'].get(polVars['external_epg_shared_policy']):
+            polVars.update(kwargs['easyDict']['tenants']['external_epg_policies'][polVars['external_epg_shared_policy']])
         else:
             validating.error_policy_not_found('external_epg_shared_policy', **kwargs)
 
         pop_list = ['external_epg_shared_policy']
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'l3outs'
-        templateVars['data_subtype'] = 'external_epgs'
-        templateVars['policy_name'] = kwargs['l3out']
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        polVars['data_type'] = 'l3outs'
+        polVars['data_subtype'] = 'external_epgs'
+        polVars['policy_name'] = kwargs['l3out']
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2944,18 +2811,18 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.externalEpg.Policy']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'external_epg_policies'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2966,23 +2833,23 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.externalEpg.Subnet']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Modify the templateVars aggregate, external_epg_classification, and route_control
-        templateVars['aggregate'] = {
-            'aggregate_export':templateVars['aggregate_export'],
-            'aggregate_shared_routes':templateVars['aggregate_shared_routes']
+        # Modify the polVars aggregate, external_epg_classification, and route_control
+        polVars['aggregate'] = {
+            'aggregate_export':polVars['aggregate_export'],
+            'aggregate_shared_routes':polVars['aggregate_shared_routes']
         }
-        templateVars['external_epg_classification'] = {
-            'external_subnets_for_external_epg':templateVars['external_subnets_for_external_epg'],
-            'shared_security_import_subnet':templateVars['shared_security_import_subnet']
+        polVars['external_epg_classification'] = {
+            'external_subnets_for_external_epg':polVars['external_subnets_for_external_epg'],
+            'shared_security_import_subnet':polVars['shared_security_import_subnet']
         }
-        templateVars['route_control'] = {
-            'export_route_control_subnet':templateVars['export_route_control_subnet'],
-            'shared_route_control_subnet':templateVars['shared_route_control_subnet']
+        polVars['route_control'] = {
+            'export_route_control_subnet':polVars['export_route_control_subnet'],
+            'shared_route_control_subnet':polVars['shared_route_control_subnet']
         }
         pop_list = [
             'aggregate_export',
@@ -2993,24 +2860,24 @@ class tenants(object):
             'shared_route_control_subnet'
         ]
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
 
         # Attach the Subnet to the External EPG
-        if templateVars['site_group'] in kwargs['easyDict']['tenants']['l3outs'].keys():
+        if polVars['site_group'] in kwargs['easyDict']['tenants']['l3outs'].keys():
             complete = False
             while complete == False:
-                for item in kwargs['easyDict']['tenants']['l3outs'][templateVars['site_group']]:
-                    if item['name'] == templateVars['l3out'] and item['tenant'] == templateVars['tenant']:
+                for item in kwargs['easyDict']['tenants']['l3outs'][polVars['site_group']]:
+                    if item['name'] == polVars['l3out'] and item['tenant'] == polVars['tenant']:
                         for i in item['external_epgs']:
-                            if i['name'] == templateVars['external_epg']:
-                                subnets = templateVars['subnets']
-                                templateVars.pop('external_epg')
-                                templateVars.pop('l3out')
-                                templateVars.pop('tenant')
-                                templateVars.pop('site_group')
-                                templateVars.pop('subnets')
-                                templateVars['subnets'] = subnets.split(',')
-                                i['subnets'].append(templateVars)
+                            if i['name'] == polVars['external_epg']:
+                                subnets = polVars['subnets']
+                                polVars.pop('external_epg')
+                                polVars.pop('l3out')
+                                polVars.pop('tenant')
+                                polVars.pop('site_group')
+                                polVars.pop('subnets')
+                                polVars['subnets'] = subnets.split(',')
+                                i['subnets'].append(polVars)
                                 complete = True
                                 break
                     if complete == True: break
@@ -3029,16 +2896,16 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.contract.Filters']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['filter_entries'] = []
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['filter_entries'] = []
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'filters'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'filters'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3049,18 +2916,18 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.contract.filterEntry']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'filters'
-        templateVars['data_subtype'] = 'filter_entries'
-        templateVars['policy_name'] = templateVars['filter_name']
-        templateVars.pop('filter_name')
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        polVars['data_type'] = 'filters'
+        polVars['data_subtype'] = 'filter_entries'
+        polVars['policy_name'] = polVars['filter_name']
+        polVars.pop('filter_name')
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3071,34 +2938,34 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.L3Out']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['external_epgs'] = []
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['external_epgs'] = []
 
         # Attach the L3Out Policy Additional Attributes
-        if kwargs['easyDict']['tenants']['l3out_policies'].get(templateVars['l3out_shared_policy']):
-            templateVars.update(kwargs['easyDict']['tenants']['l3out_policies'][templateVars['l3out_shared_policy']])
+        if kwargs['easyDict']['tenants']['l3out_policies'].get(polVars['l3out_shared_policy']):
+            polVars.update(kwargs['easyDict']['tenants']['l3out_policies'][polVars['l3out_shared_policy']])
         else:
             validating.error_policy_not_found('l3out_shared_policy', **kwargs)
 
         # Attach the OSPF Routing Profile if defined
-        if not templateVars['ospf_external_profile'] == None:
-            if kwargs['easyDict']['tenants']['ospf_external_profiles'].get(templateVars['ospf_external_profile']):
-                aa = kwargs['easyDict']['tenants']['ospf_external_profiles'][templateVars['ospf_external_profile']]
-                templateVars['ospf_external_profile'] = aa
+        if not polVars['ospf_external_profile'] == None:
+            if kwargs['easyDict']['tenants']['ospf_external_profiles'].get(polVars['ospf_external_profile']):
+                aa = kwargs['easyDict']['tenants']['ospf_external_profiles'][polVars['ospf_external_profile']]
+                polVars['ospf_external_profile'] = aa
             else:
                 validating.error_policy_not_found('ospf_external_profile', **kwargs)
         
         pop_list = [ 'l3out_shared_policy', 'ospf_external_profile']
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'l3outs'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'l3outs'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3109,30 +2976,67 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.L3Out.Policy']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Modify the templateVars Route Control Enforcement
-        templateVars['route_control_enforcement'] = {
-            'export':templateVars['export'],
-            'import':templateVars['import']
+        # Modify the polVars Route Control Enforcement
+        polVars['route_control_enforcement'] = {
+            'export':polVars['export'],
+            'import':polVars['import']
         }
         pop_list = [
             'export',
             'import'
         ]
         for i in pop_list:
-            templateVars.pop(i)
+            polVars.pop(i)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'l3out_policies'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
+        return kwargs['easyDict']
+
+    #=============================================================================
+    # Function - Tenants
+    #=============================================================================
+    def ndo_schema(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['tenants.ndoSchemas']['allOf'][1]['properties']
+
+        # Validate User Input
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
+
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['sites'] = polVars['sites'].split(',')
+
+        # Add Policy Variables to easyDict
+        if not kwargs['easyDict']['sites'].get('ndo_settings'):
+            kwargs['easyDict']['sites'].update({'ndo_settings':[]})
+        kwargs['easyDict']['sites']['ndo_settings'].append(deepcopy(polVars))
+        if not kwargs['easyDict']['sites'].get('ndo_schemas'):
+            kwargs['easyDict']['sites'].update({'ndo_schemas':[]})
+        scount = 0
+        for item in kwargs['easyDict']['sites']['ndo_schemas']:
+            if item['name'] == polVars['schema']:
+                item['templates'].append(deepcopy({'name':polVars['template'],'sites':polVars['sites']}))
+                scount += 1
+        if scount == 0:
+            polVars['name'] = polVars['schema']
+            polVars['templates'] = []
+            polVars['templates'].append(deepcopy(
+                {'name':polVars['template'],'sites':polVars['sites']}
+            ))
+            pop_list = ['ndo_settings', 'schema', 'template', 'sites', 'vrf_schema', 'vrf_template']
+            for i in pop_list:
+                polVars.pop(i)
+            kwargs['easyDict']['sites']['ndo_schemas'].append(polVars)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3143,88 +3047,69 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeInterfaceProfile']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'l3out_logical_node_profiles'
-        templateVars['data_subtype'] = 'interface_profiles'
+        polVars['data_type'] = 'l3out_logical_node_profiles'
+        polVars['data_subtype'] = 'interface_profiles'
 
         # Attach the Node Interface Profile Additional Attributes
-        if kwargs['easyDict']['tenants']['node_interface_profile_policies'].get(templateVars['interface_profile_shared_policy']):
-            templateVars.update(kwargs['easyDict']['tenants']['node_interface_profile_policies'][templateVars['interface_profile_shared_policy']])
+        if kwargs['easyDict']['tenants']['node_interface_profile_policies'].get(polVars['interface_profile_shared_policy']):
+            polVars.update(kwargs['easyDict']['tenants']['node_interface_profile_policies'][polVars['interface_profile_shared_policy']])
         else:
             validating.error_policy_not_found('interface_profile_shared_policy', **kwargs)
 
         # Attach the Interface Configuration
-        if kwargs['easyDict']['tenants']['node_interface_configurations'].get(templateVars['interface_config_name']):
-            templateVars.update(kwargs['easyDict']['tenants']['node_interface_configurations'][templateVars['interface_config_name']])
+        if kwargs['easyDict']['tenants']['node_interface_configurations'].get(polVars['interface_config_name']):
+            polVars.update(kwargs['easyDict']['tenants']['node_interface_configurations'][polVars['interface_config_name']])
         else:
             validating.error_policy_not_found('interface_config_name', **kwargs)
 
         # Attach the BGP Peers if defined
-        if not templateVars['bgp_peers'] == None:
-            templateVars['bgp_peers'] = []
+        if not polVars['bgp_peers'] == None:
+            polVars['bgp_peers'] = []
             for i in kwargs['bgp_peers'].split(','):
                 if kwargs['easyDict']['tenants']['bgp_peers'].get(i):
                     aa = kwargs['easyDict']['tenants']['bgp_peers'][i]
 
-                    # If BGP Password is Set, Check Environment for presence.
+                    # Check if the Sensitive Variables are in the Environment.  If not Add them.
                     if re.search('^[0-5]$', str(aa['bgp_password'])):
-                        templateVars['easyDict'] = kwargs['easyDict']
-                        templateVars['jsonData'] = jsonData
-                        templateVars["Variable"] = f'bgp_password_{aa["bgp_password"]}'
-                        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-                        templateVars.pop('easyDict')
-                        templateVars.pop('jsonData')
-                        templateVars.pop('Variable')
-                        aa['password'] = aa['bgp_password']
-                        aa.pop('bgp_password')
+                        sensitive_list = [f'bgp_password_{aa["bgp_password"]}']
+                        polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
 
                     aa = OrderedDict(sorted(aa.items()))
-                    templateVars['bgp_peers'].append(aa)
+                    polVars['bgp_peers'].append(aa)
                 else:
                     validating.error_policy_not_found('bgp_peers', **kwargs)
 
         # Attach the EIGRP Interface Profile if defined
-        if not templateVars['eigrp_interface_profile'] == None:
-            if kwargs['easyDict']['tenants']['eigrp_interface_profiles'].get(templateVars['eigrp_interface_profile']):
-                aa = kwargs['easyDict']['tenants']['eigrp_interface_profiles'][templateVars['eigrp_interface_profile']]
-                templateVars['eigrp_interface_profile'] = aa
+        if not polVars['eigrp_interface_profile'] == None:
+            if kwargs['easyDict']['tenants']['eigrp_interface_profiles'].get(polVars['eigrp_interface_profile']):
+                aa = kwargs['easyDict']['tenants']['eigrp_interface_profiles'][polVars['eigrp_interface_profile']]
+                polVars['eigrp_interface_profile'] = aa
             else:
                 validating.error_policy_not_found('eigrp_interface_profile', **kwargs)
 
         # Attach the OSPF Interface Profile if defined
-        if not templateVars['ospf_interface_profile'] == None:
-            if kwargs['easyDict']['tenants']['ospf_interface_profiles'].get(templateVars['ospf_interface_profile']):
-                aa = kwargs['easyDict']['tenants']['ospf_interface_profiles'][templateVars['ospf_interface_profile']]
-                templateVars['ospf_interface_profile'] = aa
-                # If OSPF auth_key is Set, Check Environment for presence.
+        if not polVars['ospf_interface_profile'] == None:
+            if kwargs['easyDict']['tenants']['ospf_interface_profiles'].get(polVars['ospf_interface_profile']):
+                aa = kwargs['easyDict']['tenants']['ospf_interface_profiles'][polVars['ospf_interface_profile']]
+                polVars['ospf_interface_profile'] = aa
+
+                # Check if the Sensitive Variables are in the Environment.  If not Add them.
                 if re.search('[0-9]', str(aa['key_id'])):
-                    templateVars['easyDict'] = kwargs['easyDict']
-                    templateVars['jsonData'] = jsonData
-                    templateVars["Variable"] = f'ospf_key_{aa["key_id"]}'
-                    kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-                    templateVars.pop('easyDict')
-                    templateVars.pop('jsonData')
-                    templateVars.pop('Variable')
+                    sensitive_list = [f'ospf_key_{aa["key_id"]}']
+                    polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
+            else: validating.error_policy_not_found('ospf_interface_profile', **kwargs)
 
-            else:
-                validating.error_policy_not_found('ospf_interface_profile', **kwargs)
-
-        pop_list = [
-            'interface_config_name',
-            'interface_profile_shared_policy',
-            'node_profile',
-        ]
-        for i in pop_list:
-            templateVars.pop(i)
-
+        pop_list = ['interface_config_name', 'interface_profile_shared_policy', 'node_profile']
+        for i in pop_list: polVars.pop(i)
 
         # Add Dictionary to Policy
-        templateVars['policy_name'] = kwargs['node_profile']
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        polVars['policy_name'] = kwargs['node_profile']
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3241,34 +3126,34 @@ class tenants(object):
                 pop_list.append('encap_scope')
                 pop_list.append('mode')
                 pop_list.append('vlan')
-            jsonData = required_args_remove(pop_list, jsonData)
+            jsonData = easy_functions.args_remove(pop_list, jsonData)
         
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        if templateVars['interface_type'] == 'ext-svi':
-            if not templateVars['link_local_addresses'] == None:
-                if not len(templateVars['link_local_addresses'].split(',')) == 2:
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        if polVars['interface_type'] == 'ext-svi':
+            if not polVars['link_local_addresses'] == None:
+                if not len(polVars['link_local_addresses'].split(',')) == 2:
                     validating.error_interface_address('link_local_addresses', **kwargs)
-                link_local_a = templateVars['link_local_addresses'].split(',')[0]
-                link_local_b = templateVars['link_local_addresses'].split(',')[1]
+                link_local_a = polVars['link_local_addresses'].split(',')[0]
+                link_local_b = polVars['link_local_addresses'].split(',')[1]
             else:
                 link_local_a = None
                 link_local_b = None
-            if not templateVars['primary_preferred_addresses'] == None:
-                if not len(templateVars['primary_preferred_addresses'].split(',')) == 2:
+            if not polVars['primary_preferred_addresses'] == None:
+                if not len(polVars['primary_preferred_addresses'].split(',')) == 2:
                     validating.error_interface_address('primary_preferred_addresses', **kwargs)
-                primary_a = templateVars['primary_preferred_addresses'].split(',')[0]
-                primary_b = templateVars['primary_preferred_addresses'].split(',')[1]
+                primary_a = polVars['primary_preferred_addresses'].split(',')[0]
+                primary_b = polVars['primary_preferred_addresses'].split(',')[1]
             else:
                 primary_a = None
                 primary_b = None
-            if not templateVars['secondary_addresses'] == None:
-                if not len(templateVars['secondary_addresses'].split(',')) % 2  == 0:
+            if not polVars['secondary_addresses'] == None:
+                if not len(polVars['secondary_addresses'].split(',')) % 2  == 0:
                     validating.error_interface_address('secondary_addresses', **kwargs)
-                xsplit = templateVars['secondary_addresses'].split(',')
+                xsplit = polVars['secondary_addresses'].split(',')
                 half = len(xsplit)//2
                 secondaries_a = xsplit[:half]
                 secondaries_b = xsplit[half:]
@@ -3276,7 +3161,7 @@ class tenants(object):
                 secondaries_a = None
                 secondaries_b = None
             
-            templateVars['svi_addresses'] = [
+            polVars['svi_addresses'] = [
                 {
                     'link_local_address':link_local_a,
                     'primary_preferred_address':primary_a,
@@ -3291,30 +3176,30 @@ class tenants(object):
                 }
             ]
         else:
-            if not templateVars['link_local_addresses'] == None:
-                if not len(templateVars['link_local_addresses'].split(',')) == 1:
+            if not polVars['link_local_addresses'] == None:
+                if not len(polVars['link_local_addresses'].split(',')) == 1:
                     validating.error_interface_address('link_local_addresses', **kwargs)
-            templateVars['link_local_address'] = templateVars['link_local_addresses']
-            if not templateVars['primary_preferred_addresses'] == None:
-                if not len(templateVars['primary_preferred_addresses'].split(',')) == 1:
+            polVars['link_local_address'] = polVars['link_local_addresses']
+            if not polVars['primary_preferred_addresses'] == None:
+                if not len(polVars['primary_preferred_addresses'].split(',')) == 1:
                     validating.error_interface_address('primary_preferred_addresses', **kwargs)
-            templateVars['primary_preferred_address'] = templateVars['primary_preferred_addresses']
-            if not templateVars['secondary_addresses'] == None:
-                templateVars['secondary_addresses'] = templateVars['secondary_addresses'].split(',')
+            polVars['primary_preferred_address'] = polVars['primary_preferred_addresses']
+            if not polVars['secondary_addresses'] == None:
+                polVars['secondary_addresses'] = polVars['secondary_addresses'].split(',')
 
-        templateVars.pop('link_local_addresses')
-        templateVars.pop('primary_preferred_addresses')
-        templateVars.pop('policy_name')
-        templateVars = OrderedDict(sorted(templateVars.items()))
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('link_local_addresses')
+        polVars.pop('primary_preferred_addresses')
+        polVars.pop('policy_name')
+        polVars = OrderedDict(sorted(polVars.items()))
+        policy_dict = {kwargs['policy_name']:polVars}
 
         if re.search('^(l3-port|sub-interface)$', kwargs['interface_type']):
-            jsonData = required_args_add(pop_list, jsonData)
+            jsonData = easy_functions.args_add(pop_list, jsonData)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'node_interface_configurations'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3325,18 +3210,18 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeInterfaceProfile.Policy']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'node_interface_profile_policies'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3347,31 +3232,31 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeProfile']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['interface_profiles'] = []
-        templateVars['node_router_ids'] = templateVars['node_router_ids'].split(',')
-        templateVars['node_list'] = [int(s) for s in str(templateVars['node_list']).split(',')]
-        templateVars['nodes'] = []
-        for x in range(0, len(templateVars['node_list'])):
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['interface_profiles'] = []
+        polVars['node_router_ids'] = polVars['node_router_ids'].split(',')
+        polVars['node_list'] = [int(s) for s in str(polVars['node_list']).split(',')]
+        polVars['nodes'] = []
+        for x in range(0, len(polVars['node_list'])):
             node = {
-                'node_id':templateVars['node_list'][x],
-                'router_id':templateVars['node_router_ids'][x],
-                'use_router_id_as_loopback':templateVars['use_router_id_as_loopback']
+                'node_id':polVars['node_list'][x],
+                'router_id':polVars['node_router_ids'][x],
+                'use_router_id_as_loopback':polVars['use_router_id_as_loopback']
             }
-            templateVars['nodes'].append(node)
+            polVars['nodes'].append(node)
 
         # Remove Arguments
-        templateVars.pop('node_list')
-        templateVars.pop('node_router_ids')
-        templateVars.pop('use_router_id_as_loopback')
+        polVars.pop('node_list')
+        polVars.pop('node_router_ids')
+        polVars.pop('use_router_id_as_loopback')
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'l3out_logical_node_profiles'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'l3out_logical_node_profiles'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3382,15 +3267,15 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.policies.ospfInterface']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'policies_ospf_interface'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        polVars['data_type'] = 'policies_ospf_interface'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3401,19 +3286,19 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.ospfInterfaceProfile']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         
-        templateVars['name'] = templateVars['profile_name']
-        templateVars.pop('profile_name')
-        policy_dict = {kwargs['profile_name']:templateVars}
+        polVars['name'] = polVars['profile_name']
+        polVars.pop('profile_name')
+        policy_dict = {kwargs['profile_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'ospf_interface_profiles'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3424,93 +3309,32 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.l3out.ospfRoutingProfile']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        # Modify the templateVars OSPF Area Control
-        templateVars['ospf_area_control'] = {
-            'originate_summary_lsa':templateVars['originate_summary_lsa'],
-            'send_redistribution_lsas_into_nssa_area':templateVars['send_redistribution_lsas_into_nssa_area'],
-            'suppress_forwarding_address':templateVars['suppress_forwarding_address']
+        # Modify the polVars OSPF Area Control
+        polVars['ospf_area_control'] = {
+            'originate_summary_lsa':polVars['originate_summary_lsa'],
+            'send_redistribution_lsas_into_nssa_area':polVars['send_redistribution_lsas_into_nssa_area'],
+            'suppress_forwarding_address':polVars['suppress_forwarding_address']
         }
         pop_list = [
             'originate_summary_lsa',
             'send_redistribution_lsas_into_nssa_area',
             'suppress_forwarding_address'
         ]
-        for i in pop_list:
-            templateVars.pop(i)
+        for i in pop_list: polVars.pop(i)
 
-        templateVars.pop('profile_name')
-        policy_dict = {kwargs['profile_name']:templateVars}
+        polVars.pop('profile_name')
+        policy_dict = {kwargs['profile_name']:polVars}
 
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         policy_dict['class_path'] = 'tenants'
         policy_dict['data_type'] = 'ospf_external_profiles'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
         return kwargs['easyDict']
-
-    #=============================================================================
-    # Function - Schema and Templates
-    #=============================================================================
-    def template_add(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['tenants.Schemas']['allOf'][1]['properties']
-
-        # Determine if tenants match and add arguments to requirements if so.
-        pop_list = []
-        if kwargs['template_tenant'] == kwargs['tenant']:
-            pop_list = ['template', 'sites', 'template_tenant']
-            jsonData = required_args_add(pop_list, jsonData)
-
-        # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
-
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-
-        # Remove Items in the Pop List
-        jsonData = required_args_remove(pop_list, jsonData)
-
-        # Modify Variables for Lists and name attribute
-        templateVars['name'] = templateVars['schema']
-        templateVars.pop('schema')
-        if not templateVars['sites'] == None:
-            templateVars['sites'] = templateVars['sites'].split(',')
-        templateVars['templates'] = [{
-            'name':templateVars['template'],
-            'sites':templateVars['sites'],
-            'tenant':templateVars['template_tenant']
-        }]
-
-        if re.search(r'\d{1,16}', kwargs['site_group']):
-            exists = False
-            if kwargs['easyDict']['tenants']['schemas'].get(kwargs['site_group']):
-                for i in kwargs['easyDict']['tenants']['schemas'][kwargs['site_group']]:
-                    if i['name'] == templateVars['name'] and i['tenant'] == templateVars['tenant']:
-                        exists = True
-                        i['templates'].append(
-                            {
-                                'name':templateVars['template'],
-                                'sites':templateVars['sites'],
-                                'tenant':templateVars['template_tenant']
-                            }
-                        )
-            if exists == False:
-                # Add Dictionary to easyDict
-                pop_list = ['template', 'sites']
-                if templateVars['sites'] == None:
-                    pop_list.append('templates')
-                for i in pop_list:
-                    templateVars.pop(i)
-                kwargs['class_path'] = 'tenants'
-                templateVars['data_type'] = 'schemas'
-                kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
-                return kwargs['easyDict']
-            else:
-                return kwargs['easyDict']
 
     #=============================================================================
     # Function - Tenants
@@ -3520,27 +3344,34 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.Tenants']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['monitoring_policy'] = 'default'
-        templateVars['tenant'] = templateVars['name']
-        if not templateVars['users'] == None:
-            if ',' in templateVars['users']:
-                templateVars['users'] = templateVars['users'].split(',')
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['monitoring_policy'] = 'default'
+        polVars['tenant'] = polVars['name']
+        if not polVars['ndo_settings'] == None:
+            polVars['users'] = polVars['ndo_settings'].split(',')
+            for item in kwargs['easyDict']['sites']['ndo_settings']:
+                if item['ndo_settings'] == polVars['ndo_settings']:
+                    for i in kwargs['easyDict']['sites']['ndo_schemas']:
+                        if i['name'] == item['schema']:
+                            polVars['ndo'] = i
+            polVars.pop('ndo_settings')
+            ndo_sites = []
+            for i in polVars['ndo']['templates']:
+                if not i in ndo_sites:
+                    ndo_sites.append(i)
+            if len(ndo_sites) > 0:
+                polVars['sites'] = []
+                for item in ndo_sites:
+                    for i in kwargs['easyDict']['sites']['ndo_sites']:
+                        if i['name'] == item:
+                            polVars['sites'].append(i)
 
-        if re.search(r'\d{1,16}', kwargs['site_group']):
-            if kwargs['easyDict']['tenants']['sites'].get(kwargs['site_group']):
-                templateVars['sites'] = []
-                for i in kwargs['easyDict']['tenants']['sites'][kwargs['site_group']]:
-                    if i['tenant'] == templateVars['name']:
-                        templateVars['sites'].append(i)
-
-        # Add Dictionary to easyDict
+        # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'tenants'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3551,15 +3382,16 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.Sites']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.ez_remove_empty(polVars)
 
-        # Add Dictionary to easyDict
-        kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'sites'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        # Add Policy Variables to easyDict
+        if not kwargs['easyDict']['sites'].get('ndo_sites'):
+            kwargs['easyDict']['sites'].update({'ndo_sites':[]})
+        kwargs['easyDict']['sites']['ndo_sites'].append(polVars)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3570,33 +3402,25 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.Vrfs']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
-        templateVars['communities'] = []
-        templateVars['epg_esg_collection_for_vrfs'] = dict(
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars['communities'] = []
+        polVars['epg_esg_collection_for_vrfs'] = dict(
             contracts = [],
-            match_type = kwargs['label_match_criteria']
+            label_match_criteria = 'AtleastOne'
         )
-        templateVars.pop('label_match_criteria')
 
         # Attach the VRF Policy Additional Attributes
-        if kwargs['easyDict']['tenants']['vrf_policies'].get(templateVars['vrf_policy']):
-            templateVars.update(kwargs['easyDict']['tenants']['vrf_policies'][templateVars['vrf_policy']])
+        if kwargs['easyDict']['tenants']['vrf_policies'].get(polVars['vrf_policy']):
+            polVars.update(kwargs['easyDict']['tenants']['vrf_policies'][polVars['vrf_policy']])
         else:
             validating.error_policy_not_found('vrf_policy', **kwargs)
 
-        # If NDO Split Sites if Necessary
-        if templateVars.get('sites'):
-            if not templateVars['sites'] == None:
-                templateVars['sites'] = templateVars['sites'].split(',')
-
-
-        # Add Dictionary to easyDict
-        kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'vrfs'
-        kwargs['easyDict'] = easyDict_append(templateVars, **kwargs)
+        # Add Policy Variables to easyDict
+        kwargs['class_path'] = 'tenants,vrfs'
+        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
         
     #=============================================================================
@@ -3607,27 +3431,22 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.vrf.Community']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
         kwargs['class_path'] = 'tenants'
-        templateVars['data_type'] = 'vrfs'
-        templateVars['data_subtype'] = 'communities'
+        polVars['data_type'] = 'vrfs'
+        polVars['data_subtype'] = 'communities'
 
-        # Check if the SNMP Community is in the Environment.  If not Add it.
-        templateVars['easyDict'] = kwargs['easyDict']
-        templateVars['jsonData'] = jsonData
-        templateVars["Variable"] = f'vrf_snmp_community_{kwargs["community_variable"]}'
-        kwargs['easyDict'] = sensitive_var_site_group(**templateVars)
-        templateVars.pop('easyDict')
-        templateVars.pop('jsonData')
-        templateVars.pop('Variable')
+        # Check if the Sensitive Variables are in the Environment.  If not Add them.
+        sensitive_list = [f'vrf_snmp_community_{kwargs["community_variable"]}']
+        polVars, kwargs = easy_functions.env_sensitive(sensitive_list, jsonData, polVars, **kwargs)
 
         # Add Dictionary to Policy
-        templateVars['policy_name'] = templateVars['vrf']
-        templateVars.pop('vrf')
-        kwargs['easyDict'] = easyDict_append_subtype(templateVars, **kwargs)
+        polVars['policy_name'] = polVars['vrf']
+        polVars.pop('vrf')
+        kwargs['easyDict'] = easy_functions.ez_append_subtype(polVars, **kwargs)
         return kwargs['easyDict']
 
     #=============================================================================
@@ -3638,26 +3457,26 @@ class tenants(object):
         jsonData = kwargs['easy_jsonData']['tenants.vrf.Policy']['allOf'][1]['properties']
 
         # Validate User Input
-        kwargs = validate_args(jsonData, **kwargs)
+        kwargs = easy_functions.validate_args(jsonData, **kwargs)
 
-        # Validate inputs, return dict of template vars
-        templateVars = process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
 
-        templateVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:templateVars}
+        polVars.pop('policy_name')
+        policy_dict = {kwargs['policy_name']:polVars}
 
         per_list = ['bgp_timers_per_address_family', 'eigrp_timers_per_address_family', 'ospf_timers_per_address_family']
         for i in per_list:
-            if not templateVars[i] == None:
+            if not polVars[i] == None:
                 dict_list = []
-                for v in templateVars[i].split(','):
+                for v in polVars[i].split(','):
                     if '_' in v: dict_list.append({ 'address_family': v.split('_')[0], 'policy': v.split('_')[1] })
-                templateVars[i] = dict_list
+                polVars[i] = dict_list
 
-        # Add Dictionary to easyDict
-        policy_dict['class_path'] = 'tenants'
-        policy_dict['data_type'] = 'vrf_policies'
-        kwargs['easyDict'] = easyDict_append_policy(policy_dict, **kwargs)
+        # Add Policy Variables to easyDict
+        if not kwargs['easyDict']['sites'].get('vrf_policy'):
+            kwargs['easyDict']['sites'].update({'vrf_policy':[]})
+        kwargs['easyDict']['sites']['vrf_policy'].append(polVars)
         return kwargs['easyDict']
 
 #=====================================================================================
@@ -3680,83 +3499,83 @@ class terraform_cloud(object):
         tfcb_config = []
         valid = False
         while valid == False:
-            templateVars = {}
-            templateVars["Description"] = f'Terraform Cloud Workspaces for Site {site}'
-            templateVars["varInput"] = f'Do you want to Proceed with creating Workspaces in Terraform Cloud?'
-            templateVars["varDefault"] = 'Y'
-            templateVars["varName"] = 'Terraform Cloud Workspaces'
-            runTFCB = varBoolLoop(**templateVars)
+            polVars = {}
+            polVars["Description"] = f'Terraform Cloud Workspaces for Site {site}'
+            polVars["varInput"] = f'Do you want to Proceed with creating Workspaces in Terraform Cloud?'
+            polVars["varDefault"] = 'Y'
+            polVars["varName"] = 'Terraform Cloud Workspaces'
+            runTFCB = easy_functions.varBoolLoop(**polVars)
             valid = True
         if runTFCB == True:
-            templateVars = { 'site_group':site_group }
-            templateVars["terraform_cloud_token"] = terraform_cloud().terraform_token()
+            polVars = { 'site_group':site_group }
+            polVars["terraform_cloud_token"] = terraform_cloud().terraform_token()
             
             # Obtain Terraform Cloud Organization
             if os.environ.get('tfc_organization') is None:
-                templateVars["tfc_organization"] = terraform_cloud().tfc_organization(**templateVars)
-                os.environ['tfc_organization'] = templateVars["tfc_organization"]
+                polVars["tfc_organization"] = terraform_cloud().tfc_organization(**polVars)
+                os.environ['tfc_organization'] = polVars["tfc_organization"]
             else:
-                templateVars["tfc_organization"] = os.environ.get('tfc_organization')
-            tfcb_config.append({'tfc_organization':templateVars["tfc_organization"]})
+                polVars["tfc_organization"] = os.environ.get('tfc_organization')
+            tfcb_config.append({'tfc_organization':polVars["tfc_organization"]})
             
             # Obtain Terraform Cloud Agent_Pool
             if os.environ.get('agentPoolId') is None:
-                templateVars["agentPoolId"] = terraform_cloud().tfc_agent_pool(**templateVars)
-                os.environ['agentPoolId'] = templateVars["tfc_organization"]
+                polVars["agentPoolId"] = terraform_cloud().tfc_agent_pool(**polVars)
+                os.environ['agentPoolId'] = polVars["tfc_organization"]
             else:
-                templateVars["agentPoolId"] = os.environ.get('agentPoolId')
-            tfcb_config.append({'agentPoolId':templateVars["agentPoolId"]})
+                polVars["agentPoolId"] = os.environ.get('agentPoolId')
+            tfcb_config.append({'agentPoolId':polVars["agentPoolId"]})
             
             # Obtain Version Control Provider
             if os.environ.get('tfc_vcs_provider') is None:
-                tfc_vcs_provider,templateVars["tfc_oath_token"] = terraform_cloud(
-                ).tfc_vcs_providers(**templateVars)
-                templateVars["tfc_vcs_provider"] = tfc_vcs_provider
+                tfc_vcs_provider,polVars["tfc_oath_token"] = terraform_cloud(
+                ).tfc_vcs_providers(**polVars)
+                polVars["tfc_vcs_provider"] = tfc_vcs_provider
                 os.environ['tfc_vcs_provider'] = tfc_vcs_provider
-                os.environ['tfc_oath_token'] = templateVars["tfc_oath_token"]
+                os.environ['tfc_oath_token'] = polVars["tfc_oath_token"]
             else:
-                templateVars["tfc_vcs_provider"] = os.environ.get('tfc_vcs_provider')
-                templateVars["tfc_oath_token"] = os.environ['tfc_oath_token']
+                polVars["tfc_vcs_provider"] = os.environ.get('tfc_vcs_provider')
+                polVars["tfc_oath_token"] = os.environ['tfc_oath_token']
 
             # Obtain Version Control Base Repo
             if os.environ.get('vcsBaseRepo') is None:
-                templateVars["vcsBaseRepo"] = terraform_cloud().tfc_vcs_repository(**templateVars)
-                os.environ['vcsBaseRepo'] = templateVars["vcsBaseRepo"]
+                polVars["vcsBaseRepo"] = terraform_cloud().tfc_vcs_repository(**polVars)
+                os.environ['vcsBaseRepo'] = polVars["vcsBaseRepo"]
             else:
-                templateVars["vcsBaseRepo"] = os.environ.get('vcsBaseRepo')
+                polVars["vcsBaseRepo"] = os.environ.get('vcsBaseRepo')
             
             # Set Some of the default Variables that user is not Prompted for
-            templateVars["allowDestroyPlan"] = False
-            templateVars["executionMode"] = 'agent'
-            templateVars["queueAllRuns"] = False
-            templateVars["speculativeEnabled"] = True
-            templateVars["triggerPrefixes"] = []
+            polVars["allowDestroyPlan"] = False
+            polVars["executionMode"] = 'agent'
+            polVars["queueAllRuns"] = False
+            polVars["speculativeEnabled"] = True
+            polVars["triggerPrefixes"] = []
 
             # Set the Terraform Version for the Workspace
-            templateVars["terraformVersion"] = kwargs['easyDict']['latest_versions']['terraform_version']
+            polVars["terraformVersion"] = kwargs['easyDict']['latest_versions']['terraform_version']
 
             # Loop through the Site Folders
             folders.sort()
             for folder in folders:
-                templateVars["autoApply"] = True
-                templateVars["Description"] = f'Site {site} - {folder}'
-                templateVars["globalRemoteState"] = False
-                templateVars["workingDirectory"] = f'{site}/{folder}'
+                polVars["autoApply"] = True
+                polVars["Description"] = f'Site {site} - {folder}'
+                polVars["globalRemoteState"] = False
+                polVars["workingDirectory"] = f'{site}/{folder}'
 
-                templateVars["Description"] = f'Name of the Workspace to Create in Terraform Cloud for:\n'\
+                polVars["Description"] = f'Name of the Workspace to Create in Terraform Cloud for:\n'\
                     f'  - Site: "{site}"\n  - Folder: "{folder}"'
-                templateVars["varDefault"] = f'{site}_{folder}'
-                templateVars["varInput"] = f'Terraform Cloud Workspace Name. [{site}_{folder}]: '
-                templateVars["varName"] = f'Workspace Name'
-                templateVars["maximum"] = 90
-                templateVars["minimum"] = 1
-                templateVars["pattern"] = '^[a-zA-Z0-9\\-\\_]+$'
-                templateVars["workspaceName"] = varStringLoop(**templateVars)
-                tfcb_config.append({folder:templateVars["workspaceName"]})
-                # templateVars["vcsBranch"] = ''
+                polVars["varDefault"] = f'{site}_{folder}'
+                polVars["varInput"] = f'Terraform Cloud Workspace Name. [{site}_{folder}]: '
+                polVars["varName"] = f'Workspace Name'
+                polVars["maximum"] = 90
+                polVars["minimum"] = 1
+                polVars["pattern"] = '^[a-zA-Z0-9\\-\\_]+$'
+                polVars["workspaceName"] = easy_functions.varStringLoop(**polVars)
+                tfcb_config.append({folder:polVars["workspaceName"]})
+                # polVars["vcsBranch"] = ''
 
                 # Create Terraform Cloud Workspace
-                templateVars['workspace_id'] = terraform_cloud().tfcWorkspace(**templateVars)
+                polVars['workspace_id'] = terraform_cloud().tfcWorkspace(**polVars)
 
                 #==============================================
                 # Add Sensitive Variables to Workspace
@@ -3782,20 +3601,20 @@ class terraform_cloud(object):
                 var_list.sort()
                 for var in var_list:
                     if 'cert' in var or 'private' in var:
-                        templateVars["Multi_Line_Input"] = True
-                    print(f'* Adding {var} to {templateVars["workspaceName"]}')
+                        polVars["Multi_Line_Input"] = True
+                    print(f'* Adding {var} to {polVars["workspaceName"]}')
                     kwargs['class_path'] = 'tfcVariables'
-                    templateVars["Description"] = ''
-                    templateVars["easyDict"] = easyDict
-                    templateVars['jsonData'] = jsonData
-                    templateVars["Variable"] = var
-                    templateVars["varId"] = var
-                    templateVars["varKey"] = var
-                    sensitive_var_site_group(**templateVars)
+                    polVars["Description"] = ''
+                    polVars["easyDict"] = easyDict
+                    polVars['jsonData'] = jsonData
+                    polVars["Variable"] = var
+                    polVars["varId"] = var
+                    polVars["varKey"] = var
+                    easy_functions.sensitive_var_site_group(**polVars)
                     osvar = f'TF_VAR_{var}'
-                    templateVars["varValue"] = os.environ.get(osvar)
-                    templateVars["Sensitive"] = True
-                    terraform_cloud().tfcVariables(**templateVars)
+                    polVars["varValue"] = os.environ.get(osvar)
+                    polVars["Sensitive"] = True
+                    terraform_cloud().tfcVariables(**polVars)
 
         else:
             print(f'\n-------------------------------------------------------------------------------------------\n')
@@ -3841,12 +3660,12 @@ class terraform_cloud(object):
     #=============================================================================
     # Function - Terraform Cloud - VCS Repository
     #=============================================================================
-    def tfc_agent_pool(self, **templateVars):
+    def tfc_agent_pool(self, **polVars):
         #-------------------------------
         # Configure the Variables URL
         #-------------------------------
-        url = 'https://app.terraform.io/api/v2/organizations/%s/agent-pools' % (templateVars['tfc_organization'])
-        tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+        url = 'https://app.terraform.io/api/v2/organizations/%s/agent-pools' % (polVars['tfc_organization'])
+        tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
         tf_header = {'Authorization': tf_token,
                 'Content-Type': 'application/vnd.api+json'
         }
@@ -3854,7 +3673,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = tfc_get(url, tf_header, 'Get Agent Pools')
+        status,json_data = easy_functions.tfc_get(url, tf_header, 'Get Agent Pools')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -3870,12 +3689,12 @@ class terraform_cloud(object):
                 pool_dict.update({item['attributes']['name']:item['id']})
 
             # print(vcsProvider)
-            templateVars["multi_select"] = False
-            templateVars["var_description"] = "Terraform Cloud Agent Pools:"
-            templateVars["jsonVars"] = sorted(pool_list)
-            templateVars["varType"] = 'Agent Pools'
-            templateVars["defaultVar"] = ''
-            agentPool = variablesFromAPI(**templateVars)
+            polVars["multi_select"] = False
+            polVars["var_description"] = "Terraform Cloud Agent Pools:"
+            polVars["jsonVars"] = sorted(pool_list)
+            polVars["varType"] = 'Agent Pools'
+            polVars["defaultVar"] = ''
+            agentPool = easy_functions.variablesFromAPI(**polVars)
 
             agentPool = pool_dict[agentPool]
             return agentPool
@@ -3885,12 +3704,12 @@ class terraform_cloud(object):
     #=============================================================================
     # Function - Terraform Cloud - Organization
     #=============================================================================
-    def tfc_organization(self, **templateVars):
+    def tfc_organization(self, **polVars):
         #-------------------------------
         # Configure the Variables URL
         #-------------------------------
         url = 'https://app.terraform.io/api/v2/organizations'
-        tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+        tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
         tf_header = {'Authorization': tf_token,
                 'Content-Type': 'application/vnd.api+json'
         }
@@ -3898,7 +3717,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = tfc_get(url, tf_header, 'Get Terraform Cloud Organizations')
+        status,json_data = easy_functions.tfc_get(url, tf_header, 'Get Terraform Cloud Organizations')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -3914,12 +3733,12 @@ class terraform_cloud(object):
                         tfcOrgs.append(v)
 
             # print(tfcOrgs)
-            templateVars["multi_select"] = False
-            templateVars["var_description"] = 'Terraform Cloud Organizations:'
-            templateVars["jsonVars"] = tfcOrgs
-            templateVars["varType"] = 'Terraform Cloud Organization'
-            templateVars["defaultVar"] = ''
-            tfc_organization = variablesFromAPI(**templateVars)
+            polVars["multi_select"] = False
+            polVars["var_description"] = 'Terraform Cloud Organizations:'
+            polVars["jsonVars"] = tfcOrgs
+            polVars["varType"] = 'Terraform Cloud Organization'
+            polVars["defaultVar"] = ''
+            tfc_organization = easy_functions.variablesFromAPI(**polVars)
             return tfc_organization
         else:
             print(status)
@@ -3927,13 +3746,13 @@ class terraform_cloud(object):
     #=============================================================================
     # Function - Terraform Cloud - VCS Repository
     #=============================================================================
-    def tfc_vcs_repository(self, **templateVars):
+    def tfc_vcs_repository(self, **polVars):
         #-------------------------------
         # Configure the Variables URL
         #-------------------------------
-        oauth_token = templateVars["tfc_oath_token"]
+        oauth_token = polVars["tfc_oath_token"]
         url = 'https://app.terraform.io/api/v2/oauth-tokens/%s/authorized-repos?oauth_token_id=%s' % (oauth_token, oauth_token)
-        tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+        tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
         tf_header = {'Authorization': tf_token,
                 'Content-Type': 'application/vnd.api+json'
         }
@@ -3941,7 +3760,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = tfc_get(url, tf_header, 'Get VCS Repos')
+        status,json_data = easy_functions.tfc_get(url, tf_header, 'Get VCS Repos')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -3957,12 +3776,12 @@ class terraform_cloud(object):
                         repo_list.append(v)
 
             # print(vcsProvider)
-            templateVars["multi_select"] = False
-            templateVars["var_description"] = "Terraform Cloud VCS Base Repository:"
-            templateVars["jsonVars"] = sorted(repo_list)
-            templateVars["varType"] = 'VCS Base Repository'
-            templateVars["defaultVar"] = ''
-            vcsBaseRepo = variablesFromAPI(**templateVars)
+            polVars["multi_select"] = False
+            polVars["var_description"] = "Terraform Cloud VCS Base Repository:"
+            polVars["jsonVars"] = sorted(repo_list)
+            polVars["varType"] = 'VCS Base Repository'
+            polVars["defaultVar"] = ''
+            vcsBaseRepo = easy_functions.variablesFromAPI(**polVars)
 
             return vcsBaseRepo
         else:
@@ -3971,12 +3790,12 @@ class terraform_cloud(object):
     #=============================================================================
     # Function - Terraform Cloud - VCS Providers
     #=============================================================================
-    def tfc_vcs_providers(self, **templateVars):
+    def tfc_vcs_providers(self, **polVars):
         #-------------------------------
         # Configure the Variables URL
         #-------------------------------
-        url = 'https://app.terraform.io/api/v2/organizations/%s/oauth-clients' % (templateVars["tfc_organization"])
-        tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+        url = 'https://app.terraform.io/api/v2/organizations/%s/oauth-clients' % (polVars["tfc_organization"])
+        tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
         tf_header = {'Authorization': tf_token,
                 'Content-Type': 'application/vnd.api+json'
         }
@@ -3984,7 +3803,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = tfc_get(url, tf_header, 'Get VCS Repos')
+        status,json_data = easy_functions.tfc_get(url, tf_header, 'Get VCS Repos')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -4012,12 +3831,12 @@ class terraform_cloud(object):
                 vcsAttributes.append(vcs_repo)
 
             # print(vcsProvider)
-            templateVars["multi_select"] = False
-            templateVars["var_description"] = "Terraform Cloud VCS Provider:"
-            templateVars["jsonVars"] = vcsProvider
-            templateVars["varType"] = 'VCS Provider'
-            templateVars["defaultVar"] = ''
-            vcsRepoName = variablesFromAPI(**templateVars)
+            polVars["multi_select"] = False
+            polVars["var_description"] = "Terraform Cloud VCS Provider:"
+            polVars["jsonVars"] = vcsProvider
+            polVars["varType"] = 'VCS Provider'
+            polVars["defaultVar"] = ''
+            vcsRepoName = easy_functions.variablesFromAPI(**polVars)
 
             for i in vcsAttributes:
                 if i["name"] == vcsRepoName:
@@ -4031,12 +3850,12 @@ class terraform_cloud(object):
     #=============================================================================
     # Function - Terraform Cloud - GET Workspaces
     #=============================================================================
-    def tfcWorkspace(self, **templateVars):
+    def tfcWorkspace(self, **polVars):
         #-------------------------------
         # Configure the Workspace URL
         #-------------------------------
-        url = 'https://app.terraform.io/api/v2/organizations/%s/workspaces/%s' %  (templateVars['tfc_organization'], templateVars['workspaceName'])
-        tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+        url = 'https://app.terraform.io/api/v2/organizations/%s/workspaces/%s' %  (polVars['tfc_organization'], polVars['workspaceName'])
+        tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
         tf_header = {'Authorization': tf_token,
                 'Content-Type': 'application/vnd.api+json'
         }
@@ -4044,7 +3863,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Organization to Search for the Workspace
         #----------------------------------------------------------------------------------
-        status,json_data = tfc_get(url, tf_header, 'workspace_check')
+        status,json_data = easy_functions.tfc_get(url, tf_header, 'workspace_check')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Workspace Exists or Not.
@@ -4053,7 +3872,7 @@ class terraform_cloud(object):
         workspace_id = ''
         # print(json.dumps(json_data, indent = 4))
         if status == 200:
-            if json_data['data']['attributes']['name'] == templateVars['workspaceName']:
+            if json_data['data']['attributes']['name'] == polVars['workspaceName']:
                 workspace_id = json_data['data']['id']
                 key_count =+ 1
 
@@ -4063,19 +3882,19 @@ class terraform_cloud(object):
 
         opSystem = platform.system()
         if opSystem == 'Windows':
-            workingDir = templateVars["workingDirectory"]
-            templateVars["workingDirectory"] = workingDir.replace('\\', '/')
+            workingDir = polVars["workingDirectory"]
+            polVars["workingDirectory"] = workingDir.replace('\\', '/')
 
-        # if re.search(r'\/', templateVars["workingDirectory"]):
-        #     workingDir = templateVars["workingDirectory"]
-        #     templateVars["workingDirectory"] = workingDir[1 : ]
+        # if re.search(r'\/', polVars["workingDirectory"]):
+        #     workingDir = polVars["workingDirectory"]
+        #     polVars["workingDirectory"] = workingDir[1 : ]
         
         if not key_count > 0:
             #-------------------------------
             # Get Workspaces the Workspace URL
             #-------------------------------
-            url = 'https://app.terraform.io/api/v2/organizations/%s/workspaces/' %  (templateVars['tfc_organization'])
-            tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+            url = 'https://app.terraform.io/api/v2/organizations/%s/workspaces/' %  (polVars['tfc_organization'])
+            tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
             tf_header = {'Authorization': tf_token,
                     'Content-Type': 'application/vnd.api+json'
             }
@@ -4085,13 +3904,13 @@ class terraform_cloud(object):
             template = self.templateEnv.get_template(template_file)
 
             # Create the Payload
-            payload = template.render(templateVars)
+            payload = template.render(polVars)
 
             if print_payload:
                 print(payload)
 
             # Post the Contents to Terraform Cloud
-            json_data = tfc_post(url, payload, tf_header, template_file)
+            json_data = easy_functions.tfc_post(url, payload, tf_header, template_file)
 
             # Get the Workspace ID from the JSON Dump
             workspace_id = json_data['data']['id']
@@ -4102,7 +3921,7 @@ class terraform_cloud(object):
             # Configure the PATCH Variables URL
             #-----------------------------------
             url = 'https://app.terraform.io/api/v2/workspaces/%s/' %  (workspace_id)
-            tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+            tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
             tf_header = {'Authorization': tf_token,
                     'Content-Type': 'application/vnd.api+json'
             }
@@ -4112,20 +3931,20 @@ class terraform_cloud(object):
             template = self.templateEnv.get_template(template_file)
 
             # Create the Payload
-            payload = template.render(templateVars)
+            payload = template.render(polVars)
 
             if print_payload:
                 print(payload)
 
             # PATCH the Contents to Terraform Cloud
-            json_data = tfc_patch(url, payload, tf_header, template_file)
+            json_data = easy_functions.tfc_patch(url, payload, tf_header, template_file)
             # Get the Workspace ID from the JSON Dump
             workspace_id = json_data['data']['id']
             key_count =+ 1
 
         if not key_count > 0:
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'\n   Unable to Determine the Workspace ID for "{templateVars["workspaceName"]}".')
+            print(f'\n   Unable to Determine the Workspace ID for "{polVars["workspaceName"]}".')
             print(f'\n   Exiting...')
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
@@ -4136,12 +3955,12 @@ class terraform_cloud(object):
     #=============================================================================
     # Function - Terraform Cloud - Workspace Remove
     #=============================================================================
-    def tfcWorkspace_remove(self, **templateVars):
+    def tfcWorkspace_remove(self, **polVars):
         #-------------------------------
         # Configure the Workspace URL
         #-------------------------------
-        url = 'https://app.terraform.io/api/v2/organizations/%s/workspaces/%s' %  (templateVars['tfc_organization'], templateVars['workspaceName'])
-        tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+        url = 'https://app.terraform.io/api/v2/organizations/%s/workspaces/%s' %  (polVars['tfc_organization'], polVars['workspaceName'])
+        tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
         tf_header = {'Authorization': tf_token,
                 'Content-Type': 'application/vnd.api+json'
         }
@@ -4156,33 +3975,32 @@ class terraform_cloud(object):
         # Parse the JSON Data to see if the Workspace Exists or Not.
         #--------------------------------------------------------------
         del_count = 0
-        workspace_id = ''
         # print(json.dumps(json_data, indent = 4))
         if response.status_code == 200:
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'    Successfully Deleted Workspace "{templateVars["workspaceName"]}".')
+            print(f'    Successfully Deleted Workspace "{polVars["workspaceName"]}".')
             print(f'\n-----------------------------------------------------------------------------\n')
             del_count =+ 1
         elif response.status_code == 204:
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'    Successfully Deleted Workspace "{templateVars["workspaceName"]}".')
+            print(f'    Successfully Deleted Workspace "{polVars["workspaceName"]}".')
             print(f'\n-----------------------------------------------------------------------------\n')
             del_count =+ 1
 
         if not del_count > 0:
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'    Unable to Determine the Workspace ID for "{templateVars["workspaceName"]}".')
+            print(f'    Unable to Determine the Workspace ID for "{polVars["workspaceName"]}".')
             print(f'\n-----------------------------------------------------------------------------\n')
 
     #=============================================================================
     # Function - Terraform Cloud - Workspace Variables
     #=============================================================================
-    def tfcVariables(self, **templateVars):
+    def tfcVariables(self, **polVars):
         #-------------------------------
         # Configure the Variables URL
         #-------------------------------
-        url = 'https://app.terraform.io/api/v2/workspaces/%s/vars' %  (templateVars['workspace_id'])
-        tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+        url = 'https://app.terraform.io/api/v2/workspaces/%s/vars' %  (polVars['workspace_id'])
+        tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
         tf_header = {'Authorization': tf_token,
                 'Content-Type': 'application/vnd.api+json'
         }
@@ -4190,7 +4008,7 @@ class terraform_cloud(object):
         #----------------------------------------------------------------------------------
         # Get the Contents of the Workspace to Search for the Variable
         #----------------------------------------------------------------------------------
-        status,json_data = tfc_get(url, tf_header, 'variable_check')
+        status,json_data = easy_functions.tfc_get(url, tf_header, 'variable_check')
 
         #--------------------------------------------------------------
         # Parse the JSON Data to see if the Variable Exists or Not.
@@ -4201,7 +4019,7 @@ class terraform_cloud(object):
         var_id = ''
         if 'id' in json_text:
             for keys in json_data['data']:
-                if keys['attributes']['key'] == templateVars['Variable']:
+                if keys['attributes']['key'] == polVars['Variable']:
                     var_id = keys['id']
                     key_count =+ 1
 
@@ -4215,13 +4033,13 @@ class terraform_cloud(object):
             template = self.templateEnv.get_template(template_file)
 
             # Create the Payload
-            payload = template.render(templateVars)
+            payload = template.render(polVars)
 
             if print_payload:
                 print(payload)
 
             # Post the Contents to Terraform Cloud
-            json_data = tfc_post(url, payload, tf_header, template_file)
+            json_data = easy_functions.tfc_post(url, payload, tf_header, template_file)
 
             # Get the Workspace ID from the JSON Dump
             var_id = json_data['data']['id']
@@ -4231,8 +4049,8 @@ class terraform_cloud(object):
             #-----------------------------------
             # Configure the PATCH Variables URL
             #-----------------------------------
-            url = 'https://app.terraform.io/api/v2/workspaces/%s/vars/%s' %  (templateVars['workspace_id'], var_id)
-            tf_token = 'Bearer %s' % (templateVars['terraform_cloud_token'])
+            url = 'https://app.terraform.io/api/v2/workspaces/%s/vars/%s' %  (polVars['workspace_id'], var_id)
+            tf_token = 'Bearer %s' % (polVars['terraform_cloud_token'])
             tf_header = {'Authorization': tf_token,
                     'Content-Type': 'application/vnd.api+json'
             }
@@ -4242,21 +4060,21 @@ class terraform_cloud(object):
             template = self.templateEnv.get_template(template_file)
 
             # Create the Payload
-            templateVars.pop('varId')
-            payload = template.render(templateVars)
+            polVars.pop('varId')
+            payload = template.render(polVars)
 
             if print_payload:
                 print(payload)
 
             # PATCH the Contents to Terraform Cloud
-            json_data = tfc_patch(url, payload, tf_header, template_file)
+            json_data = easy_functions.tfc_patch(url, payload, tf_header, template_file)
             # Get the Workspace ID from the JSON Dump
             var_id = json_data['data']['id']
             key_count =+ 1
 
         if not key_count > 0:
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f"\n   Unable to Determine the Variable ID for {templateVars['Variable']}.")
+            print(f"\n   Unable to Determine the Variable ID for {polVars['Variable']}.")
             print(f"\n   Exiting...")
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()

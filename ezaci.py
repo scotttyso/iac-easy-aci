@@ -58,7 +58,7 @@ port_convert_regex = '^port_cnvt$'
 sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|recommended_settings)$'
-tenants_regex = '^(ndo_settings|(template|tenant)_(add|site)|vrf_(add|community))$'
+tenants_regex = '^(ndo_schema|(template|tenant)_(add|site)|vrf_(add|community|policy))$'
 tenant_pol_regex = '^(apic_inb|bgp_pfx|dhcp_relay|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
@@ -375,7 +375,6 @@ def main():
             easyDict = eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
 
 
-    # print(json.dumps(easyDict['sites'], indent=4))
     # Begin Proceedures to Create files
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     create_yaml(args, easy_jsonData, **easyDict)
