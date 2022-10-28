@@ -1351,15 +1351,16 @@ def ndo_get(ndo, cookies, uri, section=''):
 #========================================================
 # Function to validate input for each method
 #========================================================
-def process_kwargs(required_args, optional_args, **kwargs):
-    # Validate all required kwargs passed
-    # if all(item in kwargs for item in required_args.keys()) is not True:
-    #    error_ = '\n***ERROR***\nREQUIRED Argument Not Found in Input:\n "%s"\nInsufficient required arguments.' % (item)
-    #    raise InsufficientArgs(error_)
-    row_num = kwargs["row_num"]
-    ws = kwargs["ws"]
+def process_kwargs(jsonData, **kwargs):
+    # Validate User Input
+    validate_args(jsonData, **kwargs)
+    
     error_count = 0
     error_list = []
+    optional_args = jsonData['optional_args']
+    required_args = jsonData['required_args']
+    row_num = kwargs["row_num"]
+    ws = kwargs["ws"]
     for item in required_args:
         if item not in kwargs.keys():
             error_count =+ 1

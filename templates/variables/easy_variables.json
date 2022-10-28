@@ -4916,8 +4916,6 @@
                     {
                         "properties": {
                             "optional_args": {
-                                "site_1": "",
-                                "site_2": "",
                                 "site_3": "",
                                 "site_4": "",
                                 "site_5": "",
@@ -4931,6 +4929,96 @@
                                 "site_1": "",
                                 "site_2": "",
                                 "site_group": ""
+                            },
+                            "site_1": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": 1,
+                                "x-omitempty": true
+                            },
+                            "site_2": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": 2,
+                                "x-omitempty": true
+                            },
+                            "site_3": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": null,
+                                "x-omitempty": true
+                            },
+                            "site_4": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": null,
+                                "x-omitempty": true
+                            },
+                            "site_5": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": null,
+                                "x-omitempty": true
+                            },
+                            "site_6": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": null,
+                                "x-omitempty": true
+                            },
+                            "site_7": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": null,
+                                "x-omitempty": true
+                            },
+                            "site_8": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": null,
+                                "x-omitempty": true
+                            },
+                            "site_9": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": 9,
+                                "x-omitempty": true
+                            },
+                            "site_10": {
+                                "description": "Site Identifier.",
+                                "type": "integer",
+                                "format": "int64",
+                                "minimum": 1,
+                                "maximum": 100,
+                                "default": 10,
+                                "x-omitempty": true
                             }
                         }
                     }

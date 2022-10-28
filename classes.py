@@ -50,11 +50,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.domains.Layer3']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,physical_and_external_domains,l3_domains'
@@ -68,11 +65,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.domains.Physical']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,physical_and_external_domains,l3_domains'
@@ -86,11 +80,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.global.attachableAccessEntityProfile']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Split Domain Values to Lists
         domain_list = ['physical_domains', 'l3_domains', 'vmm_domains']
@@ -110,11 +101,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.switches.leafPolicyGroup']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,switches,leaf,policy_groups'
@@ -128,11 +116,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policyGroups.leafAccessPort']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,interfaces,leaf,policy_groups,access'
@@ -146,11 +131,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policyGroups.leafBreakOut']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,interfaces,leaf,policy_groups,breakout'
@@ -164,11 +146,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policyGroups.leafBundles']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars.pop('template_name')
         polVars['names'] = polVars['names'].split(',')
 
@@ -186,11 +165,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policyGroups.leafBundleTemplate']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         if not polVars['netflow_monitor_policies'] == None:
             polVars['netflow_monitor_policies'] = polVars['netflow_monitor_policies'].split(',')
 
@@ -206,11 +182,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policyGroups.spineAccessPort']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,interfaces,spine,policy_groups'
@@ -224,11 +197,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policies.cdpInterface']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,cdp_interface'
@@ -242,11 +212,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policies.fibreChannelInterface']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,fibre_channel_interface'
@@ -260,11 +227,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policies.L2Interface']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,l2_interface'
@@ -278,11 +242,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policies.linkLevel']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,link_level'
@@ -296,11 +257,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policies.lldpInterface']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,lldp_interface'
@@ -314,11 +272,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policies.mcpInterface']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,mcp_interface'
@@ -332,11 +287,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policies.PortChannel']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,port_channel'
@@ -350,11 +302,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policies.portSecurity']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,port_security'
@@ -368,11 +317,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.policies.spanningTreeInterface']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,spanning_tree_interface'
@@ -386,11 +332,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.preBuiltPolicies']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,policies,interface,create_pre_built_interface_policies'
@@ -404,11 +347,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.switches.spinePolicyGroup']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,switches,spine,policy_groups'
@@ -422,11 +362,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.pools.Vlan']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,pools,vlan'
@@ -440,11 +377,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.vmm.Controllers']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars.pop('domain_name')
 
         # Add Dictionary to Policy
@@ -461,11 +395,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.vmm.Credentials']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Check Environment for VMM Credentials Password
         sensitive_list = ['vmm_password']
@@ -485,11 +416,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.vmm.Domains']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Convert to Lists
         if not polVars["uplink_names"] == None:
@@ -518,11 +446,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.vmm.enhancedLag']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars.pop('domain_name')
 
         # Add Dictionary to Policy
@@ -539,11 +464,8 @@ class access(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.vmm.vswitchPolicy']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars.pop('domain_name')
 
         # Add Dictionary to Policy
@@ -578,11 +500,8 @@ class admin(object):
                 jsonData = easy_functions.args_add(['default_login_domain'], jsonData)
         else: kwargs['default_realm'] == 'local'
         
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         if polVars['console_login_domain'] == None: polVars['console_login_domain'] = ''
         if polVars['default_login_domain'] == None: polVars['default_login_domain'] = ''
 
@@ -617,11 +536,8 @@ class admin(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['admin.exportPolicy']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars['schedule'] = {'days':polVars['days'], 'hour':polVars['hour'], 'minute':polVars['minute']}
         polVars.update({'configuration_export': []})
@@ -641,11 +557,8 @@ class admin(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['admin.firmware.Policy']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'admin,firmware,maintenance_group_policies'
@@ -659,11 +572,8 @@ class admin(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['admin.firmware.MaintenanceGroups']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Convert to Lists
         temp = polVars['node_list'].split(',')
@@ -687,11 +597,8 @@ class admin(object):
                 jsonData = easy_functions.args_add(['username'], jsonData)
         else: kwargs['server_monitoring'] == 'disabled'
         
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['hosts'] = polVars['hosts'].split(',')
         pop_list = ['server_monitoring', 'username']
 
@@ -727,11 +634,8 @@ class admin(object):
             kwargs['authentication_type'] == 'usePassword'
             jsonData = easy_functions.args_add(['username'], jsonData)
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars["remote_hosts"] = polVars["remote_hosts"].split(',')
         polVars.pop('scheduler_name')
         
@@ -759,11 +663,8 @@ class admin(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['admin.globalSecurity']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['lockout_user'] = {
           'enable_lockout': polVars['enable_lockout'],
           'lockout_duration': polVars['lockout_duration'],
@@ -786,11 +687,8 @@ class admin(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['admin.smartCallHome']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['name'] = 'default'
         polVars['smtp_server'] = {}
         polVars['smart_destinations'] = []
@@ -807,11 +705,8 @@ class admin(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['admin.smartDestinations']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'admin,external-data-collectors,smart_callhome,smart_destinations'
@@ -833,11 +728,8 @@ class admin(object):
                 jsonData = easy_functions.args_add(['username'], jsonData)
         else: kwargs['secure_smtp'] == False
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Check if the Sensitive Variables are in the Environment.  If not Add them.
         if kwargs['secure_smtp'] == True:
@@ -858,11 +750,8 @@ class admin(object):
        # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['admin.Syslog']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         Additions = {
             'console_destination': {
                 'admin_state':polVars['console_admin_state'],
@@ -902,11 +791,8 @@ class admin(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['admin.syslogRemoteDestinations']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['hosts'] = polVars['hosts'].split(',')
 
         # Add Dictionary to Policy
@@ -929,11 +815,8 @@ class admin(object):
                 jsonData = easy_functions.args_add(['username'], jsonData)
         else: kwargs['server_monitoring'] == 'disabled'
         
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['accounting_include'] = {
             'audit_logs':polVars['audit_logs'],
             'events':polVars['events'],
@@ -1034,11 +917,8 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['fabric.DateandTime']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         if polVars['server_state'] == 'disabled':
             polVars['master_mode'] = 'disabled'
         Additions = {
@@ -1066,11 +946,8 @@ class fabric(object):
                 if not kwargs['default_domain'] in kwargs['dns_domains']:
                     kwargs['dns_domains'].append(kwargs['default_domain'])
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['name'] = 'default'
         
         # Convert to Lists
@@ -1106,11 +983,8 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['fabric.Ntp']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'fabric,policies,pod,date_and_time,ntp_servers'
@@ -1126,11 +1000,8 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['fabric.NtpKeys']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Check if the Sensitive Variables are in the Environment.  If not Add them.
         sensitive_list = [f'ntp_key_{kwargs["key_id"]}']
@@ -1150,11 +1021,8 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['fabric.snmpClientGroups']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         if not polVars["clients"] == None:
             clients = []
             for i in polVars["clients"].split(','):
@@ -1175,11 +1043,8 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['fabric.snmpCommunities']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['community_variable'] = int(polVars['community_variable'])
 
         # Check if the Sensitive Variables are in the Environment.  If not Add them.
@@ -1208,11 +1073,8 @@ class fabric(object):
                 jsonData = easy_functions.args_add(['username', 'v3_security_level'], jsonData)
         else: kwargs['version'] = 'v2c'
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Reset Arguments
         if re.fullmatch('(v1|v2c)', kwargs['version']):
@@ -1234,11 +1096,8 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['fabric.snmpPolicy']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['name'] = 'default'
         polVars['snmp_client_groups'] = []
         polVars['snmp_communities'] = []
@@ -1273,11 +1132,8 @@ class fabric(object):
         else:
             kwargs['privacy_key'] = 'none'
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Check if the Sensitive Variables are in the Environment.  If not Add them.
         if not kwargs['privacy_type'] == 'none':
@@ -1306,11 +1162,8 @@ class fabric(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['fabric.recommendedSettings']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'fabric,recommended_settings'
@@ -1393,11 +1246,8 @@ class switches(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.profiles.interfaceSelectors']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['interface_description'] = polVars['description']
         if len(polVars['interface'].split(',')) > 2: polVars['sub_port'] = True
         else: polVars['sub_port'] = None
@@ -1423,11 +1273,8 @@ class switches(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.switches.portConvert']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         def process_site(site_dict, polVars, **kwargs):
             if site_dict['auth_type'] == 'username':
@@ -1502,11 +1349,8 @@ class switches(object):
                     if not kwargs[f'{mgmt}_{atype}'] == None:
                         jsonData = easy_functions.args_add([f'{mgmt}_{atype}', f'{mgmt}_{atype}_gateway'], jsonData)
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         for mgmt in mgmt_list:
             for atype in atype_list:
@@ -1648,11 +1492,8 @@ class switches(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.profiles.switchModules']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Split the Node List into Nodes
         polVars['node_list'] = polVars['node_list'].split(',')
@@ -1678,11 +1519,8 @@ class site_policies(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['site.Identifiers']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         kwargs["multi_select"] = False
         # Prompt User for the Version of the Controller
@@ -1831,7 +1669,7 @@ class site_policies(object):
         jsonData = kwargs['easy_jsonData']['site.Groups']['allOf'][1]['properties']
 
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars['row_num'] = kwargs['row_num']
         polVars['ws'] = kwargs['ws']
@@ -1873,11 +1711,8 @@ class system_settings(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['system.apicConnectivityPreference']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'system_settings,apic_connectivity_preference'
@@ -1891,11 +1726,8 @@ class system_settings(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['system.bgpASN']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'system_settings,bgp'
@@ -1909,11 +1741,8 @@ class system_settings(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['system.bgpRouteReflector']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['pod_id'] = int(polVars['pod_id'])
         temp = polVars['route_reflector_nodes'].split(',')
         polVars['route_reflector_nodes'] = [eval(i) for i in temp]
@@ -1930,11 +1759,8 @@ class system_settings(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['system.recommendedSettings']['allOf'][1]['properties']
 
-        # Validate User Input
-        easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         
         # Check if the Sensitive Variables are in the Environment.  If not Add them.
         if kwargs['global_aes_encryption_settings'] == True:
@@ -1961,11 +1787,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.apic.InbandMgmt']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['tenant'] = 'mgmt'
         polVars['management_epg'] = polVars['inband_epg']
 
@@ -1982,11 +1805,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.applicationProfiles']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         if not polVars['sites'] == None:
             polVars['sites'] = polVars['sites'].split(',')
         else:
@@ -2005,11 +1825,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.bridgeDomains']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Attach the Bridge Domain General Policy Additional Attributes
         if kwargs['easyDict']['tenants']['bridge_domains_general'].get(polVars['general_policy']):
@@ -2131,11 +1948,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.bd.General']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars.pop('policy_name')
         policy_dict = {kwargs['policy_name']:polVars}
@@ -2153,11 +1967,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.bd.L3Configurations']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars.pop('policy_name')
         policy_dict = {kwargs['policy_name']:polVars}
@@ -2175,11 +1986,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.bd.Orchestrator']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars.pop('policy_name')
         policy_dict = {kwargs['policy_name']:polVars}
@@ -2197,11 +2005,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.bd.dhcpRelayLabels']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['names'] = polVars['names'].split(',')
 
         # Modify the polVars scope and subnet_control
@@ -2228,11 +2033,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.bd.Subnets']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Modify the polVars scope and subnet_control
         polVars['scope'] = {
@@ -2273,11 +2075,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.bgpPeerConnectivityProfile']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Attach the BGP Peer Connectivity Policy Additional Attributes
         if kwargs['easyDict']['tenants']['bgp_peer_policies'].get(polVars['bgp_peer_shared_policy']):
@@ -2301,11 +2100,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.policies.bgpPrefix']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
@@ -2320,11 +2116,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.bgpPeerConnectivityProfile.Policy']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Modify the polVars Address Type Controls, BGP Controls, Peer Controls, and Private AS Controls
         polVars['address_type_controls'] = {
@@ -2384,11 +2177,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.contract.Contracts']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['subjects'] = []
 
         # Add Policy Variables to easyDict
@@ -2418,11 +2208,8 @@ class tenants(object):
             pop_list.append('vrfs')
             jsonData = easy_functions.args_add(pop_list, jsonData)
         
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Remove Items in the Pop List
         jsonData = easy_functions.args_remove(pop_list, jsonData)
@@ -2503,11 +2290,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.contract.ContractFilters']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['directives'] = {
             'enable_policy_compression':polVars['enable_policy_compression'],
             'log':polVars['log_packets']
@@ -2539,11 +2323,8 @@ class tenants(object):
         else: pop_list = ['application_epg']
         jsonData = easy_functions.args_add(pop_list, jsonData)
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         jsonData = easy_functions.args_remove(pop_list, jsonData)
 
         pop_list = ['address', 'application_profile', 'epg', 'epg_type', 'l3out']
@@ -2576,11 +2357,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.policies.eigrpInterface']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
@@ -2595,11 +2373,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.eigrpInterfaceProfile']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars.pop('profile_name')
         policy_dict = {kwargs['profile_name']:polVars}
@@ -2631,11 +2406,8 @@ class tenants(object):
             if epgpolicy['epg_type'] == 'inb':
                 jsonData = easy_functions.args_add(['vlans'], jsonData)
         
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['monitoring_policy'] = 'default'
 
         if re.search('^(inb|oob)$', epgpolicy['epg_type']):
@@ -2733,11 +2505,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.applicationEpg.Policy']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars.pop('policy_name')
         policy_dict = {kwargs['policy_name']:polVars}
@@ -2755,11 +2524,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.applicationEpg.VMMPolicy']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars.pop('policy_name')
         policy_dict = {kwargs['policy_name']:polVars}
@@ -2777,11 +2543,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.externalEpg']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['contracts'] = []
         polVars['subnets'] = []
 
@@ -2810,11 +2573,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.externalEpg.Policy']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars.pop('policy_name')
         policy_dict = {kwargs['policy_name']:polVars}
@@ -2832,11 +2592,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.externalEpg.Subnet']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Modify the polVars aggregate, external_epg_classification, and route_control
         polVars['aggregate'] = {
@@ -2895,11 +2652,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.contract.Filters']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['filter_entries'] = []
 
         # Add Policy Variables to easyDict
@@ -2915,11 +2669,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.contract.filterEntry']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Dictionary to Policy
         kwargs['class_path'] = 'tenants'
@@ -2937,11 +2688,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.L3Out']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['external_epgs'] = []
 
         # Attach the L3Out Policy Additional Attributes
@@ -2975,11 +2723,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.L3Out.Policy']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Modify the polVars Route Control Enforcement
         polVars['route_control_enforcement'] = {
@@ -3009,11 +2754,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.ndoSchemas']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['sites'] = polVars['sites'].split(',')
 
         # Add Policy Variables to easyDict
@@ -3046,11 +2788,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeInterfaceProfile']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         kwargs['class_path'] = 'tenants'
         polVars['data_type'] = 'l3out_logical_node_profiles'
         polVars['data_subtype'] = 'interface_profiles'
@@ -3128,11 +2867,8 @@ class tenants(object):
                 pop_list.append('vlan')
             jsonData = easy_functions.args_remove(pop_list, jsonData)
         
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         if polVars['interface_type'] == 'ext-svi':
             if not polVars['link_local_addresses'] == None:
                 if not len(polVars['link_local_addresses'].split(',')) == 2:
@@ -3209,11 +2945,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeInterfaceProfile.Policy']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars.pop('policy_name')
         policy_dict = {kwargs['policy_name']:polVars}
@@ -3231,11 +2964,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.logicalNodeProfile']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['interface_profiles'] = []
         polVars['node_router_ids'] = polVars['node_router_ids'].split(',')
         polVars['node_list'] = [int(s) for s in str(polVars['node_list']).split(',')]
@@ -3266,11 +2996,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.policies.ospfInterface']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
@@ -3285,11 +3012,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.ospfInterfaceProfile']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         
         polVars['name'] = polVars['profile_name']
         polVars.pop('profile_name')
@@ -3308,11 +3032,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.l3out.ospfRoutingProfile']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Modify the polVars OSPF Area Control
         polVars['ospf_area_control'] = {
@@ -3343,11 +3064,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.Tenants']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['monitoring_policy'] = 'default'
         polVars['tenant'] = polVars['name']
         if not polVars['ndo_settings'] == None:
@@ -3381,11 +3099,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.Sites']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars = easy_functions.ez_remove_empty(polVars)
 
         # Add Policy Variables to easyDict
@@ -3401,11 +3116,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.Vrfs']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['communities'] = []
         polVars['epg_esg_collection_for_vrfs'] = dict(
             contracts = [],
@@ -3430,11 +3142,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.vrf.Community']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         kwargs['class_path'] = 'tenants'
         polVars['data_type'] = 'vrfs'
         polVars['data_subtype'] = 'communities'
@@ -3456,11 +3165,8 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.vrf.Policy']['allOf'][1]['properties']
 
-        # Validate User Input
-        kwargs = easy_functions.validate_args(jsonData, **kwargs)
-
         # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData['required_args'], jsonData['optional_args'], **kwargs)
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         polVars.pop('policy_name')
         policy_dict = {kwargs['policy_name']:polVars}
