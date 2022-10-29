@@ -2082,31 +2082,18 @@ class tenants(object):
             'replace_private_as_with_local_as':polVars['replace_private_as_with_local_as']
         }
         pop_list = [
-            'af_mcast',
-            'af_ucast',
-            'allow_self_as',
-            'as_override',
-            'disable_peer_as_check',
-            'next_hop_self',
-            'send_community',
-            'send_domain_path',
-            'send_extended_community',
-            'bidirectional_forwarding_detection',
-            'disable_connected_check',
-            'remove_all_private_as',
-            'remove_private_as',
-            'replace_private_as_with_local_as'
+            'af_mcast', 'af_ucast', 'allow_self_as', 'as_override',
+            'bidirectional_forwarding_detection', 'disable_connected_check',
+            'disable_peer_as_check', 'next_hop_self', 'policy_name',
+            'remove_all_private_as', 'remove_private_as', 'replace_private_as_with_local_as',
+            'send_community', 'send_domain_path', 'send_extended_community'
         ]
-        for i in pop_list:
-            polVars.pop(i)
-
-        polVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:polVars}
+        for i in pop_list: polVars.pop(i)
 
         # Add Policy Variables to easyDict
-        policy_dict['class_path'] = 'tenants'
-        policy_dict['data_type'] = 'bgp_peer_policies'
-        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
+        if not kwargs['easyDict']['sites'].get('bgp_policies'):
+            kwargs['easyDict']['sites'].update(deepcopy({'bgp_policies':{}}))
+        kwargs['easyDict']['sites']['bgp_policies'].update(deepcopy({f"{kwargs['policy_name']}":polVars}))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2509,14 +2496,12 @@ class tenants(object):
 
         # Build Dictionary of Policy Variables
         polVars = easy_functions.process_kwargs(jsonData, **kwargs)
-
         polVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:polVars}
 
         # Add Policy Variables to easyDict
-        policy_dict['class_path'] = 'tenants'
-        policy_dict['data_type'] = 'external_epg_policies'
-        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
+        if not kwargs['easyDict']['sites'].get('ext_epg_policies'):
+            kwargs['easyDict']['sites'].update(deepcopy({'ext_epg_policies':{}}))
+        kwargs['easyDict']['sites']['ext_epg_policies'].update(deepcopy({f"{kwargs['policy_name']}":polVars}))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2665,20 +2650,13 @@ class tenants(object):
             'export':polVars['export'],
             'import':polVars['import']
         }
-        pop_list = [
-            'export',
-            'import'
-        ]
-        for i in pop_list:
-            polVars.pop(i)
-
-        polVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:polVars}
+        pop_list = ['export', 'import', 'policy_name']
+        for i in pop_list: polVars.pop(i)
 
         # Add Policy Variables to easyDict
-        policy_dict['class_path'] = 'tenants'
-        policy_dict['data_type'] = 'l3out_policies'
-        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
+        if not kwargs['easyDict']['sites'].get('l3out_policies'):
+            kwargs['easyDict']['sites'].update(deepcopy({'l3out_policies':{}}))
+        kwargs['easyDict']['sites']['l3out_policies'].update(deepcopy({f"{kwargs['policy_name']}":polVars}))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2795,7 +2773,7 @@ class tenants(object):
         if re.search('^(l3-port|sub-interface)$', kwargs['interface_type']):
             args_list.append('auto_state')
             if kwargs['interface_type'] == 'l3-port':
-                args_list.append('encap_scope', 'mode', 'vlan')
+                args_list.extend(['encap_scope', 'mode', 'vlan'])
             jsonData = easy_functions.args_remove(args_list, jsonData)
         
         # Build Dictionary of Policy Variables
@@ -2858,15 +2836,14 @@ class tenants(object):
         polVars.pop('primary_preferred_addresses')
         polVars.pop('policy_name')
         polVars = OrderedDict(sorted(polVars.items()))
-        policy_dict = {kwargs['policy_name']:polVars}
 
         if re.search('^(l3-port|sub-interface)$', kwargs['interface_type']):
             jsonData = easy_functions.args_add(args_list, jsonData)
 
-        # Add Policy Variables to easyDict
-        policy_dict['class_path'] = 'tenants'
-        policy_dict['data_type'] = 'node_interface_configurations'
-        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
+       # Add Policy Variables to easyDict
+        if not kwargs['easyDict']['sites'].get('node_intf_cfg'):
+            kwargs['easyDict']['sites'].update(deepcopy({'node_intf_cfg':{}}))
+        kwargs['easyDict']['sites']['node_intf_cfg'].update(deepcopy({f"{kwargs['policy_name']}":polVars}))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2879,13 +2856,10 @@ class tenants(object):
         # Build Dictionary of Policy Variables
         polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
-        polVars.pop('policy_name')
-        policy_dict = {kwargs['policy_name']:polVars}
-
-        # Add Policy Variables to easyDict
-        policy_dict['class_path'] = 'tenants'
-        policy_dict['data_type'] = 'node_interface_profile_policies'
-        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
+       # Add Policy Variables to easyDict
+        if not kwargs['easyDict']['sites'].get('node_intf_policies'):
+            kwargs['easyDict']['sites'].update(deepcopy({'node_intf_policies':{}}))
+        kwargs['easyDict']['sites']['node_intf_policies'].update(deepcopy({f"{kwargs['policy_name']}":polVars}))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2946,15 +2920,12 @@ class tenants(object):
 
         # Build Dictionary of Policy Variables
         polVars = easy_functions.process_kwargs(jsonData, **kwargs)
-        
-        polVars['name'] = polVars['profile_name']
         polVars.pop('profile_name')
-        policy_dict = {kwargs['profile_name']:polVars}
 
         # Add Policy Variables to easyDict
-        policy_dict['class_path'] = 'tenants'
-        policy_dict['data_type'] = 'ospf_interface_profiles'
-        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
+        if not kwargs['easyDict']['sites'].get('ospf_profiles'):
+            kwargs['easyDict']['sites'].update(deepcopy({'ospf_profiles':{}}))
+        kwargs['easyDict']['sites']['ospf_profiles'].update(deepcopy({f"{kwargs['profile_name']}":polVars}))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2974,19 +2945,16 @@ class tenants(object):
             'suppress_forwarding_address':polVars['suppress_forwarding_address']
         }
         pop_list = [
-            'originate_summary_lsa',
+            'originate_summary_lsa', 'profile_name',
             'send_redistribution_lsas_into_nssa_area',
             'suppress_forwarding_address'
         ]
         for i in pop_list: polVars.pop(i)
 
-        polVars.pop('profile_name')
-        policy_dict = {kwargs['profile_name']:polVars}
-
         # Add Policy Variables to easyDict
-        policy_dict['class_path'] = 'tenants'
-        policy_dict['data_type'] = 'ospf_external_profiles'
-        kwargs['easyDict'] = easy_functions.ez_append_policy(policy_dict, **kwargs)
+        if not kwargs['easyDict']['sites'].get('ospf_routing'):
+            kwargs['easyDict']['sites'].update(deepcopy({'ospf_routing':{}}))
+        kwargs['easyDict']['sites']['ospf_routing'].update(deepcopy({f"{kwargs['profile_name']}":polVars}))
         return kwargs['easyDict']
 
     #=============================================================================
