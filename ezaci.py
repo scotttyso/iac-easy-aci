@@ -11,24 +11,14 @@ It uses argparse to take in the following CLI arguments:
 #======================================================
 # Source Modules
 #======================================================
-from classes import access, admin, fabric, site_policies, switches, system_settings, tenants
-from easy_functions import apply_terraform, create_yaml
-from easy_functions import get_folders, git_base_repo, git_check_status
-from easy_functions import countKeys, findKeys, findVars
-from easy_functions import get_latest_versions, merge_easy_aci_repository
-from easy_functions import read_easy_jsonData, read_in
-from easy_functions import stdout_log
 import argparse
+import classes
+import easy_functions
 import json
 import os
 import platform
 import re
 import sys
-
-#=====================================================================
-# Note: This is simply to make it so the classes don't appear Unused.
-#=====================================================================
-class_list = [access, admin, fabric, site_policies, switches, system_settings, tenants]
 
 #======================================================
 # Regular Expressions to Control wich rows in the
@@ -122,7 +112,7 @@ def process_site_settings(args, easyDict, easy_jsonData, wb):
         'wb':wb,
         'ws': wb['Sites']
     }
-    easyDict = site_policies('site_settings').site_settings(**kwargs)
+    easyDict = classes.site_policies('site_settings').site_settings(**kwargs)
     return easyDict
 
 #=================================================================
@@ -178,14 +168,14 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
     ws = wb['Tenant Policies']
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # Evaluate the Bridge Domains Worksheet
-    func_regex = bds_regex
-    ws = wb['Bridge Domains']
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-
     # Evaluate the Apps and EPGs Worksheet
     func_regex = apps_epgs_regex
     ws = wb['Apps and EPGs']
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+
+    # Evaluate the Bridge Domains Worksheet
+    func_regex = bds_regex
+    ws = wb['Bridge Domains']
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the L3Out Worksheet
@@ -217,18 +207,18 @@ def process_virtual_networking(args, easyDict, easy_jsonData, wb):
 #=================================================================
 def read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
     rows = ws.max_row
-    func_list = findKeys(ws, func_regex)
-    stdout_log(ws, None, 'begin')
+    func_list = easy_functions.findKeys(ws, func_regex)
+    easy_functions.stdout_log(ws, None, 'begin')
     for func in func_list:
-        count = countKeys(ws, func)
-        var_dict = findVars(ws, func, rows, count)
+        count = easy_functions.countKeys(ws, func)
+        var_dict = easy_functions.findVars(ws, func, rows, count)
         for pos in var_dict:
             row_num = var_dict[pos]['row']
             del var_dict[pos]['row']
             for x in list(var_dict[pos].keys()):
                 if var_dict[pos][x] == '':
                     del var_dict[pos][x]
-            stdout_log(ws, row_num, 'begin')
+            easy_functions.stdout_log(ws, row_num, 'begin')
             var_dict[pos].update(
                 {
                     'args':args,
@@ -240,9 +230,9 @@ def read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func
                     'ws':ws
                 }
             )
-            easyDict = eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
+            easyDict = eval(f"classes.{class_init}(class_folder).{func}(**var_dict[pos])")
     
-    stdout_log(ws, None, 'end')
+    easy_functions.stdout_log(ws, None, 'end')
     # Return the easyDict
     return easyDict
 
@@ -334,7 +324,7 @@ def main():
                 print('\nWorkbook not Found.  Please enter a valid /path/filename for the source you will be using.')
 
     # Load Workbook
-    wb = read_in(excel_workbook)
+    wb = easy_functions.read_in(excel_workbook)
 
     # Create Dictionary for Worksheets in the Workbook
     easy_jsonData = easy_jsonData['components']['schemas']
@@ -342,12 +332,12 @@ def main():
     easyDict['latest_versions'] = easy_jsonData['easy_aci']['allOf'][1]['properties']['latest_versions']
 
     # Obtain the Latest Provider Releases
-    easyDict = get_latest_versions(easyDict)
+    #easyDict = easy_functions.get_latest_versions(easyDict)
 
     # Initialize the Base Repo/Terraform Working Directory
     if not os.path.isdir(args.dir):
         os.mkdir(args.dir)
-    # baseRepo = git_base_repo(args, wb)
+    # baseRepo = easy_functions.git_base_repo(args, wb)
 
     # Process the Sites Worksheet
     easyDict['wb'] = wb
@@ -377,15 +367,14 @@ def main():
 
     # Begin Proceedures to Create files
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
-    create_yaml(args, easy_jsonData, **easyDict)
-    # read_easy_jsonData(args, easy_jsonData, **easyDict)
-    # merge_easy_aci_repository(args, easy_jsonData, **easyDict)
+    easy_functions.create_yaml(args, easy_jsonData, **easyDict)
+    # easy_functions.merge_easy_aci_repository(args, easy_jsonData, **easyDict)
     # changed_folders = []
     # if args.git_check == 'True':
-    #     changed_folders = git_check_status(args)
+    #     changed_folders = easy_functions.git_check_status(args)
     # else:
-    #     changed_folders = get_folders(args, path_sep)
-    # apply_terraform(args, changed_folders, **easyDict)
+    #     changed_folders = easy_functions.get_folders(args, path_sep)
+    # easy_functions.apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')

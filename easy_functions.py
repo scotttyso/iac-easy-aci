@@ -42,18 +42,18 @@ class InsufficientArgs(Exception):
     pass
 
 #========================================================
-# Function to GET to the APIC Config API
+# Function to Connect to the APIC API
 #========================================================
-def apic_get(apic, cookies, uri, section=''):
+def apic_api(apic, method, payload, cookies, uri, section=''):
     s = requests.Session()
     r = ''
     while r == '':
         try:
-            r = s.get(
-                'https://{}/{}.json'.format(apic, uri),
-                cookies=cookies,
-                verify=False
-            )
+            if method == 'conf':
+                r = s.post('https://{}/{}.json'.format(apic, uri),
+                data=payload, cookies=cookies, verify=False)
+            elif 'get':
+                r = s.get('https://{}/{}.json'.format(apic, uri), cookies=cookies, verify=False)
             status = r.status_code
         except requests.exceptions.ConnectionError as e:
             print("Connection error, pausing before retrying. Error: {}"
@@ -63,38 +63,22 @@ def apic_get(apic, cookies, uri, section=''):
             print("Method {} failed. Exception: {}".format(section[:-5], e))
             status = 666
             return(status)
-    if print_response_always:
-        print(r.text)
-    if status != 200 and print_response_on_fail:
-        print(r.text)
+    if print_response_always: print(r.text)
+    if status != 200 and print_response_on_fail: print(r.text)
     return r
 
 #========================================================
-# Function to POST to the APIC Config API
+# Function to Split Annotations to key and Value
 #========================================================
-def apic_post(apic, payload, cookies, uri, section=''):
-    if print_payload:
-        print(payload)
-    s = requests.Session()
-    r = ''
-    while r == '':
-        try:
-            r = s.post('https://{}/{}.json'.format(apic, uri),
-                    data=payload, cookies=cookies, verify=False)
-            status = r.status_code
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: {}"
-                .format(e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method {} failed. Exception: {}".format(section[:-5], e))
-            status = 666
-            return(status)
-    if print_response_always:
-        print(r.text)
-    if status != 200 and print_response_on_fail:
-        print(r.text)
-    return status
+def annotations_split(annotations):
+    ann_list = []
+    ann_split = annotations.split('')
+    for i in ann_split:
+        x = i.split('_')
+        if len(x) == 2:
+            ann_list.append({'key':x[0],'value':x[1]})
+    annotations = ann_list
+    return annotations
 
 #========================================================
 # Function to run 'terraform plan' and 'terraform apply'
@@ -496,7 +480,7 @@ def ez_append(polVars, **kwargs):
 
     def site_append(cS, site, polVars):
         if not kwargs['easyDict']['sites'].get(site):
-            validating.site_group_error('site_group', **kwargs)
+            validating.error_site_group('site_group', **kwargs)
 
         # Confirm the Key Exists
         if len(cS) == 1:
@@ -505,29 +489,31 @@ def ez_append(polVars, **kwargs):
         if len(cS) >= 2:
             if not kwargs['easyDict']['sites'][site].get(cS[0]):
                 kwargs['easyDict']['sites'][site].update(deepcopy({cS[0]:{}}))
-        if len(cS) == 2:
-            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
-                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:[]}))
         if len(cS) >= 3:
             if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
                 kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
-        if len(cS) == 3:
-            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:[]}))
         if len(cS) >= 4:
             if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
                 kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
-        if len(cS) == 4:
+        if len(cS) == 1: cs_count = 0
+        elif len(cS) == 2:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:[]}))
+        elif len(cS) == 3:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:[]}))
+        elif len(cS) == 4:
             if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
                 kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:[]}))
-        if len(cS) == 5:
+        elif len(cS) == 5:
             if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
                 kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:{}}))
             if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].get(cS[4]):
                 kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].update(deepcopy({cS[4]:[]}))
+        
         # append the Dictionary
-        if len(cS) == 1: kwargs['easyDict']['sites'][site][cS[0]].append(deepcopy(polVars))
-        elif len(cS) == 2:   kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy(polVars))
+        if len(cS) == 1:   kwargs['easyDict']['sites'][site][cS[0]].append(deepcopy(polVars))
+        elif len(cS) == 2: kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy(polVars))
         elif len(cS) == 3: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].append(deepcopy(polVars))
         elif len(cS) == 4: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy(polVars))
         elif len(cS) == 5: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]].append(deepcopy(polVars))
@@ -538,66 +524,9 @@ def ez_append(polVars, **kwargs):
             for site in sites:
                 site_append(cS, site, polVars)
         else:
-            validating.site_group_error('site_group', **kwargs)
+            validating.error_site_group('site_group', **kwargs)
     else:
         site_append(cS, kwargs['site_group'], polVars)
-        
-    return kwargs['easyDict']
-
-#========================================================
-# Function to Append the easyDict Dictionary
-#========================================================
-def ez_append_policy(polVars, **kwargs):
-    class_path = kwargs['class_path']
-    cS = class_path.split(',')
-    polVars.pop('site_group')
-    def site_update(cS, site, polVars):
-        if not kwargs['easyDict']['sites'].get(site):
-            validating.site_group_error('site_group', **kwargs)
-
-        # Confirm the Key(s) Exists
-        if not kwargs['easyDict']['sites'][site].get(cS[0]):
-            kwargs['easyDict']['sites'][site].update(deepcopy({cS[0]:{}}))
-        if len(cS) == 2:
-            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
-                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:[]}))
-        if len(cS) == 3:
-            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
-                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
-            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:[]}))
-        if len(cS) == 4:
-            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
-                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
-            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
-            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:[]}))
-        if len(cS) == 5:
-            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
-                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
-            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
-            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:{}}))
-            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].get(cS[4]):
-                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].update(deepcopy({cS[4]:[]}))
-
-        # Append the Dictionary
-        if len(cS) == 1:   kwargs['easyDict']['sites'][site][cS[0]].append(deepcopy(polVars))
-        elif len(cS) == 2:   kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy(polVars))
-        elif len(cS) == 3: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].append(deepcopy(polVars))
-        elif len(cS) == 4: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy(polVars))
-
-    if 'Grp_' in kwargs['site_group']:
-        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
-            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
-            for site in sites:
-                site_update(cS, site, polVars)
-        else:
-            validating.site_group_error('site_group', **kwargs)
-    else:
-        site_update(cS, kwargs['site_group'], polVars)
         
     return kwargs['easyDict']
 
@@ -614,7 +543,7 @@ def ez_append_subtype(polVars, **kwargs):
 
     def site_append(cS, site, polVars):
         # Assign the Dictionary
-        if len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site][cS[0]]
+        if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site][cS[0]]
         elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
         elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
         elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
@@ -633,7 +562,7 @@ def ez_append_subtype(polVars, **kwargs):
             for site in sites:
                 site_append(cS, site, polVars)
         else:
-            validating.site_group_error('site_group', **kwargs)
+            validating.error_site_group('site_group', **kwargs)
     else:
         site_append(cS, kwargs['site_group'], polVars)
 
@@ -653,7 +582,7 @@ def ez_append_arg(polVars, **kwargs):
 
     def site_append(cS, site, polVars):
         # Assign the Dictionary
-        if len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
+        if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
         elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
         elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
         elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]]
@@ -671,11 +600,48 @@ def ez_append_arg(polVars, **kwargs):
             for site in sites:
                 site_append(cS, site, polVars)
         else:
-            validating.site_group_error('site_group', **kwargs)
+            validating.error_site_group('site_group', **kwargs)
     else:
         site_append(cS, kwargs['site_group'], polVars)
 
     # Return Dictionary
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append the easyDict Dictionary
+#========================================================
+def ez_merge(polVars, **kwargs):
+    class_path = kwargs['class_path']
+    cS = class_path.split(',')
+    policy  = kwargs['policy']
+    policy_name  = kwargs['policy_name']
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_merge(cS, site, polVars):
+        if not kwargs['easyDict']['sites'].get(site):
+            validating.error_site_group('site_group', **kwargs)
+
+        # Assign the Dictionary
+        if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[4]][cS[5]]
+
+        for i in dict1:
+            if i[policy] == policy_name:
+                i.update(deepcopy(polVars))
+                break
+
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_merge(cS, site, polVars)
+        else:
+            validating.error_site_group('site_group', **kwargs)
+    else:
+        site_merge(cS, kwargs['site_group'], polVars)
+        
     return kwargs['easyDict']
 
 #========================================================
@@ -691,40 +657,116 @@ def ez_remove_empty(polVars):
     return polVars
 
 #========================================================
-# Function to Append the easyDict Dictionary
+# Function to Append the Tenant easyDict Dictionary
 #========================================================
-def ez_merge(polVars, **kwargs):
+def ez_tenants_append(polVars, **kwargs):
     class_path = kwargs['class_path']
     cS = class_path.split(',')
-    policy  = kwargs['policy']
-    policy_name  = kwargs['policy_name']
     polVars.pop('site_group')
     polVars = ez_remove_empty(polVars)
 
-    def site_merge(cS, site, polVars):
+    def site_append(cS, site, polVars):
         if not kwargs['easyDict']['sites'].get(site):
-            validating.site_group_error('site_group', **kwargs)
-
-        # Assign the Dictionary
-        if len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
-        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
-        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[4]][cS[5]]
-
-        for i in dict1:
-            if i[policy] == policy_name:
-                i.update(deepcopy(polVars))
+            validating.error_site_group('site_group', **kwargs)
+        tenant_match = False
+        tkey = 0
+        for i in kwargs['easyDict']['sites'][site]['tenants']:
+            if i['name'] == kwargs['tenant']:
+                tenant_match = True
                 break
+            tkey += 1
+        if tenant_match == False:
+            validating.error_tenant('tenant', **kwargs)
+
+        # Confirm the Key Exists
+        if len(cS) == 1:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey].get(cS[0]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey].update(deepcopy({cS[0]:[]}))
+        if len(cS) >= 2:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey].get(cS[0]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey].update(deepcopy({cS[0]:{}}))
+        if len(cS) >= 3:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].update(deepcopy({cS[1]:{}}))
+        if len(cS) >= 4:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
+        if len(cS) == 1: cs_count = 0
+        elif len(cS) == 2:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].update(deepcopy({cS[1]:[]}))
+        elif len(cS) == 3:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].update(deepcopy({cS[2]:[]}))
+        elif len(cS) == 4:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:[]}))
+        
+        # append the Dictionary
+        if len(cS) ==   1: kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].append(deepcopy(polVars))
+        elif len(cS) == 2: kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].append(deepcopy(polVars))
+        elif len(cS) == 3: kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]].append(deepcopy(polVars))
+        elif len(cS) == 4: kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy(polVars))
 
     if 'Grp_' in kwargs['site_group']:
         if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
             sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
             for site in sites:
-                site_merge(cS, site, polVars)
+                site_append(cS, site, polVars)
         else:
-            validating.site_group_error('site_group', **kwargs)
+            validating.error_site_group('site_group', **kwargs)
     else:
-        site_merge(cS, kwargs['site_group'], polVars)
+        site_append(cS, kwargs['site_group'], polVars)
         
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append Subtype easyDict Dictionary
+#========================================================
+def ez_tenant_append_subtype(polVars, **kwargs):
+    class_path  = kwargs['class_path']
+    cS          = class_path.split(',')
+    policy      = kwargs['policy']
+    policy_name = kwargs['policy_name']
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        tenant_match = False
+        tkey = 0
+        for i in kwargs['easyDict']['sites'][site]['tenants']:
+            if i['name'] == kwargs['tenant']:
+                tenant_match = True
+                break
+            tkey += 1
+        if tenant_match == False:
+            validating.error_tenant('tenant', **kwargs)
+
+        # Assign the Dictionary
+        if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]][cS[3]]
+
+        for k, v in dict1.items():
+            for i in v:
+                if not i.get(cS[-1]):
+                    i[cS[-1]] = []
+                if i[policy] == policy_name:
+                    i[cS[-1]].append(deepcopy(polVars))
+                    break
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, polVars)
+        else:
+            validating.error_site_group('site_group', **kwargs)
+    else:
+        site_append(cS, kwargs['site_group'], polVars)
+
+    # Return Dictionary
     return kwargs['easyDict']
 
 #========================================================
@@ -738,7 +780,7 @@ def ez_update(polVars, **kwargs):
 
     def site_update(cS, site, polVars):
         if not kwargs['easyDict']['sites'].get(site):
-            validating.site_group_error('site_group', **kwargs)
+            validating.error_site_group('site_group', **kwargs)
 
         # Confirm the Key(s) Exists
         if not kwargs['easyDict']['sites'][site].get(cS[0]):
@@ -769,7 +811,7 @@ def ez_update(polVars, **kwargs):
             for site in sites:
                 site_update(cS, site, polVars)
         else:
-            validating.site_group_error('site_group', **kwargs)
+            validating.error_site_group('site_group', **kwargs)
     else:
         site_update(cS, kwargs['site_group'], polVars)
         
@@ -807,7 +849,7 @@ def ez_update_subtype(polVars, **kwargs):
             for site in sites:
                 site_append(cS, site, polVars)
         else:
-            validating.site_group_error('site_group', **kwargs)
+            validating.error_site_group('site_group', **kwargs)
     else:
         site_append(cS, kwargs['site_group'], polVars)
 
@@ -834,11 +876,10 @@ def findVars(ws, func, rows, count):
     for i in range(1, rows + 1):
         if (ws.cell(row=i, column=1)).value == func:
             try:
-                for x in range(2, 34):
+                for x in range(2, 36):
                     if (ws.cell(row=i - 1, column=x)).value:
                         var_list.append(str(ws.cell(row=i - 1, column=x).value))
-                    else:
-                        x += 1
+                    else: x += 1
             except Exception as e:
                 e = e
                 pass
@@ -1119,7 +1160,11 @@ def interface_selector_workbook(polVars, **kwargs):
             pgroups = kwargs['easyDict']['sites'][site_group]['access']['interfaces']['leaf']['policy_groups'][pgroup]
         for i in pgroups:
             if pgroup == 'bundle':
-                switch_pgs[pgroup].extend(i['names'])
+                if i.get('names'):
+                    switch_pgs[pgroup].extend(i['names'])
+                else:
+                    kwargs.update({'template_name':i['template_name']})
+                    validating.error_bundle_names('template_name', **kwargs)
             else:
                 switch_pgs[pgroup].append(i['name'])
 
@@ -1323,16 +1368,13 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
 #========================================================
 # Function to GET to the NDO API
 #========================================================
-def ndo_get(ndo, cookies, uri, section=''):
+def ndo_api(ndo, method, cookies, uri, section=''):
     s = requests.Session()
     r = ''
     while r == '':
         try:
-            r = s.get(
-                'https://{}/{}'.format(ndo, uri),
-                cookies=cookies,
-                verify=False
-            )
+            if method == 'get':
+                r = s.get('https://{}/{}'.format(ndo, uri), cookies=cookies, verify=False)
             status = r.status_code
         except requests.exceptions.ConnectionError as e:
             print("Connection error, pausing before retrying. Error: {}"
@@ -1342,10 +1384,8 @@ def ndo_get(ndo, cookies, uri, section=''):
             print("Method {} failed. Exception: {}".format(section[:-5], e))
             status = 666
             return(status)
-    if print_response_always:
-        print(r.text)
-    if status != 200 and print_response_on_fail:
-        print(r.text)
+    if print_response_always: print(r.text)
+    if status != 200 and print_response_on_fail: print(r.text)
     return r
 
 #========================================================
@@ -1446,100 +1486,6 @@ def process_workbook(polVars, **kwargs):
         print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
         print(f"\n-----------------------------------------------------------------------------\n")
         exit()
-
-#========================================================
-# Function for Processing Loops to auto.tfvars files
-#========================================================
-def read_easy_jsonData(args, easy_jsonData, **easyDict):
-    jsonData = easy_jsonData['easy_aci']['allOf'][1]['properties']
-    classes = jsonData['classes']['enum']
-
-    # Loop to write the Header and content to the files
-    for class_type in classes:
-        funcList = jsonData[f'class.{class_type}']['enum']
-        for func in funcList:
-            for k, v in easyDict[class_type][func].items():
-                for i in v:
-                    polVars = i
-                    kwargs = {
-                        'args': args,
-                        'easyDict': easyDict,
-                        'row_num': f'{func}_section',
-                        'site_group': k,
-                        'ws': easyDict['wb']['System Settings']
-                    }
-
-                    # Add Variables for Template Functions
-                    polVars['template_type'] = func
-                        
-                    if re.search('^(apic_connectivity_preference|bgp_autonomous_system_number)$', func):
-                        kwargs["template_file"] = 'template_open2.jinja2'
-                    else:
-                        kwargs["template_file"] = 'template_open.jinja2'
-
-                    kwargs['tfvars_file'] = func
-                    x = func.split('_')
-                    policyType = ''
-                    xcount = 0
-                    for i in x:
-                        if not i == 'and' and xcount == 0:
-                            policyType = policyType + i.capitalize()
-                        elif 'and' in i:
-                            policyType = policyType + ' ' + i
-                        else:
-                            policyType = policyType + ' ' + i.capitalize()
-                        xcount += 1
-                    policyType = policyType.replace('Aaep', 'AAEP')
-                    policyType = policyType.replace('Aes', 'AES')
-                    policyType = policyType.replace('Apic', 'APIC')
-                    policyType = policyType.replace('Cdp', 'CDP')
-                    policyType = policyType.replace('Lldp', 'LLDP')
-                    policyType = policyType.replace('Radius', 'RADIUS')
-                    policyType = policyType.replace('Snmp', 'SNMP')
-                    policyType = policyType.replace('Tacacs', 'TACACS+')
-                    policyType = policyType.replace('Vpc', 'VPC')
-                    polVars['policy_type'] = policyType
-                    
-                    kwargs["initial_write"] = True
-                    write_to_site(polVars, **kwargs)
-
-        for func in funcList:
-            for k, v in easyDict[class_type][func].items():
-                for i in v:
-                    polVars = i
-                    kwargs = {
-                        'args': args,
-                        'easyDict': easyDict,
-                        'row_num': f'{func}_section',
-                        'site_group': k,
-                        'ws': easyDict['wb']['System Settings']
-                    }
-
-                    # Write the template to the Template File
-                    kwargs['tfvars_file'] = func
-                    kwargs["initial_write"] = False
-                    kwargs["template_file"] = f'{func}.jinja2'
-                    write_to_site(polVars, **kwargs)
-
-    # Add Closing Bracket to auto.tfvars that are dictionaries    
-    for k, v in easyDict['sites']['site_settings'].items():
-        site_name = v[0]['site_name']
-        siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
-        siteDirs.sort()
-        for folder in siteDirs:
-            files = [f for f in os.listdir(os.path.join(args.dir, site_name, folder)) if 'auto.tfvars' in f]
-            for file in files:
-                if not re.search('(bgp_auto|connectivity|variables)', file):
-                    file_name = open(os.path.join(args.dir, site_name, folder, file), 'r')
-                    end_count = 0
-                    for line in file_name:
-                        if re.search(r'^}', line):
-                            end_count += 1
-                    file_name.close
-                    if end_count == 0:
-                            file_name = open(os.path.join(args.dir, site_name, folder, file), 'a+')
-                            file_name.write('\n}\n')
-                            file_name.close()
 
 #========================================================
 # Function to Read Excel Workbook Data
@@ -1834,79 +1780,45 @@ def spine_module_port_count(module_type):
     return port_count
 
 #========================================================
-# Function to GET from Terraform Cloud
+# Function for Terraform Cloud API
 #========================================================
-def tfc_get(url, site_header, section=''):
+def tfc_api(url, method, payload, site_header, section=''):
     r = ''
     while r == '':
         try:
-            r = requests.get(url, headers=site_header)
-            status = r.status_code
+            if method == 'get':
+                r = requests.get(url, headers=site_header)
+            elif method == 'patch':
+                r = requests.patch(url, data=payload, headers=site_header)
+            elif method == 'post':
+                r = requests.post(url, data=payload, headers=site_header)
 
             # Use this for Troubleshooting
             if print_response_always:
-                print(status)
+                print(r.status_code)
                 print(r.text)
+                #print(json.dumps(r.json(), indent=4))
 
-            if status == 200 or status == 404:
-                json_data = r.json()
-                return status,json_data
-            else:
-                validating.error_request(r.status_code, r.text)
-
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: %s" % (e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method %s Failed. Exception: %s" % (section[:-5], e))
-            exit()
-
-#========================================================
-# Function to PATCH to Terraform Cloud
-#========================================================
-def tfc_patch(url, payload, site_header, section=''):
-    r = ''
-    while r == '':
-        try:
-            r = requests.patch(url, data=payload, headers=site_header)
-
-            # Use this for Troubleshooting
-            if print_response_always:
-                print(r.status_code)
-                # print(r.text)
-
-            if r.status_code != 200:
-                validating.error_request(r.status_code, r.text)
-
-            json_data = r.json()
-            return json_data
-
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: %s" % (e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method %s Failed. Exception: %s" % (section[:-5], e))
-            exit()
-
-#========================================================
-# Function to POST to Terraform Cloud
-#========================================================
-def tfc_post(url, payload, site_header, section=''):
-    r = ''
-    while r == '':
-        try:
-            r = requests.post(url, data=payload, headers=site_header)
-
-            # Use this for Troubleshooting
-            if print_response_always:
-                print(r.status_code)
-                # print(r.text)
-
-            if r.status_code != 201:
-                validating.error_request(r.status_code, r.text)
-
-            json_data = r.json()
-            return json_data
+            # Check Status and Return or Show Error
+            # print(json.dumps(r.json(), indent=4))
+            if method == 'get':
+                if r.status_code == 200 or r.status_code == 404:
+                    json_data = r.json()
+                    return r.status_code,json_data
+                else: validating.error_request(r.status_code, r.json())
+            elif method == 'patch':
+                if r.status_code == 201 or r.status_code == 200:
+                    json_data = r.json()
+                    return json_data
+                else:
+                    validating.error_request(r.status_code, r.json())
+            elif method == 'post':
+                if r.status_code != 200:
+                    json_data = r.json()
+                    return json_data
+                else:
+                    validating.error_request(r.status_code, r.json())
+            else: validating.error_request(r.status_code, r.json())
 
         except requests.exceptions.ConnectionError as e:
             print("Connection error, pausing before retrying. Error: %s" % (e))
@@ -2380,10 +2292,7 @@ def write_to_site(polVars, **kwargs):
     class_type = kwargs['class_type']
     dest_dir   = kwargs["dest_dir"]
     dest_file  = kwargs["tf_file"]
-    row_num    = kwargs["row_num"]
-    site       = str(kwargs['site'])
     site_name  = kwargs["site_name"]
-    ws         = kwargs["ws"]
 
     aci_template_path = pkg_resources.resource_filename(f'classes', 'templates/')
     templateLoader = jinja2.FileSystemLoader(
@@ -2392,49 +2301,6 @@ def write_to_site(polVars, **kwargs):
     
     # Define the Template Source
     template = templateEnv.get_template(kwargs["template_file"])
-
-    if kwargs["initial_write"] == True:
-        write_method = 'w'
-    else:
-        write_method = 'a'
-
-    # Process the template
-    if 'access' in class_type:
-        kwargs["dest_dir"] = 'fabric:access-policies'
-    elif 'tenants' in class_type:
-        kwargs["dest_dir"] = 'tenants/%s' % (polVars['tenant'])
-    elif 'fabric' in class_type:
-        kwargs["dest_dir"] = 'fabric:fabric-policies'
-    elif 'switches' in class_type:
-        if polVars['template_type'] == 'switch_profiles':
-            if not polVars['vpc_name'] == None:
-                kwargs["dest_dir"] = 'switch_%s' % (polVars['vpc_name'])
-            else:
-                kwargs["dest_dir"] = 'switch_%s' % (polVars['switch_name'])
-        elif polVars['template_type'] == 'vpc_domains':
-            kwargs["dest_dir"] = 'switch_%s' % (polVars['name'])
-    elif 'sites' in class_type:
-        kwargs["dest_dir"] = kwargs["dest_dir"]
-    else:
-        kwargs["dest_dir"] = '%s' % (class_type)
-
-    # Obtain the Site Dictionary
-    siteDict = kwargs['easyDict']['sites'][site]['site_settings']
-
-    # Create kwargs for site_name controller and controller_type
-    kwargs['controller'] = siteDict.get('controller')
-    kwargs['controller_type'] = siteDict.get('controller_type')
-    kwargs['site_name'] = siteDict.get('site_name')
-    kwargs['version'] = siteDict.get('version')
-    if kwargs['tf_file'] == 'firmware.auto.tfvars':
-        polVars['version'] = kwargs['version']
-    if kwargs['controller_type'] == 'ndo' and kwargs['tf_file'] == 'tenants.auto.tfvars':
-        if polVars['users'] == None:
-            validating.error_tenant_users(**kwargs)
-        else:
-            for user in polVars['users']:
-                regexp = '^[a-zA-Z0-9\_\-]+$'
-                validating.length_and_regex(regexp, 'users', user, 1, 64)
 
     # Make sure the Destination Path and Folder Exist
     if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
@@ -2448,7 +2314,7 @@ def write_to_site(polVars, **kwargs):
         create_file = f'type nul >> {os.path.join(dest_dir, dest_file)}'
         os.system(create_file)
     tf_file = os.path.join(dest_dir, dest_file)
-    wr_file = open(tf_file, write_method)
+    wr_file = open(tf_file, 'w')
 
     # Render Payload and Write to File
     polVars = json.loads(json.dumps(polVars))

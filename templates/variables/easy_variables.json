@@ -13,6 +13,7 @@
                                     "fabric",
                                     "switch",
                                     "system_settings",
+                                    "templates",
                                     "tenants",
                                     "virtual_networking"
                                 ]
@@ -4867,7 +4868,7 @@
                                 "x-omitempty": true
                             },
                             "template": {
-                                "description": "Template name.",
+                                "description": "Nexus Dashboard Orchestrator Template name.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -5302,39 +5303,6 @@
                                 "apic_node_id": "",
                                 "pod_id": "",
                                 "site_group": ""
-                            }
-                        }
-                    }
-                ]
-            },
-            "tenants.applicationProfiles": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "optional_args": {
-                                "description": "",
-                                "global_alias": "",
-                                "alias": "",
-                                "qos_class": "",
-                                "schema": "",
-                                "sites": "",
-                                "template": ""
-                            },
-                            "preferred_group_member": {
-                                "description": "Preferred Group Member.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "exclude",
-                                    "include"
-                                ],
-                                "default": "exclude",
-                                "x-omitempty": true
-                            },
-                            "required_args": {
-                                "name": "",
-                                "site_group": "",
-                                "tenant": ""
                             }
                         }
                     }
@@ -5791,52 +5759,36 @@
                     }
                 ]
             },
-            "tenants.bd.dhcpRelayLabels": {
+            "tenants.applicationProfiles": {
                 "allOf": [
                     {},
                     {
                         "properties": {
-                            "dhcp_option_policy": {
-                                "description": "The Name of a DHCP Option Policy to assign to the DHCP Relay Label.",
+                            "ndo_template": {
+                                "description": "Nexus Dashboard Orchestrator Template name.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "names": {
-                                "description": "A list of DHCP Relay Policies to assign to the Bridge Domain.",
-                                "type": "list_of_string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
                             "optional_args": {
-                                "dhcp_option_policy": ""
+                                "alias": "",
+                                "description": "",
+                                "global_alias": "",
+                                "qos_class": "",
+                                "ndo_template": ""
                             },
                             "required_args": {
-                                "bridge_domain": "",
-                                "names": "",
-                                "scope": "",
+                                "name": "",
                                 "site_group": "",
                                 "tenant": ""
-                            },
-                            "scope": {
-                                "description": "The owner of the target relay. The DHCP relay is any host that forwards DHCP packets between clients and servers. The relays are used to forward requests and replies between clients and servers when they are not on the same physical subnet. The relay owner can be:  * infra — The owner is the infrastructure  * tenant — The owner is the tenant.  The default is infra.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "infra",
-                                    "tenant"
-                                ],
-                                "default": "infra",
-                                "x-omitempty": true
                             }
                         }
                     }
                 ]
             },
-            "tenants.bd.General": {
+            "tenants.bd.Templates": {
                 "allOf": [
                     {},
                     {
@@ -5853,8 +5805,36 @@
                                 "default": false,
                                 "x-omitempty": true
                             },
+                            "dhcp_option_policy": {
+                                "description": "The Name of a DHCP Option Policy to assign to the DHCP Relay Label.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "disable_ip_data_plane_learning_for_pbr": {
+                                "description": "Change this setting to true, only if the bridge domain is to be associated with policy-based redirect (PBR) enabled endpoint groups.  Note: Use caution when changing the default setting for this field. Setting this option to no can cause suboptimal traffic forwarding for non-PBR scenarios.",
+                                "type": "boolean",
+                                "default": false,
+                                "x-omitempty": true
+                            },
                             "endpoint_retention_policy": {
                                 "description": "Name of the Endpoint Retention Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "ep_move_detection_mode": {
+                                "description": "When the GARP based detection option is enabled, Cisco ACI will trigger an endpoint move based on GARP packets if the move occurs on the same interface and same EPG.  Note: This can only be used when ARP Flooding is enabled.",
+                                "type": "boolean",
+                                "default": false,
+                                "x-omitempty": true
+                            },
+                            "first_hop_security_policy": {
+                                "description": "Assign a First Hop Security BD Policy.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -5875,6 +5855,18 @@
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "intersite_bum_traffic_allow": {
+                                "description": "When extending the bridge domain between sites this option is to permit broadcast unknown multicast (BUM) traffic between the sites.",
+                                "type": "boolean",
+                                "default": false,
+                                "x-omitempty": true
+                            },
+                            "intersite_l2_stretch": {
+                                "description": "Extend the Bridge Domain between ACI Fabrics.",
+                                "type": "boolean",
+                                "default": false,
                                 "x-omitempty": true
                             },
                             "ipv6_l3_unknown_multicast": {
@@ -5932,11 +5924,51 @@
                                 "default": "bd-flood",
                                 "x-omitempty": true
                             },
+                            "names": {
+                                "description": "A list of DHCP Relay Policies to assign to the Bridge Domain.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "nd_policy": {
+                                "description": "Assign a Neighbor discovery (ND) Interface policy, that supports IPv6 services for the bridge domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "ndo_settings": {
+                                "description": "Name for the NDO Settings Policy.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "optimize_wan_bandwidth": {
+                                "description": "Optimize WAN Bandwidth when stretching a BD over Multi-Site",
+                                "type": "boolean",
+                                "default": false,
+                                "x-omitempty": true
+                            },
                             "optional_args": {
+                                "dhcp_option_policy": "",
+                                "first_hop_security_policy": "",
                                 "endpoint_retention_policy": "",
                                 "igmp_interface_policy": "",
                                 "igmp_snooping_policy": "",
-                                "mld_snoop_policy": ""
+                                "mld_snoop_policy": "",
+                                "names": "",
+                                "nd_policy": "",
+                                "ndo_settings": "",
+                                "netflow_monitor_policies": "",
+                                "scope": "",
+                                "rogue_coop_exception_list": "",
+                                "route_profile": "",
+                                "vrf_tenant": ""
                             },
                             "pim": {
                                 "description": "Enables the Protocol Independent Multicast (PIM) protocol.",
@@ -5950,115 +5982,25 @@
                                 "default": false,
                                 "x-omitempty": true
                             },
-                            "policy_name": {
-                                "description": "Name for this Shared Bridge Domain - General Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
                             "required_args": {
                                 "advertise_host_routes": "",
                                 "arp_flooding": "",
+                                "disable_ip_data_plane_learning_for_pbr": "",
+                                "ep_move_detection_mode": "",
+                                "intersite_bum_traffic_allow": "",
+                                "intersite_l2_stretch": "",
                                 "ipv6_l3_unknown_multicast": "",
                                 "l2_unknown_unicast": "",
                                 "l3_unknown_multicast_flooding": "",
                                 "limit_ip_learn_to_subnets": "",
                                 "multi_destionation_flooding": "",
+                                "optimize_wan_bandwidth": "",
                                 "pim": "",
                                 "pimv6": "",
-                                "policy_name": "",
-                                "type": ""
-                            },
-                            "type": {
-                                "description": "Specifies whether this bridge domain supports Fibre Channel Over Ethernet (FCoE) communication traffic or regular Ethernet communication traffic. The options are:  * fc — Supports FCoE communication over the ACI fabric.  * regular — Supports normal Ethernet communications over the ACI fabric.  * Note:  The FCoE protocol is typically used to support communication between SAN storage devices running on a Fibre Channel (FC) network and host applications running on a non-FC network.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "fc",
-                                    "regular"
-                                ],
-                                "default": "regular",
-                                "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "tenants.bd.L3Configurations": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "disable_ip_data_plane_learning_for_pbr": {
-                                "description": "Change this setting to true, only if the bridge domain is to be associated with policy-based redirect (PBR) enabled endpoint groups.  Note: Use caution when changing the default setting for this field. Setting this option to no can cause suboptimal traffic forwarding for non-PBR scenarios.",
-                                "type": "boolean",
-                                "default": false,
-                                "x-omitempty": true
-                            },
-                            "ep_move_detection_mode": {
-                                "description": "When the GARP based detection option is enabled, Cisco ACI will trigger an endpoint move based on GARP packets if the move occurs on the same interface and same EPG.  Note: This can only be used when ARP Flooding is enabled.",
-                                "type": "boolean",
-                                "default": false,
-                                "x-omitempty": true
-                            },
-                            "first_hop_security_policy": {
-                                "description": "Assign a First Hop Security BD Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "intersite_bum_traffic_allow": {
-                                "description": "When extending the bridge domain between sites this option is to permit broadcast unknown multicast (BUM) traffic between the sites.",
-                                "type": "boolean",
-                                "default": false,
-                                "x-omitempty": true
-                            },
-                            "intersite_l2_stretch": {
-                                "description": "Extend the Bridge Domain between ACI Fabrics.",
-                                "type": "boolean",
-                                "default": false,
-                                "x-omitempty": true
-                            },
-                            "optimize_wan_bandwidth": {
-                                "description": "Optimize WAN Bandwidth when stretching a BD over Multi-Site",
-                                "type": "boolean",
-                                "default": false,
-                                "x-omitempty": true
-                            },
-                            "optional_args": {
-                                "first_hop_security_policy": "",
-                                "nd_policy": "",
-                                "netflow_monitor_policies": "",
-                                "rogue_coop_exception_list": "",
-                                "route_profile": ""
-                            },
-                            "nd_policy": {
-                                "description": "Assign a Neighbor discovery (ND) Interface policy, that supports IPv6 services for the bridge domain.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "policy_name": {
-                                "description": "Name for this Shared Bridge Domain - General Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "required_args": {
-                                "disable_ip_data_plane_learning_for_pbr": "",
-                                "ep_move_detection_mode": "",
-                                "intersite_bum_traffic_allow": "",
-                                "intersite_l2_stretch": "",
-                                "optimize_wan_bandwidth": "",
-                                "policy_name": "",
-                                "unicast_routing": ""
+                                "template_name": "",
+                                "type": "",
+                                "unicast_routing": "",
+                                "vrf": ""
                             },
                             "rogue_coop_exception_list": {
                                 "description": "A list of MAC addresses for which you want to have a higher tolerance for endpoint movement with rogue endpoint control before the endpoints get marked as rogue. Endpoints in the rogue/COOP exception list get marked as rogue only if they move 3000 or more times within 10 minutes. After an endpoint is marked as rogue, the endpoint is kept static so that learning is prevented and the traffic to and from the endpoint is dropped. The rogue endpoint is deleted after 30 seconds.",
@@ -6073,49 +6015,42 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
+                            "scope": {
+                                "description": "The owner of the target relay. The DHCP relay is any host that forwards DHCP packets between clients and servers. The relays are used to forward requests and replies between clients and servers when they are not on the same physical subnet. The relay owner can be:  * infra — The owner is the infrastructure  * tenant — The owner is the tenant.  The default is infra.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "infra",
+                                    "tenant"
+                                ],
+                                "default": "infra",
+                                "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name for this Bridge Domain Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "type": {
+                                "description": "Specifies whether this bridge domain supports Fibre Channel Over Ethernet (FCoE) communication traffic or regular Ethernet communication traffic. The options are:  * fc — Supports FCoE communication over the ACI fabric.  * regular — Supports normal Ethernet communications over the ACI fabric.  * Note:  The FCoE protocol is typically used to support communication between SAN storage devices running on a Fibre Channel (FC) network and host applications running on a non-FC network.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "fc",
+                                    "regular"
+                                ],
+                                "default": "regular",
+                                "x-omitempty": true
+                            },
                             "unicast_routing": {
                                 "description": "enable or disable unicast routing on the Bridge Domain. We recommend disabling, false,  if you have not configured a subnet on the BD.",
                                 "type": "boolean",
                                 "default": true,
                                 "x-omitempty": true
-                            }
-                        }
-                    }
-                ]
-            },
-            "tenants.bd.Orchestrator": {
-                "allOf": [
-                    {},
-                    {
-                        "properties": {
-                            "optional_args": {
-                                "vrf_schema": "",
-                                "vrf_template": ""
                             },
-                            "policy_name": {
-                                "description": "Name for this Bridge Domain - Nexus Dashboard Orchestrator Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "required_args": {
-                                "policy_name": "",
-                                "schema": "",
-                                "template": "",
-                                "sites": ""
-                            },
-                            "vrf_schema": {
-                                "description": "Name for the VRF Schema.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "vrf_template": {
-                                "description": "Name for VRF Template.",
+                            "vrf_tenant": {
+                                "description": "Name of the VRF Tenant.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -6126,7 +6061,7 @@
                     }
                 ]
             },
-            "tenants.bd.Subnets": {
+            "tenants.bd.SubnetsTemplates": {
                 "allOf": [
                     {},
                     {
@@ -6135,11 +6070,6 @@
                                 "description": "The subnet can be exported to a routed connection.",
                                 "type": "boolean",
                                 "default": false,
-                                "x-omitempty": true
-                            },
-                            "gateway_ip": {
-                                "description": "IPv4 or IPv6 Subnet to Assign to the Bridge Domain.",
-                                "type": "hostname",
                                 "x-omitempty": true
                             },
                             "ip_data_plane_learning": {
@@ -6152,16 +6082,10 @@
                                 "default": "enabled",
                                 "x-omitempty": true
                             },
-                            "no_default_svi_gateway": {
-                                "description": "When using Cisco ACI Multi-Site with this APIC fabric domain (site), indicates that the VRF, EPG, or BD using this subnet are mirrored from another site, which has a relationship to this site through a contract. Do not modify or delete the mirrored objects.",
+                            "make_this_ip_address_primary": {
+                                "description": "Indicates if the subnet is the primary IP address for the bridge domain (preferred over the available alternatives). ",
                                 "type": "boolean",
                                 "default": false,
-                                "x-omitempty": true
-                            },
-                            "neighbor_discovery": {
-                                "description": "Enables Neighbor Discovery on the subnet.",
-                                "type": "boolean",
-                                "default": true,
                                 "x-omitempty": true
                             },
                             "nd_ra_prefix_policy": {
@@ -6172,14 +6096,19 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "make_this_ip_address_primary": {
-                                "description": "Indicates if the subnet is the primary IP address for the bridge domain (preferred over the available alternatives). ",
+                            "neighbor_discovery": {
+                                "description": "Enables Neighbor Discovery on the subnet.",
+                                "type": "boolean",
+                                "default": true,
+                                "x-omitempty": true
+                            },
+                            "no_default_svi_gateway": {
+                                "description": "When using Cisco ACI Multi-Site with this APIC fabric domain (site), indicates that the VRF, EPG, or BD using this subnet are mirrored from another site, which has a relationship to this site through a contract. Do not modify or delete the mirrored objects.",
                                 "type": "boolean",
                                 "default": false,
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "description": "",
                                 "nd_ra_prefix_policy": "",
                                 "policy_tags": "",
                                 "route_profile": ""
@@ -6203,8 +6132,6 @@
                             },
                             "required_args": {
                                 "advertise_externally": "",
-                                "bridge_domain": "",
-                                "gateway_ip": "",
                                 "ip_data_plane_learning": "",
                                 "make_this_ip_address_primary": "",
                                 "neighbor_discovery": "",
@@ -6212,7 +6139,7 @@
                                 "querier_ip": "",
                                 "shared_between_vrfs": "",
                                 "site_group": "",
-                                "tenant": "",
+                                "template_name": "",
                                 "treat_as_virtual_ip_address": ""
                             },
                             "route_profile": {
@@ -6227,6 +6154,14 @@
                                 "description": "The subnet can be shared with and exported to multiple contexts (VRFs) in the same tenant or across tenants as part of a shared service. An example of a shared service is a routed connection to an EPG present in another context (VRF) in a different tenant. This enables traffic to pass in both directions across contexts (VRFs). An EPG that provides a shared service must have its subnet configured under that EPG (not under a bridge domain), and its scope must be set to advertised externally, and shared between VRFs.  Note: Shared subnets must be unique across the contexts (VRF) involved in the communication. When a subnet under an EPG provides a Layer 3 external network shared service, such a subnet must be globally unique within the entire ACI fabric.",
                                 "type": "boolean",
                                 "default": false,
+                                "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name for this Bridge Domain Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "treat_as_virtual_ip_address": {
@@ -6244,6 +6179,14 @@
                     {},
                     {
                         "properties": {
+                            "bd_template": {
+                                "description": "Name of the Bridge Domain Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "custom_mac_address": {
                                 "description": "The MAC address of the bridge domain (BD) or switched virtual interface (SVI). By default, a BD takes the fabric wide default MAC address of 00:22:BD:F8:19:FF. Configure this property to override the default address.",
                                 "type": "mac_address",
@@ -6253,6 +6196,19 @@
                                 "description": "Set this to Clear the Endpoint Table on the Bridge Domain.",
                                 "type": "boolean",
                                 "default": false,
+                                "x-omitempty": true
+                            },
+                            "epg_template": {
+                                "description": "Name of the Application EPG Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "epg_to_aaep_vlans": {
+                                "description": "List of AAEP VLANs.  List of 1 or 2",
+                                "type": "list_of_vlans",
                                 "x-omitempty": true
                             },
                             "flood_in_encapsulation": {
@@ -6265,14 +6221,9 @@
                                 "default": "admin_up",
                                 "x-omitempty": true
                             },
-                            "intra_epg_isolation": {
-                                "description": "Intra-EPG endpoint isolation policies provide full isolation for virtual or physical endpoints; no communication is allowed between endpoints in an EPG that is operating with isolation enforced. Isolation enforced EPGs reduce the number of EPG encapsulations required when many clients access a common service but are not allowed to communicate with each other.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "enforced",
-                                    "unenforced"
-                                ],
-                                "default": "unenforced",
+                            "gateway_ips": {
+                                "description": "IPv4 or IPv6 Subnet to Assign to the Bridge Domain.",
+                                "type": "list_of_hosts",
                                 "x-omitempty": true
                             },
                             "label_match_criteria": {
@@ -6287,16 +6238,8 @@
                                 "default": "AtleastOne",
                                 "x-omitempty": true
                             },
-                            "general_policy": {
-                                "description": "Name of the General Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "l3out": {
-                                "description": "Name of the L3Out.",
+                            "l3outs": {
+                                "description": "Name of the L3Out(s).",
                                 "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -6316,65 +6259,38 @@
                                 "type": "hostname",
                                 "x-omitempty": true
                             },
-                            "ndo_policy": {
-                                "description": "Name of the Nexus Dashboard Orchestrator Conifgurations Policy.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
                             "optional_args": {
                                 "alias": "",
                                 "annotations": "",
                                 "custom_mac_address": "",
                                 "description": "",
+                                "endpoint_clear": "",
+                                "epg_template": "",
+                                "epg_to_aaep_vlans": "",
+                                "gateway_ips": "",
                                 "global_alias": "",
-                                "l3_policy": "",
-                                "l3out": "",
+                                "l3outs": "",
                                 "link_local_ipv6_address": "",
-                                "policy_source_tenant": "",
-                                "ndo_policy": "",
-                                "virtual_mac_address": "",
-                                "vrf": "",
-                                "vrf_tenant": ""
-                            },
-                            "policy_source_tenant": {
-                                "description": "Name for the tenant in which the Policies were created.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "preferred_group_member": {
-                                "description": "Preferred Group Member.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "exclude",
-                                    "include"
-                                ],
-                                "default": "exclude",
-                                "x-omitempty": true
+                                "subnet_templates": "",
+                                "virtual_mac_address": ""
                             },
                             "required_args": {
-                                "endpoint_clear": "",
-                                "general_policy": "",
+                                "bd_template": "",
                                 "name": "",
                                 "site_group": "",
                                 "tenant": ""
                             },
-                            "virtual_mac_address": {
-                                "description": "The bridge domain virtual MAC address.  Note: The BD virtual MAC address and the subnet virutal IP address must be the same for all ACI fabrics for that bridge domain. Multiple bridge domains can be configured to communicate across connected ACI fabrics. The virtual MAC address and the virtual IP address can be shared across bridge domains.",
-                                "type": "mac_address",
-                                "x-omitempty": true
-                            },
-                            "vrf_tenant": {
-                                "description": "Name of the VRF Tenant.",
-                                "type": "string",
+                            "subnet_templates": {
+                                "description": "Name of the Subnet Template.",
+                                "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "virtual_mac_address": {
+                                "description": "The bridge domain virtual MAC address.  Note: The BD virtual MAC address and the subnet virutal IP address must be the same for all ACI fabrics for that bridge domain. Multiple bridge domains can be configured to communicate across connected ACI fabrics. The virtual MAC address and the virtual IP address can be shared across bridge domains.",
+                                "type": "mac_address",
                                 "x-omitempty": true
                             }
                         }
@@ -8295,9 +8211,9 @@
                     {},
                     {
                         "properties": {
-                            "address": {
-                                "description": "The server IP address.",
-                                "type": "hostname",
+                            "addresses": {
+                                "description": "The server IP addresses.",
+                                "type": "list_of_hosts",
                                 "x-omitempty": true
                             },
                             "application_profile": {
@@ -8344,6 +8260,14 @@
                                 "default": "visible",
                                 "x-omitempty": true
                             },
+                            "names": {
+                                "description": "The Name(s) of the DHCP Relay Policies.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "optional_args": {
                                 "application_profile": "",
                                 "description": "",
@@ -8360,12 +8284,13 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "address": "",
+                                "addresses": "",
                                 "epg": "",
                                 "epg_type": "",
                                 "mode": "",
-                                "name": "",
+                                "names": "",
                                 "owner": "",
+                                "site_group": "",
                                 "tenant": ""
                             }
                         }
@@ -8781,6 +8706,14 @@
                                 "description": "",
                                 "type": "boolean",
                                 "default": false,
+                                "x-omitempty": true
+                            },
+                            "ndo_template": {
+                                "description": "Name of the NDO Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "optional_args": {
