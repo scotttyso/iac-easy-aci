@@ -1,4 +1,5 @@
 # Directories to Ignore
+tfe_modules/*
 **/tfe_modules/*
 
 # Local .terraform directories

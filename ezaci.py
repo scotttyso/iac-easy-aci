@@ -32,7 +32,7 @@ ad1 = 'auth|(export|mg)_policy|maint_group|radius|recommended_settings|remote_ho
 ad2 = 'smart_(callhome|destinations|smtp_server)|syslog(_destinations)?'
 admin_regex = f'^({ad1}|{ad2})$'
 
-apps_epgs_regex = '^(app|epg)_(add|template|vmm_policy)$'
+apps_epgs_regex = '^(app|epg)_(add|template|vmm_temp)$'
 bds_regex = '^(bd|subnet)_(add|template)$'
 contracts_regex = '^(contract|filter|subject)_(add|assign|entry|filters)$'
 
@@ -40,15 +40,15 @@ fa1 = 'date_time|dns_profile|ntp(_key)?|recommended_settings'
 fa2 = 'snmp_(clgrp|community|destinations|policy|user)'
 fabric_regex = f'^({fa1}|{fa2})$'
 
-l31 = '(bgp|eigrp|ospf)_(peer|policy|profile|routing)|ext_epg(_policy|_sub)?'
-l32 = 'l3out_(add|policy)|node_(interface|intf_(cfg|policy)|profile)?'
+l31 = '(bgp|eigrp|ospf)_(peer|template|profile|routing)|ext_epg(_temp|_sub)?'
+l32 = 'l3out_(add|template)|node_(interface|intf_(cfg|temp)|profile)?'
 l3out_regex = f'^({l31}|{l32})$'
 
 port_convert_regex = '^port_cnvt$'
 sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|recommended_settings)$'
-tenants_regex = '^(ndo_schema|(template|tenant)_(add|site)|vrf_(add|community|policy))$'
+tenants_regex = '^(ndo_schema|(template|tenant)_(add|site)|vrf_(add|community|template))$'
 tenant_pol_regex = '^(apic_inb|bgp_pfx|dhcp_relay|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
@@ -61,6 +61,7 @@ def process_access(args, easyDict, easy_jsonData, wb):
     class_folder = 'access'
     func_regex = access_regex
     ws = wb['Access']
+    easyDict['remove_default_args'] = True
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
@@ -108,6 +109,7 @@ def process_site_settings(args, easyDict, easy_jsonData, wb):
         'args':args,
         'easyDict':easyDict,
         'easy_jsonData':easy_jsonData,
+        'remove_default_args':False,
         'row_num':0,
         'wb':wb,
         'ws': wb['Sites']
@@ -124,6 +126,7 @@ def process_sites(args, easyDict, easy_jsonData, wb):
     class_folder = 'sites'
     func_regex = sites_regex
     ws = wb['Sites']
+    easyDict['remove_default_args'] = False
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
@@ -136,7 +139,9 @@ def process_switches(args, easyDict, easy_jsonData, wb):
     class_folder = 'switches'
     func_regex = switch_regex
     ws = wb['Switch Profiles']
+    easyDict['remove_default_args'] = False
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict['remove_default_args'] = True
     return easyDict
 
 #=================================================================
@@ -161,6 +166,7 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
     # Evaluate the Tenants Worksheet
     func_regex = tenants_regex
     ws = wb['Tenants']
+    easyDict['remove_default_args'] = True
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the Tenant Policies Worksheet
@@ -366,14 +372,14 @@ def main():
 
 
     # Begin Proceedures to Create files
-    easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     easy_functions.create_yaml(args, easy_jsonData, **easyDict)
-    # easy_functions.merge_easy_aci_repository(args, easy_jsonData, **easyDict)
-    # changed_folders = []
-    # if args.git_check == 'True':
-    #     changed_folders = easy_functions.git_check_status(args)
-    # else:
-    #     changed_folders = easy_functions.get_folders(args, path_sep)
+    easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
+    easy_functions.merge_easy_aci_repository(args, easy_jsonData, **easyDict)
+    changed_folders = []
+    if args.git_check == 'True':
+        changed_folders = easy_functions.git_check_status(args)
+    else:
+        changed_folders = easy_functions.get_folders(args, path_sep)
     # easy_functions.apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')

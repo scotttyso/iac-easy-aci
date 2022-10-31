@@ -53,6 +53,12 @@
                                     "system_settings"
                                 ]
                             },
+                            "class.templates": {
+                                "directory": "tenants",
+                                "enum": [
+                                    "templates"
+                                ]
+                            },
                             "class.tenants": {
                                 "directory": "tenants",
                                 "enum": [
@@ -197,13 +203,13 @@
                             },
                             "processes": {
                                 "enum": [
-                                    "tenants",
                                     "access",
                                     "admin",
                                     "fabric",
                                     "switches",
                                     "system_settings",
-                                    "virtual_networking"
+                                    "virtual_networking",
+                                    "tenants"
                                 ]
                             },
                             "siteDict": {
@@ -5308,7 +5314,7 @@
                     }
                 ]
             },
-            "tenants.applicationEpg.Policy": {
+            "tenants.applicationEpg.Templates": {
                 "allOf": [
                     {},
                     {
@@ -5353,6 +5359,25 @@
                                 "minimum": 1,
                                 "maximum": 128,
                                 "pattern": "^[a-zA-Z0-9_.:-]+:[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "epg_to_aaeps": {
+                                "description": "Name of the Attachable Entity Profile Policy to Assign this to this Application EPG Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "epg_to_aaep_mode": {
+                                "description": "Mode for Application EPG to AAEP Mappings.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "access",
+                                    "dot1p",
+                                    "trunk"
+                                ],
+                                "default": "unspecified",
                                 "x-omitempty": true
                             },
                             "epg_type": {
@@ -5420,13 +5445,35 @@
                                 "default": "AtleastOne",
                                 "x-omitempty": true
                             },
+                            "ndo_settings": {
+                                "description": "Name of the NDO Settings Policy to Associate to the Application EPG Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "optional_args": {
                                 "contract_exception_tag": "",
                                 "custom_qos": "",
                                 "data_plane_policer": "",
                                 "epg_contract_masters": "",
+                                "epg_to_aaep_mode": "",
+                                "epg_to_aaeps": "",
                                 "fhs_trust_control_policy": "",
-                                "fibre_channel_domain_association": ""
+                                "physical_domains": "",
+                                "ndo_settings": "",
+                                "fibre_channel_domain_association": "",
+                                "vmm_domains": "",
+                                "vmm_template": ""
+                            },
+                            "physical_domains": {
+                                "description": "Name(s) of the Physical Domains to Associate to the Application EPG Template.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             },
                             "preferred_group_member": {
                                 "description": "If an EPG is marked as a Preferred Group Member, it is put into an internally created contract group where all members of the group are allowed to communicate with each other without requiring a contract between them.",
@@ -5440,22 +5487,47 @@
                                 "has_multicast_source": "",
                                 "intra_epg_isolation": "",
                                 "label_match_criteria": "",
-                                "policy_name": "",
                                 "preferred_group_member": "",
                                 "qos_class": "",
+                                "site_group": "",
+                                "template_name": "",
                                 "useg_epg": ""
+                            },
+                            "template_name": {
+                                "description": "Name for this Appication EPG Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             },
                             "useg_epg": {
                                 "description": "Micro-Segmentation EPG.",
                                 "type": "boolean",
                                 "default": false,
                                 "x-omitempty": true
+                            },
+                            "vmm_domains": {
+                                "description": "Name(s) of the VMM Domains to Associate to the Application EPG Template.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "vmm_template": {
+                                "description": "Name of the VMM Domain Template to Assign to the Application EPG Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             }
                         }
                     }
                 ]
             },
-            "tenants.applicationEpg.VMMPolicy": {
+            "tenants.applicationEpg.VMMTemplates": {
                 "allOf": [
                     {},
                     {
@@ -5584,7 +5656,7 @@
                                 "mac_changes": "",
                                 "netflow": "",
                                 "number_of_ports": "",
-                                "policy_name": "",
+                                "template_name": "",
                                 "port_allocation": "",
                                 "port_binding": "",
                                 "switch_provider": "",
@@ -5615,6 +5687,14 @@
                                     "VMware"
                                 ],
                                 "default": "reject",
+                                "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name for this Application EPG VMM Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "vlan_mode": {
@@ -5660,31 +5740,12 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "epg_policy": {
-                                "description": "The Name of an EPG Policy in the Spreadsheet.",
+                            "epg_template": {
+                                "description": "The Name of an Application EPG Template to Assign.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "epg_to_aaeps": {
-                                "description": "Name of the Attachable Entity Profile Policy to Assign this to this EPG.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "epg_to_aaep_mode": {
-                                "description": "Mode for EPG to AAEP Mappings.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "access",
-                                    "dot1p",
-                                    "trunk"
-                                ],
-                                "default": "unspecified",
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -5692,39 +5753,14 @@
                                 "annotations": "",
                                 "custom_epg_name": "",
                                 "description": "",
-                                "epg_to_aaeps": "",
-                                "epg_to_aaep_mode": "",
                                 "global_alias": "",
-                                "physical_domains": "",
-                                "policy_source_tenant": "",
-                                "schema": "",
-                                "sites": "",
-                                "template": "",
                                 "vlans": "",
-                                "vmm_domains": "",
-                                "vmm_policy": "",
                                 "vmm_vlans": ""
-                            },
-                            "physical_domains": {
-                                "description": "Name(s) of the Physical Domains to associate to this EPG.",
-                                "type": "list_of_string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "policy_source_tenant": {
-                                "description": "Name for the tenant in which Policies were created.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
                             },
                             "required_args": {
                                 "application_profile": "",
                                 "bridge_domain": "",
-                                "epg_policy": "",
+                                "epg_template": "",
                                 "name": "",
                                 "site_group": "",
                                 "tenant": ""
@@ -5732,22 +5768,6 @@
                             "vlans": {
                                 "description": "List of VLANs to assign to Static Interface Bindings.",
                                 "type": "list_of_vlans",
-                                "x-omitempty": true
-                            },
-                            "vmm_domains": {
-                                "description": "Name(s) of the VMM Domains to associate to this EPG.",
-                                "type": "list_of_string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "vmm_policy": {
-                                "description": "Name of the VMM Policy from the Worksheet.",
-                                "type": "string",
-                                "minimum": 1,
-                                "maximum": 64,
-                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "vmm_vlans": {
@@ -6306,10 +6326,7 @@
                                 "alias": "",
                                 "description": "",
                                 "annotations": "",
-                                "global_alias": "",
-                                "schema": "",
-                                "sites": "",
-                                "template": ""
+                                "global_alias": ""
                             },
                             "required_args" : {
                                 "name": "",
@@ -6348,6 +6365,7 @@
                                 "minimum": 1,
                                 "maximum": 512,
                                 "pattern": "^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified|[\\d]{1,4}|[1-6][0-5][0-5][0-3][0-5])$",
+                                "default": "unspecified",
                                 "x-omitempty": true
                             },
                             "destination_port_to": {
@@ -6356,6 +6374,7 @@
                                 "minimum": 1,
                                 "maximum": 512,
                                 "pattern": "^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified|[\\d]{1,4}|[1-6][0-5][0-5][0-3][0-5])$",
+                                "default": "unspecified",
                                 "x-omitempty": true
                             },
                             "established": {
@@ -6522,6 +6541,7 @@
                                 "minimum": 1,
                                 "maximum": 512,
                                 "pattern": "^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified|[\\d]{1,4}|[1-6][0-5][0-5][0-3][0-5])$",
+                                "default": "unspecified",
                                 "x-omitempty": true
                             },
                             "source_port_to": {
@@ -6530,6 +6550,7 @@
                                 "minimum": 1,
                                 "maximum": 512,
                                 "pattern": "^(dns|ftpData|http|https|pop3|rtsp|smtp|unspecified|[\\d]{1,4}|[1-6][0-5][0-5][0-3][0-5])$",
+                                "default": "unspecified",
                                 "x-omitempty": true
                             },
                             "stateful": {
@@ -6606,16 +6627,37 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
+                            "ndo_settings": {
+                                "description": "Name for this NDO Schema Policy to Associate to BD's, EPG's, etc.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "optional_args": {
                                 "application_epgs": "",
                                 "application_profile": "",
                                 "external_epgs": "",
                                 "l3out": "",
-                                "schema": "",
-                                "sites": "",
+                                "ndo_settings": "",
                                 "target_tenant": "",
-                                "template": "",
                                 "vrfs": ""
+                            },
+                            "qos_class": {
+                                "description": "The QoS priority class identifier.  QoS priority classes are not inherited with Contract Inheritance.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
                             },
                             "required_args": {
                                 "contract": "",
@@ -6733,6 +6775,21 @@
                             "optional_args": {
                                 "description": ""
                             },
+                            "qos_class": {
+                                "description": "The QoS priority class identifier.  QoS priority classes are not inherited with Contract Inheritance.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
                             "required_args": {
                                 "action": "",
                                 "apply_both_directions": "",
@@ -6747,6 +6804,37 @@
                                 "site_group": "",
                                 "target_dscp": "",
                                 "tenant": ""
+                            },
+                            "target_dscp": {
+                                "description": "Target DSCP Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
                             }
                         }
                     }
@@ -6768,13 +6856,35 @@
                                 "default": "standard",
                                 "x-omitempty": true
                             },
+                            "ndo_settings": {
+                                "description": "Name for this NDO Schema Policy to Associate to BD's, EPG's, etc.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "optional_args": {
                                 "alias": "",
+                                "annotations": "",
                                 "description": "",
                                 "global_alias": "",
-                                "schema": "",
-                                "sites": "",
-                                "template": ""
+                                "ndo_settings": ""
+                            },
+                            "qos_class": {
+                                "description": "The QoS priority class identifier.  QoS priority classes are not inherited with Contract Inheritance.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
                             },
                             "required_args": {
                                 "contract_type": "",
@@ -6795,6 +6905,37 @@
                                     "tenant"
                                 ],
                                 "default": "context",
+                                "x-omitempty": true
+                            },
+                            "target_dscp": {
+                                "description": "Target DSCP Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
                                 "x-omitempty": true
                             }
                         }
@@ -6829,9 +6970,17 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "l3out_shared_policy": {
-                                "description": "Name of the L3Out Shared Policy.",
+                            "l3out_template": {
+                                "description": "Name of the L3Out Template.",
                                 "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "ndo_settings": {
+                                "description": "Name for this NDO Schema Policy to Associate to BD's, EPG's, etc.",
+                                "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
@@ -6843,10 +6992,8 @@
                                 "description": "",
                                 "eigrp_as_number": "",
                                 "global_alias": "",
-                                "ospf_external_profile": "",
-                                "schema": "",
-                                "sites": "",
-                                "template": ""
+                                "ndo_settings": "",
+                                "ospf_external_profile": ""
                             },
                             "ospf_external_profile": {
                                 "description": "Name of the OSPF Routing Profile.",
@@ -6859,7 +7006,7 @@
                             "required_args": {
                                 "enable_bgp": "",
                                 "l3_domain": "",
-                                "l3out_shared_policy": "",
+                                "l3out_template": "",
                                 "name": "",
                                 "site_group": "",
                                 "tenant": "",
@@ -6869,7 +7016,7 @@
                     }
                 ]
             },
-            "tenants.L3Out.Policy": {
+            "tenants.L3Out.Templates": {
                 "allOf": [
                     {},
                     {
@@ -6927,8 +7074,8 @@
                                 "import": "",
                                 "pim": "",
                                 "pimv6": "",
-                                "policy_name": "",
-                                "target_dscp": ""
+                                "target_dscp": "",
+                                "template_name": ""
                             },
                             "route_controls_for_dampening": {
                                 "description": "Name for the Route Control/Map to Associate for Dampening.  Dampening minimizes propagation into the fabric of flapping e-BGP routes received from external routers connected to border leaf switches (BLs). Frequently flapping routes from external routers are suppressed on BLs based on configured criteria and prohibited from redistribution to iBGP peers (ACI spine switches). Suppressed routes are reused after a configured time criteria.",
@@ -6948,6 +7095,45 @@
                             },
                             "route_profile_for_interleak": {
                                 "description": "Name for the Route Control/Map to Associate for Interleak.   A route profile allows the user to set attributes, such as community, preference, and metric for route leaking from OSPF to BGP.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "target_dscp": {
+                                "description": "Target DSCP Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name for this L3Out - OSPF Routing Template.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -7088,7 +7274,7 @@
                     }
                 ]
             },
-            "tenants.l3out.bgpPeerConnectivityProfile.Policy": {
+            "tenants.l3out.bgpPeerConnectivityProfile.Templates": {
                 "allOf": [
                     {},
                     {
@@ -7180,13 +7366,13 @@
                                 "disable_connected_check": "",
                                 "disable_peer_as_check": "",
                                 "next_hop_self": "",
-                                "policy_name": "",
                                 "remove_all_private_as": "",
                                 "remove_private_as": "",
                                 "replace_private_as_with_local_as": "",
                                 "send_community": "",
                                 "send_domain_path": "",
-                                "send_extended_community": ""
+                                "send_extended_community": "",
+                                "template_name": ""
                             },
                             "send_community": {
                                 "description": "Sends the BGP community attribute to a peer.",
@@ -7204,6 +7390,14 @@
                                 "description": "Sends the BGP extended community attribute to a peer.",
                                 "type": "boolean",
                                 "default": false,
+                                "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name for this BGP Peer Connectivity Profile Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             }
                         }
@@ -7258,8 +7452,8 @@
                     {},
                     {
                         "properties": {
-                            "external_epg_shared_policy": {
-                                "description": "Name of the External EPG Shared Policy.",
+                            "external_epg_template": {
+                                "description": "Name of the External EPG Template Policy.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -7273,7 +7467,7 @@
                                 "global_alias": ""
                             },
                             "required_args": {
-                                "external_epg_shared_policy": "",
+                                "external_epg_template": "",
                                 "l3out": "",
                                 "name": "",
                                 "site_group": "",
@@ -7283,7 +7477,7 @@
                     }
                 ]
             },
-            "tenants.l3out.externalEpg.Policy": {
+            "tenants.l3out.externalEpg.Templates": {
                 "allOf": [
                     {},
                     {
@@ -7347,14 +7541,29 @@
                                 "default": false,
                                 "x-omitempty": true
                             },
+                            "qos_class": {
+                                "description": "The QoS priority class identifier.  QoS priority classes are not inherited with Contract Inheritance.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
                             "required_args": {
                                 "flood_on_encapsulation": "",
                                 "intra_epg_isolation": "",
                                 "label_match_criteria": "",
-                                "policy_name": "",
                                 "preferred_group_member": "",
                                 "qos_class": "",
-                                "target_dscp": ""
+                                "target_dscp": "",
+                                "template_name": ""
                             },
                             "route_control_profiles": {
                                 "description": "Name for the Route Control/Map to Associate for Import/Export.",
@@ -7362,6 +7571,45 @@
                                 "minimum": 1,
                                 "maximum": 70,
                                 "pattern": "^[a-zA-Z0-9_.:-]+:(export|import)$",
+                                "x-omitempty": true
+                            },
+                            "target_dscp": {
+                                "description": "Target DSCP Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name for this External EPG Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             }
                         }
@@ -7499,8 +7747,7 @@
                             "optional_args": {
                                 "description": "",
                                 "key_id": "",
-                                "ospf_interface_policy": "",
-                                "policy_source_tenant": ""
+                                "ospf_interface_policy": ""
                             },
                             "ospf_interface_policy": {
                                 "description": "Name for an existing OSPF Interface Policy.",
@@ -7510,17 +7757,17 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "policy_source_tenant": {
-                                "description": "Name for the tenant in which the OSPF Interface Policy was created.",
+                            "required_args": {
+                                "auth_type": "",
+                                "template_name": ""
+                            },
+                            "template_name": {
+                                "description": "Name for this L3Out - OSPF Routing Template.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
-                            },
-                            "required_args": {
-                                "auth_type": "",
-                                "profile_name": ""
                             }
                         }
                     }
@@ -7572,9 +7819,9 @@
                                 "ospf_area_cost": "",
                                 "ospf_area_id": "",
                                 "ospf_area_type": "",
-                                "profile_name": "",
                                 "send_redistribution_lsas_into_nssa_area": "",
-                                "suppress_forwarding_address": ""
+                                "suppress_forwarding_address": "",
+                                "template_name": ""
                             },
                             "send_redistribution_lsas_into_nssa_area": {
                                 "description": "Flag to Advertise the Interface Subnet into OSPF.",
@@ -7587,6 +7834,14 @@
                                 "type": "boolean",
                                 "default": false,
                                 "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name for this L3Out - OSPF Routing Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
                             }
                         }
                     }
@@ -7597,29 +7852,43 @@
                     {},
                     {
                         "properties": {
+                            "bgp_password": {
+                                "description": "BGP Password length and regex.",
+                                "minimum": 2,
+                                "maximum": 255,
+                                "pattern": "^[\\S+]{2,255}$"
+                            },
                             "bgp_peers": {
                                 "description": "A List of BGP Peer Addresses.  This will define the Neighbor relationships for the Interface.",
                                 "type": "list_of_hosts",
                                 "x-omitempty": true
                             },
+                            "bgp_template": {
+                                "description": "Name for the BGP Template to Attach to the Interface Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "eigrp_interface_profile": {
-                                "description": "Name for a OSPF Interface Profile defined in the worksheet.",
+                                "description": "Name for a OSPF Interface Profile Template defined in the worksheet.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "interface_config_name": {
-                                "description": "Name for the Interface Configuration Policy defined in the worksheet.",
+                            "interface_config_template": {
+                                "description": "Name for the Logical Node Interface Configuration Template defined in the worksheet.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "interface_profile_shared_policy": {
-                                "description": "Name for the Interface Profile Shared Policy defined in the worksheet.",
+                            "interface_template": {
+                                "description": "Name for the Logical Node Interface Profile Template defined in the worksheet.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -7636,34 +7905,24 @@
                             },
                             "optional_args": {
                                 "alias": "",
+                                "bgp_password": "",
                                 "bgp_peers": "",
+                                "bgp_template": "",
                                 "description": "",
                                 "eigrp_interface_profile": "",
                                 "ospf_interface_profile": ""
                             },
-                            "ospf_key": {
-                                "description": "OSPF Key/Password length and regex.",
-                                "minimum": 2,
-                                "maximum": 255,
-                                "pattern": "^[\\S+]{2,255}$"
-                            },
                             "ospf_interface_profile": {
-                                "description": "Name for a OSPF Interface Profile defined in the worksheet.",
+                                "description": "Name for a OSPF Interface Profile Template defined in the worksheet.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "password": {
-                                "description": "BGP Password length and regex.",
-                                "minimum": 2,
-                                "maximum": 255,
-                                "pattern": "^[\\S+]{2,255}$"
-                            },
                             "required_args": {
-                                "interface_config_name": "",
-                                "interface_profile_shared_policy": "",
+                                "interface_config_template": "",
+                                "interface_template": "",
                                 "l3out": "",
                                 "name": "",
                                 "node_profile": "",
@@ -7785,20 +8044,59 @@
                                 "ipv6_dad": "",
                                 "mode": "",
                                 "mtu": "",
-                                "policy_name": "",
                                 "primary_preferred_addresses": "",
-                                "target_dscp": ""
+                                "target_dscp": "",
+                                "template_name": ""
                             },
                             "secondary_addresses": {
                                 "description": "A List of Secondary Addresses.",
                                 "type": "list_of_hosts",
+                                "x-omitempty": true
+                            },
+                            "target_dscp": {
+                                "description": "Target DSCP Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name for this Node Interface Configuration Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             }
                         }
                     }
                 ]
             },
-            "tenants.l3out.logicalNodeInterfaceProfile.Policy": {
+            "tenants.l3out.logicalNodeInterfaceProfile.Templates": {
                 "allOf": [
                     {},
                     {
@@ -7869,18 +8167,63 @@
                                 "pim_interface_policy": "",
                                 "pimv6_interface_policy": ""
                             },
-                            "policy_source_tenant": {
-                                "description": "The Source Tenant Name for each of the policies attached here.  For simplicity the script will only support specifying the source tenant for all policies instead of a tenant for each policy, otherwise there would be twice as many arguments.  Typically this will be tenant common.",
+                            "qos_class": {
+                                "description": "The QoS priority class identifier.  QoS priority classes are not inherited with Contract Inheritance.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "level1",
+                                    "level2",
+                                    "level3",
+                                    "level4",
+                                    "level5",
+                                    "level6",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "required_args": {
+                                "qos_class": "",
+                                "template_name": ""
+                            },
+                            "target_dscp": {
+                                "description": "Target DSCP Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
+                            },
+                            "template_name": {
+                                "description": "Name for this L3Out Template.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
-                            },
-                            "required_args": {
-                                "policy_name": "",
-                                "policy_source_tenant": "",
-                                "qos_class": ""
                             }
                         }
                     }
@@ -8068,6 +8411,37 @@
                                 "target_dscp": "",
                                 "tenant": "",
                                 "use_router_id_as_loopback": ""
+                            },
+                            "target_dscp": {
+                                "description": "Target DSCP Values.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "AF11",
+                                    "AF12",
+                                    "AF13",
+                                    "AF21",
+                                    "AF22",
+                                    "AF23",
+                                    "AF31",
+                                    "AF32",
+                                    "AF33",
+                                    "AF41",
+                                    "AF42",
+                                    "AF43",
+                                    "CS0",
+                                    "CS1",
+                                    "CS2",
+                                    "CS3",
+                                    "CS4",
+                                    "CS5",
+                                    "CS6",
+                                    "CS7",
+                                    "EF",
+                                    "VA",
+                                    "unspecified"
+                                ],
+                                "default": "unspecified",
+                                "x-omitempty": true
                             },
                             "use_router_id_as_loopback": {
                                 "description": "Flag to add the Router ID as a Loopback.",
@@ -8564,7 +8938,7 @@
                     }
                 ]
             },
-            "tenants.vrf.Policy": {
+            "tenants.vrf.Templates": {
                 "allOf": [
                     {},
                     {
@@ -8661,19 +9035,19 @@
                                 "default": "enforced",
                                 "x-omitempty": true
                             },
-                            "policy_name": {
-                                "description": "Name of the VRF Policy.",
+                            "required_args": {
+                                "bd_enforcement_status": "",
+                                "policy_control_enforcement_direction": "",
+                                "policy_control_enforcement_preference": "",
+                                "template_name": ""
+                            },
+                            "template_name": {
+                                "description": "Name of the VRF Template.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
-                            },
-                            "required_args": {
-                                "bd_enforcement_status": "",
-                                "policy_control_enforcement_direction": "",
-                                "policy_control_enforcement_preference": "",
-                                "policy_name": ""
                             },
                             "transit_route_tag_policy": {
                                 "description": "Name of the Transit Route Tag Policy.",
@@ -8736,10 +9110,10 @@
                                 "preferred_group": "",
                                 "site_group": "",
                                 "tenant": "",
-                                "vrf_policy": ""
+                                "vrf_template": ""
                             },
-                            "vrf_policy": {
-                                "description": "Name of the VRF Policy.",
+                            "vrf_template": {
+                                "description": "Name of the VRF Template.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,

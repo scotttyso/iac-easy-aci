@@ -25,6 +25,7 @@ import time
 import validating
 import yaml
 
+
 # Global options for debugging
 print_payload = False
 print_response_always = False
@@ -236,6 +237,35 @@ def args_remove(args_list, jsonData):
     return jsonData
 
 #========================================================
+# Function to Check the Existance of a Template
+#========================================================
+def confirm_templates_exist(template_type, template_name, **kwargs):
+    def template_check(site, template_type, template_name, **kwargs):
+        template_count = 0
+        for i in kwargs['easyDict']['sites'][site]['templates'][template_type]:
+            if i['template_name'] == template_name:
+                template_count += 1
+                if template_type == 'bridge_domains':
+                    if len(kwargs['l3outs']) > 0:
+                        if not i.get('l3_configurations'):
+                            i['l3_configurations'] = deepcopy({})
+                            if not i['l3_configurations'].get('l3outs'):
+                                i['l3_configurations']['l3outs'] = deepcopy([])
+                            i['l3_configurations']['l3outs'].append(deepcopy(kwargs['l3outs']))
+        if template_count == 0:
+            if template_type == 'application_epgs':
+                validating.error_template_not_found('epg_template', **kwargs)
+            elif template_type == 'bridge_domains':
+                validating.error_template_not_found('bd_template', **kwargs)
+            else: validating.error_template_not_found('subnet_templates', **kwargs)
+    
+    if 'Grp_' in kwargs['site_group']:
+        sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+        for site in sites:
+            template_check(site, template_type, template_name, **kwargs)
+    else: template_check(kwargs['site_group'], template_type, template_name, **kwargs)
+
+#========================================================
 # Function to Count the Number of Keys/Columns
 #========================================================
 def countKeys(ws, func):
@@ -386,11 +416,15 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
 def create_yaml(args, easy_jsonData, **easyDict):
     jsonData = easy_jsonData['easy_aci']['allOf'][1]['properties']
     classes = jsonData['classes']['enum']
+    opSystem = platform.system()
+    if opSystem == 'Windows': path_sep = '\\'
+    else: path_sep = '/'
+
     def write_file(dest_dir, dest_file, dict, title1):
         class MyDumper(yaml.Dumper):
             def increase_indent(self, flow=False, indentless=False):
                 return super(MyDumper, self).increase_indent(flow, False)
-
+        
         if not os.path.exists(os.path.join(dest_dir, dest_file)):
             create_file = f'type nul >> {os.path.join(dest_dir, dest_file)}'
             os.system(create_file)
@@ -401,7 +435,9 @@ def create_yaml(args, easy_jsonData, **easyDict):
         wr_file.write(f'#{dash_length}\n')
         wr_file.write(f'#   {title1} - Variables\n')
         wr_file.write(f'#{dash_length}\n')
-        wr_file.write(yaml.dump(dict, Dumper=MyDumper, default_flow_style=False))
+        stream = yaml.dump(dict, default_flow_style=False)
+        wr_file.write(stream.replace('\n- ', '\n\n- '))
+        # wr_file.write(yaml.dump(dict, Dumper=MyDumper, default_flow_style=False))
         wr_file.close()
 
     for k,v in easyDict['sites'].items():
@@ -423,34 +459,45 @@ def create_yaml(args, easy_jsonData, **easyDict):
                     item.pop('interfaces')
         for item in classes:
             if easyDict['sites'][k].get(item):
-                dest_dir = jsonData[f'class.{item}']['directory']
-                if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
-                    opSystem = platform.system()
-                    if opSystem == 'Windows': path_sep = '\\'
-                    else: path_sep = '/'
-                    dest_path = f'{os.path.join(baseRepo, site_name)}{path_sep}{dest_dir}'
-                    os.makedirs(dest_path)
-                dest_dir = os.path.join(baseRepo, site_name, dest_dir)
-                for i in jsonData[f'class.{item}']['enum']:
-                    if item == i:
-                        dict = {item:easyDict['sites'][k][item]}
-                    else:
-                        dict = {item:{i:easyDict['sites'][k][item][i]}}
-                    if item == 'switch' and i == 'switch_profiles':
-                        icount = 0
-                        for items in dict['switch']['switch_profiles']:
-                            dest_file = f"{items['name']}.yaml"
-                            title1 = items['name']
-                            dict2 = {item:{i:easyDict['sites'][k][item][i][icount]}}
-                            write_file(dest_dir, dest_file, dict2, title1)
-                            icount += 1
-                    else:
-                        dest_file = f'{i}.yaml'
-                        if item == i:
-                            title1 = str.title(item.replace('_', ' '))
-                        else:
-                            title1 = f"{str.title(item.replace('_', ' '))} -> {str.title(i.replace('_', ' '))}"
+                if item == 'tenants':
+                    tcount = 0
+                    for i in easyDict['sites'][k][item]:
+                        dest_dir = f"tenants{path_sep}{i['name']}"
+                        if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
+                            dest_path = f'{os.path.join(baseRepo, site_name)}{path_sep}{dest_dir}'
+                            os.makedirs(dest_path)
+                        dest_dir = os.path.join(baseRepo, site_name, dest_dir)
+                        dict = {item:easyDict['sites'][k][item][tcount]}
+                        dest_file = f"{i['name']}.yaml"
+                        title1 = f"{str.title(item)} -> {i['name']}"
                         write_file(dest_dir, dest_file, dict, title1)
+                        tcount += 1
+                else:
+                    dest_dir = jsonData[f'class.{item}']['directory']
+                    if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
+                        dest_path = f'{os.path.join(baseRepo, site_name)}{path_sep}{dest_dir}'
+                        os.makedirs(dest_path)
+                    dest_dir = os.path.join(baseRepo, site_name, dest_dir)
+                    for i in jsonData[f'class.{item}']['enum']:
+                        if item == i:
+                            dict = {item:easyDict['sites'][k][item]}
+                        else:
+                            dict = {item:{i:easyDict['sites'][k][item][i]}}
+                        if item == 'switch' and i == 'switch_profiles':
+                            icount = 0
+                            for items in dict['switch']['switch_profiles']:
+                                dest_file = f"{items['name']}.yaml"
+                                title1 = items['name']
+                                dict2 = {item:{i:easyDict['sites'][k][item][i][icount]}}
+                                write_file(dest_dir, dest_file, dict2, title1)
+                                icount += 1
+                        else:
+                            dest_file = f'{i}.yaml'
+                            if item == i:
+                                title1 = str.title(item.replace('_', ' '))
+                            else:
+                                title1 = f"{str.title(item.replace('_', ' '))} -> {str.title(i.replace('_', ' '))}"
+                            write_file(dest_dir, dest_file, dict, title1)
                         
 #========================================================
 # Function for Processing Loops to auto.tfvars files
@@ -523,10 +570,8 @@ def ez_append(polVars, **kwargs):
             sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
             for site in sites:
                 site_append(cS, site, polVars)
-        else:
-            validating.error_site_group('site_group', **kwargs)
-    else:
-        site_append(cS, kwargs['site_group'], polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
         
     return kwargs['easyDict']
 
@@ -561,10 +606,8 @@ def ez_append_subtype(polVars, **kwargs):
             sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
             for site in sites:
                 site_append(cS, site, polVars)
-        else:
-            validating.error_site_group('site_group', **kwargs)
-    else:
-        site_append(cS, kwargs['site_group'], polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
 
     # Return Dictionary
     return kwargs['easyDict']
@@ -599,11 +642,8 @@ def ez_append_arg(polVars, **kwargs):
             sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
             for site in sites:
                 site_append(cS, site, polVars)
-        else:
-            validating.error_site_group('site_group', **kwargs)
-    else:
-        site_append(cS, kwargs['site_group'], polVars)
-
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
     # Return Dictionary
     return kwargs['easyDict']
 
@@ -637,11 +677,8 @@ def ez_merge(polVars, **kwargs):
             sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
             for site in sites:
                 site_merge(cS, site, polVars)
-        else:
-            validating.error_site_group('site_group', **kwargs)
-    else:
-        site_merge(cS, kwargs['site_group'], polVars)
-        
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_merge(cS, kwargs['site_group'], polVars)
     return kwargs['easyDict']
 
 #========================================================
@@ -713,17 +750,14 @@ def ez_tenants_append(polVars, **kwargs):
             sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
             for site in sites:
                 site_append(cS, site, polVars)
-        else:
-            validating.error_site_group('site_group', **kwargs)
-    else:
-        site_append(cS, kwargs['site_group'], polVars)
-        
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
     return kwargs['easyDict']
 
 #========================================================
 # Function to Append Subtype easyDict Dictionary
 #========================================================
-def ez_tenant_append_subtype(polVars, **kwargs):
+def ez_tenants_append_subtype(polVars, **kwargs):
     class_path  = kwargs['class_path']
     cS          = class_path.split(',')
     policy      = kwargs['policy']
@@ -743,28 +777,88 @@ def ez_tenant_append_subtype(polVars, **kwargs):
             validating.error_tenant('tenant', **kwargs)
 
         # Assign the Dictionary
-        if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]]
-        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]]
-        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]]
-        elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]][cS[3]]
+        if len(cS) == 2:   dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]]
+        elif len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]][cS[3]]
 
-        for k, v in dict1.items():
-            for i in v:
-                if not i.get(cS[-1]):
-                    i[cS[-1]] = []
-                if i[policy] == policy_name:
-                    i[cS[-1]].append(deepcopy(polVars))
-                    break
+        for i in dict1:
+            if not i.get(cS[-1]):
+                i[cS[-1]] = []
+            if i[policy] == policy_name:
+                i[cS[-1]].append(deepcopy(polVars))
+                break
         
     if 'Grp_' in kwargs['site_group']:
         if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
             sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
             for site in sites:
                 site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
+
+    # Return Dictionary
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append Subtype easyDict Dictionary
+#========================================================
+def ez_tenants_append_sub_subtype(polVars, **kwargs):
+    class_path  = kwargs['class_path']
+    cS          = class_path.split(',')
+    policy1      = kwargs['policy1']
+    policy_name1 = kwargs['policy_name1']
+    policy2      = kwargs['policy2']
+    policy_name2 = kwargs['policy_name2']
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        tenant_match = False
+        tkey = 0
+        for i in kwargs['easyDict']['sites'][site]['tenants']:
+            if i['name'] == kwargs['tenant']:
+                tenant_match = True
+                break
+            tkey += 1
+        if tenant_match == False:
+            validating.error_tenant('tenant', **kwargs)
+
+        # Assign the Dictionary
+        if policy2 == 'epg_esg_collection_for_vrfs':
+            dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]]
         else:
-            validating.error_site_group('site_group', **kwargs)
-    else:
-        site_append(cS, kwargs['site_group'], polVars)
+            if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]]
+            elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]]
+            elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]]
+
+        itcount = 0
+        for item in dict1:
+            if item[policy1] == policy_name1:
+                if policy2 == 'epg_esg_collection_for_vrfs':
+                    item[policy2][cS[-1]].append(deepcopy(polVars))
+                    break
+                else:
+                    icount = 0
+                    #print(dict1[itcount][cS[-2]])
+                    #exit()
+                    for i in dict1[itcount][cS[-2]]:
+                        if not i.get(cS[-1]):
+                            i[cS[-1]] = []
+                        if i[policy2] == policy_name2:
+                            dict1[itcount][cS[-2]][icount][cS[-1]].append(deepcopy(polVars))
+                            break
+                        icount +=1
+            itcount += 1
+        return kwargs['easyDict'] 
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                kwargs['easyDict']  = site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: kwargs['easyDict']  = site_append(cS, kwargs['site_group'], polVars)
 
     # Return Dictionary
     return kwargs['easyDict']
@@ -810,11 +904,8 @@ def ez_update(polVars, **kwargs):
             sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
             for site in sites:
                 site_update(cS, site, polVars)
-        else:
-            validating.error_site_group('site_group', **kwargs)
-    else:
-        site_update(cS, kwargs['site_group'], polVars)
-        
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_update(cS, kwargs['site_group'], polVars)
     return kwargs['easyDict']
 
 #========================================================
@@ -848,10 +939,8 @@ def ez_update_subtype(polVars, **kwargs):
             sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
             for site in sites:
                 site_append(cS, site, polVars)
-        else:
-            validating.error_site_group('site_group', **kwargs)
-    else:
-        site_append(cS, kwargs['site_group'], polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
 
     # Return Dictionary
     return kwargs['easyDict']
@@ -1314,56 +1403,46 @@ def interface_selector_workbook(polVars, **kwargs):
 # Function to Merge Easy ACI Repository to Dest Folder
 #========================================================
 def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
-    jsonData = easy_jsonData['easy_aci']['allOf'][1]['properties']
-    baseRepo = args.dir
-    
     # Setup Operating Environment
+    baseRepo = args.dir
     opSystem = platform.system()
     tfe_dir = 'tfe_modules'
     if opSystem == 'Windows': path_sep = '\\'
     else: path_sep = '/'
     tfe_modules = f'{tfe_dir}{path_sep}modules'
-    git_url = "https://github.com/terraform-cisco-modules/terraform-easy-aci"
+    git_url = "https://github.com/terraform-cisco-modules/easy-aci-complete"
     if not os.path.isdir(tfe_dir):
         os.mkdir(tfe_dir)
         Repo.clone_from(git_url, tfe_dir)
-    elif not os.path.isdir(tfe_modules):
-        Repo.clone_from(git_url, tfe_dir)
+    # elif not os.path.isdir(tfe_modules):
+    #     Repo.clone_from(git_url, tfe_dir)
     else:
         g = cmd.Git(tfe_dir)
         g.pull()
 
-    folders = []
     # Get All sub-folders from tfDir
-    for k, v in easyDict['sites']['site_settings'].items():
-        site_name = v[0]['site_name']
-        site_dirs = next(os.walk(os.path.join(baseRepo, site_name)))[1]
-        site_dirs.sort()
-        for dir in site_dirs:
-            folders.append(os.path.join(baseRepo, site_name, dir))
+    site_list = list(easyDict['sites'].keys())
+    for item in site_list:
+        site_name = easyDict['sites'][item]['site_settings']['site_name']
+        site_dir = os.path.join(baseRepo, site_name)
+        default_dir = os.path.join(baseRepo, site_name, 'defaults')
     
-    # Now Loop over the folders and merge the module files
-    module_folders = ['access', 'admin', 'fabric', 'switch', 'system_settings', 'tenant']
-    for folder in folders:
-        for mod in module_folders:
-            if mod in folder:
-                src_dir = os.path.join(tfe_dir, 'modules', mod)
-                copy_files = os.listdir(src_dir)
-                for fname in copy_files:
-                    if not os.path.isdir(os.path.join(src_dir, fname)):
-                        shutil.copy2(os.path.join(src_dir, fname), folder)
-
-    # Loop over the folder list again and create blank auto.tfvars files for anything that doesn't already exist
-    for folder in folders:
-        if os.path.isdir(folder):
-            for mod in module_folders:
-                if mod in folder:
-                    files = jsonData['files'][mod]
-                    removeList = jsonData['remove_files']
-                    for xRemove in removeList:
-                        if xRemove in files:
-                            files.remove(xRemove)
-                    terraform_fmt(files, folder, path_sep)
+        # Now Loop over the folders and merge the module files
+        for folder in [site_name, 'defaults']:
+            if folder == 'defaults':
+                dest_dir = os.path.join(baseRepo, site_name, folder)
+                src_dir = os.path.join(tfe_dir, 'defaults')
+            else:
+                dest_dir = os.path.join(baseRepo, site_name)
+                src_dir = os.path.join(tfe_dir)
+            copy_files = os.listdir(src_dir)
+            if 'variables.auto.tfvars' in copy_files:
+                copy_files.remove('variables.auto.tfvars')
+                copy_files.remove('provider.tf')
+            for fname in copy_files:
+                if not os.path.isdir(os.path.join(src_dir, fname)):
+                    shutil.copy2(os.path.join(src_dir, fname), dest_dir)
+        terraform_fmt(site_dir)
 
 #========================================================
 # Function to GET to the NDO API
@@ -1447,10 +1526,18 @@ def process_kwargs(jsonData, **kwargs):
 
     # Combine option and required dicts for Jinja template render
     polVars = {**required_args, **optional_args}
+
+    if kwargs['easyDict']['remove_default_args'] == True:
+        Dicts = deepcopy(polVars)
+        for k,v in Dicts.items():
+            if jsonData.get(k):
+                if not jsonData[k].get('default') == None:
+                    if v == jsonData[k]['default']:
+                        polVars.pop(k)
     return(polVars)
 
 #========================================================
-# Function to Add Static Port Bindings to Bridge Domains Terraform Files
+# Add Static Port Bindings to Bridge Domains
 #========================================================
 def process_workbook(polVars, **kwargs):
     row_num = kwargs['row_num']
@@ -1797,10 +1884,8 @@ def tfc_api(url, method, payload, site_header, section=''):
             if print_response_always:
                 print(r.status_code)
                 print(r.text)
-                #print(json.dumps(r.json(), indent=4))
 
             # Check Status and Return or Show Error
-            # print(json.dumps(r.json(), indent=4))
             if method == 'get':
                 if r.status_code == 200 or r.status_code == 404:
                     json_data = r.json()
@@ -1830,31 +1915,12 @@ def tfc_api(url, method, payload, site_header, section=''):
 #========================================================
 # Function to Format Terraform Files
 #========================================================
-def terraform_fmt(files, folder, path_sep):
-    # Create the Empty_variable_maps.auto.tfvars to house all the unused variables
-    empty_auto_tfvars = f'{folder}{path_sep}Empty_variable_maps.auto.tfvars'
-    wr_file = open(empty_auto_tfvars, 'w')
-    wrString = f'#______________________________________________'\
-              '\n#'\
-              '\n# UNUSED Variables'\
-              '\n#______________________________________________\n\n'
-    wr_file.write(wrString)
-    for file in files:
-        varFiles = f"{file.split('.')[0]}.auto.tfvars"
-        dest_file = f'{folder}{path_sep}{varFiles}'
-        if not os.path.isfile(dest_file):
-            x = file.split('.')
-            wrString = f'{x[0]} = ''{}\n'
-            wr_file.write(wrString)
-
-    # Close the Unused Variables File
-    wr_file.close()
-
+def terraform_fmt(folder):
     # Run terraform fmt to cleanup the formating for all of the auto.tfvar files and tf files if needed
-    print(f'\n-------------------------------------------------------------------------------------------\n')
+    print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Running "terraform fmt" in folder "{folder}",')
     print(f'  to correct variable formatting!')
-    print(f'\n-------------------------------------------------------------------------------------------\n')
+    print(f'\n-----------------------------------------------------------------------------\n')
     p = subprocess.Popen(
         ['terraform', 'fmt', folder],
         stdout = subprocess.PIPE,
