@@ -467,7 +467,7 @@ def create_yaml(args, easy_jsonData, **easyDict):
                             dest_path = f'{os.path.join(baseRepo, site_name)}{path_sep}{dest_dir}'
                             os.makedirs(dest_path)
                         dest_dir = os.path.join(baseRepo, site_name, dest_dir)
-                        dict = {item:easyDict['sites'][k][item][tcount]}
+                        dict = {item:{i['name']:easyDict['sites'][k][item][tcount]}}
                         dest_file = f"{i['name']}.yaml"
                         title1 = f"{str.title(item)} -> {i['name']}"
                         write_file(dest_dir, dest_file, dict, title1)
@@ -488,7 +488,7 @@ def create_yaml(args, easy_jsonData, **easyDict):
                             for items in dict['switch']['switch_profiles']:
                                 dest_file = f"{items['name']}.yaml"
                                 title1 = items['name']
-                                dict2 = {item:{i:easyDict['sites'][k][item][i][icount]}}
+                                dict2 = {item:{i:{items['name']:easyDict['sites'][k][item][i][icount]}}}
                                 write_file(dest_dir, dest_file, dict2, title1)
                                 icount += 1
                         else:
@@ -752,6 +752,36 @@ def ez_tenants_append(polVars, **kwargs):
                 site_append(cS, site, polVars)
         else: validating.error_site_group('site_group', **kwargs)
     else: site_append(cS, kwargs['site_group'], polVars)
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append L3Out easyDict Dictionary
+#========================================================
+def ez_append_l3out(polVars, **kwargs):
+    class_path  = kwargs['class_path']
+    cS          = class_path.split(',')
+    policy      = kwargs['policy']
+    policy_name = kwargs['policy_name']
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        # Assign the Dictionary
+        dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
+
+        for i in dict1:
+            if i[policy] == policy_name:
+                i[cS[-2]][cS[-1]][0].update(deepcopy(polVars))
+                break
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
+
+    # Return Dictionary
     return kwargs['easyDict']
 
 #========================================================
@@ -1426,6 +1456,8 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
         site_name = easyDict['sites'][item]['site_settings']['site_name']
         site_dir = os.path.join(baseRepo, site_name)
         default_dir = os.path.join(baseRepo, site_name, 'defaults')
+        if not os.path.isdir(default_dir):
+            os.mkdir(default_dir)
     
         # Now Loop over the folders and merge the module files
         for folder in [site_name, 'defaults']:
@@ -1436,9 +1468,6 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
                 dest_dir = os.path.join(baseRepo, site_name)
                 src_dir = os.path.join(tfe_dir)
             copy_files = os.listdir(src_dir)
-            if 'variables.auto.tfvars' in copy_files:
-                copy_files.remove('variables.auto.tfvars')
-                copy_files.remove('provider.tf')
             for fname in copy_files:
                 if not os.path.isdir(os.path.join(src_dir, fname)):
                     shutil.copy2(os.path.join(src_dir, fname), dest_dir)

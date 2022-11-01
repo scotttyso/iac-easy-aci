@@ -68,7 +68,7 @@ class access(object):
         polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
         # Add Policy Variables to easyDict
-        kwargs['class_path'] = 'access,physical_and_external_domains,l3_domains'
+        kwargs['class_path'] = 'access,physical_and_external_domains,physical_domains'
         kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
@@ -424,6 +424,7 @@ class access(object):
         # Convert to Lists
         if not polVars["uplink_names"] == None:
             polVars["uplink_names"] = polVars["uplink_names"].split(',')
+        polVars = easy_functions.ez_remove_empty(polVars)
 
         newDict = {
             'controllers':[],
@@ -970,7 +971,7 @@ class fabric(object):
             if not polVars.get(i) == None: polVars.pop(i)
 
         # Add Policy Variables to easyDict
-        kwargs['class_path'] = 'fabric,global,dns_profiles'
+        kwargs['class_path'] = 'fabric,policies,global,dns_profiles'
         kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
         return kwargs['easyDict']
 
@@ -1632,6 +1633,9 @@ class site_policies(object):
                 if not v['site_settings']['login_domain'] == None:
                     polVars['ndoDomain'] = v['site_settings']['login_domain']
             
+            # Assign Management EPGs
+            polVars['management_epgs'] = kwargs['easyDict']['tmp']['management_epgs']
+            
             # siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
             kwargs['auth_type'] = v['site_settings']['auth_type']
             kwargs['class_type'] = 'sites'
@@ -1825,8 +1829,17 @@ class tenants(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['tenants.bridgeDomains']['allOf'][1]['properties']
 
+        args_add = []
+        if not kwargs['epg_template'] == None:
+            args_add.extend(['application_profile', 'epg_template'])
+        jsonData = easy_functions.args_add(args_add, jsonData)
+        
         # Build Dictionary of Policy Variables
         polVars = easy_functions.process_kwargs(jsonData, **kwargs)
+
+        # Remove Items in the Pop List
+        jsonData = easy_functions.args_remove(args_add, jsonData)
+
         if not polVars['annotations'] == None:
             polVars['annotations'] = easy_functions.annotations_split(polVars['annotations'])
         polVars['gateway_ips'] = polVars['gateway_ips'].split(',')
@@ -1848,18 +1861,24 @@ class tenants(object):
         # Re-Classify the Application EPG Template
         if not polVars['epg_template'] == None:
             easy_functions.confirm_templates_exist('application_epgs', polVars['epg_template'], **kwargs)
-            polVars['application_epg'] = {'template':polVars['epg_template']}
-        if not polVars['epg_to_aaep_vlans'] == None:
-            polVars['application_epg'].update(
-                {'epg_to_aaep_vlans':[eval(i) for i in polVars['epg_to_aaep_vlans'].split(',')]}
-            )
+            polVars['application_epg'] = {'application_profile':polVars['application_profile'],'template':polVars['epg_template']}
+            if not polVars['vlans'] == None:
+                polVars['epg_to_aaep_vlans'] = [eval(i) for i in polVars['vlans'].split(',')]
+                polVars.pop('vlans')
+        if not polVars.get('vlans') == None:
+            polVars['vlans'] = [eval(i) for i in polVars['vlans'].split(',')]
         
         # Re-classify the Bridge Domain Template
         easy_functions.confirm_templates_exist('bridge_domains', polVars['bd_template'], **kwargs)
         polVars['subnets'] = subs
         polVars['template'] = polVars['bd_template']
 
-        pop_list = ['bd_template', 'epg_template', 'epg_to_aaep_vlans', 'gateway_ips', 'l3outs', 'subnet_templates', 'tenant']
+        kwargs['class_path'] = 'templates,bridge_domains,l3_configurations,associated_l3outs'
+        kwargs['policy'] = 'template_name'
+        kwargs['policy_name'] = polVars['bd_template']
+        kwargs['easyDict'] = easy_functions.ez_append_l3out({'l3outs':polVars['l3outs']}, **kwargs)
+
+        pop_list = ['bd_template', 'epg_template', 'gateway_ips', 'l3outs', 'subnet_templates', 'tenant']
         for i in pop_list:
             if not polVars.get(i) == None: polVars.pop(i)
 
@@ -1895,16 +1914,17 @@ class tenants(object):
         if not polVars['names'] == None:
             dhcp = {
                 'dhcp_option_policy': kwargs['dhcp_option_policy'],
-                'names': kwargs['names'],
+                'names': kwargs['names'].split(','),
                 'scope': kwargs['scope']
             }
             dhcp = easy_functions.ez_remove_empty(dhcp)
+            dhcp = [dhcp]
         else: dhcp = None
 
         # L3Out and VRF Configuration
-        l3outs = {'tenant': polVars['vrf_tenant']}
+        l3outs = [{'tenant': polVars['vrf_tenant']}]
         vrf = {'name': polVars['vrf'], 'tenant': polVars['vrf_tenant']}
-        l3outs = easy_functions.ez_remove_empty(l3outs)
+        #l3outs = easy_functions.ez_remove_empty(l3outs)
         vrf = easy_functions.ez_remove_empty(vrf)
         if not polVars['ndo_settings'] == None:
             if kwargs['easyDict']['tmp']['ndo_settings'].get(polVars['ndo_settings']):
@@ -2327,10 +2347,16 @@ class tenants(object):
                 validating.error_site_group('site_group', **kwargs)
         else: epg_template = get_epg_template(kwargs['site_group'], **kwargs)
         kwargs.update(epg_template)
+        if not kwargs['easyDict']['tmp'].get('management_epgs'):
+            kwargs['easyDict']['tmp']['management_epgs'] = []
         args_add = []
         args_remove = []
-        if kwargs['epg_type'] == 'inb': args_add.append('vlans')
-        if kwargs['epg_type'] == 'oob': args_remove.append('bridge_domain')
+        if kwargs['epg_type'] == 'inb':
+            args_add.append('vlans')
+            kwargs['easyDict']['tmp']['management_epgs'].append({'name':kwargs['name'],'type':kwargs['epg_type']})
+        if kwargs['epg_type'] == 'oob':
+            args_remove.append('bridge_domain')
+            kwargs['easyDict']['tmp']['management_epgs'].append({'name':kwargs['name'],'type':kwargs['epg_type']})
         jsonData = easy_functions.args_add(args_add, jsonData)
         jsonData = easy_functions.args_remove(args_remove, jsonData)
         
@@ -2343,6 +2369,8 @@ class tenants(object):
         if not polVars['annotations'] == None:
             polVars['annotations'] = easy_functions.annotations_split(polVars['annotations'])
         polVars['monitoring_policy'] = 'default'
+        if not polVars['vlans'] == None:
+            polVars['vlans'] =[eval(i) for i in polVars['vlans'].split(',')]
 
         # Add Application EPG Template
         polVars['template'] = polVars['epg_template']
@@ -2402,7 +2430,7 @@ class tenants(object):
                             vmm_template = deepcopy(kwargs['easyDict']['tmp']['vmm_templates'][polVars['vmm_template']])
                         else: validating.error_template_not_found('vmm_template', **kwargs)
                     else: validating.error_template_not_found('vmm_template', **kwargs)
-                    vmm_template.update(deepcopy({'name':i}))
+                    vmm_template.update(deepcopy({'name':i,'domain_type':'vmm'}))
                     polVars['domains'].append(deepcopy(vmm_template))
         
         # Add NDO Settings if Defined

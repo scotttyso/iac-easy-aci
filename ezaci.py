@@ -338,7 +338,7 @@ def main():
     easyDict['latest_versions'] = easy_jsonData['easy_aci']['allOf'][1]['properties']['latest_versions']
 
     # Obtain the Latest Provider Releases
-    #easyDict = easy_functions.get_latest_versions(easyDict)
+    easyDict = easy_functions.get_latest_versions(easyDict)
 
     # Initialize the Base Repo/Terraform Working Directory
     if not os.path.isdir(args.dir):

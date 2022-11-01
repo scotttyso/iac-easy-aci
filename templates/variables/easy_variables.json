@@ -48,7 +48,7 @@
                                 ]
                             },
                             "class.system_settings": {
-                                "directory": "system_settings",
+                                "directory": "system-settings",
                                 "enum": [
                                     "system_settings"
                                 ]
@@ -66,7 +66,7 @@
                                 ]
                             },
                             "class.virtual_networking": {
-                                "directory": "virtual_networking",
+                                "directory": "virtual-networking",
                                 "enum": [
                                     "virtual_networking"
                                 ]
@@ -1767,6 +1767,12 @@
                                 "default": false,
                                 "x-omitempty": true
                             },
+                            "port_security": {
+                                "description": "Boolean to configure or not configure Port Security Interface Pre-Built Policies.",
+                                "type": "boolean",
+                                "default": false,
+                                "x-omitempty": true
+                            },
                             "required_args": {
                                 "cdp_interface": "",
                                 "fibre_channel_interface": "",
@@ -1775,6 +1781,7 @@
                                 "lldp_interface": "",
                                 "mcp_interface": "",
                                 "port_channel": "",
+                                "port_security": "",
                                 "spanning_tree_interface": "",
                                 "site_group": ""
                             },
@@ -6199,6 +6206,14 @@
                     {},
                     {
                         "properties": {
+                            "application_profile": {
+                                "description": "Name of the Application Profile to Assign tot he EPG Template.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "bd_template": {
                                 "description": "Name of the Bridge Domain Template.",
                                 "type": "string",
@@ -6224,11 +6239,6 @@
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
-                                "x-omitempty": true
-                            },
-                            "epg_to_aaep_vlans": {
-                                "description": "List of AAEP VLANs.  List of 1 or 2",
-                                "type": "list_of_vlans",
                                 "x-omitempty": true
                             },
                             "flood_in_encapsulation": {
@@ -6282,17 +6292,18 @@
                             "optional_args": {
                                 "alias": "",
                                 "annotations": "",
+                                "application_profile": "",
                                 "custom_mac_address": "",
                                 "description": "",
                                 "endpoint_clear": "",
                                 "epg_template": "",
-                                "epg_to_aaep_vlans": "",
                                 "gateway_ips": "",
                                 "global_alias": "",
                                 "l3outs": "",
                                 "link_local_ipv6_address": "",
                                 "subnet_templates": "",
-                                "virtual_mac_address": ""
+                                "virtual_mac_address": "",
+                                "vlans": ""
                             },
                             "required_args": {
                                 "bd_template": "",
@@ -6311,6 +6322,11 @@
                             "virtual_mac_address": {
                                 "description": "The bridge domain virtual MAC address.  Note: The BD virtual MAC address and the subnet virutal IP address must be the same for all ACI fabrics for that bridge domain. Multiple bridge domains can be configured to communicate across connected ACI fabrics. The virtual MAC address and the virtual IP address can be shared across bridge domains.",
                                 "type": "mac_address",
+                                "x-omitempty": true
+                            },
+                            "vlans": {
+                                "description": "List of either AAEP VLANs or the VLAN for the Inband EPG.  List of 1 or 2",
+                                "type": "list_of_vlans",
                                 "x-omitempty": true
                             }
                         }
