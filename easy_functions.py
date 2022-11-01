@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-#======================================================
+#========================================================
 # Source Modules
-#======================================================
-from collections import OrderedDict
+#========================================================
+from copy import deepcopy
 from git import cmd, Repo
 from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
@@ -23,36 +23,38 @@ import sys
 import stdiomask
 import time
 import validating
+import yaml
+
 
 # Global options for debugging
 print_payload = False
 print_response_always = False
 print_response_on_fail = True
 
-#======================================================
+#========================================================
 # Log Level - 0 = None, 1 = Class only, 2 = Line
-#======================================================
+#========================================================
 log_level = 2
 
-#======================================================
+#========================================================
 # Exception Classes
-#======================================================
+#========================================================
 class InsufficientArgs(Exception):
     pass
 
-#======================================================
-# Function to GET to the APIC Config API
-#======================================================
-def apic_get(apic, cookies, uri, section=''):
+#========================================================
+# Function to Connect to the APIC API
+#========================================================
+def apic_api(apic, method, payload, cookies, uri, section=''):
     s = requests.Session()
     r = ''
     while r == '':
         try:
-            r = s.get(
-                'https://{}/{}.json'.format(apic, uri),
-                cookies=cookies,
-                verify=False
-            )
+            if method == 'conf':
+                r = s.post('https://{}/{}.json'.format(apic, uri),
+                data=payload, cookies=cookies, verify=False)
+            elif 'get':
+                r = s.get('https://{}/{}.json'.format(apic, uri), cookies=cookies, verify=False)
             status = r.status_code
         except requests.exceptions.ConnectionError as e:
             print("Connection error, pausing before retrying. Error: {}"
@@ -62,44 +64,27 @@ def apic_get(apic, cookies, uri, section=''):
             print("Method {} failed. Exception: {}".format(section[:-5], e))
             status = 666
             return(status)
-    if print_response_always:
-        print(r.text)
-    if status != 200 and print_response_on_fail:
-        print(r.text)
+    if print_response_always: print(r.text)
+    if status != 200 and print_response_on_fail: print(r.text)
     return r
 
-#======================================================
-# Function to POST to the APIC Config API
-#======================================================
-def apic_post(apic, payload, cookies, uri, section=''):
-    if print_payload:
-        print(payload)
-    s = requests.Session()
-    r = ''
-    while r == '':
-        try:
-            r = s.post('https://{}/{}.json'.format(apic, uri),
-                    data=payload, cookies=cookies, verify=False)
-            status = r.status_code
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: {}"
-                .format(e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method {} failed. Exception: {}".format(section[:-5], e))
-            status = 666
-            return(status)
-    if print_response_always:
-        print(r.text)
-    if status != 200 and print_response_on_fail:
-        print(r.text)
-    return status
+#========================================================
+# Function to Split Annotations to key and Value
+#========================================================
+def annotations_split(annotations):
+    ann_list = []
+    ann_split = annotations.split('')
+    for i in ann_split:
+        x = i.split('_')
+        if len(x) == 2:
+            ann_list.append({'key':x[0],'value':x[1]})
+    annotations = ann_list
+    return annotations
 
-#======================================================
-# Function to run 'terraform plan' and
-# 'terraform apply' in the each folder of the
-# Destination Directory.
-#======================================================
+#========================================================
+# Function to run 'terraform plan' and 'terraform apply'
+# in the each folder of the Destination Directory.
+#========================================================
 def apply_terraform(args, folders, **easyDict):
     base_dir = args.dir
     jsonData = easyDict
@@ -233,9 +218,56 @@ def apply_terraform(args, folders, **easyDict):
                 else:
                     break
 
-#======================================================
+#========================================================
+# Function to Add Required Arguments
+#========================================================
+def args_add(args_list, jsonData):
+    for i in args_list:
+        jsonData['required_args'].update({f'{i}': ''})
+        jsonData['optional_args'].pop(i)
+    return jsonData
+
+#========================================================
+# Function to Remove Required Arguments
+#========================================================
+def args_remove(args_list, jsonData):
+    for i in args_list:
+        jsonData['optional_args'].update({f'{i}': ''})
+        jsonData['required_args'].pop(i)
+    return jsonData
+
+#========================================================
+# Function to Check the Existance of a Template
+#========================================================
+def confirm_templates_exist(template_type, template_name, **kwargs):
+    def template_check(site, template_type, template_name, **kwargs):
+        template_count = 0
+        for i in kwargs['easyDict']['sites'][site]['templates'][template_type]:
+            if i['template_name'] == template_name:
+                template_count += 1
+                if template_type == 'bridge_domains':
+                    if len(kwargs['l3outs']) > 0:
+                        if not i.get('l3_configurations'):
+                            i['l3_configurations'] = deepcopy({})
+                            if not i['l3_configurations'].get('l3outs'):
+                                i['l3_configurations']['l3outs'] = deepcopy([])
+                            i['l3_configurations']['l3outs'].append(deepcopy(kwargs['l3outs']))
+        if template_count == 0:
+            if template_type == 'application_epgs':
+                validating.error_template_not_found('epg_template', **kwargs)
+            elif template_type == 'bridge_domains':
+                validating.error_template_not_found('bd_template', **kwargs)
+            else: validating.error_template_not_found('subnet_templates', **kwargs)
+    
+    if 'Grp_' in kwargs['site_group']:
+        sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+        for site in sites:
+            template_check(site, template_type, template_name, **kwargs)
+    else: template_check(kwargs['site_group'], template_type, template_name, **kwargs)
+
+#========================================================
 # Function to Count the Number of Keys/Columns
-#======================================================
+#========================================================
 def countKeys(ws, func):
     count = 0
     for i in ws.rows:
@@ -244,37 +276,37 @@ def countKeys(ws, func):
                 count += 1
     return count
 
-#======================================================
+#========================================================
 # Function to Create Interface Selectors
-#======================================================
-def create_selector(ws_sw, ws_sw_row_count, **templateVars):
+#========================================================
+def create_selector(ws_sw, ws_sw_row_count, **polVars):
     port_selector = ''
-    for port in range(1, int(templateVars['port_count']) + 1):
+    for port in range(1, int(polVars['port_count']) + 1):
         if port < 10:
-            port_selector = 'Eth%s-0%s' % (templateVars['module'], port)
+            port_selector = 'Eth%s-0%s' % (polVars['module'], port)
         elif port < 100:
-            port_selector = 'Eth%s-%s' % (templateVars['module'], port)
+            port_selector = 'Eth%s-%s' % (polVars['module'], port)
         elif port > 99:
-            port_selector = 'Eth%s_%s' % (templateVars['module'], port)
-        modport = '%s/%s' % (templateVars['module'],port)
+            port_selector = 'Eth%s_%s' % (polVars['module'], port)
+        modport = '%s/%s' % (polVars['module'],port)
         # Copy the Port Selector to the Worksheet
-        if templateVars['node_type'] == 'spine':
+        if polVars['node_type'] == 'spine':
             data = [
                 'intf_selector',
-                templateVars['site_group'],
-                templateVars['pod_id'],
-                templateVars['node_id'],
-                templateVars['switch_name'],
+                polVars['site_group'],
+                polVars['pod_id'],
+                polVars['node_id'],
+                polVars['switch_name'],
                 port_selector,modport,
                 'spine_pg','','','','',''
             ]
         else:
             data = [
                 'intf_selector',
-                templateVars['site_group'],
-                templateVars['pod_id'],
-                templateVars['node_id'],
-                templateVars['switch_name'],
+                polVars['site_group'],
+                polVars['pod_id'],
+                polVars['node_id'],
+                polVars['switch_name'],
                 port_selector,modport,
                 '','','','','',''
             ]
@@ -285,26 +317,26 @@ def create_selector(ws_sw, ws_sw_row_count, **templateVars):
                 cell.style = 'ws_odd'
             else:
                 cell.style = 'ws_even'
-        if templateVars['node_type'] == 'spine':
-            templateVars['dv3'] = DataValidation(type="list", formula1='spine_pg', allow_blank=True)
+        if polVars['node_type'] == 'spine':
+            polVars['dv3'] = DataValidation(type="list", formula1='spine_pg', allow_blank=True)
         else:
-            templateVars['dv3'] = DataValidation(type="list", formula1=f'INDIRECT(H{ws_sw_row_count})', allow_blank=True)
-        ws_sw.add_data_validation(templateVars['dv3'])
+            polVars['dv3'] = DataValidation(type="list", formula1=f'INDIRECT(H{ws_sw_row_count})', allow_blank=True)
+        ws_sw.add_data_validation(polVars['dv3'])
         dv1_cell = f'A{ws_sw_row_count}'
         dv2_cell = f'H{ws_sw_row_count}'
         dv3_cell = f'I{ws_sw_row_count}'
         dv4_cell = f'K{ws_sw_row_count}'
-        templateVars['dv1'].add(dv1_cell)
-        templateVars['dv2'].add(dv2_cell)
-        templateVars['dv3'].add(dv3_cell)
-        templateVars['dv4'].add(dv4_cell)
+        polVars['dv1'].add(dv1_cell)
+        polVars['dv2'].add(dv2_cell)
+        polVars['dv3'].add(dv3_cell)
+        polVars['dv4'].add(dv4_cell)
         ws_sw_row_count += 1
     return ws_sw_row_count
 
-#======================================================
+#========================================================
 # Function to Create Static Paths within EPGs
-#======================================================
-def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **templateVars):
+#========================================================
+def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **polVars):
     wsheets = wb_sw.get_sheet_names()
     tf_file = ''
     for wsheet in wsheets:
@@ -315,149 +347,637 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
                 if re.search('^(individual|port-channel|vpc)$', row[7].value) and (re.search(r'\d+', str(row[12].value)) or re.search(r'\d+', str(row[13].value))):
                     if not row[12].value == None:
                         vlan = row[12].value
-                        vlan_test = vlan_range(vlan, **templateVars)
+                        vlan_test = vlan_range(vlan, **polVars)
                         if 'true' in vlan_test:
-                            templateVars['mode'] = 'native'
+                            polVars['mode'] = 'native'
                     if not 'true' in vlan_test:
-                        templateVars['mode'] = 'regular'
+                        polVars['mode'] = 'regular'
                         if not row[13].value == None:
                             vlans = row[13].value
-                            vlan_test = vlan_range(vlans, **templateVars)
+                            vlan_test = vlan_range(vlans, **polVars)
                 if vlan_test == 'true':
-                    templateVars['Pod_ID'] = row[1].value
-                    templateVars['Node_ID'] = row[2].value
-                    templateVars['Interface_Profile'] = row[3].value
-                    templateVars['Interface_Selector'] = row[4].value
-                    templateVars['Port'] = row[5].value
-                    templateVars['Policy_Group'] = row[6].value
-                    templateVars['Port_Type'] = row[7].value
-                    templateVars['Bundle_ID'] = row[9].value
-                    Site_Group = templateVars['Site_Group']
-                    pod = templateVars['Pod_ID']
-                    node_id =  templateVars['Node_ID']
-                    if templateVars['Port_Type'] == 'vpc':
+                    polVars['Pod_ID'] = row[1].value
+                    polVars['Node_ID'] = row[2].value
+                    polVars['Interface_Profile'] = row[3].value
+                    polVars['Interface_Selector'] = row[4].value
+                    polVars['Port'] = row[5].value
+                    polVars['Policy_Group'] = row[6].value
+                    polVars['Port_Type'] = row[7].value
+                    polVars['Bundle_ID'] = row[9].value
+                    Site_Group = polVars['Site_Group']
+                    pod = polVars['Pod_ID']
+                    node_id =  polVars['Node_ID']
+                    if polVars['Port_Type'] == 'vpc':
                         ws_vpc = wb['Inventory']
                         for rx in ws_vpc.rows:
                             if rx[0].value == 'vpc_pair' and int(rx[1].value) == int(Site_Group) and str(rx[4].value) == str(node_id):
-                                node1 = templateVars['Node_ID']
+                                node1 = polVars['Node_ID']
                                 node2 = rx[5].value
-                                templateVars['Policy_Group'] = '%s_vpc%s' % (row[3].value, templateVars['Bundle_ID'])
-                                templateVars['tDn'] = 'topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (pod, node1, node2, templateVars['Policy_Group'])
-                                templateVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (pod, node1, node2, templateVars['Policy_Group'])
-                                templateVars['GUI_Static'] = 'Pod-%s/Node-%s-%s/%s' % (pod, node1, node2, templateVars['Policy_Group'])
-                                templateVars['Static_descr'] = 'Pod-%s_Nodes-%s-%s_%s' % (pod, node1, node2, templateVars['Policy_Group'])
-                                tf_file = './ACI/%s/%s/%s' % (templateVars['Site_Name'], dest_dir, dest_file)
+                                polVars['Policy_Group'] = '%s_vpc%s' % (row[3].value, polVars['Bundle_ID'])
+                                polVars['tDn'] = 'topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (pod, node1, node2, polVars['Policy_Group'])
+                                polVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (pod, node1, node2, polVars['Policy_Group'])
+                                polVars['GUI_Static'] = 'Pod-%s/Node-%s-%s/%s' % (pod, node1, node2, polVars['Policy_Group'])
+                                polVars['Static_descr'] = 'Pod-%s_Nodes-%s-%s_%s' % (pod, node1, node2, polVars['Policy_Group'])
+                                tf_file = './ACI/%s/%s/%s' % (polVars['Site_Name'], dest_dir, dest_file)
                                 read_file = open(tf_file, 'r')
                                 read_file.seek(0)
-                                static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (templateVars['App_Profile'], templateVars['EPG'], templateVars['Static_descr'])
+                                static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (polVars['App_Profile'], polVars['EPG'], polVars['Static_descr'])
                                 # if not static_path_descr in read_file.read():
-                                #     create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
+                                #     create_tf_file(wr_method, dest_dir, dest_file, template, **polVars)
 
-                    elif templateVars['Port_Type'] == 'port-channel':
-                        templateVars['Policy_Group'] = '%s_pc%s' % (row[3].value, templateVars['Bundle_ID'])
-                        templateVars['tDn'] = 'topology/pod-%s/paths-%s/pathep-[%s]' % (pod, templateVars['Node_ID'], templateVars['Policy_Group'])
-                        templateVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/paths-%s/pathep-[%s]' % (pod, templateVars['Node_ID'], templateVars['Policy_Group'])
-                        templateVars['GUI_Static'] = 'Pod-%s/Node-%s/%s' % (pod, templateVars['Node_ID'], templateVars['Policy_Group'])
-                        templateVars['Static_descr'] = 'Pod-%s_Node-%s_%s' % (pod, templateVars['Node_ID'], templateVars['Policy_Group'])
+                    elif polVars['Port_Type'] == 'port-channel':
+                        polVars['Policy_Group'] = '%s_pc%s' % (row[3].value, polVars['Bundle_ID'])
+                        polVars['tDn'] = 'topology/pod-%s/paths-%s/pathep-[%s]' % (pod, polVars['Node_ID'], polVars['Policy_Group'])
+                        polVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/paths-%s/pathep-[%s]' % (pod, polVars['Node_ID'], polVars['Policy_Group'])
+                        polVars['GUI_Static'] = 'Pod-%s/Node-%s/%s' % (pod, polVars['Node_ID'], polVars['Policy_Group'])
+                        polVars['Static_descr'] = 'Pod-%s_Node-%s_%s' % (pod, polVars['Node_ID'], polVars['Policy_Group'])
                         read_file = open(tf_file, 'r')
                         read_file.seek(0)
-                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (templateVars['App_Profile'], templateVars['EPG'], templateVars['Static_descr'])
+                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (polVars['App_Profile'], polVars['EPG'], polVars['Static_descr'])
                         # if not static_path_descr in read_file.read():
-                        #     create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
+                        #     create_tf_file(wr_method, dest_dir, dest_file, template, **polVars)
 
-                    elif templateVars['Port_Type'] == 'individual':
-                        port = 'eth%s' % (templateVars['Port'])
-                        templateVars['tDn'] = 'topology/pod-%s/paths-%s/pathep-[%s]' % (pod, templateVars['Node_ID'], port)
-                        templateVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/paths-%s/pathep-[%s]' % (pod, templateVars['Node_ID'], port)
-                        templateVars['GUI_Static'] = 'Pod-%s/Node-%s/%s' % (pod, templateVars['Node_ID'], port)
-                        templateVars['Static_descr'] = 'Pod-%s_Node-%s_%s' % (pod, templateVars['Node_ID'], templateVars['Interface_Selector'])
+                    elif polVars['Port_Type'] == 'individual':
+                        port = 'eth%s' % (polVars['Port'])
+                        polVars['tDn'] = 'topology/pod-%s/paths-%s/pathep-[%s]' % (pod, polVars['Node_ID'], port)
+                        polVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/paths-%s/pathep-[%s]' % (pod, polVars['Node_ID'], port)
+                        polVars['GUI_Static'] = 'Pod-%s/Node-%s/%s' % (pod, polVars['Node_ID'], port)
+                        polVars['Static_descr'] = 'Pod-%s_Node-%s_%s' % (pod, polVars['Node_ID'], polVars['Interface_Selector'])
                         read_file = open(tf_file, 'r')
                         read_file.seek(0)
-                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (templateVars['App_Profile'], templateVars['EPG'], templateVars['Static_descr'])
+                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (polVars['App_Profile'], polVars['EPG'], polVars['Static_descr'])
                         # if not static_path_descr in read_file.read():
-                        #     create_tf_file(wr_method, dest_dir, dest_file, template, **templateVars)
+                        #     create_tf_file(wr_method, dest_dir, dest_file, template, **polVars)
                         print('hello')
 
-#======================================================
-# Function to Append the easyDict Dictionary
-#======================================================
-def easyDict_append(templateVars, **kwargs):
-    templateVars = OrderedDict(sorted(templateVars.items()))
-    class_type = templateVars['class_type']
-    data_type = templateVars['data_type']
-    templateVars.pop('data_type')
-    if not kwargs['easyDict'][class_type][data_type].get(kwargs['site_group']):
-        kwargs['easyDict'][class_type][data_type].update({kwargs['site_group']:[]})
+#==========================================================
+# Function for Processing easyDict and Creating YAML Files
+#==========================================================
+def create_yaml(args, easy_jsonData, **easyDict):
+    jsonData = easy_jsonData['easy_aci']['allOf'][1]['properties']
+    classes = jsonData['classes']['enum']
+    opSystem = platform.system()
+    if opSystem == 'Windows': path_sep = '\\'
+    else: path_sep = '/'
+
+    def write_file(dest_dir, dest_file, dict, title1):
+        class MyDumper(yaml.Dumper):
+            def increase_indent(self, flow=False, indentless=False):
+                return super(MyDumper, self).increase_indent(flow, False)
         
-    kwargs['easyDict'][class_type][data_type][kwargs['site_group']].append(templateVars)
-    return kwargs['easyDict']
+        if not os.path.exists(os.path.join(dest_dir, dest_file)):
+            create_file = f'type nul >> {os.path.join(dest_dir, dest_file)}'
+            os.system(create_file)
+        wr_file = open(os.path.join(dest_dir, dest_file), 'w')
+        wr_file.write('---\n')
+        wr_file = open(os.path.join(dest_dir, dest_file), 'a')
+        dash_length = '='*(len(title1) + 20)
+        wr_file.write(f'#{dash_length}\n')
+        wr_file.write(f'#   {title1} - Variables\n')
+        wr_file.write(f'#{dash_length}\n')
+        stream = yaml.dump(dict, default_flow_style=False)
+        wr_file.write(stream.replace('\n- ', '\n\n- '))
+        # wr_file.write(yaml.dump(dict, Dumper=MyDumper, default_flow_style=False))
+        wr_file.close()
 
-#======================================================
-# Function to Append the easyDict Dictionary
-#======================================================
-def easyDict_append_policy(templateVars, **kwargs):
-    templateVars = OrderedDict(sorted(templateVars.items()))
-    class_type = templateVars['class_type']
-    data_type = templateVars['data_type']
-    templateVars.pop('class_type')
-    templateVars.pop('data_type')
-    kwargs['easyDict'][class_type][data_type].update(templateVars)
-    return kwargs['easyDict']
-
-#======================================================
-# Function to Append Subtype easyDict Dictionary
-#======================================================
-def easyDict_append_subtype(templateVars, **kwargs):
-    templateVars = OrderedDict(sorted(templateVars.items()))
-    class_type   = templateVars['class_type']
-    data_type    = templateVars['data_type']
-    data_subtype = templateVars['data_subtype']
-    policy_name  = templateVars['policy_name']
-    templateVars.pop('class_type')
-    templateVars.pop('data_type')
-    templateVars.pop('data_subtype')
-    templateVars.pop('policy_name')
-    templateVars.pop('site_group')
-    if kwargs['easyDict'][class_type][data_type].get(kwargs['site_group']):
-        for i in kwargs['easyDict'][class_type][data_type][kwargs['site_group']]:
-            # print(json.dumps(i, indent=4))
-            if class_type == 'tenants' and data_type == 'l3out_logical_node_profiles':
-                if i['name'] == policy_name and i['tenant'] == templateVars['tenant'] and i['l3out'] == templateVars['l3out']:
-                    templateVars.pop('l3out')
-                    i[data_subtype].append(templateVars)
-                    break
-            elif class_type == 'tenants' and data_type == 'contracts':
-                if i['name'] == policy_name and i['contract_type'] == templateVars['contract_type']:
-                    templateVars.pop('contract_type')
-                    templateVars.pop('tenant')
-                    i[data_subtype].append(templateVars)
-                    break
-            elif class_type == 'tenants':
-                if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
-                    # templateVars.pop('tenant')
-                    i[data_subtype].append(templateVars)
-                    break
-            else:
-                if i['name'] == policy_name:
-                    i[data_subtype].append(templateVars)
-    elif 'Grp_' in kwargs['site_group']:
-        site_group = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
-        for site in site_group['sites']:
-            for i in kwargs['easyDict'][class_type][data_type][str(site)]:
-                if class_type == 'tenants':
-                    if i['name'] == policy_name and i['tenant'] == templateVars['tenant']:
-                        templateVars.pop['tenant']
-                        i[data_subtype].append(templateVars)
+    for k,v in easyDict['sites'].items():
+        baseRepo = args.dir
+        site_name = easyDict['sites'][k]['site_settings']['site_name']
+        
+        # Remove Random Lines from Dictionary.  Need to figure out why this happens
+        pop_list = ['snmp_client_groups', 'snmp_communities', 'snmp_destinations', 'users']
+        if easyDict['sites'][k].get('fabric'):
+            if easyDict['sites'][k]['fabric'].get('policies'):
+                if easyDict['sites'][k]['fabric']['policies'].get('pod'):
+                    if easyDict['sites'][k]['fabric']['policies'].get('pod'):
+                        for item in easyDict['sites'][k]['fabric']['policies']['pod']['date_and_time']:
+                            for i in pop_list:
+                                if item.get(i): item.pop(i)
+        if easyDict['sites'][k].get('switch'):
+            if easyDict['sites'][k]['switch'].get('vpc_domains'):
+                for item in easyDict['sites'][k]['switch']['vpc_domains']:
+                    item.pop('interfaces')
+        for item in classes:
+            if easyDict['sites'][k].get(item):
+                if item == 'tenants':
+                    tcount = 0
+                    for i in easyDict['sites'][k][item]:
+                        dest_dir = f"tenants{path_sep}{i['name']}"
+                        if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
+                            dest_path = f'{os.path.join(baseRepo, site_name)}{path_sep}{dest_dir}'
+                            os.makedirs(dest_path)
+                        dest_dir = os.path.join(baseRepo, site_name, dest_dir)
+                        dict = {item:{i['name']:easyDict['sites'][k][item][tcount]}}
+                        dest_file = f"{i['name']}.yaml"
+                        title1 = f"{str.title(item)} -> {i['name']}"
+                        write_file(dest_dir, dest_file, dict, title1)
+                        tcount += 1
                 else:
-                    if i['name'] == policy_name:
-                        i[data_subtype].append(templateVars)
+                    dest_dir = jsonData[f'class.{item}']['directory']
+                    if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
+                        dest_path = f'{os.path.join(baseRepo, site_name)}{path_sep}{dest_dir}'
+                        os.makedirs(dest_path)
+                    dest_dir = os.path.join(baseRepo, site_name, dest_dir)
+                    for i in jsonData[f'class.{item}']['enum']:
+                        if item == i:
+                            dict = {item:easyDict['sites'][k][item]}
+                        else:
+                            dict = {item:{i:easyDict['sites'][k][item][i]}}
+                        if item == 'switch' and i == 'switch_profiles':
+                            icount = 0
+                            for items in dict['switch']['switch_profiles']:
+                                dest_file = f"{items['name']}.yaml"
+                                title1 = items['name']
+                                dict2 = {item:{i:{items['name']:easyDict['sites'][k][item][i][icount]}}}
+                                write_file(dest_dir, dest_file, dict2, title1)
+                                icount += 1
+                        else:
+                            dest_file = f'{i}.yaml'
+                            if item == i:
+                                title1 = str.title(item.replace('_', ' '))
+                            else:
+                                title1 = f"{str.title(item.replace('_', ' '))} -> {str.title(i.replace('_', ' '))}"
+                            write_file(dest_dir, dest_file, dict, title1)
+                        
+#========================================================
+# Function for Processing Loops to auto.tfvars files
+#========================================================
+def env_sensitive(sensitive_list, jsonData, polVars, **kwargs):
+    pop_list = ['easyDict', 'jsonData', 'Variable']
+
+    # Process Sensitive Variables
+    for item in sensitive_list:
+        polVars['easyDict'] = kwargs['easyDict']
+        polVars['jsonData'] = jsonData
+        polVars["Variable"] = item
+        kwargs['easyDict'] = sensitive_var_site_group(**polVars)
+        for i in pop_list:
+            polVars.pop(i)
+
+        return polVars, kwargs
+
+#========================================================
+# Function to Append the easyDict Dictionary
+#========================================================
+def ez_append(polVars, **kwargs):
+    class_path = kwargs['class_path']
+    cS = class_path.split(',')
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        if not kwargs['easyDict']['sites'].get(site):
+            validating.error_site_group('site_group', **kwargs)
+
+        # Confirm the Key Exists
+        if len(cS) == 1:
+            if not kwargs['easyDict']['sites'][site].get(cS[0]):
+                kwargs['easyDict']['sites'][site].update(deepcopy({cS[0]:[]}))
+        if len(cS) >= 2:
+            if not kwargs['easyDict']['sites'][site].get(cS[0]):
+                kwargs['easyDict']['sites'][site].update(deepcopy({cS[0]:{}}))
+        if len(cS) >= 3:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
+        if len(cS) >= 4:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
+        if len(cS) == 1: cs_count = 0
+        elif len(cS) == 2:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:[]}))
+        elif len(cS) == 3:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:[]}))
+        elif len(cS) == 4:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:[]}))
+        elif len(cS) == 5:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:{}}))
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].get(cS[4]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].update(deepcopy({cS[4]:[]}))
+        
+        # append the Dictionary
+        if len(cS) == 1:   kwargs['easyDict']['sites'][site][cS[0]].append(deepcopy(polVars))
+        elif len(cS) == 2: kwargs['easyDict']['sites'][site][cS[0]][cS[1]].append(deepcopy(polVars))
+        elif len(cS) == 3: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].append(deepcopy(polVars))
+        elif len(cS) == 4: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy(polVars))
+        elif len(cS) == 5: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]].append(deepcopy(polVars))
+
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
+        
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append Subtype easyDict Dictionary
+#========================================================
+def ez_append_subtype(polVars, **kwargs):
+    class_path   = kwargs['class_path']
+    cS = class_path.split(',')
+    policy  = kwargs['policy']
+    policy_name  = kwargs['policy_name']
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        # Assign the Dictionary
+        if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site][cS[0]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
+
+        for k, v in dict1.items():
+            for i in v:
+                if not i.get(cS[-1]):
+                    i[cS[-1]] = []
+                if i[policy] == policy_name:
+                    i[cS[-1]].append(deepcopy(polVars))
+                    break
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
 
     # Return Dictionary
     return kwargs['easyDict']
 
-#======================================================
+#========================================================
+# Function to Append Subtype easyDict Dictionary
+#========================================================
+def ez_append_arg(polVars, **kwargs):
+    class_path   = kwargs['class_path']
+    cS = class_path.split(',')
+    policy  = kwargs['policy']
+    policy_name  = kwargs['policy_name']
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        # Assign the Dictionary
+        if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
+        elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]]
+
+        for i in dict1:
+            if not i.get(cS[-1]):
+                i[cS[-1]] = []
+            if i[policy] == policy_name:
+                i[cS[-1]].extend(polVars[cS[-1]])
+                break
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
+    # Return Dictionary
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append the easyDict Dictionary
+#========================================================
+def ez_merge(polVars, **kwargs):
+    class_path = kwargs['class_path']
+    cS = class_path.split(',')
+    policy  = kwargs['policy']
+    policy_name  = kwargs['policy_name']
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_merge(cS, site, polVars):
+        if not kwargs['easyDict']['sites'].get(site):
+            validating.error_site_group('site_group', **kwargs)
+
+        # Assign the Dictionary
+        if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[4]][cS[5]]
+
+        for i in dict1:
+            if i[policy] == policy_name:
+                i.update(deepcopy(polVars))
+                break
+
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_merge(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_merge(cS, kwargs['site_group'], polVars)
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Remove Empty Arguments
+#========================================================
+def ez_remove_empty(polVars):
+    pop_list = []
+    for k,v in polVars.items():
+        if v == None:
+            pop_list.append(k)
+    for i in pop_list:
+        polVars.pop(i)
+    return polVars
+
+#========================================================
+# Function to Append the Tenant easyDict Dictionary
+#========================================================
+def ez_tenants_append(polVars, **kwargs):
+    class_path = kwargs['class_path']
+    cS = class_path.split(',')
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        if not kwargs['easyDict']['sites'].get(site):
+            validating.error_site_group('site_group', **kwargs)
+        tenant_match = False
+        tkey = 0
+        for i in kwargs['easyDict']['sites'][site]['tenants']:
+            if i['name'] == kwargs['tenant']:
+                tenant_match = True
+                break
+            tkey += 1
+        if tenant_match == False:
+            validating.error_tenant('tenant', **kwargs)
+
+        # Confirm the Key Exists
+        if len(cS) == 1:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey].get(cS[0]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey].update(deepcopy({cS[0]:[]}))
+        if len(cS) >= 2:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey].get(cS[0]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey].update(deepcopy({cS[0]:{}}))
+        if len(cS) >= 3:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].update(deepcopy({cS[1]:{}}))
+        if len(cS) >= 4:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
+        if len(cS) == 1: cs_count = 0
+        elif len(cS) == 2:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].update(deepcopy({cS[1]:[]}))
+        elif len(cS) == 3:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].update(deepcopy({cS[2]:[]}))
+        elif len(cS) == 4:
+            if not kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:[]}))
+        
+        # append the Dictionary
+        if len(cS) ==   1: kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]].append(deepcopy(polVars))
+        elif len(cS) == 2: kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]].append(deepcopy(polVars))
+        elif len(cS) == 3: kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]].append(deepcopy(polVars))
+        elif len(cS) == 4: kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]][cS[3]].append(deepcopy(polVars))
+
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append L3Out easyDict Dictionary
+#========================================================
+def ez_append_l3out(polVars, **kwargs):
+    class_path  = kwargs['class_path']
+    cS          = class_path.split(',')
+    policy      = kwargs['policy']
+    policy_name = kwargs['policy_name']
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        # Assign the Dictionary
+        dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
+
+        for i in dict1:
+            if i[policy] == policy_name:
+                i[cS[-2]][cS[-1]][0].update(deepcopy(polVars))
+                break
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
+
+    # Return Dictionary
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append Subtype easyDict Dictionary
+#========================================================
+def ez_tenants_append_subtype(polVars, **kwargs):
+    class_path  = kwargs['class_path']
+    cS          = class_path.split(',')
+    policy      = kwargs['policy']
+    policy_name = kwargs['policy_name']
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        tenant_match = False
+        tkey = 0
+        for i in kwargs['easyDict']['sites'][site]['tenants']:
+            if i['name'] == kwargs['tenant']:
+                tenant_match = True
+                break
+            tkey += 1
+        if tenant_match == False:
+            validating.error_tenant('tenant', **kwargs)
+
+        # Assign the Dictionary
+        if len(cS) == 2:   dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]]
+        elif len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]][cS[3]]
+
+        for i in dict1:
+            if not i.get(cS[-1]):
+                i[cS[-1]] = []
+            if i[policy] == policy_name:
+                i[cS[-1]].append(deepcopy(polVars))
+                break
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
+
+    # Return Dictionary
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append Subtype easyDict Dictionary
+#========================================================
+def ez_tenants_append_sub_subtype(polVars, **kwargs):
+    class_path  = kwargs['class_path']
+    cS          = class_path.split(',')
+    policy1      = kwargs['policy1']
+    policy_name1 = kwargs['policy_name1']
+    policy2      = kwargs['policy2']
+    policy_name2 = kwargs['policy_name2']
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        tenant_match = False
+        tkey = 0
+        for i in kwargs['easyDict']['sites'][site]['tenants']:
+            if i['name'] == kwargs['tenant']:
+                tenant_match = True
+                break
+            tkey += 1
+        if tenant_match == False:
+            validating.error_tenant('tenant', **kwargs)
+
+        # Assign the Dictionary
+        if policy2 == 'epg_esg_collection_for_vrfs':
+            dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]]
+        else:
+            if len(cS) == 3:   dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]]
+            elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]]
+            elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site]['tenants'][tkey][cS[0]][cS[1]][cS[2]]
+
+        itcount = 0
+        for item in dict1:
+            if item[policy1] == policy_name1:
+                if policy2 == 'epg_esg_collection_for_vrfs':
+                    item[policy2][cS[-1]].append(deepcopy(polVars))
+                    break
+                else:
+                    icount = 0
+                    #print(dict1[itcount][cS[-2]])
+                    #exit()
+                    for i in dict1[itcount][cS[-2]]:
+                        if not i.get(cS[-1]):
+                            i[cS[-1]] = []
+                        if i[policy2] == policy_name2:
+                            dict1[itcount][cS[-2]][icount][cS[-1]].append(deepcopy(polVars))
+                            break
+                        icount +=1
+            itcount += 1
+        return kwargs['easyDict'] 
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                kwargs['easyDict']  = site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: kwargs['easyDict']  = site_append(cS, kwargs['site_group'], polVars)
+
+    # Return Dictionary
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append the easyDict Dictionary
+#========================================================
+def ez_update(polVars, **kwargs):
+    class_path = kwargs['class_path']
+    cS = class_path.split(',')
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_update(cS, site, polVars):
+        if not kwargs['easyDict']['sites'].get(site):
+            validating.error_site_group('site_group', **kwargs)
+
+        # Confirm the Key(s) Exists
+        if not kwargs['easyDict']['sites'][site].get(cS[0]):
+            kwargs['easyDict']['sites'][site].update(deepcopy({cS[0]:{}}))
+        if len(cS) >= 2:
+            if not kwargs['easyDict']['sites'][site][cS[0]].get(cS[1]):
+                kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy({cS[1]:{}}))
+        if len(cS) >= 3:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]].get(cS[2]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy({cS[2]:{}}))
+        if len(cS) >= 4:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].get(cS[3]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy({cS[3]:{}}))
+        if len(cS) == 5:
+            if not kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].get(cS[4]):
+                kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].update(deepcopy({cS[4]:{}}))
+
+        # Update the Dictionary
+        if len(cS) == 1:   kwargs['easyDict']['sites'][site][cS[0]].update(deepcopy(polVars))
+        elif len(cS) == 2:   kwargs['easyDict']['sites'][site][cS[0]][cS[1]].update(deepcopy(polVars))
+        elif len(cS) == 3: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]].update(deepcopy(polVars))
+        elif len(cS) == 4: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]].update(deepcopy(polVars))
+        elif len(cS) == 5: kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]][cS[4]].update(deepcopy(polVars))
+
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_update(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_update(cS, kwargs['site_group'], polVars)
+    return kwargs['easyDict']
+
+#========================================================
+# Function to Append Subtype easyDict Dictionary
+#========================================================
+def ez_update_subtype(polVars, **kwargs):
+    class_path   = kwargs['class_path']
+    cS = class_path.split(',')
+    policy  = kwargs['policy']
+    policy_name  = kwargs['policy_name']
+    polVars.pop('site_group')
+    polVars = ez_remove_empty(polVars)
+
+    def site_append(cS, site, polVars):
+        # Assign the Dictionary
+        if len(cS) == 3: dict1 = kwargs['easyDict']['sites'][site][cS[0]]
+        elif len(cS) == 4: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]]
+        elif len(cS) == 5: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]]
+        elif len(cS) == 6: dict1 = kwargs['easyDict']['sites'][site][cS[0]][cS[1]][cS[2]][cS[3]]
+
+        for k, v in dict1.items():
+            for i in v:
+                if not i.get(cS[-1]):
+                    i[cS[-1]] = {}
+                if i[policy] == policy_name:
+                    i[cS[-1]].update(deepcopy(polVars))
+                    break
+        
+    if 'Grp_' in kwargs['site_group']:
+        if kwargs['easyDict']['site_groups'].get(kwargs['site_group']):
+            sites = kwargs['easyDict']['site_groups'][kwargs['site_group']]['sites']
+            for site in sites:
+                site_append(cS, site, polVars)
+        else: validating.error_site_group('site_group', **kwargs)
+    else: site_append(cS, kwargs['site_group'], polVars)
+
+    # Return Dictionary
+    return kwargs['easyDict']
+
+#========================================================
 # Function to find the Keys for each Worksheet
-#======================================================
+#========================================================
 def findKeys(ws, func_regex):
     func_list = OrderedSet()
     for i in ws.rows:
@@ -466,20 +986,19 @@ def findKeys(ws, func_regex):
                 func_list.add(str(i[0].value))
     return func_list
 
-#======================================================
+#========================================================
 # Function to Create Terraform auto.tfvars files
-#======================================================
+#========================================================
 def findVars(ws, func, rows, count):
     var_list = []
     var_dict = {}
     for i in range(1, rows + 1):
         if (ws.cell(row=i, column=1)).value == func:
             try:
-                for x in range(2, 34):
+                for x in range(2, 36):
                     if (ws.cell(row=i - 1, column=x)).value:
                         var_list.append(str(ws.cell(row=i - 1, column=x).value))
-                    else:
-                        x += 1
+                    else: x += 1
             except Exception as e:
                 e = e
                 pass
@@ -495,9 +1014,9 @@ def findVars(ws, func, rows, count):
         vcount += 1
     return var_dict
 
-#======================================================
+#========================================================
 # Function to Get List of Folders
-#======================================================
+#========================================================
 def get_folders(args, path_sep):
     baseFolder = args.dir
     random_folders = []
@@ -531,9 +1050,9 @@ def get_folders(args, path_sep):
 
     return strict_folders
 
-#======================================================
+#========================================================
 # Function to Merge Easy ACI Repository to Dest Folder
-#======================================================
+#========================================================
 def get_latest_versions(easyDict):
     # Get the Latest Release Tag for the provider-aci repository
     url = f'https://github.com/CiscoDevNet/terraform-provider-aci/tags/'
@@ -567,6 +1086,22 @@ def get_latest_versions(easyDict):
     # Set NDO Provider Version
     ndo_provider_version = repoVer
 
+    # Get the Latest Release Tag for the provider-mso repository
+    url = f'https://github.com/netascode/terraform-provider-utils/tags/'
+    r = requests.get(url, stream=True)
+    repoVer = 'BLANK'
+    stringMatch = False
+    while stringMatch == False:
+        for line in r.iter_lines():
+            toString = line.decode("utf-8")
+            if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
+                repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
+                break
+        stringMatch = True
+    
+    # Set NDO Provider Version
+    utils_provider_version = repoVer
+
     # Get the Latest Release Tag for Terraform
     url = f'https://github.com/hashicorp/terraform/tags'
     r = requests.get(url, stream=True)
@@ -574,6 +1109,7 @@ def get_latest_versions(easyDict):
     stringMatch = False
     while stringMatch == False:
         for line in r.iter_lines():
+            # print(line)
             toString = line.decode("utf-8")
             if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
                 repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
@@ -586,12 +1122,13 @@ def get_latest_versions(easyDict):
     easyDict['latest_versions']['aci_provider_version'] = aci_provider_version
     easyDict['latest_versions']['ndo_provider_version'] = ndo_provider_version
     easyDict['latest_versions']['terraform_version'] = terraform_version
+    easyDict['latest_versions']['utils_provider_version'] = utils_provider_version
 
     return easyDict
 
-#======================================================
+#========================================================
 # Function to Check the Git Status of the Folders
-#======================================================
+#========================================================
 def git_base_repo(args, wb):
     repoName = args.dir
     if not os.path.isdir(repoName):
@@ -610,26 +1147,26 @@ def git_base_repo(args, wb):
         except:
             valid = False
             while valid == False:
-                templateVars = {}
-                templateVars["Description"] = f'Git Email Configuration. i.e. user@example.com'
-                templateVars["varInput"] = f'What is your Git email?'
-                templateVars["minimum"] = 5
-                templateVars["maximum"] = 128
-                templateVars["pattern"] = '[\\S]+'
-                templateVars["varName"] = 'Git Email'
-                repoName = varStringLoop(**templateVars)
+                polVars = {}
+                polVars["Description"] = f'Git Email Configuration. i.e. user@example.com'
+                polVars["varInput"] = f'What is your Git email?'
+                polVars["minimum"] = 5
+                polVars["maximum"] = 128
+                polVars["pattern"] = '[\\S]+'
+                polVars["varName"] = 'Git Email'
+                repoName = varStringLoop(**polVars)
                 valid = True
 
             valid = False
             while valid == False:
-                templateVars = {}
-                templateVars["Description"] = f'Git Username Configuration. i.e. user'
-                templateVars["varInput"] = f'What is your Git Username?'
-                templateVars["minimum"] = 5
-                templateVars["maximum"] = 64
-                templateVars["pattern"] = '[\\S]+'
-                templateVars["varName"] = 'Git Email'
-                repoName = varStringLoop(**templateVars)
+                polVars = {}
+                polVars["Description"] = f'Git Username Configuration. i.e. user'
+                polVars["varInput"] = f'What is your Git Username?'
+                polVars["minimum"] = 5
+                polVars["maximum"] = 64
+                polVars["pattern"] = '[\\S]+'
+                polVars["varName"] = 'Git Email'
+                repoName = varStringLoop(**polVars)
                 valid = True
     result = subprocess.Popen(['python3', '-m', 'git_status_checker', base_dir], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     while(True):
@@ -643,15 +1180,15 @@ def git_base_repo(args, wb):
             defaultUrl = f"github.com/{git_user}/{arg_folder}.git"
             valid = False
             while valid == False:
-                templateVars = {}
-                templateVars["varDefault"] = defaultUrl
-                templateVars["Description"] = f'The Destination Directory is not currently a Git Repository.'
-                templateVars["varInput"] = f'What is the Git URL (without https://) for "{args.dir}"? [{defaultUrl}]'
-                templateVars["minimum"] = 5
-                templateVars["maximum"] = 64
-                templateVars["pattern"] = '[\\S]+'
-                templateVars["varName"] = 'Git URL'
-                gitUrl = varStringLoop(**templateVars)
+                polVars = {}
+                polVars["varDefault"] = defaultUrl
+                polVars["Description"] = f'The Destination Directory is not currently a Git Repository.'
+                polVars["varInput"] = f'What is the Git URL (without https://) for "{args.dir}"? [{defaultUrl}]'
+                polVars["minimum"] = 5
+                polVars["maximum"] = 64
+                polVars["pattern"] = '[\\S]+'
+                polVars["varName"] = 'Git URL'
+                gitUrl = varStringLoop(**polVars)
                 valid = True
             ws = wb['Sites']
             kwargs = {'ws':ws, 'row_num':0, 'url':gitUrl}
@@ -673,9 +1210,9 @@ def git_base_repo(args, wb):
             exit()
         break
 
-#======================================================
+#========================================================
 # Function to Check the Git Status of the Folders
-#======================================================
+#========================================================
 def git_check_status(args):
     baseRepo = Repo(args.dir)
     untrackedFiles = baseRepo.untracked_files
@@ -717,39 +1254,38 @@ def git_check_status(args):
 
     return strict_folders
 
-#======================================================
+#========================================================
 # Function to Create Interface Selector Workbooks
-#======================================================
-def interface_selector_workbook(templateVars, **kwargs):
+#========================================================
+def interface_selector_workbook(polVars, **kwargs):
     # Set the Workbook var
     wb_sw = kwargs['wb_sw']
+    site_group = kwargs['site_group']
 
     # Use Switch_Type to Determine the Number of ports on the switch
-    modules,port_count = switch_model_ports(kwargs['row_num'], templateVars['switch_model'])
+    modules,port_count = switch_model_ports(kwargs['row_num'], polVars['switch_model'])
 
     # Get the Interface Policy Groups from EasyDict
-    if templateVars['node_type'] == 'spine':
-        pg_list = ['spine_interface_policy_groups']
+    if polVars['node_type'] == 'spine':
+        pg_list = ['spine_pg']
     else:
-        pg_list = [
-            'leaf_interfaces_policy_groups_access',
-            'leaf_interfaces_policy_groups_breakout',
-            'leaf_interfaces_policy_groups_bundle'
-        ]
+        pg_list = ['access', 'breakout', 'bundle']
     switch_pgs = {}
     for pgroup in pg_list:
         switch_pgs[pgroup] = []
-        for k, v in kwargs['easyDict']['access'][pgroup].items():
-            if re.search('Grp_', k):
-                site_group = kwargs['easyDict']['sites']['site_groups'][k][0]
-                for site in site_group['sites']:
-                    if int(templateVars['site_group']) == int(site):
-                        for i in v:
-                            switch_pgs[pgroup].append(i['name'])
+        if 'spine_pg' in pgroup:
+            pgroups = kwargs['easyDict']['sites'][site_group]['access']['interfaces']['spine']['policy_groups']
+        else:
+            pgroups = kwargs['easyDict']['sites'][site_group]['access']['interfaces']['leaf']['policy_groups'][pgroup]
+        for i in pgroups:
+            if pgroup == 'bundle':
+                if i.get('names'):
+                    switch_pgs[pgroup].extend(i['names'])
+                else:
+                    kwargs.update({'template_name':i['template_name']})
+                    validating.error_bundle_names('template_name', **kwargs)
             else:
-                if int(k) == int(templateVars['site_group']):
-                    for i in v:
-                        switch_pgs[pgroup].append(i['name'])
+                switch_pgs[pgroup].append(i['name'])
 
     # Sort the Policy Group List and Convert to a string
     for pgroup in pg_list:
@@ -769,10 +1305,10 @@ def interface_selector_workbook(templateVars, **kwargs):
 
     ws_sw = wb_sw['formulas']
     for pgroup in pg_list:
-        if pgroup == 'leaf_interfaces_policy_groups_access': x = 1
-        elif pgroup == 'leaf_interfaces_policy_groups_breakout': x = 2
-        elif pgroup == 'leaf_interfaces_policy_groups_bundle': x = 3
-        elif templateVars['node_type'] == 'spine': x = 4
+        if pgroup == 'access': x = 1
+        elif pgroup == 'breakout': x = 2
+        elif pgroup == 'bundle': x = 3
+        elif polVars['node_type'] == 'spine': x = 4
         if len(switch_pgs[pgroup]) > 0:
             row_start = 2
             row_end = len(switch_pgs[pgroup]) + row_start - 1
@@ -793,22 +1329,22 @@ def interface_selector_workbook(templateVars, **kwargs):
         for dname in defined_names:
             if dname in wb_sw.defined_names:
                 wb_sw.defined_names.delete(dname)
-        if templateVars['node_type'] == 'spine':
+        if polVars['node_type'] == 'spine':
             new_range = openpyxl.workbook.defined_name.DefinedName('spine_pg',attr_text=f"formulas!$D$2:$D{last_row}")
             if not 'spine_pg' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('spine_pg')
                 wb_sw.defined_names.append(new_range)
-        elif pgroup == 'leaf_interfaces_policy_groups_access':
+        elif pgroup == 'access':
             new_range = openpyxl.workbook.defined_name.DefinedName('access',attr_text=f"formulas!$A$2:$A{last_row}")
             if not 'access' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('access')
                 wb_sw.defined_names.append(new_range)
-        elif pgroup == 'leaf_interfaces_policy_groups_breakout':
+        elif pgroup == 'breakout':
             new_range = openpyxl.workbook.defined_name.DefinedName('breakout',attr_text=f"formulas!$B$2:$B{last_row}")
             if not 'breakout' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('breakout')
                 wb_sw.defined_names.append(new_range)
-        elif pgroup == 'leaf_interfaces_policy_groups_bundle':
+        elif pgroup == 'bundle':
             new_range = openpyxl.workbook.defined_name.DefinedName('bundle',attr_text=f"formulas!$C$2:$C{last_row}")
             if not 'bundle' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('bundle')
@@ -816,9 +1352,9 @@ def interface_selector_workbook(templateVars, **kwargs):
         wb_sw.save(kwargs['excel_workbook'])
 
     # Check if there is a Worksheet for the Switch Already
-    if not templateVars['switch_name'] in wb_sw.sheetnames:
-        ws_sw = wb_sw.create_sheet(title = templateVars['switch_name'])
-        ws_sw = wb_sw[templateVars['switch_name']]
+    if not polVars['switch_name'] in wb_sw.sheetnames:
+        ws_sw = wb_sw.create_sheet(title = polVars['switch_name'])
+        ws_sw = wb_sw[polVars['switch_name']]
         ws_sw.column_dimensions['A'].width = 15
         ws_sw.column_dimensions['B'].width = 15
         ws_sw.column_dimensions['C'].width = 10
@@ -833,7 +1369,7 @@ def interface_selector_workbook(templateVars, **kwargs):
         ws_sw.column_dimensions['L'].width = 25
         ws_sw.column_dimensions['M'].width = 30
         dv1 = DataValidation(type="list", formula1='"intf_selector"', allow_blank=True)
-        if templateVars['node_type'] == 'spine':
+        if polVars['node_type'] == 'spine':
             dv2 = DataValidation(type="list", formula1='"spine_pg"', allow_blank=True)
         else:
             dv2 = DataValidation(type="list", formula1='"access,breakout,bundle"', allow_blank=True)
@@ -861,119 +1397,92 @@ def interface_selector_workbook(templateVars, **kwargs):
             cell.style = 'Heading 3'
 
         ws_sw_row_count = 4
-        templateVars['dv1'] = dv1
-        templateVars['dv2'] = dv2
-        templateVars['dv4'] = dv4
-        templateVars['port_count'] = port_count
-        sw_type = str(templateVars['switch_model'])
+        polVars['dv1'] = dv1
+        polVars['dv2'] = dv2
+        polVars['dv4'] = dv4
+        polVars['port_count'] = port_count
+        sw_type = str(polVars['switch_model'])
         if re.search('^(95[0-1][4-8])', sw_type):
-            mod_keys = kwargs['easyDict']['access']['spine_modules'].keys()
-            site_group = templateVars["site_group"]
-            spine_modules = ''
-            if site_group in mod_keys:
-                spine_modules = kwargs['easyDict']['access']['spine_modules'][site_group][0]
-            else:
-                site_groups = kwargs['easyDict']['sites']['site_groups'].keys()
-                x = []
-                for s in site_groups:
-                    if 'Grp_' in s:
-                        x.append(s)
-                site_groups = x
-                for sgroup in site_groups:
-                    if site_group in kwargs['easyDict']['sites']['site_groups'][sgroup][0]['sites']:
-                        spine_modules = kwargs['easyDict']['access']['spine_modules'][sgroup][0]
-            modDict = {}
-            if not spine_modules == '':
-                node_list = spine_modules['node_list']
-                if str(templateVars['node_id']) in node_list:
-                    modDict = spine_modules
-            else:
-                print(f"Error, Could not find the Module list for spine {templateVars['node_id']}")
-                exit()
-            
-            for x in range(1, int(modules) + 1):
-                module_type = modDict[f'module_{x}']
-                if not module_type == None:
-                    if re.search('^X97', module_type):
-                        templateVars['module'] = x
-                        templateVars['port_count'] = spine_module_port_count(module_type)
-                        ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
+            if kwargs['easyDict']['sites'][site_group]['switch'].get('spine_modules'):
+                modCount = 0
+                for i in kwargs['easyDict']['sites'][site_group]['switch']['spine_modules']:
+                    modDict = {}
+                    if str(polVars['node_id']) in i['node_list']:
+                        modDict = i
+                        modCount += 1
+                if modCount == 0:
+                    print(f"Error, Could not find the Module list for spine {polVars['node_id']}")
+                    exit()
+                
+                for x in range(1, int(modules) + 1):
+                    module_type = modDict[f'module_{x}']
+                    if not module_type == None:
+                        if re.search('^X97', module_type):
+                            polVars['module'] = x
+                            polVars['port_count'] = spine_module_port_count(module_type)
+                            ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **polVars)
         else:
-            templateVars['module'] = 1
-            ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **templateVars)
+            polVars['module'] = 1
+            ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **polVars)
 
         # Save the Workbook
         wb_sw.save(kwargs['excel_workbook'])
         wb_sw.close()
 
-#======================================================
+#========================================================
 # Function to Merge Easy ACI Repository to Dest Folder
-#======================================================
+#========================================================
 def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
-    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
-    baseRepo = args.dir
-    
     # Setup Operating Environment
+    baseRepo = args.dir
     opSystem = platform.system()
     tfe_dir = 'tfe_modules'
     if opSystem == 'Windows': path_sep = '\\'
     else: path_sep = '/'
     tfe_modules = f'{tfe_dir}{path_sep}modules'
-    git_url = "https://github.com/terraform-cisco-modules/terraform-easy-aci"
+    git_url = "https://github.com/terraform-cisco-modules/easy-aci-complete"
     if not os.path.isdir(tfe_dir):
         os.mkdir(tfe_dir)
         Repo.clone_from(git_url, tfe_dir)
-    elif not os.path.isdir(tfe_modules):
-        Repo.clone_from(git_url, tfe_dir)
+    # elif not os.path.isdir(tfe_modules):
+    #     Repo.clone_from(git_url, tfe_dir)
     else:
         g = cmd.Git(tfe_dir)
         g.pull()
 
-    folders = []
     # Get All sub-folders from tfDir
-    for k, v in easyDict['sites']['site_settings'].items():
-        site_name = v[0]['site_name']
-        site_dirs = next(os.walk(os.path.join(baseRepo, site_name)))[1]
-        site_dirs.sort()
-        for dir in site_dirs:
-            folders.append(os.path.join(baseRepo, site_name, dir))
+    site_list = list(easyDict['sites'].keys())
+    for item in site_list:
+        site_name = easyDict['sites'][item]['site_settings']['site_name']
+        site_dir = os.path.join(baseRepo, site_name)
+        default_dir = os.path.join(baseRepo, site_name, 'defaults')
+        if not os.path.isdir(default_dir):
+            os.mkdir(default_dir)
     
-    # Now Loop over the folders and merge the module files
-    module_folders = ['access', 'admin', 'fabric', 'switch', 'system_settings', 'tenant']
-    for folder in folders:
-        for mod in module_folders:
-            if mod in folder:
-                src_dir = os.path.join(tfe_dir, 'modules', mod)
-                copy_files = os.listdir(src_dir)
-                for fname in copy_files:
-                    if not os.path.isdir(os.path.join(src_dir, fname)):
-                        shutil.copy2(os.path.join(src_dir, fname), folder)
+        # Now Loop over the folders and merge the module files
+        for folder in [site_name, 'defaults']:
+            if folder == 'defaults':
+                dest_dir = os.path.join(baseRepo, site_name, folder)
+                src_dir = os.path.join(tfe_dir, 'defaults')
+            else:
+                dest_dir = os.path.join(baseRepo, site_name)
+                src_dir = os.path.join(tfe_dir)
+            copy_files = os.listdir(src_dir)
+            for fname in copy_files:
+                if not os.path.isdir(os.path.join(src_dir, fname)):
+                    shutil.copy2(os.path.join(src_dir, fname), dest_dir)
+        terraform_fmt(site_dir)
 
-    # Loop over the folder list again and create blank auto.tfvars files for anything that doesn't already exist
-    for folder in folders:
-        if os.path.isdir(folder):
-            for mod in module_folders:
-                if mod in folder:
-                    files = jsonData['files'][mod]
-                    removeList = jsonData['remove_files']
-                    for xRemove in removeList:
-                        if xRemove in files:
-                            files.remove(xRemove)
-                    terraform_fmt(files, folder, path_sep)
-
-#======================================================
+#========================================================
 # Function to GET to the NDO API
-#======================================================
-def ndo_get(ndo, cookies, uri, section=''):
+#========================================================
+def ndo_api(ndo, method, cookies, uri, section=''):
     s = requests.Session()
     r = ''
     while r == '':
         try:
-            r = s.get(
-                'https://{}/{}'.format(ndo, uri),
-                cookies=cookies,
-                verify=False
-            )
+            if method == 'get':
+                r = s.get('https://{}/{}'.format(ndo, uri), cookies=cookies, verify=False)
             status = r.status_code
         except requests.exceptions.ConnectionError as e:
             print("Connection error, pausing before retrying. Error: {}"
@@ -983,24 +1492,23 @@ def ndo_get(ndo, cookies, uri, section=''):
             print("Method {} failed. Exception: {}".format(section[:-5], e))
             status = 666
             return(status)
-    if print_response_always:
-        print(r.text)
-    if status != 200 and print_response_on_fail:
-        print(r.text)
+    if print_response_always: print(r.text)
+    if status != 200 and print_response_on_fail: print(r.text)
     return r
 
-#======================================================
+#========================================================
 # Function to validate input for each method
-#======================================================
-def process_kwargs(required_args, optional_args, **kwargs):
-    # Validate all required kwargs passed
-    # if all(item in kwargs for item in required_args.keys()) is not True:
-    #    error_ = '\n***ERROR***\nREQUIRED Argument Not Found in Input:\n "%s"\nInsufficient required arguments.' % (item)
-    #    raise InsufficientArgs(error_)
-    row_num = kwargs["row_num"]
-    ws = kwargs["ws"]
+#========================================================
+def process_kwargs(jsonData, **kwargs):
+    # Validate User Input
+    validate_args(jsonData, **kwargs)
+    
     error_count = 0
     error_list = []
+    optional_args = jsonData['optional_args']
+    required_args = jsonData['required_args']
+    row_num = kwargs["row_num"]
+    ws = kwargs["ws"]
     for item in required_args:
         if item not in kwargs.keys():
             error_count =+ 1
@@ -1028,6 +1536,10 @@ def process_kwargs(required_args, optional_args, **kwargs):
             if required_args[item] == None:
                 error_count =+ 1
                 error_list += [item]
+            elif required_args[item] == 'false':
+                required_args[item] = False
+            elif required_args[item] == 'true':
+                required_args[item] = True
 
     if error_count > 0:
         error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following REQUIRED Key(s) Argument(s) are Blank:\nPlease Validate "{error_list}"\n\n****End ERROR****\n'
@@ -1036,24 +1548,37 @@ def process_kwargs(required_args, optional_args, **kwargs):
     for item in kwargs:
         if item in optional_args.keys():
             optional_args[item] = kwargs[item]
-    # Combine option and required dicts for Jinja template render
-    templateVars = {**required_args, **optional_args}
-    return(templateVars)
+            if optional_args[item] == 'false':
+                optional_args[item] = False
+            elif optional_args[item] == 'true':
+                optional_args[item] = True
 
-#======================================================
-# Function to Add Static Port Bindings to Bridge Domains Terraform Files
-#======================================================
-def process_workbook(templateVars, **kwargs):
+    # Combine option and required dicts for Jinja template render
+    polVars = {**required_args, **optional_args}
+
+    if kwargs['easyDict']['remove_default_args'] == True:
+        Dicts = deepcopy(polVars)
+        for k,v in Dicts.items():
+            if jsonData.get(k):
+                if not jsonData[k].get('default') == None:
+                    if v == jsonData[k]['default']:
+                        polVars.pop(k)
+    return(polVars)
+
+#========================================================
+# Add Static Port Bindings to Bridge Domains
+#========================================================
+def process_workbook(polVars, **kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']
-    def process_site(siteDict, templateVars, **kwargs):
-        # Create templateVars for Site_Name and APIC_URL
-        templateVars['site_name'] =  siteDict['Site_Name']
-        templateVars['site_group'] = siteDict['site_group']
-        templateVars['controller'] =   siteDict['controller']
+    def process_site(siteDict, polVars, **kwargs):
+        # Create polVars for Site_Name and APIC_URL
+        polVars['site_name'] =  siteDict['Site_Name']
+        polVars['site_group'] = siteDict['site_group']
+        polVars['controller'] =   siteDict['controller']
 
         # Pull in the Site Workbook
-        excel_workbook = '%s_intf_selectors.xlsx' % (templateVars['site_name'])
+        excel_workbook = '%s_intf_selectors.xlsx' % (polVars['site_name'])
         try:
             kwargs['wb_sw'] = load_workbook(excel_workbook)
         except Exception as e:
@@ -1061,120 +1586,26 @@ def process_workbook(templateVars, **kwargs):
             sys.exit(e)
 
         # Process the Interface Selectors for Static Port Paths
-        create_static_paths(templateVars, **kwargs)
+        create_static_paths(polVars, **kwargs)
 
-    if re.search('Grp_[A-F]', templateVars['site_group']):
+    if re.search('Grp_[A-F]', polVars['site_group']):
         site_group = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
         for site in site_group['sites']:
             siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
-            process_site(siteDict, templateVars, **kwargs)
-    elif re.search(r'\d+', templateVars['Site_Group']):
+            process_site(siteDict, polVars, **kwargs)
+    elif re.search(r'\d+', polVars['Site_Group']):
         siteDict = kwargs['easyDict']['sites']['site_settings'][kwargs['site_group']][0]
-        process_site(siteDict, templateVars, **kwargs)
+        process_site(siteDict, polVars, **kwargs)
     else:
         print(f"\n-----------------------------------------------------------------------------\n")
-        print(f"   Error on Worksheet {ws.title}, Row {row_num} Site_Group, value {templateVars['Site_Group']}.")
+        print(f"   Error on Worksheet {ws.title}, Row {row_num} Site_Group, value {polVars['Site_Group']}.")
         print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
         print(f"\n-----------------------------------------------------------------------------\n")
         exit()
 
-#======================================================
-# Function for Processing Loops to auto.tfvars files
-#======================================================
-def read_easy_jsonData(args, easy_jsonData, **easyDict):
-    jsonData = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']
-    classes = jsonData['classes']['enum']
-
-    # Loop to write the Header and content to the files
-    for class_type in classes:
-        funcList = jsonData[f'class.{class_type}']['enum']
-        for func in funcList:
-            for k, v in easyDict[class_type][func].items():
-                for i in v:
-                    templateVars = i
-                    kwargs = {
-                        'args': args,
-                        'easyDict': easyDict,
-                        'row_num': f'{func}_section',
-                        'site_group': k,
-                        'ws': easyDict['wb']['System Settings']
-                    }
-
-                    # Add Variables for Template Functions
-                    templateVars['template_type'] = func
-                        
-                    if re.search('^(apic_connectivity_preference|bgp_autonomous_system_number)$', func):
-                        kwargs["template_file"] = 'template_open2.jinja2'
-                    else:
-                        kwargs["template_file"] = 'template_open.jinja2'
-
-                    kwargs['tfvars_file'] = func
-                    x = func.split('_')
-                    policyType = ''
-                    xcount = 0
-                    for i in x:
-                        if not i == 'and' and xcount == 0:
-                            policyType = policyType + i.capitalize()
-                        elif 'and' in i:
-                            policyType = policyType + ' ' + i
-                        else:
-                            policyType = policyType + ' ' + i.capitalize()
-                        xcount += 1
-                    policyType = policyType.replace('Aaep', 'AAEP')
-                    policyType = policyType.replace('Aes', 'AES')
-                    policyType = policyType.replace('Apic', 'APIC')
-                    policyType = policyType.replace('Cdp', 'CDP')
-                    policyType = policyType.replace('Lldp', 'LLDP')
-                    policyType = policyType.replace('Radius', 'RADIUS')
-                    policyType = policyType.replace('Snmp', 'SNMP')
-                    policyType = policyType.replace('Tacacs', 'TACACS+')
-                    policyType = policyType.replace('Vpc', 'VPC')
-                    templateVars['policy_type'] = policyType
-                    
-                    kwargs["initial_write"] = True
-                    write_to_site(templateVars, **kwargs)
-
-        for func in funcList:
-            for k, v in easyDict[class_type][func].items():
-                for i in v:
-                    templateVars = i
-                    kwargs = {
-                        'args': args,
-                        'easyDict': easyDict,
-                        'row_num': f'{func}_section',
-                        'site_group': k,
-                        'ws': easyDict['wb']['System Settings']
-                    }
-
-                    # Write the template to the Template File
-                    kwargs['tfvars_file'] = func
-                    kwargs["initial_write"] = False
-                    kwargs["template_file"] = f'{func}.jinja2'
-                    write_to_site(templateVars, **kwargs)
-
-    # Add Closing Bracket to auto.tfvars that are dictionaries    
-    for k, v in easyDict['sites']['site_settings'].items():
-        site_name = v[0]['site_name']
-        siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
-        siteDirs.sort()
-        for folder in siteDirs:
-            files = [f for f in os.listdir(os.path.join(args.dir, site_name, folder)) if 'auto.tfvars' in f]
-            for file in files:
-                if not re.search('(bgp_auto|connectivity|variables)', file):
-                    file_name = open(os.path.join(args.dir, site_name, folder, file), 'r')
-                    end_count = 0
-                    for line in file_name:
-                        if re.search(r'^}', line):
-                            end_count += 1
-                    file_name.close
-                    if end_count == 0:
-                            file_name = open(os.path.join(args.dir, site_name, folder, file), 'a+')
-                            file_name.write('\n}\n')
-                            file_name.close()
-
-#======================================================
+#========================================================
 # Function to Read Excel Workbook Data
-#======================================================
+#========================================================
 def read_in(excel_workbook):
     try:
         wb = load_workbook(excel_workbook)
@@ -1183,9 +1614,9 @@ def read_in(excel_workbook):
         sys.exit(e)
     return wb
 
-#======================================================
+#========================================================
 # Function to Read the Worksheet and Create Templates
-#======================================================
+#========================================================
 def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
     rows = ws.max_row
     func_list = findKeys(ws, func_regex)
@@ -1216,59 +1647,31 @@ def read_worksheet(class_init, class_folder, easyDict, easy_jsonData, func_regex
     # Return the easyDict
     return easyDict
 
-#======================================================
-# Function to Add Required Arguments
-#======================================================
-def required_args_add(args_list, jsonData):
-    for i in args_list:
-        jsonData['required_args'].update({f'{i}': ''})
-        jsonData['optional_args'].pop(i)
-    return jsonData
-
-#======================================================
-# Function to Add Required Arguments
-#======================================================
-def required_args_remove(args_list, jsonData):
-    for i in args_list:
-        jsonData['optional_args'].update({f'{i}': ''})
-        jsonData['required_args'].pop(i)
-    return jsonData
-
-#======================================================
+#========================================================
 # Function to loop through site_groups for sensitve vars
-#======================================================
+#========================================================
 def sensitive_var_site_group(**kwargs):
     site_group = kwargs['site_group']
     sensitive_var = kwargs['Variable']
 
-    # Add the Sensitive Variable to easyDict
-    if 'tenants' in kwargs['class_type']:
-        class_type = f"tenant_{kwargs['tenant']}"
-    else:
-        class_type = kwargs['class_type']
-    if not 'tfcVariables' in class_type:
-        if not kwargs['easyDict']['sensitive_vars'].get(site_group):
-            kwargs['easyDict']['sensitive_vars'].update({site_group:{}})
-        if not kwargs['easyDict']['sensitive_vars'][site_group].get(class_type):
-            kwargs['easyDict']['sensitive_vars'][site_group].update({class_type:[]})
-        kwargs['easyDict']['sensitive_vars'][site_group][class_type].append(sensitive_var)
-
     # Loop Through Site Groups to confirm Sensitive Variable in the Environment
     if re.search('Grp_[A-F]', site_group):
-       siteGroup = kwargs['easyDict']['sites']['site_groups'][site_group][0]
+       siteGroup = kwargs['easyDict']['site_groups'][site_group]
        for site in siteGroup['sites']:
-            siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
+            kwargs['easyDict']['sites'][site]['sensitive_vars'].append(sensitive_var)
+            siteDict = kwargs['easyDict']['sites'][site]['site_settings']
             if siteDict['run_location'] == 'local' or siteDict['configure_terraform_cloud'] == 'true':
                 sensitive_var_value(**kwargs)
     else:
-        siteDict = kwargs['easyDict']['sites']['site_settings'][site_group][0]
+        kwargs['easyDict']['sites'][site_group]['sensitive_vars'].append(sensitive_var)
+        siteDict = kwargs['easyDict']['sites'][site_group]['site_settings']
         if siteDict['run_location'] == 'local' or siteDict['configure_terraform_cloud'] == 'true':
             sensitive_var_value(**kwargs)
     return kwargs['easyDict']
 
-#======================================================
+#========================================================
 # Function to add sensitive_var to Environment
-#======================================================
+#========================================================
 def sensitive_var_value(**kwargs):
     sensitive_var = 'TF_VAR_%s' % (kwargs['Variable'])
     # -------------------------------------------------------------------------------------------------------------------------
@@ -1356,6 +1759,9 @@ def sensitive_var_value(**kwargs):
                 elif 'radius_monitoring_password' in sensitive_var:
                     sKey = 'radius_monitoring_password'
                     varTitle = 'RADIUS Monitoring Password.'
+                elif 'remote_password' in sensitive_var:
+                    sKey = 'remote_password'
+                    varTitle = 'The Remote Host password.'
                 elif re.search('snmp_(authorization|privacy)_key', sensitive_var):
                     sKey = 'snmp_key'
                     x = sensitive_var.split('_')
@@ -1400,9 +1806,9 @@ def sensitive_var_value(**kwargs):
 
     return var_value
 
-#======================================================
+#========================================================
 # Function to Define stdout_log output
-#======================================================
+#========================================================
 def stdout_log(ws, row_num, spot):
     if log_level == 0:
         return
@@ -1425,9 +1831,9 @@ def stdout_log(ws, row_num, spot):
     else:
         return
 
-#======================================================
+#========================================================
 # Function to Determine Port count from Switch Model
-#======================================================
+#========================================================
 def switch_model_ports(row_num, switch_type):
     modules = ''
     switch_type = str(switch_type)
@@ -1477,9 +1883,9 @@ def switch_model_ports(row_num, switch_type):
         exit()
     return modules,port_count
 
-#======================================================
+#========================================================
 # Function to Determine Port Count on Modules
-#======================================================
+#========================================================
 def spine_module_port_count(module_type):
     if re.search('X9716D-GX', module_type):
         port_count = '16'
@@ -1489,26 +1895,44 @@ def spine_module_port_count(module_type):
         port_count = '36'
     return port_count
 
-#======================================================
-# Function to GET from Terraform Cloud
-#======================================================
-def tfc_get(url, site_header, section=''):
+#========================================================
+# Function for Terraform Cloud API
+#========================================================
+def tfc_api(url, method, payload, site_header, section=''):
     r = ''
     while r == '':
         try:
-            r = requests.get(url, headers=site_header)
-            status = r.status_code
+            if method == 'get':
+                r = requests.get(url, headers=site_header)
+            elif method == 'patch':
+                r = requests.patch(url, data=payload, headers=site_header)
+            elif method == 'post':
+                r = requests.post(url, data=payload, headers=site_header)
 
             # Use this for Troubleshooting
             if print_response_always:
-                print(status)
+                print(r.status_code)
                 print(r.text)
 
-            if status == 200 or status == 404:
-                json_data = r.json()
-                return status,json_data
-            else:
-                validating.error_request(r.status_code, r.text)
+            # Check Status and Return or Show Error
+            if method == 'get':
+                if r.status_code == 200 or r.status_code == 404:
+                    json_data = r.json()
+                    return r.status_code,json_data
+                else: validating.error_request(r.status_code, r.json())
+            elif method == 'patch':
+                if r.status_code == 201 or r.status_code == 200:
+                    json_data = r.json()
+                    return json_data
+                else:
+                    validating.error_request(r.status_code, r.json())
+            elif method == 'post':
+                if r.status_code != 200:
+                    json_data = r.json()
+                    return json_data
+                else:
+                    validating.error_request(r.status_code, r.json())
+            else: validating.error_request(r.status_code, r.json())
 
         except requests.exceptions.ConnectionError as e:
             print("Connection error, pausing before retrying. Error: %s" % (e))
@@ -1517,88 +1941,15 @@ def tfc_get(url, site_header, section=''):
             print("Method %s Failed. Exception: %s" % (section[:-5], e))
             exit()
 
-#======================================================
-# Function to PATCH to Terraform Cloud
-#======================================================
-def tfc_patch(url, payload, site_header, section=''):
-    r = ''
-    while r == '':
-        try:
-            r = requests.patch(url, data=payload, headers=site_header)
-
-            # Use this for Troubleshooting
-            if print_response_always:
-                print(r.status_code)
-                # print(r.text)
-
-            if r.status_code != 200:
-                validating.error_request(r.status_code, r.text)
-
-            json_data = r.json()
-            return json_data
-
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: %s" % (e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method %s Failed. Exception: %s" % (section[:-5], e))
-            exit()
-
-#======================================================
-# Function to POST to Terraform Cloud
-#======================================================
-def tfc_post(url, payload, site_header, section=''):
-    r = ''
-    while r == '':
-        try:
-            r = requests.post(url, data=payload, headers=site_header)
-
-            # Use this for Troubleshooting
-            if print_response_always:
-                print(r.status_code)
-                # print(r.text)
-
-            if r.status_code != 201:
-                validating.error_request(r.status_code, r.text)
-
-            json_data = r.json()
-            return json_data
-
-        except requests.exceptions.ConnectionError as e:
-            print("Connection error, pausing before retrying. Error: %s" % (e))
-            time.sleep(5)
-        except Exception as e:
-            print("Method %s Failed. Exception: %s" % (section[:-5], e))
-            exit()
-
-#======================================================
+#========================================================
 # Function to Format Terraform Files
-#======================================================
-def terraform_fmt(files, folder, path_sep):
-    # Create the Empty_variable_maps.auto.tfvars to house all the unused variables
-    empty_auto_tfvars = f'{folder}{path_sep}Empty_variable_maps.auto.tfvars'
-    wr_file = open(empty_auto_tfvars, 'w')
-    wrString = f'#______________________________________________'\
-              '\n#'\
-              '\n# UNUSED Variables'\
-              '\n#______________________________________________\n\n'
-    wr_file.write(wrString)
-    for file in files:
-        varFiles = f"{file.split('.')[0]}.auto.tfvars"
-        dest_file = f'{folder}{path_sep}{varFiles}'
-        if not os.path.isfile(dest_file):
-            x = file.split('.')
-            wrString = f'{x[0]} = ''{}\n'
-            wr_file.write(wrString)
-
-    # Close the Unused Variables File
-    wr_file.close()
-
+#========================================================
+def terraform_fmt(folder):
     # Run terraform fmt to cleanup the formating for all of the auto.tfvar files and tf files if needed
-    print(f'\n-------------------------------------------------------------------------------------------\n')
+    print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Running "terraform fmt" in folder "{folder}",')
     print(f'  to correct variable formatting!')
-    print(f'\n-------------------------------------------------------------------------------------------\n')
+    print(f'\n-----------------------------------------------------------------------------\n')
     p = subprocess.Popen(
         ['terraform', 'fmt', folder],
         stdout = subprocess.PIPE,
@@ -1610,11 +1961,11 @@ def terraform_fmt(files, folder, path_sep):
         line = line.strip()
         print(f'- {line}')
 
-#======================================================
+#========================================================
 # Function to Validate Worksheet User Input
-#======================================================
+#========================================================
 def validate_args(jsonData, **kwargs):
-    globalData = kwargs['easy_jsonData']['components']['schemas']['globalData']['allOf'][1]['properties']
+    globalData = kwargs['easy_jsonData']['globalData']['allOf'][1]['properties']
     global_args = [
         'admin_state',
         'application_epg',
@@ -1654,7 +2005,10 @@ def validate_args(jsonData, **kwargs):
     ]
     for i in jsonData['required_args']:
         if i in global_args:
-            if globalData[i]['type'] == 'integer':
+            if globalData[i]['type'] == 'boolean':
+                if not (kwargs[i] == None or kwargs[i] == ''):
+                    validating.boolean(i, **kwargs)
+            elif globalData[i]['type'] == 'integer':
                 if kwargs[i] == None:
                     kwargs[i] = globalData[i]['default']
                 else:
@@ -1678,6 +2032,9 @@ def validate_args(jsonData, **kwargs):
                 exit()
         elif i == 'site_group':
             validating.site_group('site_group', **kwargs)
+        elif jsonData[i]['type'] == 'boolean':
+            if not (kwargs[i] == None or kwargs[i] == ''):
+                validating.boolean(i, **kwargs)
         elif jsonData[i]['type'] == 'hostname':
             if not (kwargs[i] == None or kwargs[i] == ''):
                 if ':' in kwargs[i]:
@@ -1805,23 +2162,23 @@ def validate_args(jsonData, **kwargs):
                 exit()
     return kwargs
 
-#======================================================
+#========================================================
 # Function to pull variables from easy_jsonData
-#======================================================
-def variablesFromAPI(**templateVars):
+#========================================================
+def variablesFromAPI(**polVars):
     valid = False
     while valid == False:
-        json_vars = templateVars["jsonVars"]
-        if 'popList' in templateVars:
-            if len(templateVars["popList"]) > 0:
-                for x in templateVars["popList"]:
+        json_vars = polVars["jsonVars"]
+        if 'popList' in polVars:
+            if len(polVars["popList"]) > 0:
+                for x in polVars["popList"]:
                     varsCount = len(json_vars)
                     for r in range(0, varsCount):
                         if json_vars[r] == x:
                             json_vars.pop(r)
                             break
         print(f'\n-------------------------------------------------------------------------------------------\n')
-        newDescr = templateVars["var_description"]
+        newDescr = polVars["var_description"]
         if '\n' in newDescr:
             newDescr = newDescr.split('\n')
             for line in newDescr:
@@ -1830,37 +2187,37 @@ def variablesFromAPI(**templateVars):
                 else:
                     print(fill(f'{line}',88))
         else:
-            print(fill(f'{templateVars["var_description"]}',88))
+            print(fill(f'{polVars["var_description"]}',88))
         print(f'\n    Select an Option Below:')
         for index, value in enumerate(json_vars):
             index += 1
-            if value == templateVars["defaultVar"]:
+            if value == polVars["defaultVar"]:
                 defaultIndex = index
             if index < 10:
                 print(f'     {index}. {value}')
             else:
                 print(f'    {index}. {value}')
         print(f'\n-------------------------------------------------------------------------------------------\n')
-        if templateVars["multi_select"] == True:
-            if not templateVars["defaultVar"] == '':
-                var_selection = input(f'Please Enter the Option Number(s) to Select for {templateVars["varType"]}.  [{defaultIndex}]: ')
+        if polVars["multi_select"] == True:
+            if not polVars["defaultVar"] == '':
+                var_selection = input(f'Please Enter the Option Number(s) to Select for {polVars["varType"]}.  [{defaultIndex}]: ')
             else:
-                var_selection = input(f'Please Enter the Option Number(s) to Select for {templateVars["varType"]}: ')
+                var_selection = input(f'Please Enter the Option Number(s) to Select for {polVars["varType"]}: ')
         else:
-            if not templateVars["defaultVar"] == '':
-                var_selection = input(f'Please Enter the Option Number to Select for {templateVars["varType"]}.  [{defaultIndex}]: ')
+            if not polVars["defaultVar"] == '':
+                var_selection = input(f'Please Enter the Option Number to Select for {polVars["varType"]}.  [{defaultIndex}]: ')
             else:
-                var_selection = input(f'Please Enter the Option Number to Select for {templateVars["varType"]}: ')
-        if not templateVars["defaultVar"] == '' and var_selection == '':
+                var_selection = input(f'Please Enter the Option Number to Select for {polVars["varType"]}: ')
+        if not polVars["defaultVar"] == '' and var_selection == '':
             var_selection = defaultIndex
 
-        if templateVars["multi_select"] == False and re.search(r'^[0-9]+$', str(var_selection)):
+        if polVars["multi_select"] == False and re.search(r'^[0-9]+$', str(var_selection)):
             for index, value in enumerate(json_vars):
                 index += 1
                 if int(var_selection) == index:
                     selection = value
                     valid = True
-        elif templateVars["multi_select"] == True and re.search(r'(^[0-9]+$|^[0-9\-,]+[0-9]$)', str(var_selection)):
+        elif polVars["multi_select"] == True and re.search(r'(^[0-9]+$|^[0-9\-,]+[0-9]$)', str(var_selection)):
             var_list = vlan_list_full(var_selection)
             var_length = int(len(var_list))
             var_count = 0
@@ -1883,12 +2240,12 @@ def variablesFromAPI(**templateVars):
             print(f'\n-------------------------------------------------------------------------------------------\n')
     return selection
 
-#======================================================
+#========================================================
 # Function to pull variables from easy_jsonData
-#======================================================
-def varBoolLoop(**templateVars):
+#========================================================
+def varBoolLoop(**polVars):
     print(f'\n-------------------------------------------------------------------------------------------\n')
-    newDescr = templateVars["Description"]
+    newDescr = polVars["Description"]
     if '\n' in newDescr:
         newDescr = newDescr.split('\n')
         for line in newDescr:
@@ -1897,15 +2254,15 @@ def varBoolLoop(**templateVars):
             else:
                 print(fill(f'{line}',88))
     else:
-        print(fill(f'{templateVars["Description"]}',88))
+        print(fill(f'{polVars["Description"]}',88))
     print(f'\n-------------------------------------------------------------------------------------------\n')
     valid = False
     while valid == False:
-        varValue = input(f'{templateVars["varInput"]}  [{templateVars["varDefault"]}]: ')
+        varValue = input(f'{polVars["varInput"]}  [{polVars["varDefault"]}]: ')
         if varValue == '':
-            if templateVars["varDefault"] == 'Y':
+            if polVars["varDefault"] == 'Y':
                 varValue = True
-            elif templateVars["varDefault"] == 'N':
+            elif polVars["varDefault"] == 'N':
                 varValue = False
             valid = True
         elif varValue == 'N':
@@ -1916,21 +2273,21 @@ def varBoolLoop(**templateVars):
             valid = True
         else:
             print(f'\n-------------------------------------------------------------------------------------------\n')
-            print(f'   {templateVars["varName"]} value of "{varValue}" is Invalid!!! Please enter "Y" or "N".')
+            print(f'   {polVars["varName"]} value of "{varValue}" is Invalid!!! Please enter "Y" or "N".')
             print(f'\n-------------------------------------------------------------------------------------------\n')
     return varValue
 
-#======================================================
+#========================================================
 # Function to pull variables from easy_jsonData
-#======================================================
-def varStringLoop(**templateVars):
-    maximum = templateVars["maximum"]
-    minimum = templateVars["minimum"]
-    varName = templateVars["varName"]
-    pattern = templateVars["pattern"]
+#========================================================
+def varStringLoop(**polVars):
+    maximum = polVars["maximum"]
+    minimum = polVars["minimum"]
+    varName = polVars["varName"]
+    pattern = polVars["pattern"]
 
     print(f'\n-------------------------------------------------------------------------------------------\n')
-    newDescr = templateVars["Description"]
+    newDescr = polVars["Description"]
     if '\n' in newDescr:
         newDescr = newDescr.split('\n')
         for line in newDescr:
@@ -1939,15 +2296,15 @@ def varStringLoop(**templateVars):
             else:
                 print(fill(f'{line}',88))
     else:
-        print(fill(f'{templateVars["Description"]}',88))
+        print(fill(f'{polVars["Description"]}',88))
     print(f'\n-------------------------------------------------------------------------------------------\n')
     valid = False
     while valid == False:
-        varValue = input(f'{templateVars["varInput"]} ')
-        if 'press enter to skip' in templateVars["varInput"] and varValue == '':
+        varValue = input(f'{polVars["varInput"]} ')
+        if 'press enter to skip' in polVars["varInput"] and varValue == '':
             valid = True
-        elif not templateVars["varDefault"] == '' and varValue == '':
-            varValue = templateVars["varDefault"]
+        elif not polVars["varDefault"] == '' and varValue == '':
+            varValue = polVars["varDefault"]
             valid = True
         elif not varValue == '':
             valid = validating.length_and_regex(pattern, varName, varValue, minimum, maximum)
@@ -1957,9 +2314,9 @@ def varStringLoop(**templateVars):
             print(f'\n-------------------------------------------------------------------------------------------\n')
     return varValue
 
-#======================================================
+#========================================================
 # Function to Expand the VLAN list
-#======================================================
+#========================================================
 def vlan_list_full(vlan_list):
     full_vlan_list = []
     if re.search(r',', str(vlan_list)):
@@ -1985,10 +2342,10 @@ def vlan_list_full(vlan_list):
         full_vlan_list.append(vlan_list)
     return full_vlan_list
 
-#======================================================
+#========================================================
 # Function to Expand a VLAN Range to a VLAN List
-#======================================================
-def vlan_range(vlan_list, **templateVars):
+#========================================================
+def vlan_range(vlan_list, **polVars):
     results = 'unknown'
     while results == 'unknown':
         if re.search(',', str(vlan_list)):
@@ -1998,11 +2355,11 @@ def vlan_range(vlan_list, **templateVars):
                     vl = vrange.split('-')
                     min_ = int(vl[0])
                     max_ = int(vl[1])
-                    if (int(templateVars['VLAN']) >= min_ and int(templateVars['VLAN']) <= max_):
+                    if (int(polVars['VLAN']) >= min_ and int(polVars['VLAN']) <= max_):
                         results = 'true'
                         return results
                 else:
-                    if templateVars['VLAN'] == vrange:
+                    if polVars['VLAN'] == vrange:
                         results = 'true'
                         return results
             results = 'false'
@@ -2011,105 +2368,34 @@ def vlan_range(vlan_list, **templateVars):
             vl = vlan_list.split('-')
             min_ = int(vl[0])
             max_ = int(vl[1])
-            if (int(templateVars['VLAN']) >= min_ and int(templateVars['VLAN']) <= max_):
+            if (int(polVars['VLAN']) >= min_ and int(polVars['VLAN']) <= max_):
                 results = 'true'
                 return results
         else:
-            if int(templateVars['VLAN']) == int(vlan_list):
+            if int(polVars['VLAN']) == int(vlan_list):
                 results = 'true'
                 return results
         results = 'false'
         return results
 
-#======================================================
+#========================================================
 # Function to Determine which sites to write files to.
-#======================================================
-def write_to_site(templateVars, **kwargs):
-    class_type = templateVars['class_type']
-    aci_template_path = pkg_resources.resource_filename(f'classes', 'templates/')
+#========================================================
+def write_to_site(polVars, **kwargs):
+    args       = kwargs['args']
+    baseRepo   = args.dir
+    class_type = kwargs['class_type']
+    dest_dir   = kwargs["dest_dir"]
+    dest_file  = kwargs["tf_file"]
+    site_name  = kwargs["site_name"]
 
+    aci_template_path = pkg_resources.resource_filename(f'classes', 'templates/')
     templateLoader = jinja2.FileSystemLoader(
         searchpath=(aci_template_path + '%s/') % (class_type))
     templateEnv = jinja2.Environment(loader=templateLoader)
-    ws = kwargs["ws"]
-    row_num = kwargs["row_num"]
-    site_group = str(kwargs['site_group'])
     
     # Define the Template Source
-    kwargs["template"] = templateEnv.get_template(kwargs["template_file"])
-
-    # Process the template
-    if 'tenants' in class_type:
-        kwargs["dest_dir"] = 'tenant_%s' % (templateVars['tenant'])
-    elif 'switches' in class_type:
-        if templateVars['template_type'] == 'switch_profiles':
-            if not templateVars['vpc_name'] == None:
-                kwargs["dest_dir"] = 'switch_%s' % (templateVars['vpc_name'])
-            else:
-                kwargs["dest_dir"] = 'switch_%s' % (templateVars['switch_name'])
-        elif templateVars['template_type'] == 'vpc_domains':
-            kwargs["dest_dir"] = 'switch_%s' % (templateVars['name'])
-    elif 'sites' in class_type:
-        kwargs["dest_dir"] = kwargs["dest_dir"]
-    else:
-        kwargs["dest_dir"] = '%s' % (class_type)
-    kwargs["dest_file"] = '%s.auto.tfvars' % (kwargs["tfvars_file"])
-    if kwargs["initial_write"] == True:
-        kwargs["write_method"] = 'w'
-    else:
-        kwargs["write_method"] = 'a'
-
-    def process_siteDetails(site_dict, templateVars, **kwargs):
-        # Create kwargs for site_name controller and controller_type
-        kwargs['controller'] = site_dict.get('controller')
-        kwargs['controller_type'] = site_dict.get('controller_type')
-        templateVars['controller_type'] = site_dict.get('controller_type')
-        kwargs['site_name'] = site_dict.get('site_name')
-        kwargs['version'] = site_dict.get('version')
-        if templateVars['template_type'] == 'firmware':
-            templateVars['version'] = kwargs['version']
-        if kwargs['controller_type'] == 'ndo' and templateVars['template_type'] == 'tenants':
-            if templateVars['users'] == None:
-                validating.error_tenant_users(**kwargs)
-            else:
-                for user in templateVars['users']:
-                    regexp = '^[a-zA-Z0-9\_\-]+$'
-                    validating.length_and_regex(regexp, 'users', user, 1, 64)
-        # Create Terraform file from Template
-        write_to_template(templateVars, **kwargs)
-
-    if re.search('Grp_[A-F]', site_group):
-        siteGroup = kwargs['easyDict']['sites']['site_groups'][kwargs['site_group']][0]
-        for site in siteGroup['sites']:
-            siteDict = kwargs['easyDict']['sites']['site_settings'][site][0]
-            # Add Site Detials to kwargs and write to template
-            process_siteDetails(siteDict, templateVars, **kwargs)
-
-    elif re.search(r'\d+', site_group):
-        siteDict = kwargs['easyDict']['sites']['site_settings'][kwargs['site_group']][0]
-
-        # Add Site Detials to kwargs and write to template
-        process_siteDetails(siteDict, templateVars, **kwargs)
-
-    else:
-        print(f"\n-----------------------------------------------------------------------------\n")
-        print(f"   Error on Worksheet {ws.title}, Row {row_num} Site_Group, value {kwargs['site_group']}.")
-        print(f"   Unable to Determine if this is a Single or Group of Site(s).  Exiting....")
-        print(f"\n-----------------------------------------------------------------------------\n")
-        exit()
-
-#======================================================
-# Function to write files from Templates
-#======================================================
-def write_to_template(templateVars, **kwargs):
-    # Set Function Variables
-    args = kwargs['args']
-    baseRepo = args.dir
-    dest_dir  = kwargs["dest_dir"]
-    dest_file = kwargs["dest_file"]
-    site_name = kwargs["site_name"]
-    template  = kwargs["template"]
-    wr_method = kwargs["write_method"]
+    template = templateEnv.get_template(kwargs["template_file"])
 
     # Make sure the Destination Path and Folder Exist
     if not os.path.isdir(os.path.join(baseRepo, site_name, dest_dir)):
@@ -2123,14 +2409,11 @@ def write_to_template(templateVars, **kwargs):
         create_file = f'type nul >> {os.path.join(dest_dir, dest_file)}'
         os.system(create_file)
     tf_file = os.path.join(dest_dir, dest_file)
-    wr_file = open(tf_file, wr_method)
+    wr_file = open(tf_file, 'w')
 
     # Render Payload and Write to File
-    templateVars = json.loads(json.dumps(templateVars))
-    if templateVars['class_type'] == 'system_settings':
-        payload = template.render(templateVars)
-    else:
-        templateVars = {'keys':templateVars}
-        payload = template.render(templateVars)
+    polVars = json.loads(json.dumps(polVars))
+    polVars = {'keys':polVars}
+    payload = template.render(polVars)
     wr_file.write(payload)
     wr_file.close()

@@ -1,0 +1,35 @@
+terraform {
+  required_version = ">= {{ keys['terraform_version'] }}"
+  required_providers {
+    aci = {
+      source  = "ciscodevnet/aci"
+      version = ">= {{ keys['aci_provider_version'] }}"
+    }
+    mso = {
+      source  = "ciscodevnet/mso"
+      version = ">= {{ keys['ndo_provider_version'] }}"
+    }
+    utils = {
+      source  = "netascode/utils"
+      version = ">= {{ keys['utils_provider_version'] }}"
+    }
+  }
+}
+
+provider "aci" {
+  cert_name   = var.certName
+  password    = var.apicPass
+  private_key = var.privateKey
+  url         = "https://${var.apicHostname}"
+  username    = var.apicUser
+  insecure    = true
+}
+
+provider "mso" {
+  domain   = var.ndoDomain
+  insecure = true
+  password = var.ndoPass
+  platform = "nd"
+  url      = "https://${var.ndoHostname}"
+  username = var.ndoUser
+}

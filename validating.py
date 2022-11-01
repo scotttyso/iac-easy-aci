@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
 
 import ipaddress
+import json
 import phonenumbers
 import re
 import validators
 
 # Error Messages
+def error_bundle_names(var, **kwargs):
+    varValue = kwargs[var]
+    print(f'\n--------------------------------------------------------------------------------\n')
+    print(f'   Error in the "access" Worksheet. Leaf Interface Bundles Template ')
+    print(f'   {varValue} has no associated names in the section:')
+    print(f'   Interface > Leaf Interfaces > Policy Groups > Port-Channel and VPC (Bundles)')
+    print(f'   Please Correct the worksheet.')
+    print(f'   Exiting....')
+    print(f'\n--------------------------------------------------------------------------------\n')
+    exit()
+
 def error_enforce(row_num, vrf):
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'   Error on Row {row_num}. VRF {vrf}, Enforcement was not defined in the')
@@ -17,24 +29,6 @@ def error_enforcement(row_num, epg, ws2, ws3):
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'   Error on Row {row_num} of Worksheet {ws3}. Enforcement on the EPG {epg}')
     print(f'   is set to enforced but the VRF is unenforced in {ws2}.  Exiting....')
-    print(f'\n-----------------------------------------------------------------------------\n')
-    exit()
-
-def error_policy_names(row_num, ws, policy_1, policy_2):
-    print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Error on Row {row_num} of Worksheet {ws.title}. The Policy {policy_1} was ')
-    print(f'   not the same as {policy_2}. Exiting....')
-    print(f'\n-----------------------------------------------------------------------------\n')
-    exit()
-
-def error_policy_not_found(var, **kwargs):
-    row_num = kwargs['row_num']
-    ws = kwargs['ws']
-    varValue = kwargs[var]
-    print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Error on Row {row_num} of Worksheet {ws.title}. The {var} "{varValue}"')
-    print(f'   was not found. Please be sure this policy is already defined.')
-    print(f'   Exiting....')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
@@ -75,11 +69,32 @@ def error_login_domain(var, **kwargs):
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
-def error_request(status, text):
+def error_policy_names(row_num, ws, policy_1, policy_2):
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. The Policy {policy_1} was ')
+    print(f'   not the same as {policy_2}. Exiting....')
+    print(f'\n-----------------------------------------------------------------------------\n')
+    exit()
+
+def error_policy_match(var1, var2, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue1 = kwargs[var1]
+    varValue2 = kwargs[var2]
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. The {var1} and')
+    print(f'   {var2} should contain the same number of Values.')
+    print(f'     * {var1} = {varValue1}')
+    print(f'     * {var2} = {varValue2}')
+    print(f'   Exiting....')
+    print(f'\n-----------------------------------------------------------------------------\n')
+    exit()
+
+def error_request(status, rjson):
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'   Error in Retreiving Terraform Cloud Organization Workspaces')
     print(f'   Exiting on Error {status} with the following output:')
-    print(f'   {text}')
+    print(f'   {json.dumps(rjson, indent=4)}')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
@@ -104,10 +119,53 @@ def error_switch(row_num, ws, switch_ipr):
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
-def error_tenant(row_num, tenant, ws1, ws2):
+def error_site_group(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    if 'Grp_' in varValue:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site Group "{varValue}"')
+        print(f'   is not defined.  "{varValue}" was not defined on the sites worksheet.')
+        print(f'   Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+    else:
+        print(f'\n-----------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site "{varValue}"')
+        print(f'   is not defined.  "{varValue}" was not defined on the sites worksheet.')
+        print(f'   Exiting....')
+        print(f'\n-----------------------------------------------------------------------------\n')
+        exit()
+
+def error_schema(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
     print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Error on Row {row_num} of Worksheet {ws2}. Tenant {tenant} was not found')
-    print(f'   in the {ws1} Worksheet.  Exiting....')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. Schema {varValue} was not defined')
+    print(f'   in the ndo_schema section of the tenant Worksheet.  Exiting....')
+    print(f'\n-----------------------------------------------------------------------------\n')
+    exit()
+
+def error_template_not_found(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. The {var} "{varValue}"')
+    print(f'   was not found. Please be sure this template is already defined.')
+    print(f'   Exiting....')
+    print(f'\n-----------------------------------------------------------------------------\n')
+    exit()
+
+def error_tenant(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. Tenant {varValue} was not defined')
+    print(f'   in the tenant Worksheet.  Exiting....')
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
@@ -135,6 +193,20 @@ def error_vrf(row_num, vrf):
     exit()
 
 # Validations
+def boolean(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    valid_count = 1
+    if varValue == 'true' or varValue == 'false':
+        valid_count = 0
+    if not valid_count == 0:
+        print(f'\n--------------------------------------------------------------------------------\n')
+        print(f'   Error on Worksheet "{ws.title}", Row {row_num}, Variable {var};')
+        print(f'   must be true or false.  Exiting....')
+        print(f'\n--------------------------------------------------------------------------------\n')
+        exit()
+
 def domain(var, **kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']
@@ -513,22 +585,22 @@ def site_group(var, **kwargs):
     if 'Grp_' in varValue:
         if not re.search('Grp_[A-F]', varValue):
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site Group "{varValue}"')
             print(f'   is invalid.  A valid Group Name is Grp_A thru Grp_F.  Exiting....')
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     elif re.search(r'\d+', varValue):
         if not validators.between(int(varValue), min=1, max=15):
             print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
+            print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site "{varValue}"')
             print(f'   is invalid.  A valid Site ID is between 1 and 15.  Exiting....')
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     else:
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
-        print(f'   is invalid.  A valid Site_Group is either 1 thru 15 or Group_A thru Group_F.')
-        print(f'   Exiting....')
+        print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site Group "{varValue}"')
+        print(f'   is invalid.  A valid Site is either 1 thru 15 or for Site Groups')
+        print(f'   Group_A thru Group_F.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
@@ -536,7 +608,7 @@ def site_groups(**kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']
     var_list = ['site_group']
-    for x in range (1,16):
+    for x in range (1,11):
         var_list.append(f'site_{x}')
     for var in var_list:
         varValue = kwargs[var]
@@ -544,7 +616,7 @@ def site_groups(**kwargs):
             if 'Grp_' in varValue:
                 if not re.search('^Grp_[A-F]$', varValue):
                     print(f'\n-----------------------------------------------------------------------------\n')
-                    print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, Site_Group "{varValue}"')
+                    print(f'   Error on Worksheet {ws.title}, Row {row_num} {var}, site group "{varValue}"')
                     print(f'   is invalid.  A valid Group Name is Grp_A thru Grp_F.  Exiting....')
                     print(f'\n-----------------------------------------------------------------------------\n')
                     exit()

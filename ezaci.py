@@ -11,51 +11,44 @@ It uses argparse to take in the following CLI arguments:
 #======================================================
 # Source Modules
 #======================================================
-from classes import access, admin, fabric, site_policies, switches, system_settings, tenants
-from easy_functions import apply_terraform
-from easy_functions import get_folders, git_base_repo, git_check_status
-from easy_functions import countKeys, findKeys, findVars
-from easy_functions import get_latest_versions, merge_easy_aci_repository
-from easy_functions import read_easy_jsonData, read_in
-from easy_functions import stdout_log
 import argparse
+import classes
+import easy_functions
 import json
 import os
 import platform
 import re
 import sys
 
-#=====================================================================
-# Note: This is simply to make it so the classes don't appear Unused.
-#=====================================================================
-class_list = [access, admin, fabric, site_policies, switches, system_settings, tenants]
-
 #======================================================
 # Regular Expressions to Control wich rows in the
 # Worksheet should be processed.
 #======================================================
-a1 = '(domains_(l3|phys)|global_aaep|interface_policy|pg_(access|breakout|bundle|spine)'
-a2 = '(leaf|spine)_pg|pol_(cdp|fc|l2|link_level|lldp|mcp|port_(ch|sec)|stp)|pools_vlan)'
-access_regex = f'^({a1}|{a2})$'
+ac1 = '(l3|phys)_domains|global_aaep|interface_policy|pg_(access|breakout|bundle|spine|template)'
+ac2 = '(leaf|spine)_pg|pol_(cdp|fc|l2|link_level|lldp|mcp|port_(ch|sec)|stp)|pre_built|vlan_pools'
+access_regex = f'^({ac1}|{ac2})$'
 
-admin_regex = '^(auth|(export|mg)_policy|maint_group|radius|remote_host|security|tacacs)$'
-apps_epgs_regex = '^((app|epg|vmm)_(add|(vmm_)?policy))$'
-bds_regex = '^((bd)_(add|dhcp|general|l3|ndo|subnet))$'
-contracts_regex = '(^(contract|filter|subject)_(add|assign|entry|filters)$)'
+ad1 = 'auth|(export|mg)_policy|maint_group|radius|recommended_settings|remote_host|security|tacacs'
+ad2 = 'smart_(callhome|destinations|smtp_server)|syslog(_destinations)?'
+admin_regex = f'^({ad1}|{ad2})$'
 
-f1 = 'date_time|dns_profile|ntp(_key)?|smart_(callhome|destinations|smtp_server)'
-f2 = 'snmp_(clgrp|community|destinations|policy|user)|syslog(_destinations)?'
-fabric_regex = f'^({f1}|{f2})$'
+apps_epgs_regex = '^(app|epg)_(add|template|vmm_temp)$'
+bds_regex = '^(bd|subnet)_(add|template)$'
+contracts_regex = '^(contract|filter|subject)_(add|assign|entry|filters)$'
 
-l3out1 = '((bgp|eigrp|ospf)_(peer|policy|profile|routing)|ext_epg(_policy|_sub)?)'
-l3out2 = 'l3out_(add|policy)|node_(interface|intf_(cfg|policy)|profile)?'
-l3out_regex = f'^({l3out1}|{l3out2})$'
+fa1 = 'date_time|dns_profile|ntp(_key)?|recommended_settings'
+fa2 = 'snmp_(clgrp|community|destinations|policy|user)'
+fabric_regex = f'^({fa1}|{fa2})$'
+
+l31 = '(bgp|eigrp|ospf)_(peer|template|profile|routing)|ext_epg(_temp|_sub)?'
+l32 = 'l3out_(add|template)|node_(interface|intf_(cfg|temp)|profile)?'
+l3out_regex = f'^({l31}|{l32})$'
 
 port_convert_regex = '^port_cnvt$'
 sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
-system_settings_regex = '^(apic_preference|bgp_(asn|rr)|global_aes)$'
-tenants_regex = '^((template|tenant)_(add|site)|vrf_(add|community|policy))$'
+system_settings_regex = '^(apic_preference|bgp_(asn|rr)|recommended_settings)$'
+tenants_regex = '^(ndo_schema|(template|tenant)_(add|site)|vrf_(add|community|template))$'
 tenant_pol_regex = '^(apic_inb|bgp_pfx|dhcp_relay|(eigrp|ospf)_interface)$'
 virtual_regex = '^(vmm_(controllers|creds|domain|elagp|vswitch))$'
 
@@ -68,6 +61,7 @@ def process_access(args, easyDict, easy_jsonData, wb):
     class_folder = 'access'
     func_regex = access_regex
     ws = wb['Access']
+    easyDict['remove_default_args'] = True
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
@@ -115,11 +109,12 @@ def process_site_settings(args, easyDict, easy_jsonData, wb):
         'args':args,
         'easyDict':easyDict,
         'easy_jsonData':easy_jsonData,
+        'remove_default_args':False,
         'row_num':0,
         'wb':wb,
         'ws': wb['Sites']
     }
-    easyDict = site_policies('site_settings').site_settings(**kwargs)
+    easyDict = classes.site_policies('site_settings').site_settings(**kwargs)
     return easyDict
 
 #=================================================================
@@ -131,6 +126,7 @@ def process_sites(args, easyDict, easy_jsonData, wb):
     class_folder = 'sites'
     func_regex = sites_regex
     ws = wb['Sites']
+    easyDict['remove_default_args'] = False
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
     return easyDict
 
@@ -143,7 +139,9 @@ def process_switches(args, easyDict, easy_jsonData, wb):
     class_folder = 'switches'
     func_regex = switch_regex
     ws = wb['Switch Profiles']
+    easyDict['remove_default_args'] = False
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    easyDict['remove_default_args'] = True
     return easyDict
 
 #=================================================================
@@ -168,6 +166,7 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
     # Evaluate the Tenants Worksheet
     func_regex = tenants_regex
     ws = wb['Tenants']
+    easyDict['remove_default_args'] = True
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the Tenant Policies Worksheet
@@ -175,14 +174,14 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
     ws = wb['Tenant Policies']
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # Evaluate the Bridge Domains Worksheet
-    func_regex = bds_regex
-    ws = wb['Bridge Domains']
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
-
     # Evaluate the Apps and EPGs Worksheet
     func_regex = apps_epgs_regex
     ws = wb['Apps and EPGs']
+    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+
+    # Evaluate the Bridge Domains Worksheet
+    func_regex = bds_regex
+    ws = wb['Bridge Domains']
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the L3Out Worksheet
@@ -214,18 +213,18 @@ def process_virtual_networking(args, easyDict, easy_jsonData, wb):
 #=================================================================
 def read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws):
     rows = ws.max_row
-    func_list = findKeys(ws, func_regex)
-    stdout_log(ws, None, 'begin')
+    func_list = easy_functions.findKeys(ws, func_regex)
+    easy_functions.stdout_log(ws, None, 'begin')
     for func in func_list:
-        count = countKeys(ws, func)
-        var_dict = findVars(ws, func, rows, count)
+        count = easy_functions.countKeys(ws, func)
+        var_dict = easy_functions.findVars(ws, func, rows, count)
         for pos in var_dict:
             row_num = var_dict[pos]['row']
             del var_dict[pos]['row']
             for x in list(var_dict[pos].keys()):
                 if var_dict[pos][x] == '':
                     del var_dict[pos][x]
-            stdout_log(ws, row_num, 'begin')
+            easy_functions.stdout_log(ws, row_num, 'begin')
             var_dict[pos].update(
                 {
                     'args':args,
@@ -237,9 +236,9 @@ def read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func
                     'ws':ws
                 }
             )
-            easyDict = eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
+            easyDict = eval(f"classes.{class_init}(class_folder).{func}(**var_dict[pos])")
     
-    stdout_log(ws, None, 'end')
+    easy_functions.stdout_log(ws, None, 'end')
     # Return the easyDict
     return easyDict
 
@@ -252,16 +251,16 @@ def main():
         default = 'ACI',
         help = 'The Directory to use for the Creation of the Terraform Files.'
     )
-    Parser.add_argument('-g', '--git-check',
-        default = 'True',
-        help = 'To Skip the Git Commit Check set this to False.'
+    Parser.add_argument(
+        '-g', '--git-check', action='store_true',
+        help = 'Flag to Skip the Git Commit Check.'
     )
-    Parser.add_argument('-s', '--skip-version-check',
-        default = 'False',
-        help = 'To Skip the Version Check set this to True.'
+    Parser.add_argument(
+        '-s', '--skip-version-check', action='store_true',
+        help = 'Flag to Skip the APIC and NDO Version Check.'
     )
     Parser.add_argument('-wb', '--workbook',
-        default = 'ACI_Base_Workbookv2.xlsx',
+        default = 'ACI_Base_Workbookv3.xlsx',
         help = 'The source Workbook.'
     )
     Parser.add_argument('-ws', '--worksheet', 
@@ -331,18 +330,20 @@ def main():
                 print('\nWorkbook not Found.  Please enter a valid /path/filename for the source you will be using.')
 
     # Load Workbook
-    wb = read_in(excel_workbook)
+    wb = easy_functions.read_in(excel_workbook)
 
     # Create Dictionary for Worksheets in the Workbook
-    easyDict = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['easyDict']
+    easy_jsonData = easy_jsonData['components']['schemas']
+    easyDict = {}
+    easyDict['latest_versions'] = easy_jsonData['easy_aci']['allOf'][1]['properties']['latest_versions']
 
     # Obtain the Latest Provider Releases
-    easyDict = get_latest_versions(easyDict)
+    easyDict = easy_functions.get_latest_versions(easyDict)
 
     # Initialize the Base Repo/Terraform Working Directory
     if not os.path.isdir(args.dir):
         os.mkdir(args.dir)
-    # baseRepo = git_base_repo(args, wb)
+    # baseRepo = easy_functions.git_base_repo(args, wb)
 
     # Process the Sites Worksheet
     easyDict['wb'] = wb
@@ -364,22 +365,22 @@ def main():
             print(f'\n-----------------------------------------------------------------------------\n')
             exit()
     else:
-        process_list = easy_jsonData['components']['schemas']['easy_aci']['allOf'][1]['properties']['processes']['enum']
+        process_list = easy_jsonData['easy_aci']['allOf'][1]['properties']['processes']['enum']
         for x in process_list:
             process_type = f'process_{x}'
             easyDict = eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
 
 
     # Begin Proceedures to Create files
-    read_easy_jsonData(args, easy_jsonData, **easyDict)
+    easy_functions.create_yaml(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
-    merge_easy_aci_repository(args, easy_jsonData, **easyDict)
+    easy_functions.merge_easy_aci_repository(args, easy_jsonData, **easyDict)
     changed_folders = []
     if args.git_check == 'True':
-        changed_folders = git_check_status(args)
+        changed_folders = easy_functions.git_check_status(args)
     else:
-        changed_folders = get_folders(args, path_sep)
-    apply_terraform(args, changed_folders, **easyDict)
+        changed_folders = easy_functions.get_folders(args, path_sep)
+    # easy_functions.apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')
