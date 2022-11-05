@@ -3,7 +3,7 @@
 This Script is to Create Terraform HCL configuration from an Excel Spreadsheet.
 It uses argparse to take in the following CLI arguments:
     d or dir:        Base Directory to use for creation of the HCL Configuration Files
-    g or git-check:  By default the script will use git to check the destination for git status.  Set to False to disable.
+    g or git-check:  By default the script will not use git to check the destination for git status.  Include this flag to perform git check.
     s or skip-version-check: Setting this to "True" will disable the login to the controllers to determine the running version.
     w or workbook:   Name of Excel Workbook file for the Data Source
 """
@@ -253,7 +253,7 @@ def main():
     )
     Parser.add_argument(
         '-g', '--git-check', action='store_true',
-        help = 'Flag to Skip the Git Commit Check.'
+        help = 'By default the script will not use git to check the destination for git status.  Include this flag to perform git check.'
     )
     Parser.add_argument(
         '-s', '--skip-version-check', action='store_true',
@@ -376,11 +376,11 @@ def main():
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     easy_functions.merge_easy_aci_repository(args, easy_jsonData, **easyDict)
     changed_folders = []
-    if args.git_check == 'True':
+    if args.git_check == True:
         changed_folders = easy_functions.git_check_status(args)
     else:
         changed_folders = easy_functions.get_folders(args, path_sep)
-    # easy_functions.apply_terraform(args, changed_folders, **easyDict)
+    easy_functions.apply_terraform(args, changed_folders, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')

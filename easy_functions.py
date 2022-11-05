@@ -97,7 +97,10 @@ def apply_terraform(args, folders, **easyDict):
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Found the Followng Folders with uncommitted changes:\n')
     for folder in folders:
-        print(f'  - {base_dir}{folder}')
+        if path_sep in base_dir:
+            print(f'  - {base_dir}{folder}')
+        else:
+            print(f'  - {base_dir}{path_sep}{folder}')
     print(f'\n  Beginning Terraform Proceedures.')
     print(f'\n-----------------------------------------------------------------------------\n')
 
@@ -113,21 +116,11 @@ def apply_terraform(args, folders, **easyDict):
     print(output.decode('utf-8'))
     response_p = ''
     response_a = ''
-    for folder in folders:
-        site_name = folder.split(path_sep)[0]
-        site_match = 0
-        for k, v in easyDict['sites']['site_settings'].items():
-            if v[0]['site_name'] == site_name:
-                run_loc = v[0]['run_location']
-                site_match = 1
-        if site_match == 0:
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'  Could not determine the Run Location for folder {folder}:\n')
-            print(f'  Defined Site Names not found in the Path.')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            exit()
-
-        path = f'{base_dir}{path_sep}{folder}'
+    sites = list(easyDict['sites'].keys())
+    for site in sites:
+        run_loc = easyDict['sites'][site]['site_settings']['run_location']
+        site_name = easyDict['sites'][site]['site_settings']['site_name']
+        path = f'{base_dir}{path_sep}{site_name}'
         if run_loc == 'local':
             if os.path.isfile(os.path.join(path, '.terraform.lock.hcl')):
                 os.remove(os.path.join(path, '.terraform.lock.hcl'))
@@ -185,25 +178,25 @@ def apply_terraform(args, folders, **easyDict):
                 print(f'  Terraform Apply Complete.  Please Review for any errors and confirm next steps')
                 print(f'\n--------------------------------------------------------------------------------\n')
 
-        if args.git_check == 'True':
+        if args.git_check == True:
             while True:
                 print(f'\n-----------------------------------------------------------------------------\n')
                 print(f'  Folder: {path}.')
-                print(f'  Please confirm if you want to commit the folder or just move forward.')
-                print(f'  "C" to Commit the Folder and move forward.')
-                print(f'  "M" to Move to the Next Folder.')
+                print(f'  Please confirm if you want to commit {site_name} or just move forward.')
+                print(f'  "C" to Commit {site_name} and move forward.')
+                print(f'  "S" to Skip the Commit for {site_name}.')
                 print(f'  "Q" to Quit..')
                 print(f'\n-----------------------------------------------------------------------------\n')
-                response_a = input('  Please Enter ["C", "M" or "Q"]: ')
+                response_a = input('  Please Enter ["C", "S" or "Q"]: ')
                 if response_a == 'C':
                     break
-                elif response_a == 'M':
+                elif response_a == 'S':
                     break
                 elif response_a == 'Q':
                     exit()
                 else:
                     print(f'\n-----------------------------------------------------------------------------\n')
-                    print(f'  A Valid Response is either "C", "M" or "Q"...')
+                    print(f'  A Valid Response is either "C", "S" or "Q"...')
                     print(f'\n-----------------------------------------------------------------------------\n')
 
             while True:
@@ -1019,36 +1012,22 @@ def findVars(ws, func, rows, count):
 #========================================================
 def get_folders(args, path_sep):
     baseFolder = args.dir
-    random_folders = []
+    repo_dirs = []
     for subdir, dirs, files in os.walk(baseFolder):
         if not '.terraform' in subdir:
-            if len(subdir.split(path_sep)) == 3:
-                dirx = subdir.split(path_sep)
-                subdir = f'{dirx[1]}{path_sep}{dirx[2]}'
-                random_folders.append(subdir)
+            if len(subdir.split(path_sep)) == 2:
+                repo_dirs.append(subdir.split(path_sep)[1])
     
-    random_folders = list(set(random_folders))
-    random_folders.sort()
-    if not len(random_folders) > 0:
+    repo_dirs = list(set(repo_dirs))
+    repo_dirs.sort()
+    if not len(repo_dirs) > 0:
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   There were no folders in the Destination Directory.')
         print(f'   There may be something wrong with the input spreadsheet.')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
 
-    strict_folders = []
-    folder_order = ['access', 'common', 'mgmt']
-    for folder in folder_order:
-        for fx in random_folders:
-            if folder in fx:
-                strict_folders.append(fx)
-    for folder in strict_folders:
-        if folder in random_folders:
-            random_folders.remove(folder)
-    for folder in random_folders:
-        strict_folders.append(folder)
-
-    return strict_folders
+    return repo_dirs
 
 #========================================================
 # Function to Merge Easy ACI Repository to Dest Folder
@@ -1444,8 +1423,8 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
     if not os.path.isdir(tfe_dir):
         os.mkdir(tfe_dir)
         Repo.clone_from(git_url, tfe_dir)
-    # elif not os.path.isdir(tfe_modules):
-    #     Repo.clone_from(git_url, tfe_dir)
+    if not os.path.isfile(os.path.join(tfe_dir, 'README.md')):
+        Repo.clone_from(git_url, tfe_dir)
     else:
         g = cmd.Git(tfe_dir)
         g.pull()

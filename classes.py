@@ -367,6 +367,33 @@ class access(object):
         # Build Dictionary of Policy Variables
         polVars = easy_functions.process_kwargs(jsonData, **kwargs)
 
+        polVars['encap_blocks'] = []
+        if not polVars.get('vlan_group1') == None:
+            if not polVars.get('vlan_group1_allocation') == None:
+                polVars['encap_blocks'].append({
+                    'allocation_mode':polVars['vlan_group1_allocation'],
+                    'vlan_range':polVars['vlan_group1'],
+                })
+            else:
+                polVars['encap_blocks'].append({
+                    'allocation_mode':'inherit',
+                    'vlan_range':polVars['vlan_group1'],
+                })
+        if not polVars.get('vlan_group2') == None:
+            if not polVars.get('vlan_group2_allocation') == None:
+                polVars['encap_blocks'].append({
+                    'allocation_mode':polVars['vlan_group2_allocation'],
+                    'vlan_range':polVars['vlan_group2'],
+                })
+            else:
+                polVars['encap_blocks'].append({
+                    'allocation_mode':'inherit',
+                    'vlan_range':polVars['vlan_group2'],
+                })
+        pop_list = ['vlan_group1', 'vlan_group1_allocation', 'vlan_group2', 'vlan_group2_allocation']
+        for i in pop_list:
+            if not polVars.get(i) == None: polVars.pop(i)
+
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'access,pools,vlan'
         kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)

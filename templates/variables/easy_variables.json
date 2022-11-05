@@ -19,7 +19,7 @@
                                 ]
                             },
                             "class.access": {
-                                "directory": "fabric:access-policies",
+                                "directory": "access-policies",
                                 "enum": [
                                     "interfaces",
                                     "physical_and_external_domains",
@@ -35,7 +35,7 @@
                                 ]
                             },
                             "class.fabric": {
-                                "directory": "fabric:fabric-policies",
+                                "directory": "fabric-policies",
                                 "enum": [
                                     "fabric"
                                 ]
@@ -5555,22 +5555,6 @@
                                 "default": "reject",
                                 "x-omitempty": true
                             },
-                            "delimiter": {
-                                "description": "The delimiter symbol to use with the VMware portgroup name.  The acceptable symbols are |, ~, !, @, ^, +, =, and _..",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "|",
-                                    "~",
-                                    "!",
-                                    "@",
-                                    "^",
-                                    "+",
-                                    "=",
-                                    "_"
-                                ],
-                                "default": "|",
-                                "x-omitempty": true
-                            },
                             "deploy_immediacy": {
                                 "description": "Once policies are downloaded to the leaf software, deployment immediacy can specify when the policy is pushed into the hardware policy CAM. The options are:  * Immediate: Specifies that the policy is programmed in the hardware policy CAM when the policy is downloaded in the leaf software.  * On Demand: Specifies that the policy is programmed in the hardware policy CAM only when the first packet is received through the data path. This process helps to optimize the hardware space.  The default is On Demand.",
                                 "type": "list_of_values",
@@ -5629,7 +5613,6 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
-                                "delimiter": "",
                                 "enhanced_lag_policy": ""
                             },
                             "port_allocation": {
