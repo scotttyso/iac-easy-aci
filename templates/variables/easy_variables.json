@@ -19,7 +19,7 @@
                                 ]
                             },
                             "class.access": {
-                                "directory": "fabric:access-policies",
+                                "directory": "access-policies",
                                 "enum": [
                                     "interfaces",
                                     "physical_and_external_domains",
@@ -35,7 +35,7 @@
                                 ]
                             },
                             "class.fabric": {
-                                "directory": "fabric:fabric-policies",
+                                "directory": "fabric-policies",
                                 "enum": [
                                     "fabric"
                                 ]
