@@ -1033,76 +1033,40 @@ def get_folders(args, path_sep):
 # Function to Merge Easy ACI Repository to Dest Folder
 #========================================================
 def get_latest_versions(easyDict):
-    # Get the Latest Release Tag for the provider-aci repository
-    url = f'https://github.com/CiscoDevNet/terraform-provider-aci/tags/'
-    r = requests.get(url, stream=True)
-    repoVer = 'BLANK'
-    stringMatch = False
-    while stringMatch == False:
-        for line in r.iter_lines():
-            toString = line.decode("utf-8")
-            if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
-                repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
-                break
-        stringMatch = True
+
+    url_list = [
+        'https://github.com/CiscoDevNet/terraform-provider-aci/tags/',
+        'https://github.com/CiscoDevNet/terraform-provider-mso/tags/',
+        'https://github.com/hashicorp/terraform/tags',
+        'https://github.com/netascode/terraform-provider-utils/tags/'
+    ]
+    for url in url_list:
+        # Get the Latest Release Tag for the Provider
+        r = requests.get(url, stream=True)
+        repoVer = 'BLANK'
+        stringMatch = False
+        while stringMatch == False:
+            for line in r.iter_lines():
+                toString = line.decode("utf-8")
+                if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
+                    repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
+                    break
+            stringMatch = True
+        
+        # Make sure the latest_versions Key exists
+        if easyDict.get('latest_versions') == None:
+            easyDict['latest_versions'] = {}
+        
+        # Set Provider Version
+        if   'terraform-provider-aci' in url:
+            easyDict['latest_versions']['aci_provider_version'] = repoVer
+        elif   'terraform-provider-ndo' in url:
+            easyDict['latest_versions']['ndo_provider_version'] = repoVer
+        elif 'netascode' in url:
+            easyDict['latest_versions']['utils_provider_version'] = repoVer
+        else: easyDict['latest_versions']['terraform_version'] = repoVer
     
-    # Set ACI Provider Version
-    aci_provider_version = repoVer
-
-    # Get the Latest Release Tag for the provider-mso repository
-    url = f'https://github.com/CiscoDevNet/terraform-provider-mso/tags/'
-    r = requests.get(url, stream=True)
-    repoVer = 'BLANK'
-    stringMatch = False
-    while stringMatch == False:
-        for line in r.iter_lines():
-            toString = line.decode("utf-8")
-            if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
-                repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
-                break
-        stringMatch = True
-    
-    # Set NDO Provider Version
-    ndo_provider_version = repoVer
-
-    # Get the Latest Release Tag for the provider-mso repository
-    url = f'https://github.com/netascode/terraform-provider-utils/tags/'
-    r = requests.get(url, stream=True)
-    repoVer = 'BLANK'
-    stringMatch = False
-    while stringMatch == False:
-        for line in r.iter_lines():
-            toString = line.decode("utf-8")
-            if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
-                repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
-                break
-        stringMatch = True
-    
-    # Set NDO Provider Version
-    utils_provider_version = repoVer
-
-    # Get the Latest Release Tag for Terraform
-    url = f'https://github.com/hashicorp/terraform/tags'
-    r = requests.get(url, stream=True)
-    repoVer = 'BLANK'
-    stringMatch = False
-    while stringMatch == False:
-        for line in r.iter_lines():
-            # print(line)
-            toString = line.decode("utf-8")
-            if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
-                repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
-                break
-        stringMatch = True
-
-    # Set Terraform Version
-    terraform_version = repoVer
-
-    easyDict['latest_versions']['aci_provider_version'] = aci_provider_version
-    easyDict['latest_versions']['ndo_provider_version'] = ndo_provider_version
-    easyDict['latest_versions']['terraform_version'] = terraform_version
-    easyDict['latest_versions']['utils_provider_version'] = utils_provider_version
-
+    # Return kwargs
     return easyDict
 
 #========================================================
