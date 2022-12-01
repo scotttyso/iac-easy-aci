@@ -329,7 +329,12 @@ def create_selector(ws_sw, ws_sw_row_count, **polVars):
 #========================================================
 # Function to Create Static Paths within EPGs
 #========================================================
-def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, template, **polVars):
+def create_static_paths(**kwargs):
+    dest_dir  = kwargs['dest_dir']
+    dest_file = kwargs['dest_file']
+    polVars = {}
+    wb    = kwargs['wb']
+    wb_sw = kwargs['wb_sw']
     wsheets = wb_sw.get_sheet_names()
     tf_file = ''
     for wsheet in wsheets:
@@ -337,17 +342,18 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
         for row in ws.rows:
             if not (row[12].value == None or row[13].value == None):
                 vlan_test = ''
-                if re.search('^(individual|port-channel|vpc)$', row[7].value) and (re.search(r'\d+', str(row[12].value)) or re.search(r'\d+', str(row[13].value))):
+                if re.search('^(individual|port-channel|vpc)$', row[7].value) and (re.search(r'\d+', str(row[12].value)
+                ) or re.search(r'\d+', str(row[13].value))):
                     if not row[12].value == None:
                         vlan = row[12].value
-                        vlan_test = vlan_range(vlan, **polVars)
+                        vlan_test = vlan_range(vlan, **kwargs)
                         if 'true' in vlan_test:
                             polVars['mode'] = 'native'
                     if not 'true' in vlan_test:
                         polVars['mode'] = 'regular'
                         if not row[13].value == None:
                             vlans = row[13].value
-                            vlan_test = vlan_range(vlans, **polVars)
+                            vlan_test = vlan_range(vlans, **kwargs)
                 if vlan_test == 'true':
                     polVars['Pod_ID'] = row[1].value
                     polVars['Node_ID'] = row[2].value
@@ -367,26 +373,36 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
                                 node1 = polVars['Node_ID']
                                 node2 = rx[5].value
                                 polVars['Policy_Group'] = '%s_vpc%s' % (row[3].value, polVars['Bundle_ID'])
-                                polVars['tDn'] = 'topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (pod, node1, node2, polVars['Policy_Group'])
-                                polVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (pod, node1, node2, polVars['Policy_Group'])
+                                polVars['tDn'] = 'topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (
+                                    pod, node1, node2, polVars['Policy_Group']
+                                )
+                                polVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/protpaths-%s-%s/pathep-[%s]' % (
+                                    pod, node1, node2, polVars['Policy_Group']
+                                )
                                 polVars['GUI_Static'] = 'Pod-%s/Node-%s-%s/%s' % (pod, node1, node2, polVars['Policy_Group'])
                                 polVars['Static_descr'] = 'Pod-%s_Nodes-%s-%s_%s' % (pod, node1, node2, polVars['Policy_Group'])
                                 tf_file = './ACI/%s/%s/%s' % (polVars['Site_Name'], dest_dir, dest_file)
                                 read_file = open(tf_file, 'r')
                                 read_file.seek(0)
-                                static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (polVars['App_Profile'], polVars['EPG'], polVars['Static_descr'])
+                                static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (
+                                    polVars['App_Profile'], polVars['EPG'], polVars['Static_descr']
+                                )
                                 # if not static_path_descr in read_file.read():
                                 #     create_tf_file(wr_method, dest_dir, dest_file, template, **polVars)
 
                     elif polVars['Port_Type'] == 'port-channel':
                         polVars['Policy_Group'] = '%s_pc%s' % (row[3].value, polVars['Bundle_ID'])
                         polVars['tDn'] = 'topology/pod-%s/paths-%s/pathep-[%s]' % (pod, polVars['Node_ID'], polVars['Policy_Group'])
-                        polVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/paths-%s/pathep-[%s]' % (pod, polVars['Node_ID'], polVars['Policy_Group'])
+                        polVars['Static_Path'] = 'rspathAtt-[topology/pod-%s/paths-%s/pathep-[%s]' % (
+                            pod, polVars['Node_ID'], polVars['Policy_Group']
+                        )
                         polVars['GUI_Static'] = 'Pod-%s/Node-%s/%s' % (pod, polVars['Node_ID'], polVars['Policy_Group'])
                         polVars['Static_descr'] = 'Pod-%s_Node-%s_%s' % (pod, polVars['Node_ID'], polVars['Policy_Group'])
                         read_file = open(tf_file, 'r')
                         read_file.seek(0)
-                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (polVars['App_Profile'], polVars['EPG'], polVars['Static_descr'])
+                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (
+                            polVars['App_Profile'], polVars['EPG'], polVars['Static_descr']
+                        )
                         # if not static_path_descr in read_file.read():
                         #     create_tf_file(wr_method, dest_dir, dest_file, template, **polVars)
 
@@ -398,7 +414,9 @@ def create_static_paths(wb, wb_sw, row_num, wr_method, dest_dir, dest_file, temp
                         polVars['Static_descr'] = 'Pod-%s_Node-%s_%s' % (pod, polVars['Node_ID'], polVars['Interface_Selector'])
                         read_file = open(tf_file, 'r')
                         read_file.seek(0)
-                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (polVars['App_Profile'], polVars['EPG'], polVars['Static_descr'])
+                        static_path_descr = 'resource "aci_epg_to_static_path" "%s_%s_%s"' % (
+                            polVars['App_Profile'], polVars['EPG'], polVars['Static_descr']
+                        )
                         # if not static_path_descr in read_file.read():
                         #     create_tf_file(wr_method, dest_dir, dest_file, template, **polVars)
                         print('hello')
@@ -1457,7 +1475,8 @@ def process_kwargs(jsonData, **kwargs):
             error_count =+ 1
             error_list += [item]
     if error_count > 0:
-        error_ = f'\n\n***Begin ERROR ***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following REQUIRED Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
+        error_ = f'\n\n***Begin ERROR ***\n\nError on Worksheet {ws.title} row {row_num}\n'\
+            ' - The Following REQUIRED Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
         raise InsufficientArgs(error_)
 
     error_count = 0
@@ -1467,7 +1486,8 @@ def process_kwargs(jsonData, **kwargs):
             error_count =+ 1
             error_list += [item]
     if error_count > 0:
-        error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following Optional Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
+        error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n'\
+            ' - The Following Optional Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
         raise InsufficientArgs(error_)
 
     # Load all required args values from kwargs
@@ -1485,7 +1505,8 @@ def process_kwargs(jsonData, **kwargs):
                 required_args[item] = True
 
     if error_count > 0:
-        error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following REQUIRED Key(s) Argument(s) are Blank:\nPlease Validate "{error_list}"\n\n****End ERROR****\n'
+        error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n'
+        ' - The Following REQUIRED Key(s) Argument(s) are Blank:\nPlease Validate "{error_list}"\n\n****End ERROR****\n'
         raise InsufficientArgs(error_)
 
     for item in kwargs:
