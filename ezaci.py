@@ -370,17 +370,18 @@ def main():
             process_type = f'process_{x}'
             easyDict = eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
 
-
     # Begin Proceedures to Create files
     easy_functions.create_yaml(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
-    easy_functions.merge_easy_aci_repository(args, easy_jsonData, **easyDict)
+    site_names, site_directories = easy_functions.merge_easy_aci_repository(args, easy_jsonData, **easyDict)
     changed_folders = []
-    if args.git_check == True:
-        changed_folders = easy_functions.git_check_status(args)
+    if args.git_check == False:
+        changed_folders = easy_functions.git_check_status(args, site_names, site_directories)
     else:
-        changed_folders = easy_functions.get_folders(args, path_sep)
-    easy_functions.apply_terraform(args, changed_folders, **easyDict)
+        changed_folders = site_directories
+    easyDict['changed_folders'] = changed_folders
+    easyDict['site_names'] = site_names
+    easy_functions.apply_terraform(args, path_sep, **easyDict)
 
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Proceedures Complete!!! Closing Environment and Exiting Script.')

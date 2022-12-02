@@ -25,7 +25,6 @@ import time
 import validating
 import yaml
 
-
 # Global options for debugging
 print_payload = False
 print_response_always = False
@@ -85,30 +84,19 @@ def annotations_split(annotations):
 # Function to run 'terraform plan' and 'terraform apply'
 # in the each folder of the Destination Directory.
 #========================================================
-def apply_terraform(args, folders, **easyDict):
-    base_dir = args.dir
-    jsonData = easyDict
+def apply_terraform(args, path_sep, **easyDict):
+    folders           = easyDict['changed_folders']
+    base_dir          = args.dir
     running_directory = os.getcwd()
-    # tf_path = '.terraform/providers/registry.terraform.io/'
-    opSystem = platform.system()
-    if opSystem == 'Windows': path_sep = '\\'
-    else: path_sep = '/'
-
+    sites             = easyDict['site_names']
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'  Found the Followng Folders with uncommitted changes:\n')
-    for folder in folders:
-        if path_sep in base_dir:
-            print(f'  - {base_dir}{folder}')
-        else:
-            print(f'  - {base_dir}{path_sep}{folder}')
+    for folder in folders: print(f'  - {folder}')
     print(f'\n  Beginning Terraform Proceedures.')
     print(f'\n-----------------------------------------------------------------------------\n')
-
     tfe_dir = f'.terraform{path_sep}providers{path_sep}'
     tfe_cmd = subprocess.Popen(['terraform', 'init', '-upgrade'],
-        cwd=running_directory,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT
+        cwd=running_directory, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
     output, err = tfe_cmd.communicate()
     tfe_cmd.wait()
@@ -116,12 +104,16 @@ def apply_terraform(args, folders, **easyDict):
     print(output.decode('utf-8'))
     response_p = ''
     response_a = ''
-    sites = list(easyDict['sites'].keys())
+    sites = easyDict['sites'].keys()
     for site in sites:
         run_loc = easyDict['sites'][site]['site_settings']['run_location']
         site_name = easyDict['sites'][site]['site_settings']['site_name']
         path = f'{base_dir}{path_sep}{site_name}'
-        if run_loc == 'local':
+        run_count = 0
+        for folder in folders:
+            if site_name in folder:
+                run_count +=1
+        if run_loc == 'local' and run_count > 0:
             if os.path.isfile(os.path.join(path, '.terraform.lock.hcl')):
                 os.remove(os.path.join(path, '.terraform.lock.hcl'))
             if os.path.isdir(os.path.join(path, '.terraform')):
@@ -129,39 +121,31 @@ def apply_terraform(args, folders, **easyDict):
             lock_count = 0
             tfe_cmd = subprocess.Popen(
                 ['terraform', 'init', f'-plugin-dir={running_directory}/{tfe_dir}'],
-                cwd=path,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT
+                cwd=path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
             output, err = tfe_cmd.communicate()
             tfe_cmd.wait()
             print(output.decode('utf-8'))
-            if 'does not match configured version' in output.decode('utf-8'):
-                lock_count =+ 1
-
+            if 'does not match configured version' in output.decode('utf-8'): lock_count =+ 1
             if lock_count > 0:
                 tfe_cmd = subprocess.Popen(
-                    ['terraform', 'init', '-upgrade', f'-plugin-dir={running_directory}/{tfe_dir}']
-                    , cwd=path
+                    ['terraform', 'init', '-upgrade', f'-plugin-dir={running_directory}/{tfe_dir}'], cwd=path
                 )
                 tfe_cmd.wait()
                 print(output.decode('utf-8'))
             tfe_cmd = subprocess.Popen(['terraform', 'plan', '-out=main.plan'], cwd=path)
             output, err = tfe_cmd.communicate()
             tfe_cmd.wait()
-            if not output == None:
-                print(output.decode('utf-8'))
+            if not output == None: print(output.decode('utf-8'))
             while True:
                 print(f'\n-----------------------------------------------------------------------------\n')
                 print(f'  Terraform Plan Complete.  Please Review the Plan and confirm if you want')
                 print(f'  to move forward.  "A" to Apply the Plan. "S" to Skip.  "Q" to Quit.')
-                print(f'  Current Working Directory: {folder}')
+                print(f'  Current Working Directory: {path}')
                 print(f'\n-----------------------------------------------------------------------------\n')
                 response_p = input('  Please Enter ["A", "S" or "Q"]: ')
-                if re.search('^(A|S)$', response_p):
-                    break
-                elif response_p == 'Q':
-                    exit()
+                if re.search('^(A|S)$', response_p): break
+                elif response_p == 'Q': exit()
                 else:
                     print(f'\n-----------------------------------------------------------------------------\n')
                     print(f'  A Valid Response is either "A", "S" or "Q"...')
@@ -172,8 +156,7 @@ def apply_terraform(args, folders, **easyDict):
                 tfe_cmd.wait()
                 output, err = tfe_cmd.communicate()
                 tfe_cmd.wait()
-                if not output == None:
-                    print(output.decode('utf-8'))
+                if not output == None: print(output.decode('utf-8'))
                 print(f'\n--------------------------------------------------------------------------------\n')
                 print(f'  Terraform Apply Complete.  Please Review for any errors and confirm next steps')
                 print(f'\n--------------------------------------------------------------------------------\n')
@@ -188,12 +171,9 @@ def apply_terraform(args, folders, **easyDict):
                 print(f'  "Q" to Quit..')
                 print(f'\n-----------------------------------------------------------------------------\n')
                 response_a = input('  Please Enter ["C", "S" or "Q"]: ')
-                if response_a == 'C':
-                    break
-                elif response_a == 'S':
-                    break
-                elif response_a == 'Q':
-                    exit()
+                if response_a == 'C': break
+                elif response_a == 'S': break
+                elif response_a == 'Q': exit()
                 else:
                     print(f'\n-----------------------------------------------------------------------------\n')
                     print(f'  A Valid Response is either "C", "S" or "Q"...')
@@ -208,8 +188,7 @@ def apply_terraform(args, folders, **easyDict):
                     baseRepo.git.commit('-m', f'{commit_message}', '--', folder)
                     baseRepo.git.push()
                     break
-                else:
-                    break
+                else: break
 
 #========================================================
 # Function to Add Required Arguments
@@ -1026,28 +1005,6 @@ def findVars(ws, func, rows, count):
     return var_dict
 
 #========================================================
-# Function to Get List of Folders
-#========================================================
-def get_folders(args, path_sep):
-    baseFolder = args.dir
-    repo_dirs = []
-    for subdir, dirs, files in os.walk(baseFolder):
-        if not '.terraform' in subdir:
-            if len(subdir.split(path_sep)) == 2:
-                repo_dirs.append(subdir.split(path_sep)[1])
-    
-    repo_dirs = list(set(repo_dirs))
-    repo_dirs.sort()
-    if not len(repo_dirs) > 0:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   There were no folders in the Destination Directory.')
-        print(f'   There may be something wrong with the input spreadsheet.')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-
-    return repo_dirs
-
-#========================================================
 # Function to Merge Easy ACI Repository to Dest Folder
 #========================================================
 def get_latest_versions(easyDict):
@@ -1174,45 +1131,27 @@ def git_base_repo(args, wb):
 #========================================================
 # Function to Check the Git Status of the Folders
 #========================================================
-def git_check_status(args):
+def git_check_status(args, site_names, site_directories):
     baseRepo = Repo(args.dir)
     untrackedFiles = baseRepo.untracked_files
     random_folders = []
     modified = baseRepo.git.status()
     modifiedList = [y for y in (x.strip() for x in modified.splitlines()) if y]
-    for line in modifiedList:
-        if re.search(r'modified:   (.+\.auto\.tfvars)', line):
-            file = re.search(r'modified:   (.+\.auto.tfvars)', line).group(1)
-            dirname, filename = os.path.split(file)
-            if not dirname in random_folders:
-                random_folders.append(dirname)
-            
-    for file in untrackedFiles:
-        dirname, filename = os.path.split(file)
-        if not dirname in random_folders:
-            random_folders.append(dirname)
-
-    random_folders = list(set(random_folders))
-    random_folders.sort()
-    if not len(random_folders) > 0:
+    for site in site_names:
+        for x in site_directories:
+            if site in x:
+                for line in modifiedList:
+                    if not x in random_folders and site in line: random_folders.append(x)  
+                for line in untrackedFiles:
+                    if not x in random_folders and site in line: random_folders.append(x)
+    strict_folders = list(set(random_folders))
+    strict_folders.sort()
+    if not len(strict_folders) > 0:
         print(f'\n-----------------------------------------------------------------------------\n')
         print(f'   There were no uncommitted changes in the environment.')
         print(f'   Proceedures Complete!!! Closing Environment and Exiting Script.')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()
-
-    strict_folders = []
-    folder_order = ['access', 'common', 'mgmt']
-    for folder in folder_order:
-        for fx in random_folders:
-            if folder in fx:
-                strict_folders.append(fx)
-    for folder in strict_folders:
-        if folder in random_folders:
-            random_folders.remove(folder)
-    for folder in random_folders:
-        strict_folders.append(folder)
-
     return strict_folders
 
 #========================================================
@@ -1413,13 +1352,16 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
 
     # Get All sub-folders from tfDir
     site_list = list(easyDict['sites'].keys())
+    site_directories = []
+    site_names = []
     for item in site_list:
         site_name = easyDict['sites'][item]['site_settings']['site_name']
+        site_names.append(site_name)
         site_dir = os.path.join(baseRepo, site_name)
+        site_directories.append(site_dir)
         default_dir = os.path.join(baseRepo, site_name, 'defaults')
         if not os.path.isdir(default_dir):
             os.mkdir(default_dir)
-    
         # Now Loop over the folders and merge the module files
         for folder in [site_name, 'defaults']:
             if folder == 'defaults':
@@ -1433,6 +1375,8 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
                 if not os.path.isdir(os.path.join(src_dir, fname)):
                     shutil.copy2(os.path.join(src_dir, fname), dest_dir)
         terraform_fmt(site_dir)
+    # Return Site Names and Site Directories
+    return site_names, site_directories
 
 #========================================================
 # Function to GET to the NDO API
