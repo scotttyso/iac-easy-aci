@@ -1360,6 +1360,8 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
         site_dir = os.path.join(baseRepo, site_name)
         site_directories.append(site_dir)
         default_dir = os.path.join(baseRepo, site_name, 'defaults')
+        if not os.path.isdir(site_dir):
+            os.mkdir(site_dir)
         if not os.path.isdir(default_dir):
             os.mkdir(default_dir)
         # Now Loop over the folders and merge the module files
