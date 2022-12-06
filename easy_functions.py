@@ -2021,6 +2021,8 @@ def validate_args(jsonData, **kwargs):
                     validating.validator(i, **kwargs)
             elif re.search(r'^module_[\d]+$', i):
                 validating.list_values_key('modules', i, jsonData, **kwargs)
+            elif jsonData[i]['type'] == 'boolean':
+                validating.boolean(i, **kwargs)
             elif jsonData[i]['type'] == 'domain':
                 validating.domain(i, **kwargs)
             elif jsonData[i]['type'] == 'email':
