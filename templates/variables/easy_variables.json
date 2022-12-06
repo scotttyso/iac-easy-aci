@@ -5774,8 +5774,14 @@
                     {},
                     {
                         "properties": {
-                            "ndo_template": {
-                                "description": "Nexus Dashboard Orchestrator Template name.",
+                            "create": {
+                                "description": "Flag to Determine if the Object Should be created on the controller.",
+                                "type": "boolean",
+                                "default": true,
+                                "x-omitempty": true
+                            },
+                            "ndo_settings": {
+                                "description": "Name for the NDO Settings Policy.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -5784,10 +5790,11 @@
                             },
                             "optional_args": {
                                 "alias": "",
+                                "create": "",
                                 "description": "",
                                 "global_alias": "",
                                 "qos_class": "",
-                                "ndo_template": ""
+                                "ndo_settings": ""
                             },
                             "required_args": {
                                 "name": "",
@@ -8457,6 +8464,12 @@
                     {},
                     {
                         "properties": {
+                            "create": {
+                                "description": "Flag to Determine if the Object Should be created on the controller.",
+                                "type": "boolean",
+                                "default": true,
+                                "x-omitempty": true
+                            },
                             "ndo_settings": {
                                 "description": "Name for this NDO Schema Policy to Associate to BD's, EPG's, etc.",
                                 "type": "list_of_string",
@@ -8466,6 +8479,7 @@
                                 "x-omitempty": true
                             },
                             "optional_args": {
+                                "create": "",
                                 "description": ""
                             },
                             "required_args": {
@@ -8880,6 +8894,12 @@
                     {},
                     {
                         "properties": {
+                            "create": {
+                                "description": "Flag to Determine if the Object Should be created on the controller.",
+                                "type": "boolean",
+                                "default": true,
+                                "x-omitempty": true
+                            },
                             "ndo_settings": {
                                 "description": "Names of NDO Settings Policy.",
                                 "type": "string",
@@ -8891,6 +8911,7 @@
                             "optional_args": {
                                 "alias": "",
                                 "annotations": "",
+                                "create": "",
                                 "description": "",
                                 "global_alias": "",
                                 "ndo_settings": "",
@@ -8980,6 +9001,16 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
+                            "ip_data_plane_learning": {
+                                "description": "Defines if IP addresses are learned through dataplane packets for the VRF.",
+                                "type": "list_of_values",
+                                "enum": [
+                                    "disabled",
+                                    "enabled"
+                                ],
+                                "default": "enabled",
+                                "x-omitempty": true
+                            },
                             "monitoring_policy": {
                                 "description": "Name of the Monitoring Policy.",
                                 "type": "string",
@@ -9036,6 +9067,7 @@
                             },
                             "required_args": {
                                 "bd_enforcement_status": "",
+                                "ip_data_plane_learning": "",
                                 "policy_control_enforcement_direction": "",
                                 "policy_control_enforcement_preference": "",
                                 "template_name": ""
@@ -9065,14 +9097,10 @@
                     {},
                     {
                         "properties": {
-                            "ip_data_plane_learning": {
-                                "description": "Defines if IP addresses are learned through dataplane packets for the VRF.",
-                                "type": "list_of_values",
-                                "enum": [
-                                    "disabled",
-                                    "enabled"
-                                ],
-                                "default": "enabled",
+                            "create": {
+                                "description": "Flag to Determine if the Object Should be created on the controller.",
+                                "type": "boolean",
+                                "default": true,
                                 "x-omitempty": true
                             },
                             "layer3_multicast": {
@@ -9081,8 +9109,8 @@
                                 "default": false,
                                 "x-omitempty": true
                             },
-                            "ndo_template": {
-                                "description": "Name of the NDO Template.",
+                            "ndo_settings": {
+                                "description": "Name of the NDO Settings Policy to Associate to the VRF.",
                                 "type": "string",
                                 "minimum": 1,
                                 "maximum": 64,
@@ -9092,9 +9120,10 @@
                             "optional_args": {
                                 "alias": "",
                                 "annotations": "",
+                                "create": "",
                                 "description": "",
                                 "global_alias": "",
-                                "ndo_template": ""
+                                "ndo_settings": ""
                             },
                             "preferred_group": {
                                 "description": "Enable the Preferred Group feature to allow preferred group members in the VRF to communicate with each other without requiring a contract between them.",
@@ -9103,7 +9132,6 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "ip_data_plane_learning": "",
                                 "layer3_multicast": "",
                                 "name": "",
                                 "preferred_group": "",

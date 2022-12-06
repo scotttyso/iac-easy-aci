@@ -372,8 +372,8 @@ def main():
 
     # Begin Proceedures to Create files
     easy_functions.create_yaml(args, easy_jsonData, **easyDict)
-    easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     site_names, site_directories = easy_functions.merge_easy_aci_repository(args, easy_jsonData, **easyDict)
+    easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
     changed_folders = []
     if args.git_check == False:
         changed_folders = easy_functions.git_check_status(args, site_names, site_directories)

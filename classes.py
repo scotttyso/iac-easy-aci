@@ -1590,7 +1590,7 @@ class site_policies(object):
             for i in pop_list:
                 if not polVars.get(i) == None: polVars.pop(i)
 
-            if kwargs['args'].skip_version_check == 'True':
+            if kwargs['args'].skip_version_check == True:
                 polVars['version'] = '3.2(7l)'
             else:
                 fablogin = ndoLogin(kwargs['controller'], ndo_domain, ndo_pass, ndo_user)
@@ -1661,7 +1661,8 @@ class site_policies(object):
                     polVars['ndoDomain'] = v['site_settings']['login_domain']
             
             # Assign Management EPGs
-            polVars['management_epgs'] = kwargs['easyDict']['tmp']['management_epgs']
+            if kwargs['easyDict']['tmp'].get('management_epgs'):
+                polVars['management_epgs'] = kwargs['easyDict']['tmp']['management_epgs']
             
             # siteDirs = next(os.walk(os.path.join(args.dir, site_name)))[1]
             kwargs['auth_type'] = v['site_settings']['auth_type']
@@ -1844,6 +1845,13 @@ class tenants(object):
         polVars = easy_functions.process_kwargs(jsonData, **kwargs)
         polVars['monitoring_policy'] = 'default'
 
+        if not polVars['ndo_settings'] == None:
+            if kwargs['easyDict']['tmp']['ndo_settings'].get(polVars['ndo_settings']):
+                ndo_settings = kwargs['easyDict']['tmp']['ndo_settings'][polVars['ndo_settings']]
+            else: validating.error_schema('ndo_settings', **kwargs)
+            polVars['ndo'] = {'schema':ndo_settings['schema'], 'template': ndo_settings['template']}
+            polVars.pop('ndo_settings')
+        
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'application_profiles'
         kwargs['easyDict'] = easy_functions.ez_tenants_append(polVars, **kwargs)
@@ -1888,7 +1896,9 @@ class tenants(object):
         # Re-Classify the Application EPG Template
         if not polVars['epg_template'] == None:
             easy_functions.confirm_templates_exist('application_epgs', polVars['epg_template'], **kwargs)
-            polVars['application_epg'] = {'application_profile':polVars['application_profile'],'template':polVars['epg_template']}
+            polVars['application_epg'] = {
+                'application_profile':polVars['application_profile'],'template':polVars['epg_template']
+            }
             if not polVars['vlans'] == None:
                 polVars['epg_to_aaep_vlans'] = [eval(i) for i in polVars['vlans'].split(',')]
                 polVars.pop('vlans')
@@ -1959,7 +1969,9 @@ class tenants(object):
             else: validating.error_schema('ndo_settings', **kwargs)
             vrf['schema'] = ndo_settings['vrf_schema']
             vrf['template'] = ndo_settings['vrf_template']
-            ndo = {'template': ndo_settings['template'], 'sites': ndo_settings['sites']}
+            ndo = {
+                'schema':ndo_settings['schema'], 'sites': ndo_settings['sites'], 'template': ndo_settings['template']
+            }
         else: ndo = None
 
         # Remove Arguments from Dictionary
@@ -2465,7 +2477,9 @@ class tenants(object):
             if kwargs['easyDict']['tmp']['ndo_settings'].get(polVars['ndo_settings']):
                 ndo_settings = kwargs['easyDict']['tmp']['ndo_settings'][polVars['ndo_settings']]
             else: validating.error_schema('ndo_settings', **kwargs)
-            polVars['ndo'] = {'template': ndo_settings['template'], 'sites': ndo_settings['sites']}
+            polVars['ndo'] = {
+                'schema':ndo_settings['schema'], 'template': ndo_settings['template'], 'sites': ndo_settings['sites']
+            }
         else: polVars['ndo'] = None
         
         # Remove Unused Items
@@ -3093,9 +3107,12 @@ class tenants(object):
             'contracts': [],
             'label_match_criteria': 'AtleastOne'
         }
-        if not polVars['ndo_template'] == None:
-            polVars['ndo'] = {'template': polVars['ndo_template']}
-        pop_list = ['ndo_template', 'tenant']
+        if not polVars['ndo_settings'] == None:
+            if kwargs['easyDict']['tmp']['ndo_settings'].get(polVars['ndo_settings']):
+                ndo_settings = kwargs['easyDict']['tmp']['ndo_settings'][polVars['ndo_settings']]
+            else: validating.error_schema('ndo_settings', **kwargs)
+            polVars['ndo'] = {'schema':ndo_settings['schema'], 'template': ndo_settings['template']}
+        pop_list = ['ndo_settings', 'tenant']
         for i in pop_list:
             if not polVars.get(i) == None: polVars.pop(i)
 

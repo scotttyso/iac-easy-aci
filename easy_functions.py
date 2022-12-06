@@ -1035,7 +1035,7 @@ def get_latest_versions(easyDict):
         # Set Provider Version
         if   'terraform-provider-aci' in url:
             easyDict['latest_versions']['aci_provider_version'] = repoVer
-        elif   'terraform-provider-ndo' in url:
+        elif   'terraform-provider-mso' in url:
             easyDict['latest_versions']['ndo_provider_version'] = repoVer
         elif 'netascode' in url:
             easyDict['latest_versions']['utils_provider_version'] = repoVer
