@@ -169,29 +169,29 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
     easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the Tenant Policies Worksheet
-    func_regex = tenant_pol_regex
-    ws = wb['Tenant Policies']
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    #func_regex = tenant_pol_regex
+    #ws = wb['Tenant Policies']
+    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the Apps and EPGs Worksheet
-    func_regex = apps_epgs_regex
-    ws = wb['Apps and EPGs']
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    #func_regex = apps_epgs_regex
+    #ws = wb['Apps and EPGs']
+    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the Bridge Domains Worksheet
-    func_regex = bds_regex
-    ws = wb['Bridge Domains']
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    #func_regex = bds_regex
+    #ws = wb['Bridge Domains']
+    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the L3Out Worksheet
-    func_regex = l3out_regex
-    ws = wb['L3Out']
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    #func_regex = l3out_regex
+    #ws = wb['L3Out']
+    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     # Evaluate the Contracts Worksheet
-    func_regex = contracts_regex
-    ws = wb['Contracts']
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    #func_regex = contracts_regex
+    #ws = wb['Contracts']
+    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     return easyDict
 
