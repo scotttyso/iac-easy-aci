@@ -148,6 +148,17 @@ def error_schema(var, **kwargs):
     print(f'\n-----------------------------------------------------------------------------\n')
     exit()
 
+def error_sites_not_found(var, **kwargs):
+    row_num = kwargs['row_num']
+    ws = kwargs['ws']
+    varValue = kwargs[var]
+    print(f'\n-----------------------------------------------------------------------------\n')
+    print(f'   Error on Row {row_num} of Worksheet {ws.title}. The {var} "{varValue}"')
+    print(f'   was not found. Please be sure this epg_vmm_sites is already defined.')
+    print(f'   Exiting....')
+    print(f'\n-----------------------------------------------------------------------------\n')
+    exit()
+
 def error_template_not_found(var, **kwargs):
     row_num = kwargs['row_num']
     ws = kwargs['ws']

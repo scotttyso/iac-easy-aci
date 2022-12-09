@@ -5534,6 +5534,37 @@
                     }
                 ]
             },
+            "tenants.applicationEpg.VMMSites": {
+                "allOf": [
+                    {},
+                    {
+                        "properties": {
+                            "optional_args": {
+                            },
+                            "required_args": {
+                                "vmm_domain": "",
+                                "vmm_sites": ""
+                            },
+                            "vmm_domain": {
+                                "description": "Name for the VMM Domain.",
+                                "type": "string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "vmm_sites": {
+                                "description": "Name(s) for the Nexus Dashboard Sites to Associate to the VMM Domain.",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            }
+                        }
+                    }
+                ]
+            },
             "tenants.applicationEpg.VMMTemplates": {
                 "allOf": [
                     {},
@@ -8480,15 +8511,15 @@
                             },
                             "optional_args": {
                                 "create": "",
-                                "description": ""
-                            },
-                            "required_args": {
-                                "ndo_settings": "",
-                                "schema": "",
+                                "description": "",
                                 "sites": "",
                                 "template": "",
                                 "vrf_schema": "",
                                 "vrf_template": ""
+                            },
+                            "required_args": {
+                                "ndo_settings": "",
+                                "schema": ""
                             },
                             "schema": {
                                 "description": "Name of the Schema to Create.",
@@ -8901,8 +8932,8 @@
                                 "x-omitempty": true
                             },
                             "ndo_settings": {
-                                "description": "Names of NDO Settings Policy.",
-                                "type": "string",
+                                "description": "Names of NDO Settings Policies.",
+                                "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",

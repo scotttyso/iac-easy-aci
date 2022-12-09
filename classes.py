@@ -1550,7 +1550,22 @@ class site_policies(object):
 
         kwargs["multi_select"] = False
         # Prompt User for the Version of the Controller
-        if polVars['controller_type'] == 'apic':
+        ccount = 0
+        if args.skip_version_check == True:
+            if polVars['controller_type'] == 'apic': polVars['version'] = '4.2(7m)'
+            else: polVars['version'] = '3.2(7l)'
+        else:
+            url = 'https://{}'.format(polVars['controller'])
+            r = requests.Session()
+            try:
+                r.get(url, timeout=2, verify=False)
+            except requests.ConnectionError as e:
+                print(f'URL Error: {e}\nURL {url}'); ccount += 1
+        if ccount > 0:
+            if polVars['controller_type'] == 'apic': polVars['version'] = '4.2(7m)'
+            else: polVars['version'] = '3.2(7l)'
+            args.skip_version_check == True
+        if polVars['controller_type'] == 'apic' and args.skip_version_check == False:
             # Obtain the APIC version from the API
             polVars['easyDict'] = kwargs['easyDict']
             polVars['jsonData'] = jsonData
@@ -1560,25 +1575,22 @@ class site_policies(object):
             for i in pop_list:
                 if not polVars.get(i) == None: polVars.pop(i)
 
-            if args.skip_version_check == True:
-                polVars['version'] = '4.2(7m)'
+            if not kwargs['login_domain'] == None:
+                apic_user = f"apic#{kwargs['login_domain']}\\{kwargs['username']}"
             else:
-                if not kwargs['login_domain'] == None:
-                    apic_user = f"apic#{kwargs['login_domain']}\\{kwargs['username']}"
-                else:
-                    apic_user = kwargs['username']
-                fablogin = apicLogin(kwargs['controller'], apic_user, apic_pass)
-                cookies = fablogin.login()
+                apic_user = kwargs['username']
+            fablogin = apicLogin(kwargs['controller'], apic_user, apic_pass)
+            cookies = fablogin.login()
 
-                # Locate template for method
-                template_file = "aaaRefresh.json"
-                uri = 'api/aaaRefresh'
-                uriResponse = easy_functions.apic_api(
-                    kwargs['controller'], 'get', {}, cookies, uri, template_file
-                )
-                verJson = uriResponse.json()
-                polVars['version'] = verJson['imdata'][0]['aaaLogin']['attributes']['version']
-        else:
+            # Locate template for method
+            template_file = "aaaRefresh.json"
+            uri = 'api/aaaRefresh'
+            uriResponse = easy_functions.apic_api(
+                kwargs['controller'], 'get', {}, cookies, uri, template_file
+            )
+            verJson = uriResponse.json()
+            polVars['version'] = verJson['imdata'][0]['aaaLogin']['attributes']['version']
+        elif polVars['controller_type'] == 'ndo' and args.skip_version_check == False:
             # Obtain the NDO version from the API
             polVars['easyDict'] = kwargs['easyDict']
             polVars['jsonData'] = jsonData
@@ -1590,20 +1602,17 @@ class site_policies(object):
             for i in pop_list:
                 if not polVars.get(i) == None: polVars.pop(i)
 
-            if kwargs['args'].skip_version_check == True:
-                polVars['version'] = '3.2(7l)'
-            else:
-                fablogin = ndoLogin(kwargs['controller'], ndo_domain, ndo_pass, ndo_user)
-                cookies = fablogin.login()
+            fablogin = ndoLogin(kwargs['controller'], ndo_domain, ndo_pass, ndo_user)
+            cookies = fablogin.login()
 
-                # Locate template for method and obtain running Version
-                template_file = "aaaRefresh.json"
-                uri = 'mso/api/v1/platform/version'
-                uriResponse = easy_functions.ndo_api(
-                    kwargs['controller'], 'get', cookies, uri, template_file
-                )
-                verJson = uriResponse.json()
-                polVars['version'] = verJson['version']
+            # Locate template for method and obtain running Version
+            template_file = "aaaRefresh.json"
+            uri = 'mso/api/v1/platform/version'
+            uriResponse = easy_functions.ndo_api(
+                kwargs['controller'], 'get', cookies, uri, template_file
+            )
+            verJson = uriResponse.json()
+            polVars['version'] = verJson['version']
 
         if polVars['controller_type'] == 'apic': 
             site_wb = '%s_interface_selectors.xlsx' % (kwargs['site_name'])
@@ -2160,9 +2169,7 @@ class tenants(object):
                 ndo_settings = kwargs['easyDict']['tmp']['ndo_settings'][polVars['ndo_settings']]
             else: validating.error_schema('ndo_settings', **kwargs)
             polVars['ndo'] = {
-                'schema': ndo_settings['schema'],
-                'sites': ndo_settings['sites'],
-                'template': ndo_settings['template']
+                'schema': ndo_settings['schema'], 'sites': ndo_settings['sites'], 'template': ndo_settings['template']
             }
         else: polVars['ndo'] = None
         
@@ -2210,9 +2217,7 @@ class tenants(object):
                 ndo_settings = kwargs['easyDict']['tmp']['ndo_settings'][polVars['ndo_settings']]
             else: validating.error_schema('ndo_settings', **kwargs)
             polVars['ndo'] = {
-                'schema': ndo_settings['schema'],
-                'sites': ndo_settings['sites'],
-                'template': ndo_settings['template']
+                'schema': ndo_settings['schema'], 'sites': ndo_settings['sites'], 'template': ndo_settings['template']
             }
         else: polVars['ndo'] = None
 
@@ -2459,18 +2464,23 @@ class tenants(object):
         # Add Domain Mappings
         if not polVars['physical_domains'] == None or not polVars['vmm_domains'] == None:
             polVars['domains'] = []
-            if not polVars['physical_domains'] == None:
-                for i in polVars['physical_domains'].split(','):
-                    polVars['domains'].append(deepcopy({'name':i}))
-            if not polVars['vmm_domains'] == None:
-                for i in polVars['vmm_domains'].split(','):
-                    if kwargs['easyDict']['tmp'].get('vmm_templates'):
-                        if kwargs['easyDict']['tmp']['vmm_templates'].get(polVars['vmm_template']):
-                            vmm_template = deepcopy(kwargs['easyDict']['tmp']['vmm_templates'][polVars['vmm_template']])
-                        else: validating.error_template_not_found('vmm_template', **kwargs)
+        if not polVars['physical_domains'] == None:
+            for i in polVars['physical_domains'].split(','):
+                polVars['domains'].append(deepcopy({'name':i}))
+        if not polVars['vmm_domains'] == None:
+            for i in polVars['vmm_domains'].split(','):
+                if kwargs['easyDict']['tmp'].get('vmm_templates'):
+                    if kwargs['easyDict']['tmp']['vmm_templates'].get(polVars['vmm_template']):
+                        vmm_template = deepcopy(kwargs['easyDict']['tmp']['vmm_templates'][polVars['vmm_template']])
+                        if kwargs['easyDict']['tmp'].get('vmm_sites'):
+                            if kwargs['easyDict']['tmp']['vmm_sites'].get(i):
+                                vmm_template.update(deepcopy({'sites':kwargs['easyDict']['tmp']['vmm_sites'][i]}))
+                            else: validating.error_sites_not_found('vmm_domain', **kwargs)
+                        else: validating.error_sites_not_found('vmm_domain', **kwargs)
                     else: validating.error_template_not_found('vmm_template', **kwargs)
-                    vmm_template.update(deepcopy({'name':i,'domain_type':'vmm'}))
-                    polVars['domains'].append(deepcopy(vmm_template))
+                else: validating.error_template_not_found('vmm_template', **kwargs)
+                vmm_template.update(deepcopy({'name':i,'domain_type':'vmm'}))
+                polVars['domains'].append(deepcopy(vmm_template))
         
         # Add NDO Settings if Defined
         if not polVars['ndo_settings'] == None:
@@ -2490,6 +2500,23 @@ class tenants(object):
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'templates,application_epgs'
         kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
+        return kwargs['easyDict']
+
+    #=============================================================================
+    # Function - Application EPG - VMM Sites
+    #=============================================================================
+    def epg_vmm_sites(self, **kwargs):
+        # Get Variables from Library
+        jsonData = kwargs['easy_jsonData']['tenants.applicationEpg.VMMSites']['allOf'][1]['properties']
+
+        # Build Dictionary of Policy Variables
+        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
+        polVars['vmm_sites'] = polVars['vmm_sites'].split(',')
+
+        # Add Policy Variables to easyDict
+        if not kwargs['easyDict']['tmp'].get('vmm_sites'):
+            kwargs['easyDict']['tmp'].update(deepcopy({'vmm_sites':{}}))
+        kwargs['easyDict']['tmp']['vmm_sites'].update(deepcopy({f"{polVars['vmm_domain']}":polVars['vmm_sites']}))
         return kwargs['easyDict']
 
     #=============================================================================
@@ -2745,7 +2772,7 @@ class tenants(object):
 
         # Build Dictionary of Policy Variables
         polVars = easy_functions.process_kwargs(jsonData, **kwargs)
-        polVars['sites'] = polVars['sites'].split(',')
+        if polVars.get('sites'): polVars['sites'] = polVars['sites'].split(',')
 
         # Add Policy Variables to easyDict
         if not kwargs['easyDict']['tmp'].get('ndo_settings'):
@@ -2764,7 +2791,7 @@ class tenants(object):
             polVars['templates'].append(deepcopy(
                 {'name':polVars['template'],'sites':polVars['sites']}
             ))
-            pop_list = ['ndo_settings', 'schema', 'template', 'sites', 'vrf_schema', 'vrf_template']
+            pop_list = ['schema', 'template', 'sites', 'vrf_schema', 'vrf_template']
             for i in pop_list:
                 if not polVars.get(i) == None: polVars.pop(i)
             kwargs['easyDict']['tmp']['ndo_schemas'].append(polVars)
@@ -3049,27 +3076,31 @@ class tenants(object):
             polVars['annotations'] = easy_functions.annotations_split(polVars['annotations'])
         polVars['monitoring_policy'] = 'default'
         if not polVars['ndo_settings'] == None:
+            polVars.update({'ndo':{'schemas':[]}})
+            pcount = 0
             if kwargs['easyDict']['tmp'].get('ndo_settings'):
-                if kwargs['easyDict']['tmp']['ndo_settings'].get(polVars['ndo_settings']):
-                    for i in kwargs['easyDict']['tmp']['ndo_schemas']:
-                        if i['name'] == polVars['ndo_settings']:
-                            polVars['ndo'] = deepcopy(i)
-                else: validating.error_schema('ndo_settings', **kwargs)
+                for item in polVars['ndo_settings'].split(','):
+                    if kwargs['easyDict']['tmp']['ndo_settings'].get(item):
+                        for i in kwargs['easyDict']['tmp']['ndo_schemas']:
+                            if i['ndo_settings'] == item:
+                                polVars['ndo']['schemas'].append(deepcopy(i))
+                                polVars['ndo']['schemas'][pcount].pop('ndo_settings')
+                                pcount += 1
             else: validating.error_schema('ndo_settings', **kwargs)
             polVars['ndo']['users'] = polVars['users'].split(',')
             polVars.pop('ndo_settings')
             polVars.pop('users')
             ndo_sites = []
-            for item in polVars['ndo']['templates']:
-                for i in item['sites']:
-                    if not i in ndo_sites:
-                        ndo_sites.append(i)
+            for items in polVars['ndo']['schemas']:
+                for item in items['templates']:
+                    if item.get('sites'):
+                        for i in item['sites']:
+                            if not i in ndo_sites: ndo_sites.append(i)
             if len(ndo_sites) > 0:
                 polVars['ndo']['sites'] = []
                 for item in ndo_sites:
                     for i in kwargs['easyDict']['tmp']['ndo_sites']:
-                        if i['name'] == item:
-                            polVars['ndo']['sites'].append(deepcopy(i))
+                        if i['name'] == item: polVars['ndo']['sites'].append(deepcopy(i))
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'tenants'
         kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)

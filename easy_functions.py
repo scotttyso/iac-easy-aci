@@ -4,11 +4,11 @@
 # Source Modules
 #========================================================
 from copy import deepcopy
-from git import cmd, Repo
 from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 from ordered_set import OrderedSet
 from textwrap import fill
+import git
 import jinja2
 import json
 import openpyxl
@@ -183,7 +183,7 @@ def apply_terraform(args, path_sep, **easyDict):
                 if response_a == 'C':
                     print(f'\n-----------------------------------------------------------------------------\n')
                     commit_message = input(f'  Please Enter your Commit Message for the folder {folder}: ')
-                    baseRepo = Repo(args.dir)
+                    baseRepo = git.Repo(args.dir)
                     baseRepo.git.add(all=True)
                     baseRepo.git.commit('-m', f'{commit_message}', '--', folder)
                     baseRepo.git.push()
@@ -214,16 +214,17 @@ def args_remove(args_list, jsonData):
 def confirm_templates_exist(template_type, template_name, **kwargs):
     def template_check(site, template_type, template_name, **kwargs):
         template_count = 0
-        for i in kwargs['easyDict']['sites'][site]['templates'][template_type]:
-            if i['template_name'] == template_name:
-                template_count += 1
-                if template_type == 'bridge_domains':
-                    if len(kwargs['l3outs']) > 0:
-                        if not i.get('l3_configurations'):
-                            i['l3_configurations'] = deepcopy({})
-                            if not i['l3_configurations'].get('l3outs'):
-                                i['l3_configurations']['l3outs'] = deepcopy([])
-                            i['l3_configurations']['l3outs'].append(deepcopy(kwargs['l3outs']))
+        if kwargs['easyDict']['sites'][site]['templates'].get(template_type):
+            for i in kwargs['easyDict']['sites'][site]['templates'][template_type]:
+                if i['template_name'] == template_name:
+                    template_count += 1
+                    if template_type == 'bridge_domains':
+                        if len(kwargs['l3outs']) > 0:
+                            if not i.get('l3_configurations'):
+                                i['l3_configurations'] = deepcopy({})
+                                if not i['l3_configurations'].get('l3outs'):
+                                    i['l3_configurations']['l3outs'] = deepcopy([])
+                                i['l3_configurations']['l3outs'].append(deepcopy(kwargs['l3outs']))
         if template_count == 0:
             if template_type == 'application_epgs':
                 validating.error_template_not_found('epg_template', **kwargs)
@@ -1050,13 +1051,13 @@ def get_latest_versions(easyDict):
 def git_base_repo(args, wb):
     repoName = args.dir
     if not os.path.isdir(repoName):
-        baseRepo = Repo.init(repoName, bare=True, mkdir=True)
+        baseRepo = git.Repo.init(repoName, bare=True, mkdir=True)
         assert baseRepo.bare
     else:
         try: 
-            baseRepo = Repo.init(repoName)
+            baseRepo = git.Repo.init(repoName)
         except:
-            baseRepo = Repo.init(repoName, bare=True, mkdir=True)
+            baseRepo = git.Repo.init(repoName, bare=True, mkdir=True)
     base_dir = args.dir
     with baseRepo.config_reader() as git_config:
         try:
@@ -1132,27 +1133,37 @@ def git_base_repo(args, wb):
 # Function to Check the Git Status of the Folders
 #========================================================
 def git_check_status(args, site_names, site_directories):
-    baseRepo = Repo(args.dir)
-    untrackedFiles = baseRepo.untracked_files
-    random_folders = []
-    modified = baseRepo.git.status()
-    modifiedList = [y for y in (x.strip() for x in modified.splitlines()) if y]
-    for site in site_names:
-        for x in site_directories:
-            if site in x:
-                for line in modifiedList:
-                    if not x in random_folders and site in line: random_folders.append(x)  
-                for line in untrackedFiles:
-                    if not x in random_folders and site in line: random_folders.append(x)
-    strict_folders = list(set(random_folders))
-    strict_folders.sort()
-    if not len(strict_folders) > 0:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   There were no uncommitted changes in the environment.')
-        print(f'   Proceedures Complete!!! Closing Environment and Exiting Script.')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
-    return strict_folders
+    gitRepo = True
+    args.git_check = True
+    try:
+        baseRepo = git.Repo(args.dir)
+    except git.exc.GitError as e:
+        print(f'\nError: {args.dir} is not a Git Repository\n Error {e}')
+        args.git_check = False
+        gitRepo = False
+    if gitRepo == True:
+        untrackedFiles = baseRepo.untracked_files
+        random_folders = []
+        modified = baseRepo.git.status()
+        modifiedList = [y for y in (x.strip() for x in modified.splitlines()) if y]
+        for site in site_names:
+            for x in site_directories:
+                if site in x:
+                    for line in modifiedList:
+                        if not x in random_folders and site in line: random_folders.append(x)  
+                    for line in untrackedFiles:
+                        if not x in random_folders and site in line: random_folders.append(x)
+        strict_folders = list(set(random_folders))
+        strict_folders.sort()
+        if not len(strict_folders) > 0:
+            print(f'\n-----------------------------------------------------------------------------\n')
+            print(f'   There were no uncommitted changes in the environment.')
+            print(f'   Proceedures Complete!!! Closing Environment and Exiting Script.')
+            print(f'\n-----------------------------------------------------------------------------\n')
+            exit()
+        return args, strict_folders, True
+    else: return args, [], False
+
 
 #========================================================
 # Function to Create Interface Selector Workbooks
@@ -1343,11 +1354,11 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
     git_url = "https://github.com/terraform-cisco-modules/easy-aci-complete"
     if not os.path.isdir(tfe_dir):
         os.mkdir(tfe_dir)
-        Repo.clone_from(git_url, tfe_dir)
+        git.Repo.clone_from(git_url, tfe_dir)
     if not os.path.isfile(os.path.join(tfe_dir, 'README.md')):
-        Repo.clone_from(git_url, tfe_dir)
+        git.Repo.clone_from(git_url, tfe_dir)
     else:
-        g = cmd.Git(tfe_dir)
+        g = git.cmd.Git(tfe_dir)
         g.pull()
 
     # Get All sub-folders from tfDir
@@ -1421,9 +1432,11 @@ def process_kwargs(jsonData, **kwargs):
             error_count =+ 1
             error_list += [item]
     if error_count > 0:
-        error_ = f'\n\n***Begin ERROR ***\n\nError on Worksheet {ws.title} row {row_num}\n'\
-            ' - The Following REQUIRED Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
-        raise InsufficientArgs(error_)
+        print(f'\n\n***Begin ERROR ***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following'\
+            f' REQUIRED Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n')
+        exit()
+        #error_ = f'\n\n***Begin ERROR ***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following REQUIRED Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
+        #raise InsufficientArgs(error_)
 
     error_count = 0
     error_list = []
@@ -1432,9 +1445,11 @@ def process_kwargs(jsonData, **kwargs):
             error_count =+ 1
             error_list += [item]
     if error_count > 0:
-        error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n'\
-            ' - The Following Optional Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
-        raise InsufficientArgs(error_)
+        print(f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following'\
+            f' Optional Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n')
+        exit()
+        #error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following Optional Key(s) Were Not Found in kwargs: "{error_list}"\n\n****End ERROR****\n'
+        #raise InsufficientArgs(error_)
 
     # Load all required args values from kwargs
     error_count = 0
@@ -1451,9 +1466,11 @@ def process_kwargs(jsonData, **kwargs):
                 required_args[item] = True
 
     if error_count > 0:
-        error_ = f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n'
-        ' - The Following REQUIRED Key(s) Argument(s) are Blank:\nPlease Validate "{error_list}"\n\n****End ERROR****\n'
-        raise InsufficientArgs(error_)
+        print(f'\n\n***Begin ERROR***\n\nError on Worksheet {ws.title} row {row_num}\n - The Following'\
+            f' REQUIRED Key(s) Argument(s) are Blank:\nPlease Validate "{error_list}"\n\n****End ERROR****\n')
+        exit()
+        #error_ = 
+        #raise InsufficientArgs(error_)
 
     for item in kwargs:
         if item in optional_args.keys():

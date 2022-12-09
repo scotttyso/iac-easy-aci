@@ -3,8 +3,7 @@
 This Script is to Create Terraform HCL configuration from an Excel Spreadsheet.
 It uses argparse to take in the following CLI arguments:
     d or dir:        Base Directory to use for creation of the HCL Configuration Files
-    g or git-check:  By default the script will not use git to check the destination for git status.  Include this flag to perform git check.
-    s or skip-version-check: Setting this to "True" will disable the login to the controllers to determine the running version.
+    s or skip-version-check: Adding this Flag will disable the login to the controllers to determine the running version.
     w or workbook:   Name of Excel Workbook file for the Data Source
 """
 
@@ -32,7 +31,7 @@ ad1 = 'auth|(export|mg)_policy|maint_group|radius|recommended_settings|remote_ho
 ad2 = 'smart_(callhome|destinations|smtp_server)|syslog(_destinations)?'
 admin_regex = f'^({ad1}|{ad2})$'
 
-apps_epgs_regex = '^(app|epg)_(add|template|vmm_temp)$'
+apps_epgs_regex = '^(app|epg)_(add|template|vmm_(sites|temp))$'
 bds_regex = '^(bd|subnet)_(add|template)$'
 contracts_regex = '^(contract|filter|subject)_(add|assign|entry|filters)$'
 
@@ -252,10 +251,6 @@ def main():
         help = 'The Directory to use for the Creation of the Terraform Files.'
     )
     Parser.add_argument(
-        '-g', '--git-check', action='store_true',
-        help = 'By default the script will not use git to check the destination for git status.  Include this flag to perform git check.'
-    )
-    Parser.add_argument(
         '-s', '--skip-version-check', action='store_true',
         help = 'Flag to Skip the APIC and NDO Version Check.'
     )
@@ -374,11 +369,8 @@ def main():
     easy_functions.create_yaml(args, easy_jsonData, **easyDict)
     site_names, site_directories = easy_functions.merge_easy_aci_repository(args, easy_jsonData, **easyDict)
     easyDict = process_site_settings(args, easyDict, easy_jsonData, wb)
-    changed_folders = []
-    if args.git_check == False:
-        changed_folders = easy_functions.git_check_status(args, site_names, site_directories)
-    else:
-        changed_folders = site_directories
+    args, changed_folders, gitFolder = easy_functions.git_check_status(args, site_names, site_directories)
+    if gitFolder == False: changed_folders = site_directories
     easyDict['changed_folders'] = changed_folders
     easyDict['site_names'] = site_names
     easy_functions.apply_terraform(args, path_sep, **easyDict)
