@@ -162,36 +162,45 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
     class_init = 'tenants'
     class_folder = 'tenants'
 
-    # Evaluate the Tenants Worksheet
-    func_regex = tenants_regex
-    ws = wb['Tenants']
-    easyDict['remove_default_args'] = True
-    easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    r1 = 'access|admin|bridge_domains|contracts|epgs|fabric|inventory'
+    r2 = 'l3out|port_convert|sites|switch|system_settings|tenants'
+    if args.worksheet == None: args.worksheet = 'undefined'
+    if args.worksheet == 'tenant' or args.worksheet == 'undefined':
+        # Evaluate the Tenants Worksheet
+        func_regex = tenants_regex
+        ws = wb['Tenants']
+        easyDict['remove_default_args'] = True
+        easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # Evaluate the Tenant Policies Worksheet
-    #func_regex = tenant_pol_regex
-    #ws = wb['Tenant Policies']
-    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    if args.worksheet == 'tenant_policies' or args.worksheet == 'undefined':
+        # Evaluate the Tenant Policies Worksheet
+        func_regex = tenant_pol_regex
+        ws = wb['Tenant Policies']
+        easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # Evaluate the Apps and EPGs Worksheet
-    #func_regex = apps_epgs_regex
-    #ws = wb['Apps and EPGs']
-    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    if args.worksheet == 'epgs' or args.worksheet == 'undefined':
+        # Evaluate the Apps and EPGs Worksheet
+        func_regex = apps_epgs_regex
+        ws = wb['Apps and EPGs']
+        easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # Evaluate the Bridge Domains Worksheet
-    #func_regex = bds_regex
-    #ws = wb['Bridge Domains']
-    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    if args.worksheet == 'bridge_domains' or args.worksheet == 'undefined':
+        # Evaluate the Bridge Domains Worksheet
+        func_regex = bds_regex
+        ws = wb['Bridge Domains']
+        easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # Evaluate the L3Out Worksheet
-    #func_regex = l3out_regex
-    #ws = wb['L3Out']
-    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    if args.worksheet == 'l3out' or args.worksheet == 'undefined':
+        # Evaluate the L3Out Worksheet
+        func_regex = l3out_regex
+        ws = wb['L3Out']
+        easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    # Evaluate the Contracts Worksheet
-    #func_regex = contracts_regex
-    #ws = wb['Contracts']
-    #easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
+    if args.worksheet == 'contracts' or args.worksheet == 'undefined':
+        # Evaluate the Contracts Worksheet
+        func_regex = contracts_regex
+        ws = wb['Contracts']
+        easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
     return easyDict
 
@@ -273,6 +282,7 @@ def main():
             9. switches: for Switch Profiles\
             10. system_settings: for System Settings\
             11. tenants: for Tenants\
+            11. tenants: for Tenants\
             12. virtual_networking: for Virtual Networking'
     )
     args = Parser.parse_args()
@@ -347,7 +357,7 @@ def main():
     # Process Individual Worksheets if specified in args or Process All by Default
     if not args.worksheet == None:
         r1 = 'access|admin|bridge_domains|contracts|epgs|fabric|inventory'
-        r2 = 'l3out|port_convert|sites|switch|system_settings|tenants'
+        r2 = 'l3out|port_convert|sites|switch|system_settings|tenant(s)?(_policies)?'
         ws_regex = f'^({r1}|{r2})$'
         if re.search(ws_regex, str(args.worksheet)):
             process_type = f'process_{args.worksheet}'

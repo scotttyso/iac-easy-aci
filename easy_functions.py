@@ -11,6 +11,7 @@ from textwrap import fill
 import git
 import jinja2
 import json
+import itertools
 import openpyxl
 import os
 import pkg_resources
@@ -2242,6 +2243,16 @@ def varStringLoop(**polVars):
             print(f'   {varName} value of "{varValue}" is Invalid!!! ')
             print(f'\n-------------------------------------------------------------------------------------------\n')
     return varValue
+
+#======================================================
+# Function - Collapse VLAN List
+#======================================================
+def vlan_list_format(vlan_list_expanded):
+    vlanGroups = itertools.groupby(vlan_list_expanded, key=lambda item, c=itertools.count():item-next(c))
+    tempvlans = [list(g) for k, g in vlanGroups]
+    vlanList = [str(x[0]) if len(x) == 1 else "{}-{}".format(x[0],x[-1]) for x in tempvlans]
+    vlan_list = ",".join(vlanList)
+    return vlan_list
 
 #========================================================
 # Function to Expand the VLAN list
