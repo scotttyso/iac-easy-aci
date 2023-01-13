@@ -4,12 +4,11 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side 
 import argparse
 import easy_functions
-import json
 import platform
 import os
 import re
 
-# Define Regular Expressions to be used in function definations and searches
+# Define Regular Expressions to be used
 re_bpdu   = re.compile('^  spanning-tree bpduguard enable$\n')
 re_cdpe   = re.compile('^  cdp enable$\n')
 re_dhcp   = re.compile(r'^  ip dhcp relay address (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}) $\n')
@@ -45,7 +44,7 @@ re_vrf_   = re.compile('^  vrf member (.+)$\n')
 re_vrfc   = re.compile('^vrf context (.+)$\n')
 reipv6m   = re.compile('^  ipv6 multicast multipath s-g-hash\n')
 
-# Workbook Format
+# Create Workbook Format
 bd1 = Side(style="thick", color="8EA9DB")
 bd2 = Side(style="medium", color="8EA9DB")
 wsh1 = NamedStyle(name="wsh1")
@@ -67,6 +66,7 @@ ws_even.alignment = Alignment(horizontal="center", vertical="center")
 ws_even.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
 ws_even.font = Font(bold=False, size=12, color="44546A")
 
+# Function to Create Export Workbooks
 def create_workbooks(path_sep, jsonDict):
     wb = Workbook()
     wb.add_named_style(wsh1)
@@ -538,7 +538,7 @@ def main():
     if opSystem == 'Windows': path_sep = '\\'
     else: path_sep = '/'
 
-    # Check Configuration File(s) Directory
+    # Check Configuration File(s) Directory Exists
     try:
         if os.path.isdir(args.dir):
             print(f'\n-----------------------------------------------------------------------------\n')
@@ -557,40 +557,30 @@ def main():
 
     #Get Configuration Files
     for file in os.listdir(args.dir):
-        if file.endswith('.txt'):
-            jsonDict = parse_config_file(jsonDict, os.path.join(args.dir, file))
-        if file.endswith('.cfg'):
-            jsonDict = parse_config_file(jsonDict, os.path.join(args.dir, file))
-        if file.endswith('.config'):
-            jsonDict = parse_config_file(jsonDict, os.path.join(args.dir, file))
+        file_ext = ['.txt','.cfg','.config']
+        for ext in file_ext:
+            if file.endswith(ext):
+                jsonDict = parse_config_file(jsonDict, os.path.join(args.dir, file))
+    
+    # Sort vlans and compact list
     jsonDict['vlans'].sort()
     vlans = set(jsonDict['vlans'])
     vlan_list = []
-    for vlan in vlans:
-        vlan_list.append(vlan)
+    for vlan in vlans: vlan_list.append(vlan)
     jsonDict['vlans'] = easy_functions.vlan_list_format(vlan_list)
-    dic2 = {}    
-    for i in sorted(jsonDict['bd_duplicates']):
-        dic2[i] = jsonDict['bd_duplicates'][i]
-    jsonDict['bd_duplicates'] = dic2
-    dic2 = {}    
-    for i in sorted(jsonDict['bridge_domains']):
-        dic2[i] = jsonDict['bridge_domains'][i]
-    jsonDict['bridge_domains'] = dic2
-    dic2 = {}    
-    for i in sorted(jsonDict['switches']):
-        dic2[i] = jsonDict['switches'][i]
-    jsonDict['switches'] = dic2
-    dic2 = {}    
-    for i in sorted(jsonDict['vrfs']):
-        dic2[i] = jsonDict['vrfs'][i]
-    jsonDict['vrfs'] = dic2
-    #print(json.dumps(jsonDict['bd_duplicates'], indent=4))
-    #exit()
+    
+    # Sort Dictionary keys
+    dlist = ['bd_duplicates','bridge_domains','switches','vrfs']
+    for item in dlist:
+        dic2 = {}    
+        for i in sorted(jsonDict[item]):
+            dic2[i] = jsonDict[item][i]
+        jsonDict[item] = dic2
+        dic2 = {}    
+
     # Create the Workbooks
     create_workbooks(path_sep, jsonDict)
 
-    #print(json.dumps(jsonDict, indent=4))
     #End Script
     print(f'\n-----------------------------------------------------------------------------\n')
     print(f'   Completed Running Script.  Exiting....')
