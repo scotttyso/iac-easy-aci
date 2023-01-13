@@ -1615,10 +1615,12 @@
                                 "inband_ipv4_gateway": "",
                                 "inband_ipv6": "",
                                 "inband_ipv6_gateway": "",
+                                "inband_mgmt_epg": "",
                                 "ooband_ipv4": "",
                                 "ooband_ipv4_gateway": "",
                                 "ooband_ipv6": "",
                                 "ooband_ipv6_gateway": "",
+                                "ooband_mgmt_epg": "",
                                 "vpc_domain_id": "",
                                 "vpc_name": ""
                             },
@@ -1631,10 +1633,8 @@
                                 "x-omitempty": true
                             },
                             "required_args": {
-                                "inband_mgmt_epg": "",
                                 "node_id": "",
                                 "node_type": "",
-                                "ooband_mgmt_epg": "",
                                 "pod_id": "",
                                 "role": "",
                                 "serial_number": "",

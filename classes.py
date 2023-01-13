@@ -1375,6 +1375,8 @@ class switches(object):
         for mgmt in mgmt_list:
             for atype in atype_list:
                 if kwargs.get(f'{mgmt}_{atype}'):
+                    if not kwargs.get(f'{mgmt}_mgmt_epg'):
+                        args_list.append([f'{mgmt}_mgmt_epg'])
                     if not kwargs[f'{mgmt}_{atype}'] == None:
                         args_list.extend([f'{mgmt}_{atype}', f'{mgmt}_{atype}_gateway'])
         jsonData = easy_functions.args_add(args_list, jsonData)
@@ -2900,20 +2902,20 @@ class tenants(object):
             
             # Check for Link Local Addresses
             if not polVars['link_local_addresses'] == None:
-                if not len(polVars['link_local_addresses'].split(',')) == 2:
-                    validating.error_interface_address('link_local_addresses', **kwargs)
+                #if not len(polVars['link_local_addresses'].split(',')) == 2:
+                #    validating.error_interface_address('link_local_addresses', **kwargs)
                 svi['link_local_addresses'] = polVars['link_local_addresses'].split(',')
             
             # Check for Primary Addresses
             if not polVars['primary_preferred_addresses'] == None:
-                if not len(polVars['primary_preferred_addresses'].split(',')) == 2:
-                    validating.error_interface_address('primary_preferred_addresses', **kwargs)
+                #if not len(polVars['primary_preferred_addresses'].split(',')) == 2:
+                #    validating.error_interface_address('primary_preferred_addresses', **kwargs)
                 svi['primary_preferred_addresses'] = polVars['primary_preferred_addresses'].split(',')
             
             # Check for Secondary Addresses
             if not polVars['secondary_addresses'] == None:
-                if not len(polVars['secondary_addresses'].split(',')) % 2  == 0:
-                    validating.error_interface_address('secondary_addresses', **kwargs)
+                #if not len(polVars['secondary_addresses'].split(',')) % 2  == 0:
+                #    validating.error_interface_address('secondary_addresses', **kwargs)
                 svi['secondary_addresses'] = polVars['secondary_addresses'].split(',')
         else:
             if not polVars['link_local_addresses'] == None:
