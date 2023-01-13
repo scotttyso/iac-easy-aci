@@ -164,39 +164,39 @@ def process_tenants(args, easyDict, easy_jsonData, wb):
 
     r1 = 'access|admin|bridge_domains|contracts|epgs|fabric|inventory'
     r2 = 'l3out|port_convert|sites|switch|system_settings|tenants'
-    if args.worksheet == None: args.worksheet = 'undefined'
-    if args.worksheet == 'tenant' or args.worksheet == 'undefined':
+    if args.worksheets == None: args.worksheets = ['undefined']
+    if 'tenants' in args.worksheets or 'undefined' in args.worksheets:
         # Evaluate the Tenants Worksheet
         func_regex = tenants_regex
         ws = wb['Tenants']
         easyDict['remove_default_args'] = True
         easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    if args.worksheet == 'tenant_policies' or args.worksheet == 'undefined':
+    if 'tenant_policies' in args.worksheets or 'undefined' in args.worksheets:
         # Evaluate the Tenant Policies Worksheet
         func_regex = tenant_pol_regex
         ws = wb['Tenant Policies']
         easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    if args.worksheet == 'epgs' or args.worksheet == 'undefined':
+    if 'epgs' in args.worksheets or 'undefined' in args.worksheets:
         # Evaluate the Apps and EPGs Worksheet
         func_regex = apps_epgs_regex
         ws = wb['Apps and EPGs']
         easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    if args.worksheet == 'bridge_domains' or args.worksheet == 'undefined':
+    if 'bridge_domains' in args.worksheets or 'undefined' in args.worksheets:
         # Evaluate the Bridge Domains Worksheet
         func_regex = bds_regex
         ws = wb['Bridge Domains']
         easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    if args.worksheet == 'l3out' or args.worksheet == 'undefined':
+    if 'l3out' in args.worksheets or 'undefined' in args.worksheets:
         # Evaluate the L3Out Worksheet
         func_regex = l3out_regex
         ws = wb['L3Out']
         easyDict = read_worksheet(args, class_init, class_folder, easyDict, easy_jsonData, func_regex, wb, ws)
 
-    if args.worksheet == 'contracts' or args.worksheet == 'undefined':
+    if 'contracts' in args.worksheets or 'undefined' in args.worksheets:
         # Evaluate the Contracts Worksheet
         func_regex = contracts_regex
         ws = wb['Contracts']
@@ -267,22 +267,22 @@ def main():
         default = 'ACI_Base_Workbookv3.xlsx',
         help = 'The source Workbook.'
     )
-    Parser.add_argument('-ws', '--worksheet', 
+    Parser.add_argument('-ws', '--worksheets', 
         default = None,
-        help = 'Only evaluate this single worksheet. Worksheet values are:\
-            1. access - for Access\
-            2. admin: for Admin\
-            3. bridge_domains: for Bridge Domains\
-            4. contracts: for Contracts\
-            5. epgs: for EPGs\
-            6. fabric: for Fabric\
-            7. l3out: for L3Out\
-            8. port_convert: for Uplink to Download Conversion\
-            8. sites: for Sites\
-            9. switches: for Switch Profiles\
+        help = 'Only evaluate the listed worksheet(s), comma seperated. Worksheet values are:\
+            1.  access - for Access\
+            2.  admin: for Admin\
+            3.  bridge_domains: for Bridge Domains\
+            4.  contracts: for Contracts\
+            5.  epgs: for EPGs\
+            6.  fabric: for Fabric\
+            7.  l3out: for L3Out\
+            8.  port_convert: for Uplink to Download Conversion\
+            8.  sites: for Sites\
+            9.  switches: for Switch Profiles\
             10. system_settings: for System Settings\
             11. tenants: for Tenants\
-            11. tenants: for Tenants\
+            11. tenant_policies: for Tenant Policies\
             12. virtual_networking: for Virtual Networking'
     )
     args = Parser.parse_args()
@@ -317,8 +317,7 @@ def main():
         destdirCheck = True
 
     # Set the Source Workbook
-    if os.path.isfile(args.workbook):
-        excel_workbook = args.workbook
+    if os.path.isfile(args.workbook): excel_workbook = args.workbook
     else:
         print(f'\n-------------------------------------------------------------------------------------------\n')
         print( '\nWorkbook not Found.  Please enter a valid /path/filename for the source workbook.')
@@ -355,20 +354,27 @@ def main():
     easyDict = process_sites(args, easyDict, easy_jsonData, wb)
 
     # Process Individual Worksheets if specified in args or Process All by Default
-    if not args.worksheet == None:
-        r1 = 'access|admin|bridge_domains|contracts|epgs|fabric|inventory'
-        r2 = 'l3out|port_convert|sites|switch|system_settings|tenant(s)?(_policies)?'
-        ws_regex = f'^({r1}|{r2})$'
-        if re.search(ws_regex, str(args.worksheet)):
-            process_type = f'process_{args.worksheet}'
-            eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
-        else:
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   ERROR: "{args.worksheet}" is not a valid worksheet.  If you are trying ')
-            print(f'   to run a single worksheet please re-enter the -ws argument.')
-            print(f'   Exiting...')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            exit()
+    if not args.worksheets == None:
+        tnt_regex = '(bridge_domains|contracts|epgs|l3out|tenant_policies)$'
+        proc_regex = '^(access|admin|fabric|inventory|port_convert|sites|switch|system_settings|tenants)$'
+        if ',' in args.worksheets: worksheets = args.worksheets.split(',')
+        else: worksheets = [args.worksheets]
+        wsloop = worksheets
+        for i in wsloop:
+            if re.search(tnt_regex, i):
+                if not 'tenants' in worksheets: worksheets.append('tenants')
+        for i in worksheets:
+            args.worksheets = worksheets
+            if re.search(proc_regex, i):
+                process_type = f'process_{i}'
+                eval(f"{process_type}(args, easyDict, easy_jsonData, wb)")
+            elif not re.search(tnt_regex, i):
+                print(f'\n-----------------------------------------------------------------------------\n')
+                print(f'   ERROR: "{i}" is not a valid worksheet.  If you are trying ')
+                print(f'   to run individual worksheet(s) please re-enter the -ws argument.')
+                print(f'   Exiting...')
+                print(f'\n-----------------------------------------------------------------------------\n')
+                exit()
     else:
         process_list = easy_jsonData['easy_aci']['allOf'][1]['properties']['processes']['enum']
         for x in process_list:
