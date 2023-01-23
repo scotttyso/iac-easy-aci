@@ -3241,7 +3241,7 @@
                     {
                         "properties": {
                             "email": {
-                                "description": "Smart Callhome destionation email.",
+                                "description": "Smart Callhome destination email.",
                                 "type": "email",
                                 "x-omitempty": true
                             },
@@ -5369,8 +5369,8 @@
                                 "x-omitempty": true
                             },
                             "epg_to_aaeps": {
-                                "description": "Name of the Attachable Entity Profile Policy to Assign this to this Application EPG Template.",
-                                "type": "string",
+                                "description": "Name(s) of the Attachable Entity Profile Policy to Assign this to this Application EPG Template.",
+                                "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
@@ -5961,7 +5961,7 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
-                            "multi_destionation_flooding": {
+                            "multi_destination_flooding": {
                                 "description": "The multiple destination forwarding method for L2 Multicast, Broadcast, and Link Layer traffic types. The method can be:  bd-flood — Sends the data to all ports on the same bridge domain, drop — Drops Packet. Never sends the data to any other ports., encap-flood — Sends the data to the ports on the same VLAN within the bridge domain regardless of the EPG, with the exception that data for the following protocols is flooded to the entire bridge domain: ARP/GARP, BGP, EIGRP, IGMP, IS-IS, OSPF/OSPFv6, ND, and PIM",
                                 "type": "list_of_values",
                                 "enum": [
@@ -6041,7 +6041,7 @@
                                 "l2_unknown_unicast": "",
                                 "l3_unknown_multicast_flooding": "",
                                 "limit_ip_learn_to_subnets": "",
-                                "multi_destionation_flooding": "",
+                                "multi_destination_flooding": "",
                                 "optimize_wan_bandwidth": "",
                                 "pim": "",
                                 "pimv6": "",
