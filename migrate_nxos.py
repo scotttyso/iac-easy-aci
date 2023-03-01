@@ -4,6 +4,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side 
 import argparse
 import easy_functions
+import json
 import platform
 import os
 import re
@@ -205,6 +206,8 @@ def create_workbooks(path_sep, jsonDict):
     dest_file = 'switch_export.xlsx'
     ws_count = 0
     # Populate Switch Worksheet
+    print(json.dumps(jsonDict['switches'], indent=4))
+    exit()
     for k, v in jsonDict['switches'].items():
         int_count = 0
         if len(v['interfaces']) >= 1: int_count += 1
