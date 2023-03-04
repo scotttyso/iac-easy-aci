@@ -1237,30 +1237,45 @@ def interface_selector_workbook(polVars, **kwargs):
 
         wb_sw.save(kwargs['excel_workbook'])
         last_row = len(switch_pgs[pgroup]) + 1
-        defined_names = ['DSCP', 'leaf', 'spine', 'spine_modules', 'spine_type', 'switch_role', 'tag', 'Time_Zone']
-        for dname in defined_names:
+        dnames = ['DSCP', 'leaf', 'spine', 'spine_modules', 'spine_type', 'switch_role', 'tag', 'Time_Zone']
+        for dname in dnames:
             if dname in wb_sw.defined_names:
-                wb_sw.defined_names.delete(dname)
+                if type(wb_sw.defined_names) is dict:
+                    wb_sw.defined_names.pop(dname)
+                elif type(wb_sw.defined_names) is list:
+                    wb_sw.defined_names.delete(dname)
         if polVars['node_type'] == 'spine':
             new_range = openpyxl.workbook.defined_name.DefinedName('spine_pg',attr_text=f"formulas!$D$2:$D{last_row}")
             if not 'spine_pg' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('spine_pg')
-                wb_sw.defined_names.append(new_range)
+                if type(wb_sw.defined_names) is dict:
+                    wb_sw.defined_names.update(new_range)
+                elif type(wb_sw.defined_names) is list:
+                    wb_sw.defined_names.append(new_range)
         elif pgroup == 'access':
             new_range = openpyxl.workbook.defined_name.DefinedName('access',attr_text=f"formulas!$A$2:$A{last_row}")
             if not 'access' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('access')
-                wb_sw.defined_names.append(new_range)
+                if type(wb_sw.defined_names) is dict:
+                    wb_sw.defined_names.update(new_range)
+                elif type(wb_sw.defined_names) is list:
+                    wb_sw.defined_names.append(new_range)
         elif pgroup == 'breakout':
             new_range = openpyxl.workbook.defined_name.DefinedName('breakout',attr_text=f"formulas!$B$2:$B{last_row}")
             if not 'breakout' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('breakout')
-                wb_sw.defined_names.append(new_range)
+                if type(wb_sw.defined_names) is dict:
+                    wb_sw.defined_names.update(new_range)
+                elif type(wb_sw.defined_names) is list:
+                    wb_sw.defined_names.append(new_range)
         elif pgroup == 'bundle':
             new_range = openpyxl.workbook.defined_name.DefinedName('bundle',attr_text=f"formulas!$C$2:$C{last_row}")
             if not 'bundle' in wb_sw.defined_names:
                 # wb_sw.defined_names.delete('bundle')
-                wb_sw.defined_names.append(new_range)
+                if type(wb_sw.defined_names) is dict:
+                    wb_sw.defined_names.update(new_range)
+                elif type(wb_sw.defined_names) is list:
+                    wb_sw.defined_names.append(new_range)
         wb_sw.save(kwargs['excel_workbook'])
 
     # Check if there is a Worksheet for the Switch Already
@@ -1354,11 +1369,14 @@ def merge_easy_aci_repository(args, easy_jsonData, **easyDict):
     tfe_modules = f'{tfe_dir}{path_sep}modules'
     git_url = "https://github.com/terraform-cisco-modules/easy-aci-complete"
     if not os.path.isdir(tfe_dir):
+        print('creating directory')
         os.mkdir(tfe_dir)
         git.Repo.clone_from(git_url, tfe_dir)
     if not os.path.isfile(os.path.join(tfe_dir, 'README.md')):
+        print('cloning directory')
         git.Repo.clone_from(git_url, tfe_dir)
     else:
+        print('pulling directory')
         g = git.cmd.Git(tfe_dir)
         g.pull()
 

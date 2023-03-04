@@ -1505,13 +1505,13 @@ class switches(object):
                         'ws':ws
                     }
                 )
-                easyDict = eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
+                kwargs['easyDict'] = eval(f"{class_init}(class_folder).{func}(**var_dict[pos])")
 
         # Set the wb and ws back
         kwargs['wb'] = wb
         kwargs['ws'] = ws
         kwargs['wb_sw'].close()
-        return easyDict
+        return kwargs['easyDict']
 
     #=============================================================================
     # Function - Switch Modules

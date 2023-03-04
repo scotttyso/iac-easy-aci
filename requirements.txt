@@ -4,7 +4,7 @@ GitPython
 git_status_checker
 ipaddress
 jinja2
-openpyxl
+openpyxl==3.0.9
 ordered_set
 phonenumbers
 pyyaml
