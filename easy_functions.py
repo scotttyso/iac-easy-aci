@@ -1009,7 +1009,7 @@ def findVars(ws, func, rows, count):
 #========================================================
 # Function to Merge Easy ACI Repository to Dest Folder
 #========================================================
-def get_latest_versions(easyDict):
+def get_latest_versions(args, easyDict):
 
     url_list = [
         'https://github.com/CiscoDevNet/terraform-provider-aci/tags/',
@@ -1017,31 +1017,37 @@ def get_latest_versions(easyDict):
         'https://github.com/hashicorp/terraform/tags',
         'https://github.com/netascode/terraform-provider-utils/tags/'
     ]
-    for url in url_list:
-        # Get the Latest Release Tag for the Provider
-        r = requests.get(url, stream=True)
-        repoVer = 'BLANK'
-        stringMatch = False
-        while stringMatch == False:
-            for line in r.iter_lines():
-                toString = line.decode("utf-8")
-                if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
-                    repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
-                    break
-            stringMatch = True
-        
-        # Make sure the latest_versions Key exists
-        if easyDict.get('latest_versions') == None:
-            easyDict['latest_versions'] = {}
-        
-        # Set Provider Version
-        if   'terraform-provider-aci' in url:
-            easyDict['latest_versions']['aci_provider_version'] = repoVer
-        elif   'terraform-provider-mso' in url:
-            easyDict['latest_versions']['ndo_provider_version'] = repoVer
-        elif 'netascode' in url:
-            easyDict['latest_versions']['utils_provider_version'] = repoVer
-        else: easyDict['latest_versions']['terraform_version'] = repoVer
+    if args.skip_version_check == True:
+        easyDict['latest_versions']['aci_provider_version'] = '2.6.1'
+        easyDict['latest_versions']['ndo_provider_version'] = '0.8.1'
+        easyDict['latest_versions']['terraform_version'] = '1.3.6'
+        easyDict['latest_versions']['utils_provider_version'] = '0.2.4'
+    else:
+        for url in url_list:
+            # Get the Latest Release Tag for the Provider
+            r = requests.get(url, stream=True)
+            repoVer = 'BLANK'
+            stringMatch = False
+            while stringMatch == False:
+                for line in r.iter_lines():
+                    toString = line.decode("utf-8")
+                    if re.search(r'/releases/tag/v(\d+\.\d+\.\d+)\"', toString):
+                        repoVer = re.search('/releases/tag/v(\d+\.\d+\.\d+)', toString).group(1)
+                        break
+                stringMatch = True
+            
+            # Make sure the latest_versions Key exists
+            if easyDict.get('latest_versions') == None:
+                easyDict['latest_versions'] = {}
+            
+            # Set Provider Version
+            if   'terraform-provider-aci' in url:
+                easyDict['latest_versions']['aci_provider_version'] = repoVer
+            elif   'terraform-provider-mso' in url:
+                easyDict['latest_versions']['ndo_provider_version'] = repoVer
+            elif 'netascode' in url:
+                easyDict['latest_versions']['utils_provider_version'] = repoVer
+            else: easyDict['latest_versions']['terraform_version'] = repoVer
     
     # Return kwargs
     return easyDict
@@ -1341,12 +1347,11 @@ def interface_selector_workbook(polVars, **kwargs):
                     print(f"Error, Could not find the Module list for spine {polVars['node_id']}")
                     exit()
                 
-                for x in range(1, int(modules) + 1):
-                    module_type = modDict[f'module_{x}']
-                    if not module_type == None:
-                        if re.search('^X97', module_type):
-                            polVars['module'] = x
-                            polVars['port_count'] = spine_module_port_count(module_type)
+                for k, v in modDict.items():
+                    if 'module' in k:
+                        polVars['module'] = k.split('_')[1]
+                        if re.search('^X97', v):
+                            polVars['port_count'] = spine_module_port_count(v)
                             ws_sw_row_count = create_selector(ws_sw, ws_sw_row_count, **polVars)
         else:
             polVars['module'] = 1

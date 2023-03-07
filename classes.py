@@ -1460,6 +1460,8 @@ class switches(object):
         # Add Policy Variables to easyDict
         kwargs['class_path'] = 'switch,switch_profiles'
         kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
+        polVars['site_group'] = kwargs['site_group']
+        polVars = dict(sorted(polVars.items()))
 
         # Create or Modify the Interface Selector Workbook
         siteDict = kwargs['easyDict']['sites'][kwargs['site_group']]['site_settings']
@@ -1516,20 +1518,20 @@ class switches(object):
     #=============================================================================
     # Function - Switch Modules
     #=============================================================================
-    def sw_modules(self, **kwargs):
-        # Get Variables from Library
-        jsonData = kwargs['easy_jsonData']['access.profiles.switchModules']['allOf'][1]['properties']
-
-        # Build Dictionary of Policy Variables
-        polVars = easy_functions.process_kwargs(jsonData, **kwargs)
-
-        # Split the Node List into Nodes
-        polVars['node_list'] = polVars['node_list'].split(',')
- 
-        # Add Policy Variables to easyDict
-        kwargs['class_path'] = 'switch,spine_modules'
-        kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
-        return kwargs['easyDict']
+    #def sw_modules(self, **kwargs):
+    #    # Get Variables from Library
+    #    jsonData = kwargs['easy_jsonData']['access.profiles.switchModules']['allOf'][1]['properties']
+    #
+    #    # Build Dictionary of Policy Variables
+    #    polVars = easy_functions.process_kwargs(jsonData, **kwargs)
+    #
+    #    # Split the Node List into Nodes
+    #    polVars['node_list'] = polVars['node_list'].split(',')
+    #
+    #    # Add Policy Variables to easyDict
+    #    kwargs['class_path'] = 'switch,spine_modules'
+    #    #kwargs['easyDict'] = easy_functions.ez_append(polVars, **kwargs)
+    #    return kwargs['easyDict']
 
 #=====================================================================================
 # Please Refer to the "Notes" in the relevant column headers in the input Spreadhseet

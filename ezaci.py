@@ -46,6 +46,7 @@ l3out_regex = f'^({l31}|{l32})$'
 port_convert_regex = '^port_cnvt$'
 sites_regex = '^(site_id|group_id)$'
 switch_regex = '^(sw_modules|switch)$'
+switch_regex = '^switch$'
 system_settings_regex = '^(apic_preference|bgp_(asn|rr)|recommended_settings)$'
 tenants_regex = '^(ndo_schema|(template|tenant)_(add|site)|vrf_(add|community|template))$'
 tenant_pol_regex = '^(apic_inb|bgp_pfx|dhcp_relay|(eigrp|ospf)_interface)$'
@@ -342,7 +343,7 @@ def main():
     easyDict['latest_versions'] = easy_jsonData['easy_aci']['allOf'][1]['properties']['latest_versions']
 
     # Obtain the Latest Provider Releases
-    easyDict = easy_functions.get_latest_versions(easyDict)
+    easyDict = easy_functions.get_latest_versions(args, easyDict)
 
     # Initialize the Base Repo/Terraform Working Directory
     if not os.path.isdir(args.dir):
