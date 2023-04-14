@@ -4,8 +4,10 @@
 # Source Modules
 #========================================================
 from copy import deepcopy
+from dotmap import DotMap
 from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side 
 from ordered_set import OrderedSet
 from textwrap import fill
 import git
@@ -56,6 +58,31 @@ def apic_api(apic, method, payload, cookies, uri, section=''):
             elif 'get':
                 r = s.get('https://{}/{}.json'.format(apic, uri), cookies=cookies, verify=False)
             status = r.status_code
+        except requests.exceptions.ConnectionError as e:
+            print("Connection error, pausing before retrying. Error: {}"
+                .format(e))
+            time.sleep(5)
+        except Exception as e:
+            print("Method {} failed. Exception: {}".format(section[:-5], e))
+            status = 666
+            return(status)
+    if print_response_always: print(r.text)
+    if status != 200 and print_response_on_fail: print(r.text)
+    return r
+
+#========================================================
+# Function to Connect to the APIC API
+#========================================================
+def apic_api_with_filter(apic, cookies, uri, uriFilter, section=''):
+    s = requests.Session()
+    r = ''
+    while r == '':
+        try:
+            print('https://{}/{}.json?{}'.format(apic, uri, uriFilter))
+            r = s.get('https://{}/{}.json?{}'.format(apic, uri, uriFilter), cookies=cookies, verify=False)
+            status = r.status_code
+            print(status)
+            print(r.json())
         except requests.exceptions.ConnectionError as e:
             print("Connection error, pausing before retrying. Error: {}"
                 .format(e))
@@ -2342,6 +2369,35 @@ def vlan_range(vlan_list, **polVars):
         return results
 
 #========================================================
+# Function to Create Workbook Styles.
+#========================================================
+def workbook_styles():
+    wbstyles = DotMap()
+    # Create Workbook Format
+    bd1 = Side(style="thick", color="8EA9DB")
+    bd2 = Side(style="medium", color="8EA9DB")
+    wbstyles.wsh1 = NamedStyle(name="wsh1")
+    wbstyles.wsh1.alignment = Alignment(horizontal="center", vertical="center", wrap_text="True")
+    wbstyles.wsh1.border = Border(left=bd1, top=bd1, right=bd1, bottom=bd1)
+    wbstyles.wsh1.font = Font(bold=True, size=15, color="FFFFFF")
+    wbstyles.wsh2 = NamedStyle(name="wsh2")
+    wbstyles.wsh2.alignment = Alignment(horizontal="center", vertical="center", wrap_text="True")
+    wbstyles.wsh2.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
+    wbstyles.wsh2.fill = PatternFill("solid", fgColor="305496")
+    wbstyles.wsh2.font = Font(bold=True, size=15, color="FFFFFF")
+    wbstyles.ws_odd = NamedStyle(name="ws_odd")
+    wbstyles.ws_odd.alignment = Alignment(horizontal="center", vertical="center")
+    wbstyles.ws_odd.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
+    wbstyles.ws_odd.fill = PatternFill("solid", fgColor="D9E1F2")
+    wbstyles.ws_odd.font = Font(bold=False, size=12, color="44546A")
+    wbstyles.ws_even = NamedStyle(name="ws_even")
+    wbstyles.ws_even.alignment = Alignment(horizontal="center", vertical="center")
+    wbstyles.ws_even.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
+    wbstyles.ws_even.font = Font(bold=False, size=12, color="44546A")
+    return wbstyles
+
+
+#========================================================
 # Function to Determine which sites to write files to.
 #========================================================
 def write_to_site(polVars, **kwargs):
@@ -2380,3 +2436,4 @@ def write_to_site(polVars, **kwargs):
     payload = template.render(polVars)
     wr_file.write(payload)
     wr_file.close()
+
