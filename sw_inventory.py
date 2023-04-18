@@ -23,7 +23,7 @@ wbstyles = easy_functions.workbook_styles()
 #======================================================
 # Function to Create Switch Dictionary
 #======================================================
-def create_switch_dictionary(nodeData, topData):
+def create_switch_dictionary(args, nodeData, topData):
     swDict = {}
     for i in topData['imdata']:
         for key, value in i.items():
@@ -44,7 +44,10 @@ def create_switch_dictionary(nodeData, topData):
                     for k, v in c.items():
                         aa = DotMap(v['attributes'])
                         admin_status = aa.adminSt
-                        intf = re.search('\\[(.*)\\]', aa.rn).group(1)
+                        if args.function_type == 'api':
+                            intf = re.search('\\[(.*)\\]', aa.rn).group(1)
+                        else:
+                            intf = re.search('\\[(.*)\\]', aa.dn).group(1)
                         if re.search('/(\\d)$', intf):
                             intf = intf.split('/')[0] + '/' + '0' + re.search('/(\\d)$', intf).group(1)
                         for y, z in v['children'][0].items():
@@ -68,7 +71,8 @@ def create_switch_dictionary(nodeData, topData):
     for i in nodeData['imdata']:
         for k, v in i.items():
             a = DotMap(v['attributes'])
-            swDict[a.dn].update(deepcopy({'model':a.model}))
+            newdn = (a.dn).strip('/sys')
+            swDict[newdn].update(deepcopy({'model':a.model}))
     swDict = dict(sorted(swDict.items()))
     for k, v in swDict.items():
         v['intfs'] = dict(sorted(v['intfs'].items()))
@@ -136,33 +140,47 @@ def create_workbook_from_data(swDict):
     wb.save(dest_file)
 
 #======================================================
-# Main Module
+# Function to Create Switch Dictionary
 #======================================================
-def main():
+def define_arguments():
     # User Input Arguments
     Parser = argparse.ArgumentParser(description='Configuration Migration')
+    Parser.add_argument('-f', '--function_type',
+                        required=True,
+                        help = 'Options are: '\
+                            '1. "api" or '\
+                            '2. "files".'
+    )
     Parser.add_argument('-n', '--node_input',
                         action='store',
-                        required=False,
-                        help = 'The Input file for fabricNode List.'
-    )
-    Parser.add_argument('-t', '--top_system_input',
-                        action='store',
-                        required=False,
-                        help = 'The Input file for systemTop.'
+                        required='files' in sys.argv,
+                        help = 'The Source file for fabricNode dump.'
     )
     Parser.add_argument('-s', '--server',
                         action='store',
-                        required=False,
+                        required='api' in sys.argv,
                         help = 'The Server Name for the APIC.'
+    )
+    Parser.add_argument('-t', '--top_system_input',
+                        action='store',
+                        required='files' in sys.argv,
+                        help = 'The Source file for topSystem dump.'
     )
     Parser.add_argument('-u', '--username',
                         action='store',
                         default = 'admin',
-                        required=False,
+                        required='api' in sys.argv,
                         help = 'The Login Username for the APIC Host.'
     )
+
     args = Parser.parse_args()
+    return args
+
+#======================================================
+# Main Module
+#======================================================
+def main():
+    args = define_arguments()
 
     opSystem = platform.system()
     kwargs = {}
@@ -203,7 +221,7 @@ def main():
         nodeData    = nodeResponse.json()
         topData     = topResponse.json()
 
-        swDict = create_switch_dictionary(nodeData, topData)
+        swDict = create_switch_dictionary(args, nodeData, topData)
         create_workbook_from_data(swDict)
 
 
@@ -215,7 +233,7 @@ def main():
         topData = json.load(open(args.top_system_input, 'r'))
         nodeData = json.load(open(args.node_input, 'r'))
 
-        swDict = create_switch_dictionary(nodeData, topData)
+        swDict = create_switch_dictionary(args, nodeData, topData)
         create_workbook_from_data(swDict)
 
 
