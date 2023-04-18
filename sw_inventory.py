@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+#======================================================
+# Source Modules
+#======================================================
 from copy import deepcopy
 from dotmap import DotMap
 from openpyxl import Workbook
@@ -9,214 +12,74 @@ import easy_functions
 import json
 import platform
 import os
+import sys
 import re
 
+#======================================================
+# Workbook Styles
+#======================================================
 wbstyles = easy_functions.workbook_styles()
 
-def main():
-    # User Input Arguments
-    Parser = argparse.ArgumentParser(description='Configuration Migration')
-    Parser.add_argument('-n', '--node_input',
-                        action='store',
-                        required=False,
-                        help = 'The Login Name for the APIC Host.'
-    )
-    Parser.add_argument('-t', '--top_system_input',
-                        action='store',
-                        required=False,
-                        help = 'The Login Name for the APIC Host.'
-    )
-    Parser.add_argument('-s', '--server',
-                        action='store',
-                        required=False,
-                        help = 'The Server Name for the APIC.'
-    )
-    Parser.add_argument('-u', '--username',
-                        action='store',
-                        default = 'admin',
-                        required=False,
-                        help = 'The Login Name for the APIC Host.'
-    )
-    args = Parser.parse_args()
-    polVars = {}
-    if not args.server == None:
-        polVars["Variable"] = 'apicPass'
-        args.apic_pass = easy_functions.sensitive_var_value(**polVars)
-        fablogin = classes.apicLogin(args.server, args.username, args.apic_pass)
-        cookies = fablogin.login()
-
-        # Switch Dictionaries
-        swDict = {}
-        tempfile = 'dummy.json'
-        uri   = 'api/node/class/fabricNode'
-        uri_response = easy_functions.apic_api(args.server, 'get', {}, cookies, uri, tempfile)
-        nodeData = uri_response.json()
-        for item in nodeData['imdata']:
-            item = DotMap(item)
-            i = item.fabricNode.attributes
-            if not i.role == 'controller':
-                swDict.update({i.dn:dict(
-                    dn      = i.dn,
-                    intfs   = {},
-                    model   = i.model,
-                    name    = i.name,
-                    role    = i.role,
-                    serial  = i.serial,
-                    version = i.version
-                )})
-                uri = f'api/mo/{i.dn}'
-                uriFilter = f'query-target=subtree&target-subtree-class=ethpmFcot'
-                apiResult = easy_functions.apic_api_with_filter(args.server, cookies, uri, uriFilter, tempfile)
-                ethpmFcot = apiResult.json()
-                print(json.dumps(ethpmFcot.json(), indent=4))
-                uriFilter = f'query-target=subtree&target-subtree-class=ethpmPhysIf'
-                apiResult = easy_functions.apic_api_with_filter(args.server, cookies, uri, uriFilter, tempfile)
-                ethpmPhysIf = apiResult.json()
-                print(json.dumps(ethpmPhysIf.json(), indent=4))
-
-        # Interface SFP/QSFP Data
-        uri = 'api/node/class/ethpmFcot'
-        uri_response = easy_functions.apic_api(args.server, 'get', {}, cookies, uri, tempfile)
-        opticData = {}
-        uriData = uri_response.json()
-        print(json.dumps(uriData['imdata'], indent=4))
-        for item in uriData['imdata']:
-            item = DotMap(item)
-            i = item.ethpmFcot.attributes
-            dnnew = i.dn.replace('/phys/fcot', '')
-            opticData.update({dnnew:dict(
-                dn = i.dn,
-                type = i.typeName
+#======================================================
+# Function to Create Switch Dictionary
+#======================================================
+def create_switch_dictionary(nodeData, topData):
+    swDict = {}
+    for i in topData['imdata']:
+        for key, value in i.items():
+            a = DotMap(value['attributes'])
+            newdn = (a.dn).strip('/sys')
+            swDict.update({newdn:dict(
+                intfs   = {},
+                model   = "",
+                name    = a.name,
+                pod     = a.podId,
+                role    = a.role,
+                serial  = a.serial,
+                version = a.version
             )})
-        # Interface Status
-        statusData   = {}
-        uri          = '/api/node/class/ethpmPhysIf'
-        uri_response = easy_functions.apic_api(args.server, 'get', {}, cookies, uri, tempfile)
-        uriData      = uri_response.json()
-        #print(json.dumps(uriData['imdata'], indent=4))
-        for item in uriData['imdata']:
-            item = DotMap(item)
-            i = item.ethpmPhysIf.attributes
-            dnnew = i.dn.replace('/phys', '')
-            statusData.update({dnnew:dict(
-                dn = i.dn,
-                accessVlan = i.accessVlan,
-                allowedVlans = i.allowedVlans,
-                operDuplex   = i.operDuplex,
-                operState    = i.operSt,
-                operReason   = i.operStQual,
-                operSpeed    = i.operSpeed,
-            )})
-        #print(json.dumps(statusData, indent=4))
-        for key, value in swDict.items():
-            for k, v in statusData.items():
-                i = DotMap(i)
-                x = k.split('/')
-                newk = x[0] + '/' + x[1] + '/' + x[2]
-                if key == newk:
-                    v = DotMap(v)
-                    intf = re.search('\\[(eth[\\d/]+)\\]', v.dn).group(1)
-                    if re.search('eth1/(\\d)$', intf):
-                        intf = 'eth1/0{}'.format(re.search('eth1/(\\d)$', intf).group(1))
-                    idict = dict(
-                        acessVlan         = v.accessVlan,
-                        allowedVlans      = v.allowedVlans,
-                        operationalDuplex = v.operDuplex,
-                        operationalSpeed  = v.operSpeed,
-                        operationalState  = v.operState,
-                    )
-                    if re.search('(link-not-connected|none)', v.operReason):
-                        newkey = k.replace('/sys-', '/sys/phys-')
-                        idict.update(deepcopy({'optic':opticData[newkey]['type']}))
-                    else: idict.update(deepcopy({'optic':v.operReason}))
-                    swDict[key]['intfs'].update(deepcopy({intf:idict}))
-        #swDict = dict(sorted(swDict))
-        for k, v in swDict.items():
-            v['intfs'] = dict(sorted(v['intfs'].items()))
-        swDict = dict(sorted(swDict.items()))
-        print(json.dumps(swDict, indent=4))
-        mainDict = {}
-        for key, value in swDict.items():
-            upcount = 0
-            downcount = 0
-            for k, v in value['intfs'].items():
-                if v['operationalState'] == 'up': upcount += 1
-                else: downcount += 1
-            mainDict.update({value['name']:{
-                'node_id': key.split('-')[2],
-                'interfaces_down': downcount,
-                'interfaces_up': upcount,
-            }})
-        print(json.dumps(mainDict, indent=4))
-        opticDict = {}
-        for key, value in swDict.items():
-            upcount = 0
-            downcount = 0
-            for k, v in value['intfs'].items():
-                if not v['optic'] == 'sfp-missing':
-                    if not opticDict.get(v['optic']):
-                        opticDict[v['optic']] = []
-                    opticDict[v['optic']].append(1)
-        opticDict = dict(sorted(opticDict.items()))
-        optics = {}
-        for k, v in opticDict.items():
-            optics[k] = {'quantity':len(v)}
-        print(json.dumps(optics, indent=4))
-    elif not args.node_input == None and not args.top_system_input == None:
-        #file = open(args.node_input, 'r')
-        topData = json.load(open(args.top_system_input, 'r'))
-        nodeData = json.load(open(args.node_input, 'r'))
-        print(json.dumps(nodeData, indent=4))
-        swDict = {}
-        for i in topData['imdata']:
-            for key, value in i.items():
-                a = DotMap(value['attributes'])
-                newdn = (a.dn).strip('/sys')
-                swDict.update({newdn:dict(
-                    intfs   = {},
-                    model   = "",
-                    name    = a.name,
-                    pod     = a.podId,
-                    role    = a.role,
-                    serial  = a.serial,
-                    version = a.version
-                )})
-                intfDict = {}
-                if value.get('children'):
-                    for c in value['children']:
-                        for k, v in c.items():
-                            aa = DotMap(v['attributes'])
-                            admin_status = aa.adminSt
-                            intf = re.search('\\[(.*)\\]', aa.dn).group(1)
-                            if re.search('/(\\d)$', intf):
-                                intf = intf.split('/')[0] + '/' + '0' + re.search('/(\\d)$', intf).group(1)
-                            for y, z in v['children'][0].items():
-                                aaa = DotMap(z['attributes'])
-                                duplex = aaa.operDuplex
-                                speed  = aaa.operSpeed
-                                state  = aaa.operSt
-                                optic  = aaa.operStQual
-                                if not optic == 'sfp-missing':
-                                    for w, x in z['children'][0].items():
-                                        aaaa = DotMap(x['attributes'])
-                                        optic = aaaa.typeName
-                            intfDict.update(deepcopy({intf:{
-                                'admin_status': admin_status,
-                                'duplex': duplex,
-                                'optic': optic,
-                                'speed': speed,
-                                'state': state,
-                            }}))
-                    swDict[newdn]['intfs'].update(intfDict)
-        for i in nodeData['imdata']:
-            for k, v in i.items():
-                a = DotMap(v['attributes'])
-                swDict[a.dn].update(deepcopy({'model':a.model}))
-        swDict = dict(sorted(swDict.items()))
-        for k, v in swDict.items():
-            v['intfs'] = dict(sorted(v['intfs'].items()))
-        #print(json.dumps(swDict, indent=4))
-        
+            intfDict = {}
+            if value.get('children'):
+                for c in value['children']:
+                    for k, v in c.items():
+                        aa = DotMap(v['attributes'])
+                        admin_status = aa.adminSt
+                        intf = re.search('\\[(.*)\\]', aa.rn).group(1)
+                        if re.search('/(\\d)$', intf):
+                            intf = intf.split('/')[0] + '/' + '0' + re.search('/(\\d)$', intf).group(1)
+                        for y, z in v['children'][0].items():
+                            aaa = DotMap(z['attributes'])
+                            duplex = aaa.operDuplex
+                            speed  = aaa.operSpeed
+                            state  = aaa.operSt
+                            optic  = aaa.operStQual
+                            if not optic == 'sfp-missing':
+                                for w, x in z['children'][0].items():
+                                    aaaa = DotMap(x['attributes'])
+                                    optic = aaaa.typeName
+                        intfDict.update(deepcopy({intf:{
+                            'admin_status': admin_status,
+                            'duplex': duplex,
+                            'optic': optic,
+                            'speed': speed,
+                            'state': state,
+                        }}))
+                swDict[newdn]['intfs'].update(intfDict)
+    for i in nodeData['imdata']:
+        for k, v in i.items():
+            a = DotMap(v['attributes'])
+            swDict[a.dn].update(deepcopy({'model':a.model}))
+    swDict = dict(sorted(swDict.items()))
+    for k, v in swDict.items():
+        v['intfs'] = dict(sorted(v['intfs'].items()))
+    #print(json.dumps(swDict, indent=4))
+    return(swDict)
+
+
+#======================================================
+# Function to Create the Workbook
+#======================================================
+def create_workbook_from_data(swDict):
     dest_file = 'switch_inventory.xlsx'
     wbstyles = easy_functions.workbook_styles()
     wb = Workbook()
@@ -271,6 +134,90 @@ def main():
                 ws_count += 1
 
     wb.save(dest_file)
+
+#======================================================
+# Main Module
+#======================================================
+def main():
+    # User Input Arguments
+    Parser = argparse.ArgumentParser(description='Configuration Migration')
+    Parser.add_argument('-n', '--node_input',
+                        action='store',
+                        required=False,
+                        help = 'The Input file for fabricNode List.'
+    )
+    Parser.add_argument('-t', '--top_system_input',
+                        action='store',
+                        required=False,
+                        help = 'The Input file for systemTop.'
+    )
+    Parser.add_argument('-s', '--server',
+                        action='store',
+                        required=False,
+                        help = 'The Server Name for the APIC.'
+    )
+    Parser.add_argument('-u', '--username',
+                        action='store',
+                        default = 'admin',
+                        required=False,
+                        help = 'The Login Username for the APIC Host.'
+    )
+    args = Parser.parse_args()
+
+    opSystem = platform.system()
+    kwargs = {}
+    kwargs['args'] = args
+    script_path = os.path.dirname(os.path.realpath(sys.argv[0]))
+    if opSystem == 'Windows': path_sep = '\\'
+    else: path_sep = '/'
+    jsonFile = f'{script_path}{path_sep}templates{path_sep}variables{path_sep}easy_variables.json'
+    jsonOpen = open(jsonFile, 'r')
+    easy_jsonData = json.load(jsonOpen)
+    jsonOpen.close()
+    easy_jsonData = easy_jsonData['components']['schemas']
+    easyDict = {}
+    kwargs = {
+        'args':args,
+        'easyDict':easyDict,
+        'easy_jsonData':easy_jsonData,
+        'remove_default_args':False,
+    }
+    #======================================================
+    # If User Inputs Server Argument, Get Data From API
+    #======================================================
+    if not args.server == None:
+        kwargs['jsonData'] = kwargs['easy_jsonData']['site.Identifiers']['allOf'][1]['properties']
+        kwargs["Variable"] = 'apicPass'
+        args.apic_pass = easy_functions.sensitive_var_value(**kwargs)
+        fablogin = classes.apicLogin(args.server, args.username, args.apic_pass)
+        cookies = fablogin.login()
+
+        # Switch Dictionaries
+        swDict      = {}
+        tempfile    = 'dummy.json'
+        uri         = 'api/node/class/fabricNode'
+        nodeResponse= easy_functions.apic_api(args.server, 'get', {}, cookies, uri, tempfile)
+        uri         = 'api/node/class/topSystem'
+        uriFilter   = "rsp-subtree=full&rsp-subtree-class=fabricNode&rsp-subtree-class=l1PhysIf&rsp-subtree-class=ethpmPhysIf&rsp-subtree-class=ethpmFcot"
+        topResponse = easy_functions.apic_api_with_filter(args.server, cookies, uri, uriFilter)
+        nodeData    = nodeResponse.json()
+        topData     = topResponse.json()
+
+        swDict = create_switch_dictionary(nodeData, topData)
+        create_workbook_from_data(swDict)
+
+
+    #======================================================
+    # If User Does Not Assign Server Argument use Files
+    #======================================================
+    elif not args.node_input == None and not args.top_system_input == None:
+        #file = open(args.node_input, 'r')
+        topData = json.load(open(args.top_system_input, 'r'))
+        nodeData = json.load(open(args.node_input, 'r'))
+
+        swDict = create_switch_dictionary(nodeData, topData)
+        create_workbook_from_data(swDict)
+
 
 if __name__ == '__main__':
     main()

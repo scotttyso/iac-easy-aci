@@ -1,5 +1,6 @@
 argparse
 collection
+dotmap
 GitPython
 git_status_checker
 ipaddress
@@ -8,6 +9,7 @@ openpyxl==3.0.9
 ordered_set
 phonenumbers
 pyyaml
+requests
 simplejson
 stdiomask
 validators

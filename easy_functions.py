@@ -78,11 +78,9 @@ def apic_api_with_filter(apic, cookies, uri, uriFilter, section=''):
     r = ''
     while r == '':
         try:
-            print('https://{}/{}.json?{}'.format(apic, uri, uriFilter))
             r = s.get('https://{}/{}.json?{}'.format(apic, uri, uriFilter), cookies=cookies, verify=False)
             status = r.status_code
             print(status)
-            print(r.json())
         except requests.exceptions.ConnectionError as e:
             print("Connection error, pausing before retrying. Error: {}"
                 .format(e))
