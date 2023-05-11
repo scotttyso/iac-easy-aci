@@ -1,0 +1,34 @@
+{
+    "context": "_configCb",
+    "attributes": {},
+    "children": [
+        {
+            "context": "leaf",
+            "attributes": {
+                "nodeRange": "{{ node_id }}"
+            },
+            "children": [
+                {
+                    "context": "interface",
+                    "attributes": {},
+                    "children": [
+                        {
+                            "context": "ethernet",
+                            "attributes": {
+                                "ifRange": "{{ port }}"
+                            },
+                            "children": [
+                                {
+                                    "context": "portdirect",
+                                    "attributes": {
+                                        "uplink": "{{ convert_to }}"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
