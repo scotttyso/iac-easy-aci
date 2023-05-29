@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 from copy import deepcopy
+from dotmap import DotMap
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side 
 import argparse
 import easy_functions
 import json
+import pexpect
 import platform
 import os
 import re
+import sys
+import time
 
 # Define Regular Expressions to be used
 re_bpdu   = re.compile('^  spanning-tree bpduguard enable$\n')
@@ -67,8 +71,21 @@ ws_even.alignment = Alignment(horizontal="center", vertical="center")
 ws_even.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
 ws_even.font = Font(bold=False, size=12, color="44546A")
 
+#=================================================================
+# Print Color Functions
+#=================================================================
+def prCyan(skk): print("\033[96m {}\033[00m" .format(skk))
+def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
+def prLightPurple(skk): print("\033[94m {}\033[00m" .format(skk))
+def prLightGray(skk): print("\033[97m {}\033[00m" .format(skk))
+def prPurple(skk): print("\033[95m {}\033[00m" .format(skk))
+def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
+def prYellow(skk): print("\033[93m {}\033[00m" .format(skk))
+
+#=================================================================
 # Function to Create Export Workbooks
-def create_workbooks(path_sep, jsonDict):
+#=================================================================
+def create_workbooks(jsonMap):
     wb = Workbook()
     wb.add_named_style(wsh1)
     wb.add_named_style(wsh2)
@@ -106,7 +123,7 @@ def create_workbooks(path_sep, jsonDict):
     ws2.append(data)
     for cell in ws2['1:1']: cell.style = 'wsh2'
     ws_count = 2
-    for k, v in jsonDict['vrfs'].items():
+    for k, v in jsonMap.vrfs.items():
         data = ['vrf_add','','',k,'create','','','','']
         ws2.append(data)
         rc = '%s:%s' % (ws_count, ws_count)
@@ -127,10 +144,10 @@ def create_workbooks(path_sep, jsonDict):
     ws3.append(data)
     for cell in ws3['1:1']: cell.style = 'wsh2'
     ws_count = 2
-    for k, v in jsonDict['bridge_domains'].items():
-        if v.get('description'): descr = v['description']
+    for k, v in jsonMap.bridge_domains.items():
+        if v.get('description'): descr = v.description
         else: descr = ''
-        if v.get('gateway_ips'): gwy = ','.join(v['gateway_ips'])
+        if v.get('gateway_ips'): gwy = ','.join(v.gateway_ips)
         else: gwy = ''
         data = ['bd_add','','',v['name'],descr,'','','nets',k,gwy,'','']
         ws3.append(data)
@@ -149,7 +166,7 @@ def create_workbooks(path_sep, jsonDict):
     ws4.append(data)
     for cell in ws4["1:1"]: cell.style = 'wsh2'
     ws_count = 2
-    for k, v in jsonDict['dhcp_relay'].items():
+    for k, v in jsonMap.dhcp_relay.items():
         data = ['dhcp_relay','','',k,'','','','',]
         ws4.append(data)
         rc = '%s:%s' % (ws_count, ws_count)
@@ -167,7 +184,7 @@ def create_workbooks(path_sep, jsonDict):
     ws5.append(data)
     for cell in ws5["1:1"]: cell.style = 'wsh2'
     ws_count = 2
-    data = [jsonDict['vlans']]
+    data = [jsonMap.vlans]
     ws5.append(data)
     rc = '%s:%s' % (ws_count, ws_count)
     for cell in ws5[rc]:
@@ -184,7 +201,7 @@ def create_workbooks(path_sep, jsonDict):
     ws6.append(data)
     for cell in ws6["1:1"]: cell.style = 'wsh2'
     ws_count = 2
-    for k, v in jsonDict['bd_duplicates'].items():
+    for k, v in jsonMap.bd_duplicates.items():
         data = [v['vlan'],k]
         ws6.append(data)
         rc = '%s:%s' % (ws_count, ws_count)
@@ -206,10 +223,10 @@ def create_workbooks(path_sep, jsonDict):
     dest_file = 'switch_export.xlsx'
     ws_count = 0
     # Populate Switch Worksheet
-    for k, v in jsonDict['switches'].items():
+    for k, v in jsonMap.switches.items():
         int_count = 0
-        if len(v['interfaces']) >= 1: int_count += 1
-        if len(v['port_channels']) >= 1: int_count += 1
+        if len(v.interfaces) >= 1: int_count += 1
+        if len(v.port_channels) >= 1: int_count += 1
         if int_count > 0:
             if ws_count == 0:
                 ws = wb1.active
@@ -231,19 +248,16 @@ def create_workbooks(path_sep, jsonDict):
 
             # Loop Thru Switch Interfaces
             ws_count = 2
-            #print(k)
-            #print(json.dumps(v['port_channels'], indent=4))
-            #print(json.dumps(v['interfaces'], indent=4))
-            for a, b in v['port_channels'].items():
+            for a, b in v.port_channels.items():
                 ptype = 'bundle'
-                if not b['vpc'] == '': itype = 'vpc_add'
+                if not b.vpc == '': itype = 'vpc_add'
                 else: itype = 'pc_add'
-                intfs = ','.join(b['interfaces'])
+                intfs = ','.join(b.interfaces)
                 data = [
                     itype,k,intfs,'',a,
-                    a,ptype,'needed',b['description'],a,b['pc_mode'],b['vpc'],
-                    b['mtu'],b['speed'],b['mode'],b['access'],b['allowed_vlans'],
-                    b['cdp'],b['lldp_rx'],b['lldp_tx'],b['bpdu']
+                    a,ptype,'needed',b.description,a,b.pc_mode,b.vpc,
+                    b.mtu,b.speed,b.mode,b.access,b.allowed_vlans,
+                    b.cdp,b.lldp_rx,b.lldp_tx,b.bpdu
                 ]
                 ws.append(data)
                 rc = '%s:%s' % (ws_count, ws_count)
@@ -251,17 +265,17 @@ def create_workbooks(path_sep, jsonDict):
                     if ws_count % 2 == 0: cell.style = 'ws_even'
                     else: cell.style = 'ws_odd'
                 ws_count += 1
-            for a, b in v['interfaces'].items():
+            for a, b in v.interfaces.items():
                 intf = a.split('net')[1]
                 iselect = f'Eth{intf}'
                 iselect = iselect.replace('/', '-')
-                if b['pc_id'] == 'n/a': ptype = 'access'
+                if b.pc_id == 'n/a': ptype = 'access'
                 else: ptype = 'bundle'
                 data = [
                     'intf_selector',k,a,'',iselect,
-                    intf,ptype,'needed',b['description'],b['pc_id'],b['pc_mode'],'',
-                    b['mtu'],b['speed'],b['mode'],b['access'],b['allowed_vlans'],
-                    b['cdp'],b['lldp_rx'],b['lldp_tx'],b['bpdu']
+                    intf,ptype,'needed',b.description,b.pc_id,b.pc_mode,'',
+                    b.mtu,b.speed,b.mode,b.access,b.allowed_vlans,
+                    b.cdp,b.lldp_rx,b.lldp_tx,b.bpdu
                 ]
                 ws.append(data)
                 rc = '%s:%s' % (ws_count, ws_count)
@@ -276,7 +290,7 @@ def create_workbooks(path_sep, jsonDict):
 #=================================================================
 # Function to Parse the Configurations
 #=================================================================
-def parse_config_file(jsonDict, file):
+def parse_config_file(jsonMap, file):
     # Start by Creating Default Variables
     str_bpdg = False
     str_cdp_ = False
@@ -310,45 +324,45 @@ def parse_config_file(jsonDict, file):
 
     # Read the Conifguration File and Gather Configuration Information
     bd_count = 0
-    print(f'Reading File: {file}')
+    prGreen(f'Reading File: {file}')
     file = open(file, 'r')
     for line in file.readlines():
         if re.fullmatch(re_host, line):
             # Set Hostname String
             str_host = re.fullmatch(re_host, line).group(1)
             # Append Hostname to Switches Dictionary
-            if not str_host in jsonDict['switches'].keys():
-                jsonDict['switches'].update(deepcopy({str_host:{'interfaces':{},'port_channels':{}}}))
+            if not str_host in jsonMap.switches.keys():
+                jsonMap.switches[str_host] = DotMap(interfaces = DotMap(), port_channels = DotMap())
         elif re.fullmatch(re_swname, line):
             # Set Hostname String
             str_host = re.fullmatch(re_swname, line).group(1)
             # Append Hostname to Switches Dictionary
-            if not str_host in jsonDict['switches'].keys():
-                jsonDict['switches'].update(deepcopy({str_host:{'interfaces':{},'port_channels':{}}}))
+            if not str_host in jsonMap.switches.keys():
+                jsonMap.switches[str_host] = DotMap(interfaces = DotMap(), port_channels = DotMap())
         elif re.fullmatch(re_vlst, line):
             # Matched the VLAN List... Now Parse for Data Export
             str_vlst = re.fullmatch(re_vlst, line).group(1)
             # Expand VLAN Ranges into Full VLAN List
             vlan_full = easy_functions.vlan_list_full(str_vlst)
             # Append Expanded VLAN List to vlans List
-            jsonDict['vlans'].extend(vlan_full)
+            jsonMap.vlans.extend(vlan_full)
         elif re.fullmatch(re_vlan, line):
             # Matched a VLAN... Now Parse for Data Export
             str_vlan = int(re.fullmatch(re_vlan, line).group(1))
-            if not str_vlan in jsonDict['bridge_domains'].keys():
-                jsonDict['bridge_domains'][str_vlan] = {'name':'unknown'}
+            if not str_vlan in jsonMap.bridge_domains.keys():
+                jsonMap.bridge_domains[str_vlan].name = 'unknown'
         elif re.fullmatch(re_vlnm, line):
             # Matched VLAN Name... Now Parse for Data Export
             str_vlnm = re.fullmatch(re_vlnm, line).group(1)
             if not str_vlan == '':
-                if jsonDict['bridge_domains'][str_vlan]['name'] == 'unknown':
-                    jsonDict['bridge_domains'][str_vlan]['name'] = str_vlnm
-                elif not jsonDict['bridge_domains'][str_vlan]['name'] == str_vlnm:
-                    jsonDict['bd_duplicates'].update({str_vlnm:{'vlan':str_vlan}})
+                if jsonMap.bridge_domains[str_vlan].name == 'unknown':
+                    jsonMap.bridge_domains[str_vlan].name = str_vlnm
+                elif not jsonMap.bridge_domains[str_vlan].name == str_vlnm:
+                    jsonMap.bd_duplicates[str_vlnm] = DotMap(vlan = str_vlan)
         elif re.fullmatch(re_vrfc, line):
             str_vrfc = re.fullmatch(re_vrfc, line).group(1)
-            if not str_vrfc in jsonDict['vrfs'].keys():
-                jsonDict['vrfs'].update({str_vrfc:{}})
+            if not str_vrfc in jsonMap.vrfs.keys():
+                jsonMap.vrfs.update({str_vrfc:{}})
         elif re.fullmatch(re_ivln, line):
             # Matched an Interface VLAN... Now Parse for Data Export
             str_ivln = int(re.fullmatch(re_ivln, line).group(1))
@@ -379,8 +393,8 @@ def parse_config_file(jsonDict, file):
         elif re.fullmatch(re_dhcp, line):
             # Matched an IPv4 DHCP Relay definition... Now Parse for Data Export
             str_dhcp = re.fullmatch(re_dhcp, line).group(1)
-            if not str_dhcp in jsonDict['dhcp_relay'].keys():
-                jsonDict['dhcp_relay'][str_dhcp] = {'name':''}
+            if not str_dhcp in jsonMap.dhcp_relay.keys():
+                jsonMap.dhcp_relay[str_dhcp] = DotMap(name = '')
         elif re.fullmatch(re_intf, line): str_intf = re.fullmatch(re_intf, line).group(1)
         elif re.fullmatch(re_bpdu, line): str_bpdg = 'BPDU_fg'
         elif re.fullmatch(re_cdpe, line): str_cdp_ = True
@@ -409,16 +423,15 @@ def parse_config_file(jsonDict, file):
                     a,b = str_ipv4.split('/')
                     gtwy = str(str_hsv4) + '/' + str(b)
                 else: gtwy = str(str_ipv4)
-                #print(json.dumps(jsonDict['bridge_domains'], indent=4))
-                if not str_ivln in jsonDict['bridge_domains'].keys():
-                    jsonDict['bridge_domains'][str_ivln] = {'description':str_desc,'name':'unknown'}
-                jsonDict['bridge_domains'][str_ivln].update({'gateway_ips':[gtwy]})
+                if not str_ivln in jsonMap.bridge_domains.keys():
+                    jsonMap.bridge_domains[str_ivln] = DotMap(description = str_desc,name = 'unknown')
+                jsonMap.bridge_domains[str_ivln].gateway_ips = [gtwy]
                 if str_ipv4s:
                     if str_hsv4s:
                         a,b = str_ipv4s.split('/')
                         gtwy = str(str_hsv4s) + '/' + str(b)
                     else: gtwy = str(str_ipv4)
-                    jsonDict['bridge_domains'][str_ivln]['gateway_ips'].append(gtwy)
+                    jsonMap.bridge_domains[str_ivln].gateway_ips.append(gtwy)
             elif 'channel' in str_intf:
                 if str_swpt == True:
                     mtu1 = 9000
@@ -426,21 +439,21 @@ def parse_config_file(jsonDict, file):
                     if mtu2 >= mtu1: str_mtu_ = '9000'
                     if str_swmd == 'trunk': str_swav = str_tknv
                     pc_intf = str_intf.split('l')[1]
-                    jsonDict['switches'][str_host]['port_channels'][pc_intf] = {
-                        'access':str_swav,
-                        'allowed_vlans':str_tkvl,
-                        'bpdu':str_bpdg,
-                        'cdp':str_cdp_,
-                        'description':str_desc,
-                        'interfaces':[],
-                        'lldp_rx':str_lldr,
-                        'lldp_tx':str_lldt,
-                        'mode':str_swmd,
-                        'mtu':str_mtu_,
-                        'pc_mode':str_pomd,
-                        'speed':str_sped,
-                        'vpc':str_vpc_
-                    }
+                    jsonMap.switches[str_host].port_channels[pc_intf] = DotMap(
+                        access       = str_swav,
+                        allowed_vlans= str_tkvl,
+                        bpdu         = str_bpdg,
+                        cdp          = str_cdp_,
+                        description  = str_desc,
+                        interfaces   = [],
+                        lldp_rx      = str_lldr,
+                        lldp_tx      = str_lldt,
+                        mode         = str_swmd,
+                        mtu          = str_mtu_,
+                        pc_mode      = str_pomd,
+                        speed        = str_sped,
+                        vpc          = str_vpc_
+                    )
             elif 'Ethernet' in str_intf:
                 if str_swpt == True:
                     mtu1 = 9000
@@ -461,23 +474,23 @@ def parse_config_file(jsonDict, file):
                     elif str_sped == '400000': str_sped = '400G_%s' % (str_nego)
                     else: str_sped = 'inherit_%s' % (str_nego)
                     if re.search(r'\d+', str_poch):
-                        jsonDict['switches'][str_host]['port_channels'][str_poch]['interfaces'].append(str_intf)
+                        jsonMap.switches[str_host].port_channels[str_poch].interfaces.append(str_intf)
                     if str_swmd == 'access': swav = str_swav
                     else: swav = str_tknv
-                    jsonDict['switches'][str_host]['interfaces'][str_intf] = {
-                        'access':swav,
-                        'allowed_vlans':str_tkvl,
-                        'bpdu':str_bpdg,
-                        'cdp':str_cdp_,
-                        'description':str_desc,
-                        'lldp_rx':str_lldr,
-                        'lldp_tx':str_lldt,
-                        'mode':str_swmd,
-                        'mtu':str_mtu_,
-                        'pc_id':str_poch,
-                        'pc_mode':str_pomd,
-                        'speed':str_sped
-                    }
+                    jsonMap.switches[str_host].interfaces[str_intf] = DotMap(
+                        access       = swav,
+                        allowed_vlans= str_tkvl,
+                        bpdu         = str_bpdg,
+                        cdp          = str_cdp_,
+                        description  = str_desc,
+                        lldp_rx      = str_lldr,
+                        lldp_tx      = str_lldt,
+                        mode         = str_swmd,
+                        mtu          = str_mtu_,
+                        pc_id        = str_poch,
+                        pc_mode      = str_pomd,
+                        speed        = str_sped
+                    )
             
             # Reset the Variables back to Blank except str_host
             str_bpdg = False
@@ -510,7 +523,7 @@ def parse_config_file(jsonDict, file):
             str_vrfc = ''
     
     # Return the Dictionary
-    return jsonDict
+    return jsonMap
 
 #=================================================================
 # The Main Module
@@ -522,71 +535,157 @@ def main():
         default = 'CONFIG',
         help = 'The Directory Location for the Configuration Files to Read.'
     )
+    Parser.add_argument('-f', '--file',
+        help = 'A File with a List of Hosts to Login to and pull the configuration from.'
+    )
+    Parser.add_argument('-u', '--username',
+        help = 'Username to Login to the switches with.'
+    )
+    Parser.add_argument('-v', '--vdc',
+        action='store_true',
+        help = 'Username to Login to the switches with.'
+    )
     args = Parser.parse_args()
 
-    # Create the Initial Dictionary
-    jsonDict = {
-        'dhcp_relay':{},
-        'bd_duplicates':{},
-        'bridge_domains':{},
-        'switches':{},
-        'vlans':[],
-        'vrfs':{}
-    }
+    kwargs = DotMap()
+    kwargs.args = args
+    kwargs.op_system = platform.system()
+    jsonMap = DotMap(
+        dhcp_relay    = DotMap(),
+        bd_duplicates = DotMap(),
+        bridge_domains= DotMap(),
+        switches      = DotMap(),
+        vlans         = [],
+        vrf           = DotMap()
+    )
+    #=====================================================
+    # Login to Devices if File with List is defined
+    #=====================================================
+    if args.file:
+        kwargs.password = 'switch_password'
+        kwargs.username = args.username
+        try:
+            if os.path.isfile(args.file):
+                prLightGray(f'\n-----------------------------------------------------------------------------\n')
+                prLightGray(f'   {args.dir} exists.  Beginning Script Execution...')
+                prLightGray(f'\n-----------------------------------------------------------------------------\n')
 
-    # Determine Users Operating System
-    opSystem = platform.system()
-    if opSystem == 'Windows': path_sep = '\\'
-    else: path_sep = '/'
+                #=====================================================
+                # Get Show run all
+                #=====================================================
+                args.dir = os.getcwd()
+                for e in open(args.file, 'r'):
+                    split_hostame       = e.split('.')
+                    kwargs.enable_prompt= f"{split_hostame[0]}>"
+                    kwargs.hostname     = e.strip()
+                    kwargs.host_prompt  = f"{split_hostame[0]}#"
+                    file_ext = ['.txt','.cfg','.config']
+                    child, kwargs = easy_functions.child_login(kwargs)
+                    child.sendline("term length 0")
+                    child.expect(kwargs.host_prompt)
+                    child.sendline("show run all")
+                    child.expect("show run all")
+                    child.expect(kwargs.host_prompt)
+                    with open(f'{kwargs.hostname}.cfg', 'w') as f:
+                        f.write(child.before)
+                        f.close()
 
-    # Check Configuration File(s) Directory Exists
-    try:
-        if os.path.isdir(args.dir):
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   {args.dir} exists.  Beginning Script Execution...')
-            print(f'\n-----------------------------------------------------------------------------\n')
-        else:
-            print(f'\n-----------------------------------------------------------------------------\n')
-            print(f'   {args.dir} does not exist.  Exiting....')
-            print(f'\n-----------------------------------------------------------------------------\n')
-            exit()
-    except IOError:
-        print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   {args.dir} does not exist.  Exiting....')
-        print(f'\n-----------------------------------------------------------------------------\n')
-        exit()
+                    file = f'{kwargs.hostname}.cfg'
+                    jsonMap = parse_config_file(jsonMap, os.path.join(args.dir, file))
+                    os.remove(f'{kwargs.hostname}.cfg')
 
-    #Get Configuration Files
-    for file in os.listdir(args.dir):
-        file_ext = ['.txt','.cfg','.config']
-        for ext in file_ext:
-            if file.endswith(ext):
-                jsonDict = parse_config_file(jsonDict, os.path.join(args.dir, file))
+                    #=====================================================
+                    # Get Show run all
+                    #=====================================================
+                    if args.vdc == True:
+                        vdcs = DotMap()
+                        child.sendline('show vdc')
+                        child.expect('show vdc')
+                        vdc_output = False
+                        while vdc_output == False:
+                            vdc_regex = '([0-9])[ \t]+([0-9a-zA-Z\\-\\_\\.]+)[ \t]+active'
+                            i = child.expect([vdc_regex, kwargs.host_prompt, pexpect.TIMEOUT])
+                            if i == 0:
+                                print(child.match)
+                                vdcs[(child.match).group(1)] = (child.match).group(2)
+                            elif i == 1: vdc_output = True
+                        if len(vdcs) > 1:
+                            for k, v in vdcs:
+                                child.sendline(f'switchto vdc {v}')
+                                child.expect('switchto vdc')
+                                child.expect(f'{v}#')
+                                child.sendline('show run all')
+                                child.expect('show run all')
+                                child.expect(f'{v}#')
+                                with open(f'{v}.cfg', 'w') as f:
+                                    f.write(child.before)
+                                    f.close()
+                                file = f'{v}.cfg'
+                                jsonMap = parse_config_file(jsonMap, os.path.join(args.dir, file))
+                                os.remove(f'{v}.cfg')
+                    
+                    child.sendline('exit')
+                    child.expect('closed')
+                    child.close()
+            else:
+                prLightGray(f'\n-----------------------------------------------------------------------------\n')
+                prLightGray(f'   {args.file} does not exist.  Exiting....')
+                prLightGray(f'\n-----------------------------------------------------------------------------\n')
+                sys.exit(1)
+        except IOError:
+            prLightGray(f'\n-----------------------------------------------------------------------------\n')
+            prLightGray(f'   {args.file} does not exist.  Exiting....')
+            prLightGray(f'\n-----------------------------------------------------------------------------\n')
+            sys.exit(1)
+    else:
+        # Check Configuration File(s) Directory Exists
+        try:
+            if os.path.isdir(args.dir):
+                prLightGray(f'\n-----------------------------------------------------------------------------\n')
+                prLightGray(f'   {args.dir} exists.  Beginning Script Execution...')
+                prLightGray(f'\n-----------------------------------------------------------------------------\n')
+            else:
+                prLightGray(f'\n-----------------------------------------------------------------------------\n')
+                prLightGray(f'   {args.dir} does not exist.  Exiting....')
+                prLightGray(f'\n-----------------------------------------------------------------------------\n')
+                sys.exit(1)
+        except IOError:
+            prLightGray(f'\n-----------------------------------------------------------------------------\n')
+            prLightGray(f'   {args.dir} does not exist.  Exiting....')
+            prLightGray(f'\n-----------------------------------------------------------------------------\n')
+            sys.exit(1)
+
+        #Get Configuration Files
+        for file in os.listdir(args.dir):
+            file_ext = ['.txt','.cfg','.config']
+            for ext in file_ext:
+                if file.endswith(ext):
+                    jsonMap = parse_config_file(jsonMap, os.path.join(args.dir, file))
     
     # Sort vlans and compact list
-    jsonDict['vlans'].sort()
-    vlans = set(jsonDict['vlans'])
+    jsonMap.vlans.sort()
+    vlans = set(jsonMap.vlans)
     vlan_list = []
     for vlan in vlans: vlan_list.append(vlan)
-    jsonDict['vlans'] = easy_functions.vlan_list_format(vlan_list)
+    jsonMap.vlans = easy_functions.vlan_list_format(vlan_list)
     
     # Sort Dictionary keys
     dlist = ['bd_duplicates','bridge_domains','switches','vrfs']
     for item in dlist:
         dic2 = {}    
-        for i in sorted(jsonDict[item]):
-            dic2[i] = jsonDict[item][i]
-        jsonDict[item] = dic2
+        for i in sorted(jsonMap[item]):
+            dic2[i] = jsonMap[item][i]
+        jsonMap[item] = dic2
         dic2 = {}    
 
     # Create the Workbooks
-    create_workbooks(path_sep, jsonDict)
+    create_workbooks(jsonMap)
 
     #End Script
-    print(f'\n-----------------------------------------------------------------------------\n')
-    print(f'   Completed Running Script.  Exiting....')
-    print(f'\n-----------------------------------------------------------------------------\n')
-    exit()
+    prLightGray(f'\n-----------------------------------------------------------------------------\n')
+    prLightGray(f'   Completed Running Script.  Exiting....')
+    prLightGray(f'\n-----------------------------------------------------------------------------\n')
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()

@@ -1361,6 +1361,8 @@ class switches(object):
         # Get Variables from Library
         jsonData = kwargs['easy_jsonData']['access.profiles.switchProfiles']['allOf'][1]['properties']
 
+        if type(kwargs['site_group']) == int:
+            kwargs['site_group'] = str(kwargs['site_group'])
         if re.search('Grp_[A-F]', kwargs['site_group']):
             print(f"\n-----------------------------------------------------------------------------\n")
             print(f"   Error on Worksheet {kwargs['ws'].title}, Row {kwargs['row_num']} site_group, value {kwargs['site_group']}.")
@@ -1890,9 +1892,14 @@ class tenants(object):
 
         if not polVars['annotations'] == None:
             polVars['annotations'] = easy_functions.annotations_split(polVars['annotations'])
-        polVars['gateway_ips'] = polVars['gateway_ips'].split(',')
-        polVars['l3outs'] = polVars['l3outs'].split(',')
-        polVars['subnet_templates'] = polVars['subnet_templates'].split(',')
+        if polVars.get('gateway_ips'):
+            polVars['gateway_ips'] = polVars['gateway_ips'].split(',')
+        if polVars.get('l3outs'):
+            polVars['l3outs'] = polVars['l3outs'].split(',')
+        else: kwargs['l3outs'] = []; polVars['l3outs'] = []
+        if polVars.get('subnet_templates'):
+            polVars['subnet_templates'] = polVars['subnet_templates'].split(',')
+        else: kwargs['subnet_templates'] = []; polVars['subnet_templates'] = []
         subs = []
         if len(polVars['subnet_templates']) == 1:
             for i in polVars['gateway_ips']:

@@ -16,6 +16,7 @@ import json
 import itertools
 import openpyxl
 import os
+import pexpect
 import pkg_resources
 import platform
 import re
@@ -43,6 +44,17 @@ log_level = 2
 #========================================================
 class InsufficientArgs(Exception):
     pass
+
+#=====================================================
+# Print Color Functions
+#=====================================================
+def prCyan(skk): print("\033[96m {}\033[00m" .format(skk))
+def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
+def prLightPurple(skk): print("\033[94m {}\033[00m" .format(skk))
+def prLightGray(skk): print("\033[97m {}\033[00m" .format(skk))
+def prPurple(skk): print("\033[95m {}\033[00m" .format(skk))
+def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
+def prYellow(skk): print("\033[93m {}\033[00m" .format(skk))
 
 #========================================================
 # Function to Connect to the APIC API
@@ -233,6 +245,52 @@ def args_remove(args_list, jsonData):
         jsonData['optional_args'].update({f'{i}': ''})
         jsonData['required_args'].pop(i)
     return jsonData
+
+#=====================================================
+# pexpect - Login Function
+#=====================================================
+def child_login(kwargs):
+    kwargs.sensitive_var = kwargs.password
+    password = os.environ.get('switch_password')
+    #password = kwargs.var_value
+    #=====================================================
+    # Use 
+    #=====================================================
+    if kwargs.op_system == 'Windows':
+        from pexpect import popen_spawn
+        child = popen_spawn.PopenSpawn('cmd', encoding='utf-8', timeout=1)
+    else:
+        system_shell = os.environ['SHELL']
+        child = pexpect.spawn(system_shell, encoding='utf-8')
+    child.logfile_read = sys.stdout
+    if kwargs.op_system == 'Windows':
+        child.sendline(f'ping -n 2 {kwargs.hostname}')
+        child.expect(f'ping -n 2 {kwargs.hostname}')
+        child.expect_exact("> ")
+        child.sendline(f'ssh {kwargs.username}@{kwargs.hostname} | Tee-Object Logs\{kwargs.hostname}.txt')
+        child.expect(f'Tee-Object Logs\{kwargs.hostname}.txt')
+    else:
+        child.sendline(f'ping -c 2 {kwargs.hostname}')
+        child.expect(f'ping -c 2')
+        child.expect_exact("$ ")
+        child.sendline(f'ssh {kwargs.username}@{kwargs.hostname} | tee Logs/{kwargs.hostname}.txt')
+        child.expect(f'ssh {kwargs.username}')
+    logged_in = False
+    while logged_in == False:
+        i = child.expect(['Are you sure you want to continue', 'closed', 'Password:', kwargs.host_prompt, pexpect.TIMEOUT])
+        if i == 0: child.sendline('yes')
+        elif i == 1:
+            prRed(f'\n!!! FAILED !!! to connect.  '\
+                f'Please Validate {kwargs.hostname} is correct and username {kwargs.username} is correct.')
+            sys.exit(1)
+        elif i == 2: child.sendline(password)
+        elif i == 3: logged_in = True
+        elif i == 4:
+            prRed(f"\n{'-'*91}\n")
+            prRed(f'!!! FAILED !!!\n Could not open SSH Connection to {kwargs.hostname}')
+            prRed(f"\n{'-'*91}\n")
+            sys.exit(1)
+    return child, kwargs
 
 #========================================================
 # Function to Check the Existance of a Template
@@ -1467,6 +1525,10 @@ def ndo_api(ndo, method, cookies, uri, section=''):
 # Function to validate input for each method
 #========================================================
 def process_kwargs(jsonData, **kwargs):
+    if kwargs.get('site_group'):
+        if type(kwargs['site_group']) == int:
+            kwargs['site_group'] = str(kwargs['site_group'])
+
     # Validate User Input
     validate_args(jsonData, **kwargs)
     
