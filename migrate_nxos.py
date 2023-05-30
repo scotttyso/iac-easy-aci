@@ -1,17 +1,42 @@
 #!/usr/bin/env python3
-from copy import deepcopy
-from dotmap import DotMap
-from openpyxl import Workbook
-from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side 
-import argparse
-import easy_functions
-import json
-import pexpect
-import platform
-import os
-import re
-import sys
-import time
+"""Switch Migration Script - 
+This Script is built to Deploy Converged Infrastructure from a YAML Configuration File.
+The Script uses argparse to take in the following CLI arguments:
+    d or dir:      Source Directory for "show run all" Configuration Files to Read.
+    f or file:     A File with a List of Hosts to Login to and pull the configuration from.
+    u or username: Username to Login to the switches with.
+    v or vdc:      Flag to enable support for multi-vdcs, like 7Ks.
+"""
+#=================================================================
+# Print Color Functions
+#=================================================================
+def prCyan(skk): print("\033[96m {}\033[00m" .format(skk))
+def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
+def prLightPurple(skk): print("\033[94m {}\033[00m" .format(skk))
+def prLightGray(skk): print("\033[97m {}\033[00m" .format(skk))
+def prPurple(skk): print("\033[95m {}\033[00m" .format(skk))
+def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
+def prYellow(skk): print("\033[93m {}\033[00m" .format(skk))
+
+
+#======================================================
+# Source Modules
+#======================================================
+try:
+    from dotmap import DotMap
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side 
+    import argparse
+    import easy_functions
+    import pexpect
+    import platform
+    import os
+    import re
+    import sys
+except ImportError as e:
+    prRed(f'!!! ERROR !!!\n{e.__class__.__name__}')
+    prRed(f" Module {e.name} is required to run this script")
+    prRed(f" Install the module using the following: `pip install {e.name}`")
 
 # Define Regular Expressions to be used
 re_bpdu   = re.compile('^  spanning-tree bpduguard enable$\n')
@@ -70,17 +95,6 @@ ws_even = NamedStyle(name="ws_even")
 ws_even.alignment = Alignment(horizontal="center", vertical="center")
 ws_even.border = Border(left=bd2, top=bd2, right=bd2, bottom=bd2)
 ws_even.font = Font(bold=False, size=12, color="44546A")
-
-#=================================================================
-# Print Color Functions
-#=================================================================
-def prCyan(skk): print("\033[96m {}\033[00m" .format(skk))
-def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
-def prLightPurple(skk): print("\033[94m {}\033[00m" .format(skk))
-def prLightGray(skk): print("\033[97m {}\033[00m" .format(skk))
-def prPurple(skk): print("\033[95m {}\033[00m" .format(skk))
-def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
-def prYellow(skk): print("\033[93m {}\033[00m" .format(skk))
 
 #=================================================================
 # Function to Create Export Workbooks
@@ -533,7 +547,7 @@ def main():
     Parser = argparse.ArgumentParser(description='Configuration Migration')
     Parser.add_argument('-d', '--dir',
         default = 'CONFIG',
-        help = 'The Directory Location for the Configuration Files to Read.'
+        help = 'Source Directory for "show run all" Configuration Files to Read.'
     )
     Parser.add_argument('-f', '--file',
         help = 'A File with a List of Hosts to Login to and pull the configuration from.'
@@ -543,7 +557,7 @@ def main():
     )
     Parser.add_argument('-v', '--vdc',
         action='store_true',
-        help = 'Username to Login to the switches with.'
+        help = 'Flag to enable support for multi-vdcs, like 7Ks.'
     )
     args = Parser.parse_args()
 
