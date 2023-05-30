@@ -588,11 +588,10 @@ def main():
                 # Get Show run all
                 #=====================================================
                 args.dir = os.getcwd()
+                kwargs.enable_prompt= "[0-9a-zA-Z\\-\\_\\.]{3,30}>"
+                kwargs.host_prompt  = "[0-9a-zA-Z\\-\\_\\.]{3,30}#"
                 for e in open(args.file, 'r'):
-                    split_hostame       = e.split('.')
-                    kwargs.enable_prompt= f"{split_hostame[0]}>"
                     kwargs.hostname     = e.strip()
-                    kwargs.host_prompt  = f"{split_hostame[0]}#"
                     file_ext = ['.txt','.cfg','.config']
                     child, kwargs = easy_functions.child_login(kwargs)
                     child.sendline("term length 0")
