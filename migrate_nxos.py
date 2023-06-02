@@ -28,6 +28,7 @@ try:
     from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side 
     import argparse
     import easy_functions
+    import json
     import pexpect
     import platform
     import os
@@ -254,7 +255,7 @@ def create_workbooks(jsonMap):
             data = [
                 'Type','current_host','current_interfaces','interface_profile','interface_selector',
                 'interface','policy_group_type','policy_group','description','pc_id','pc_mode','vpc_id',
-                'mtu','speed','sw_mode','acccess/native','allowed_vlans',
+                'mtu','speed','status','sw_mode','acccess/native','allowed_vlans',
                 'cdp','lldp_rx','lldp_tx','bpdu'
             ]
             ws.append(data)
@@ -270,7 +271,7 @@ def create_workbooks(jsonMap):
                 data = [
                     itype,k,intfs,'',a,
                     a,ptype,'needed',b.description,a,b.pc_mode,b.vpc,
-                    b.mtu,b.speed,b.mode,b.access,b.allowed_vlans,
+                    b.mtu,b.speed,b.status,b.mode,b.access,b.allowed_vlans,
                     b.cdp,b.lldp_rx,b.lldp_tx,b.bpdu
                 ]
                 ws.append(data)
@@ -288,7 +289,7 @@ def create_workbooks(jsonMap):
                 data = [
                     'intf_selector',k,a,'',iselect,
                     intf,ptype,'needed',b.description,b.pc_id,b.pc_mode,'',
-                    b.mtu,b.speed,b.mode,b.access,b.allowed_vlans,
+                    b.mtu,b.speed,b.status,b.mode,b.access,b.allowed_vlans,
                     b.cdp,b.lldp_rx,b.lldp_tx,b.bpdu
                 ]
                 ws.append(data)
@@ -304,7 +305,7 @@ def create_workbooks(jsonMap):
 #=================================================================
 # Function to Parse the Configurations
 #=================================================================
-def parse_config_file(jsonMap, file):
+def parse_config_file(jsonMap, dir, file, status):
     # Start by Creating Default Variables
     str_bpdg = False
     str_cdp_ = False
@@ -336,11 +337,21 @@ def parse_config_file(jsonMap, file):
     str_vrf_ = 'default'
     str_vrfc = ''
 
+    int_status = DotMap()
     # Read the Conifguration File and Gather Configuration Information
+    if status == True:
+        status_file = file.replace('.cfg', '.status')
+        st_file = open(os.path.join(dir, status_file), 'r')
+        for line in st_file.readlines():
+            if re.search('(Eth[0-9]+/[0-9]+(/[0-9]+)?|Po[0-9]+)[ \\t]+.*[ \\t]+([a-zA-Z]+)[ \\t]+(trunk|[0-9]+|routed)[ \\t]+(full|auto|half)', line):
+                intf = re.search('(Eth[0-9]+/[0-9]+(/[0-9]+)?|Po[0-9]+)[ \\t]+.*[ \\t]+([a-zA-Z]+)[ \\t]+(trunk|[0-9]+|routed)[ \\t]+(full|auto|half)', line).group(1)
+                int_stat = re.search('(Eth[0-9]+/[0-9]+(/[0-9]+)?|Po[0-9]+)[ \\t]+.*[ \\t]+([a-zA-Z]+)[ \\t]+(trunk|[0-9]+|routed)[ \\t]+(full|auto|half)', line).group(3)
+                int_status[intf] = int_stat
+
     bd_count = 0
     prGreen(f'Reading File: {file}')
-    file = open(file, 'r')
-    for line in file.readlines():
+    cfg_file = open(os.path.join(dir, file), 'r')
+    for line in cfg_file.readlines():
         if re.fullmatch(re_host, line):
             # Set Hostname String
             str_host = re.fullmatch(re_host, line).group(1)
@@ -453,6 +464,9 @@ def parse_config_file(jsonMap, file):
                     if mtu2 >= mtu1: str_mtu_ = '9000'
                     if str_swmd == 'trunk': str_swav = str_tknv
                     pc_intf = str_intf.split('l')[1]
+                    str_status = 'unknown'
+                    if len(int_status) > 0:
+                        if int_status.get(f'Po{pc_intf}'): str_status = int_status[f'Po{pc_intf}']
                     jsonMap.switches[str_host].port_channels[pc_intf] = DotMap(
                         access       = str_swav,
                         allowed_vlans= str_tkvl,
@@ -466,6 +480,7 @@ def parse_config_file(jsonMap, file):
                         mtu          = str_mtu_,
                         pc_mode      = str_pomd,
                         speed        = str_sped,
+                        status       = str_status,
                         vpc          = str_vpc_
                     )
             elif 'Ethernet' in str_intf:
@@ -491,6 +506,10 @@ def parse_config_file(jsonMap, file):
                         jsonMap.switches[str_host].port_channels[str_poch].interfaces.append(str_intf)
                     if str_swmd == 'access': swav = str_swav
                     else: swav = str_tknv
+                    str_status = 'unknown'
+                    if len(int_status) > 0:
+                        short_int = str_intf.replace('ernet', '')
+                        if int_status.get(short_int): str_status = int_status[short_int]
                     jsonMap.switches[str_host].interfaces[str_intf] = DotMap(
                         access       = swav,
                         allowed_vlans= str_tkvl,
@@ -503,7 +522,8 @@ def parse_config_file(jsonMap, file):
                         mtu          = str_mtu_,
                         pc_id        = str_poch,
                         pc_mode      = str_pomd,
-                        speed        = str_sped
+                        speed        = str_sped,
+                        status       = str_status
                     )
             
             # Reset the Variables back to Blank except str_host
@@ -596,6 +616,14 @@ def main():
                     child, kwargs = easy_functions.child_login(kwargs)
                     child.sendline("term length 0")
                     child.expect(kwargs.host_prompt)
+                    child.sendline("show interface status")
+                    child.expect("show interface status")
+                    child.expect(kwargs.host_prompt)
+                    with open(f'{kwargs.hostname}.status', 'w') as f:
+                        f.write(child.before)
+                        f.close()
+
+                    file = f'{kwargs.hostname}.status'
                     child.sendline("show run all")
                     child.expect("show run all")
                     child.expect(kwargs.host_prompt)
@@ -604,8 +632,9 @@ def main():
                         f.close()
 
                     file = f'{kwargs.hostname}.cfg'
-                    jsonMap = parse_config_file(jsonMap, os.path.join(args.dir, file))
+                    jsonMap = parse_config_file(jsonMap, args.dir, file, True)
                     os.remove(f'{kwargs.hostname}.cfg')
+                    os.remove(f'{kwargs.hostname}.status')
 
                     #=====================================================
                     # Get Show run all
@@ -627,6 +656,14 @@ def main():
                                 child.sendline(f'switchto vdc {v}')
                                 child.expect('switchto vdc')
                                 child.expect(f'{v}#')
+                                child.sendline("show interface status")
+                                child.expect("show interface status")
+                                child.expect(f'{v}#')
+                                with open(f'{v}.status', 'w') as f:
+                                    f.write(child.before)
+                                    f.close()
+
+                                file = f'{v}.status'
                                 child.sendline('show run all')
                                 child.expect('show run all')
                                 child.expect(f'{v}#')
@@ -634,8 +671,9 @@ def main():
                                     f.write(child.before)
                                     f.close()
                                 file = f'{v}.cfg'
-                                jsonMap = parse_config_file(jsonMap, os.path.join(args.dir, file))
+                                jsonMap = parse_config_file(jsonMap, args.dir, file, True)
                                 os.remove(f'{v}.cfg')
+                                os.remove(f'{v}.status')
                     
                     child.sendline('exit')
                     child.expect('closed')
@@ -673,7 +711,7 @@ def main():
             file_ext = ['.txt','.cfg','.config']
             for ext in file_ext:
                 if file.endswith(ext):
-                    jsonMap = parse_config_file(jsonMap, os.path.join(args.dir, file))
+                    jsonMap = parse_config_file(jsonMap, args.dir, file, False)
     
     # Sort vlans and compact list
     jsonMap.vlans.sort()
