@@ -554,25 +554,26 @@ def create_yaml(args, easy_jsonData, **easyDict):
                         os.makedirs(dest_path)
                     dest_dir = os.path.join(baseRepo, site_name, dest_dir)
                     for i in jsonData[f'class.{item}']['enum']:
-                        if item == i:
-                            dict = {item:easyDict['sites'][k][item]}
-                        else:
-                            dict = {item:{i:easyDict['sites'][k][item][i]}}
-                        if item == 'switch' and i == 'switch_profiles':
-                            icount = 0
-                            for items in dict['switch']['switch_profiles']:
-                                dest_file = f"{items['name']}.yaml"
-                                title1 = items['name']
-                                dict2 = {item:{i:{items['name']:easyDict['sites'][k][item][i][icount]}}}
-                                write_file(dest_dir, dest_file, dict2, title1)
-                                icount += 1
-                        else:
-                            dest_file = f'{i}.yaml'
+                        if easyDict['sites'][k][item].get(i):
                             if item == i:
-                                title1 = str.title(item.replace('_', ' '))
+                                dict = {item:easyDict['sites'][k][item]}
                             else:
-                                title1 = f"{str.title(item.replace('_', ' '))} -> {str.title(i.replace('_', ' '))}"
-                            write_file(dest_dir, dest_file, dict, title1)
+                                dict = {item:{i:easyDict['sites'][k][item][i]}}
+                            if item == 'switch' and i == 'switch_profiles':
+                                icount = 0
+                                for items in dict['switch']['switch_profiles']:
+                                    dest_file = f"{items['name']}.yaml"
+                                    title1 = items['name']
+                                    dict2 = {item:{i:{items['name']:easyDict['sites'][k][item][i][icount]}}}
+                                    write_file(dest_dir, dest_file, dict2, title1)
+                                    icount += 1
+                            else:
+                                dest_file = f'{i}.yaml'
+                                if item == i:
+                                    title1 = str.title(item.replace('_', ' '))
+                                else:
+                                    title1 = f"{str.title(item.replace('_', ' '))} -> {str.title(i.replace('_', ' '))}"
+                                write_file(dest_dir, dest_file, dict, title1)
                         
 #========================================================
 # Function for Processing Loops to auto.tfvars files

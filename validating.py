@@ -320,7 +320,7 @@ def ip_address(var, **kwargs):
             valid_count =+ 1
     if not valid_count == 0:
         print(f'\n-----------------------------------------------------------------------------\n')
-        print(f'   Error on Worksheet {ws.title} Row {row_num}. {var} {varValue} is not ')
+        print(f'   Error on Worksheet {ws.title} Row {row_num}. {var} "{varValue}" is not ')
         print(f'   a valid IPv4 or IPv6 Address.  Exiting....')
         print(f'\n-----------------------------------------------------------------------------\n')
         exit()

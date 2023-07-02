@@ -918,6 +918,14 @@
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
+                            "netflow_monitor_policies": {
+                                "description": "A NetFlow Monitor Policies identifies packet flows for ingress IP packets and provides statistics based on these packet flows.  This should be configured as a list of strings with each string having a colon to seperate the policy name and the filter type.  There are three IP Filter types: * ce * ipv4 * ipv6. So to do a list of these you would do: 'default:ce,default:ipv4,my_policy:ipv6'",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^(ce|ipv(4|6)):[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
                             "optional_args": {
                                 "cdp_interface_policy": "",
                                 "copp_interface_policy": "",
@@ -1180,6 +1188,14 @@
                                 "minimum": 1,
                                 "maximum": 64,
                                 "pattern": "^[a-zA-Z0-9_.:-]+$",
+                                "x-omitempty": true
+                            },
+                            "netflow_monitor_policies": {
+                                "description": "A NetFlow Monitor Policies identifies packet flows for ingress IP packets and provides statistics based on these packet flows.  This should be configured as a list of strings with each string having a colon to seperate the policy name and the filter type.  There are three IP Filter types: * ce * ipv4 * ipv6. So to do a list of these you would do: 'default:ce,default:ipv4,my_policy:ipv6'",
+                                "type": "list_of_string",
+                                "minimum": 1,
+                                "maximum": 64,
+                                "pattern": "^(ce|ipv(4|6)):[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "optional_args": {
@@ -4735,7 +4751,7 @@
                                 "type": "list_of_string",
                                 "minimum": 1,
                                 "maximum": 64,
-                                "pattern": "^(ce|ipv(4|6):[a-zA-Z0-9_.:-]+$",
+                                "pattern": "^(ce|ipv(4|6)):[a-zA-Z0-9_.:-]+$",
                                 "x-omitempty": true
                             },
                             "node_id": {
