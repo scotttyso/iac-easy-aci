@@ -13,4 +13,4 @@ pyyaml
 requests
 simplejson
 stdiomask
-validators
+validators==0.11.0
